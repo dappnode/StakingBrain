@@ -3,7 +3,8 @@ import { AppParams, beaconchaApiParamsMap } from "../../params";
 export function getParams(): AppParams {
   const search = new URLSearchParams(window.location.search);
 
-  let currentNetwork = search.get("network") || window.env.NETWORK || "mainnet";
+  let currentNetwork =
+    search.get("network") || window.env?.NETWORK || "mainnet";
 
   if (!beaconchaApiParamsMap.has(currentNetwork)) currentNetwork = "";
 
