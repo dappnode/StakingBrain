@@ -1,0 +1,4 @@
+- Create in common API routes interface, add a json schema validation of the routes and the api calls in the brain
+- Create in brain all the API calls functions
+- in front:
+  - create api object of type rtoutes

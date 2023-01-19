@@ -19,6 +19,7 @@ import { Web3SignerStatus } from "./types";
 //Other libraries
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
+import { startApi } from "./api";
 
 function App() {
   const [currentNetwork, setCurrentNetwork] = React.useState("");
@@ -48,6 +49,11 @@ function App() {
       setSignerStatus("ERROR");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Start API and Socket.io once user has logged in
+  useEffect(() => {
+    startApi().catch((e) => console.error("Error on startApi", e));
   }, []);
 
   const showSignerStatus = async () => {
