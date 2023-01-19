@@ -1,0 +1,21 @@
+{
+  "name": "stakingbrain",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "version": "1.0.0",
+  "repository": "https://github.com/dappnode/StakingBrain.git",
+  "author": "DappNode Association",
+  "license": "MIT",
+  "devDependencies": {
+    "lerna": "^6.4.1",
+    "rimraf": "^4.1.1"
+  },
+  "scripts": {
+    "build": "lerna run build --include-dependencies --stream",
+    "clean": "yarn run clean:build && yarn run clean:libraries",
+    "clean:libraries": "rimraf packages/**/node_modules && rimraf node_modules",
+    "clean:build": "rimraf packages/**/dist && rimraf packages/**/build"
+  }
+}
