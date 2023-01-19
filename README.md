@@ -50,3 +50,23 @@ However, for the sake of simplification, consistency and DVT integration, we hav
     2. Get fee recipients from the validator (if it does not exist… MEV Smoothing Pool fee recipient? We could create a globalEnv with a default fee recipient if we do not have the MEVSP yet)
     3. Default tag “soloStaker”
     4. Write to DB
+
+## To develop
+1. Connect to your DAppNode (which needs to be running an instance of web3signer and validator in a network (e.g. Prater)
+
+2. Clone the repo
+```
+git clone https://github.com/dappnode/StakingBrain
+```
+
+3. Build and start development mode
+```
+yarn
+yarn build
+yarn start:dev
+```
+
+4.Access the KeyManager UI (e.g. Prater)
+```
+http://localhost/?network=prater&signerUrl=http://web3signer.web3signer-prater.dappnode:9000/
+```
