@@ -5,3 +5,4 @@ packages/*/node_modules
 # Builds
 packages/*/dist
 packages/*/build
+packages/brain/src/build

@@ -1,5 +1,6 @@
 {
   "name": "stakingbrain",
+  "type": "module",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -14,6 +15,7 @@
   },
   "scripts": {
     "build": "lerna run build --include-dependencies --stream",
+    "start:dev": "lerna run start:dev --include-dependencies --stream",
     "clean": "yarn run clean:build && yarn run clean:libraries",
     "clean:libraries": "rimraf packages/**/node_modules && rimraf node_modules",
     "clean:build": "rimraf packages/**/dist && rimraf packages/**/build"

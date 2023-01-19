@@ -4,12 +4,12 @@
   "version": "0.1.0",
   "license": "GPL-3.0",
   "scripts": {
-    "start:dev": "ln -s ../../ui/build/ ./dist && node dist/index.js",
-    "dev": "tsc -w",
-    "build": "yarn run clean:dist && tsc -p tsconfig.json",
+    "start:dev": "ln -s ../../ui/build/ ./src && nodemon -w src -e js,ts,json --require dotenv/config -x ts-node src/index.ts",
+    "build": "yarn run clean:dist && yarn run clean:ln && tsc -p tsconfig.json",
     "clean": "yarn run clean:modules && yarn run clean:dist",
     "clean:modules": "rimraf node_modules",
-    "clean:dist": "rimraf dist"
+    "clean:dist": "rimraf dist",
+    "clean:ln": "rimraf ./src/build"
   },
   "dependencies": {
     "@stakingbrain/common": "^0.1.0",
@@ -22,6 +22,7 @@
     "@types/node": "^18.11.18",
     "nodemon": "^2.0.20",
     "rimraf": "^4.1.1",
+    "ts-node": "^10.9.1",
     "typescript": "^4.9.4"
   }
 }
