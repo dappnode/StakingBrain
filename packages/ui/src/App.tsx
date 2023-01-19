@@ -1,6 +1,6 @@
 //External components
 import { ThemeProvider } from "@mui/material/styles";
-import { Container, Alert } from "@mui/material";
+import { Container, Alert, Button } from "@mui/material";
 
 //Internal components
 import TopBar from "./components/TopBar/TopBar";
@@ -19,7 +19,7 @@ import { Web3SignerStatus } from "./types";
 //Other libraries
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
-import { startApi } from "./api";
+import { startApi, api } from "./api";
 
 function App() {
   const [currentNetwork, setCurrentNetwork] = React.useState("");
@@ -27,6 +27,11 @@ function App() {
     React.useState<Web3SignerApi | null>(null);
   const [signerStatus, setSignerStatus] =
     React.useState<Web3SignerStatus>("LOADING");
+
+  const testRoute = async () => {
+    console.log(api);
+    console.log(await api.testRoute());
+  };
 
   const {
     network,
@@ -101,6 +106,8 @@ function App() {
                 element={<ImportScreen web3signerApi={web3signerApi} />}
               />
             </Routes>
+            {/* Call api.testRoute() when clicked */}
+            <Button onClick={testRoute}>Test Route</Button>
           </BrowserRouter>
         ) : (
           <>

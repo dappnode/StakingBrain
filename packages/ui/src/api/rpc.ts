@@ -3,7 +3,7 @@ import io, { Socket } from "socket.io-client";
 let socketGlobal: Socket | null = null;
 let apiStarted = false;
 // TODO: take into account network
-const socketIoUrl = "http://ui.web3signer-prater.dappnode";
+const socketIoUrl = "http://localhost:80";
 
 export const apiRpc: IApiRpc = {
   async call<R>(payload: RpcPayload) {

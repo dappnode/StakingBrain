@@ -19,7 +19,7 @@ export async function startApi() {
  */
 export const api: Routes = mapValues(
   routesData,
-  (data, route) =>
+  (data: any, route: string) =>
     (...args: any[]) =>
       callRoute<any>(route, args)
 );
