@@ -1,0 +1,71 @@
+version: "3.8"
+services:
+  brain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    networks:
+      brain_dev:
+        aliases:
+          - web3signer.brain.dappnode
+  signer:
+    image: consensys/web3signer:latest
+    environment:
+      - JAVA_OPTS="-Xmx2g -Xms128m"
+    command:
+      [
+        "--key-store-path=/keystores",
+        "--http-listen-port=9000",
+        "--http-listen-host=0.0.0.0",
+        "--http-host-allowlist=validator.prysm.dappnode,brain.web3signer.dappnode",
+        "--http-cors-origins=*",
+        "--idle-connection-timeout-seconds=90",
+        "eth2",
+        "--network=mainnet",
+        "--slashing-protection-db-url=jdbc:postgresql://postgres.web3signer.dappnode:5432/web3signer-mainnet",
+        "--slashing-protection-db-username=postgres",
+        "--slashing-protection-db-password=mainnet",
+        "--key-manager-api-enabled=true",
+      ]
+    networks:
+      brain_dev:
+        aliases:
+          - web3signer.web3signer.dappnode
+  db:
+    image: postgres:14.1-bullseye
+    environment:
+      - POSTGRES_PASSWORD=mainnet
+      - PGPASSWORD=mainnet
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=web3signer-mainnet
+    command: postgres
+    networks:
+      brain_dev:
+        aliases:
+          - web3signer.postgres.dappnode
+
+  prysm-validator:
+    image: gcr.io/prysmaticlabs/prysm/validator:latest
+    command:
+      [
+        "--mainnet",
+        "--datadir=/data",
+        "--wallet-dir=/root/.eth2validators",
+        "--beacon-rpc-provider=beacon-chain.prysm.dappnode:4000",
+        "--beacon-rpc-gateway-provider=beacon-chain.prysm.dappnode:3500",
+        "--validators-external-signer-url=http://web3signer.web3signer.dappnode:9000",
+        "--grpc-gateway-host=0.0.0.0 ",
+        "--grpc-gateway-port=3500",
+        "--grpc-gateway-corsdomain=http://0.0.0.0:3500",
+        "--graffiti=validating_from_DAppNode",
+        "--suggested-fee-recipient=0x0000000000000000000000000000000000000000",
+        "--web ",
+        "--accept-terms-of-use",
+        "--enable-doppelganger",
+      ]
+
+networks:
+  brain_dev:
+    name: brain_dev
