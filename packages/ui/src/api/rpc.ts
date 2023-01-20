@@ -1,28 +1,16 @@
-import io, { Socket } from "socket.io-client";
+import io from "socket.io-client";
 
-let socketGlobal: Socket | null = null;
-let apiStarted = false;
-// TODO: take into account network
-const socketIoUrl = "http://localhost:80";
+//No need to set the port, because back and front are served in the same port
+const socket = io();
 
 export const apiRpc: IApiRpc = {
   async call<R>(payload: RpcPayload) {
-    const socket = setupSocket();
     return await new Promise<RpcResponse<R>>((resolve) => {
       socket.emit("rpc", payload, resolve);
     });
   },
 
   start(onConnect, onError) {
-    // Only run start() once
-    if (apiStarted) {
-      return;
-    } else {
-      apiStarted = true;
-    }
-
-    const socket = setupSocket();
-
     socket.on("connect", function () {
       onConnect();
     });
@@ -43,28 +31,16 @@ export const apiRpc: IApiRpc = {
   },
 };
 
-function setupSocket(): Socket {
-  if (!socketGlobal) {
-    /* eslint-disable-next-line no-console */
-    console.log("Connecting API with Socket.io to", socketIoUrl);
-    socketGlobal = io(socketIoUrl);
-  }
-  return socketGlobal;
-}
-
-// Types
-
+//Types
 interface RpcPayload {
   method: string;
-  params: Args;
+  params: any[];
 }
 
 interface IApiRpc {
   start(onConnect: () => void, onError: (errorMessage: string) => void): void;
   call<R>(payload: RpcPayload): Promise<RpcResponse<R>>;
 }
-
-type Args = any[];
 
 interface RpcResponse<R = any> {
   result?: R;

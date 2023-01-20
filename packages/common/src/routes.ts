@@ -1,5 +1,5 @@
 export interface Routes {
-  testRoute(): Promise<string>;
+  testRoute: () => Promise<string>;
 }
 
 interface RouteData {

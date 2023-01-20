@@ -2,31 +2,37 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Server } from "socket.io";
 import http from "http";
+import { Server } from "socket.io";
+import { testRoute } from "./calls";
 
 const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 console.log(`Running app in mode: ${mode}`);
 
 const app = express();
-const server = new http.Server(app);
-
-const io = new Server(server, { serveClient: false });
+const server = http.createServer(app);
+const io = new Server(server, {
+  serveClient: false,
+});
 
 io.on("connection", (socket) => {
-  console.log(`Socket connected`, socket.id);
+  console.log("A user connected");
 
-  // JSON RPC over WebSockets
-  socket.on(
-    "rpc",
-    (rpcPayload: RpcPayload, callback: (res: RpcResponse) => void) => {
-      if (typeof callback !== "function")
-        return console.error("JSON RPC over WS req without cb", rpcPayload);
-
-      callback({ result: rpcPayload });
+  //Receive a call from the client to the method testRoute()
+  socket.on("rpc", async (payload, callback) => {
+    console.log("Received rpc call", payload);
+    const { method } = payload;
+    if (method === "testRoute") {
+      const result = await testRoute();
+      console.log("Sending result", result);
+      callback({ result });
     }
-  );
+  });
+
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
 });
 
 app.use(cors());
@@ -37,26 +43,7 @@ app.get("*", (req, res) => {
   console.log(__dirname);
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
-app.listen(80, () => {
-  console.log("server started on port 80");
+
+server.listen(80, () => {
+  console.log("Server listening on *:80");
 });
-
-// Utils
-
-// Types
-// TODO: check move to common
-interface RpcPayload {
-  method: string;
-  params: Args;
-}
-
-type Args = any[];
-
-export interface RpcResponse<R = any> {
-  result?: R;
-  error?: {
-    code: number;
-    message: string;
-    data?: any;
-  };
-}
