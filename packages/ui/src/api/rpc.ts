@@ -1,4 +1,5 @@
 import io from "socket.io-client";
+import { RpcResponse } from "@stakingbrain/common";
 
 //No need to set the port, because back and front are served in the same port
 const socket = io();
@@ -40,9 +41,4 @@ interface RpcPayload {
 interface IApiRpc {
   start(onConnect: () => void, onError: (errorMessage: string) => void): void;
   call<R>(payload: RpcPayload): Promise<RpcResponse<R>>;
-}
-
-interface RpcResponse<R = any> {
-  result?: R;
-  error?: { code: number; message: string; data?: any };
 }

@@ -28,7 +28,7 @@ class JsonRpcResError extends Error {
   }
 }
 
-interface RpcResponse<R = any> {
+export interface RpcResponse<R = any> {
   result?: R;
   error?: { code: number; message: string; data?: any };
 }

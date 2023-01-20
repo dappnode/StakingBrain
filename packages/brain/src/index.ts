@@ -25,7 +25,6 @@ io.on("connection", (socket) => {
     const { method } = payload;
     if (method === "testRoute") {
       const result = await testRoute();
-      console.log("Sending result", result);
       callback({ result });
     }
   });
