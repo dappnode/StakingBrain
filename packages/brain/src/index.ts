@@ -11,16 +11,20 @@ const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 console.log(`Running app in mode: ${mode}`);
 
+// DB
+brainDb.initialize();
+// TODO: Right after initializing db it should be updated with sources of truth: signer and validator
+console.debug(brainDb.data);
+
 const app = express();
 const server = http.createServer(app);
+
+// Socket io
 const io = new Server(server, {
   serveClient: false,
 });
-
 io.on("connection", (socket) => {
   console.log("A user connected");
-
-  //Receive a call from the client to the method testRoute()
   socket.on("rpc", async (payload, callback) => {
     console.log("Received rpc call", payload);
     const { method } = payload;
@@ -35,6 +39,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Express
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, "build")));

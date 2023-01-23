@@ -5,7 +5,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "skipLibCheck": true,
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "useUnknownInCatchVariables": false
   },
   "ts-node": {
     "esm": true,

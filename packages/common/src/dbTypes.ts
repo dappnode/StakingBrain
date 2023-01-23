@@ -10,23 +10,26 @@ export interface StakingBrainDb {
   [pubkey: string]: PubkeyDetails;
 }
 
-export interface PubkeyDetails {
+interface PubkeyDetails {
   tag?: Tag;
   feeRecipient?: string;
   feeRecipientValidator?: string;
   automaticImport?: boolean;
 }
 
+export const tags = [
+  "obol",
+  "diva",
+  "ssv",
+  "rocketpool",
+  "stakewise",
+  "stakehouse",
+  "solo",
+] as const;
+
 /**
  * Tag describes the protocol of the public key imported
  */
-export type Tag =
-  | "obol"
-  | "diva"
-  | "ssv"
-  | "rocketpool"
-  | "stakewise"
-  | "stakehouse"
-  | "solo";
+export type Tag = typeof tags[number];
 
 // TODO: add types for ethereum addresses so the JSON schemas validate them
