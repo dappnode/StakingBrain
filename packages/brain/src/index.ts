@@ -4,7 +4,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
-import { testRoute } from "./calls";
+import { testRoute } from "./calls/index.js";
+import { brainDb } from "./modules/db/index.js";
 
 const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

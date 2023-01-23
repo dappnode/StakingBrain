@@ -6,3 +6,6 @@ packages/*/node_modules
 packages/*/dist
 packages/*/build
 packages/brain/src/build
+
+# Brain db
+packages/brain/brain-db.json
