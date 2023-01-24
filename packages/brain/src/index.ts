@@ -7,6 +7,9 @@ import { Server } from "socket.io";
 import { testRoute } from "./calls/index.js";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
+import { RpcResponse } from "@stakingbrain/common";
+import { RpcPayload, getRpcHandler } from "./modules/rpc/index.js";
+import * as routes from "./calls/index.js";
 
 const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,20 +24,32 @@ logger.debug(brainDb.data);
 const app = express();
 const server = http.createServer(app);
 
+const rpcHandler = getRpcHandler(routes);
+
 // Socket io
 const io = new Server(server, {
   serveClient: false,
 });
 io.on("connection", (socket) => {
   logger.debug("A user connected");
-  socket.on("rpc", async (payload, callback) => {
-    logger.debug(`Received rpc call ${payload}`);
-    const { method } = payload;
-    if (method === "testRoute") {
-      const result = await testRoute();
-      callback({ result });
+  socket.on(
+    "rpc",
+    async (rpcPayload: RpcPayload, callback: (res: RpcResponse) => void) => {
+      logger.debug(`Received rpc call`);
+      logger.debug(rpcPayload);
+
+      if (typeof callback !== "function")
+        return logger.error("JSON RPC over WS req without cb");
+
+      rpcHandler(rpcPayload)
+        .then(callback)
+        .catch((error) => callback({ error }))
+        .catch((error) => {
+          error.message = `Error on JSON RPC over WS cb: ${error.message}`;
+          logger.error(error);
+        });
     }
-  });
+  );
   socket.on("disconnect", () => {
     logger.debug("A user disconnected");
   });

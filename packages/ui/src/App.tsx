@@ -1,6 +1,6 @@
 //External components
 import { ThemeProvider } from "@mui/material/styles";
-import { Container, Alert, Button } from "@mui/material";
+import { Container, Alert } from "@mui/material";
 
 //Internal components
 import TopBar from "./components/TopBar/TopBar";
@@ -115,7 +115,6 @@ function App() {
             )}
           </>
         )}
-        <Button onClick={() => getStakerConfig()}>Click me</Button>
       </Container>
     </ThemeProvider>
   );
