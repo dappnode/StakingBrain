@@ -67,14 +67,49 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   public addPubkeys(pubkeys: StakingBrainDb): void {
     try {
       this.validateDb();
+      // Remove pubkeys that already exist
+      if (this.data) {
+        for (const pubkey of Object.keys(pubkeys)) {
+          if (this.data[pubkey]) {
+            console.warn(`Pubkey ${pubkey} already in the database`);
+            delete pubkeys[pubkey];
+          }
+        }
+      }
       this.ensureDbMaxSize(pubkeys);
       this.validatePubkeys(pubkeys);
       this.data = { ...this.data, ...pubkeys };
       this.write();
     } catch (e) {
-      e.message += `\nError: unable to add pubkeys ${Object.keys(pubkeys).join(
-        ", "
-      )}`;
+      e.message =
+        `Error: unable to add pubkeys ${Object.keys(pubkeys).join(", ")}` +
+        `\n${e.message}`;
+      throw Error(e);
+    }
+  }
+
+  /**
+   * Updates 1 or more public keys details from the database
+   */
+  public updatePubkeys(pubkeys: StakingBrainDb): void {
+    try {
+      this.validateDb();
+      // Remove pubkeys that don't exist
+      if (this.data) {
+        for (const pubkey of Object.keys(pubkeys)) {
+          if (!this.data[pubkey]) {
+            console.warn(`Pubkey ${pubkey} not found in the database`);
+            delete pubkeys[pubkey];
+          }
+        }
+      }
+      this.validatePubkeys(pubkeys);
+      this.data = { ...pubkeys, ...this.data };
+      this.write();
+    } catch (e) {
+      e.message =
+        `Error: unable to update pubkeys ${Object.keys(pubkeys).join(", ")}` +
+        `\n${e.message}`;
       throw Error(e);
     }
   }
@@ -86,14 +121,17 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   public deletePubkeys(pubkeys: string[]): void {
     try {
       this.validateDb();
-      if (this.data) {
-        for (const pubkey of pubkeys) delete this.data[pubkey];
+      if (!this.data) return;
+      for (const pubkey of pubkeys) {
+        if (!this.data[pubkey]) {
+          console.warn(`Pubkey ${pubkey} not found in the database`);
+        } else delete this.data[pubkey];
         this.write();
       }
     } catch (e) {
-      e.message += `\nError: unable to delete pubkeys ${Object.keys(
-        pubkeys
-      ).join(", ")}`;
+      e.message =
+        `Error: unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}` +
+        `\n${e.message}`;
       throw Error(e);
     }
   }
@@ -106,7 +144,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.data = {};
       this.write();
     } catch (e) {
-      e.message += `\nError: unable to prune database. Creating a new one...`;
+      e.message =
+        `Error: unable to prune database. Creating a new one...` +
+        `\n${e.message}`;
       console.error(e);
       if (fs.existsSync(this.dbName)) fs.unlinkSync(this.dbName);
       this.createJsonFile();
@@ -126,7 +166,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         this.createJsonFile();
       }
     } catch (e) {
-      e.message += `\nError: The database is corrupted. Cleaning database`;
+      e.message =
+        `Error: The database is corrupted. Cleaning database` +
+        `\n${e.message}`;
       console.error(e);
       this.deleteDatabase();
       this.read();
@@ -149,10 +191,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     const MAX_DB_SIZE = 6 * 1024 * 1024;
     const dbSize = fs.statSync(this.dbName).size;
     const pubkeysSize = Buffer.byteLength(JSON.stringify(pubkeys));
-    // print pubkeys size in KB
-    console.log(
-      `Database size: ${dbSize} bytes. Pubkeys size: ${pubkeysSize} bytes.`
-    );
     if (dbSize + pubkeysSize > MAX_DB_SIZE) {
       throw Error(
         `The database is too big. Max size is ${MAX_DB_SIZE} bytes. Current size is ${dbSize} bytes. Data to be added is ${pubkeysSize} bytes.`
@@ -241,7 +279,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       }
     });
 
-    if (errors.length > 0) throw Error(errors.join(""));
+    if (errors.length > 0) throw Error(errors.join("\n"));
   }
 
   private isValidAddress(address: string): boolean {
