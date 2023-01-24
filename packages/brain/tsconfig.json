@@ -4,7 +4,9 @@
   "exclude": ["./tests/", "./node_modules/", "./dist/"],
   "compilerOptions": {
     "outDir": "dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "moduleResolution": "NodeNext",
+    "useUnknownInCatchVariables": false
   },
   "ts-node": {
     "esm": true,
