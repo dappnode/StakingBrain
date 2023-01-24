@@ -5,13 +5,14 @@ import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
 import { testRoute } from "./calls/index.js";
-import { brainDb } from "./modules/db/index.js";
+import { BrainDataBase } from "./modules/db/index.js";
 
 const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 console.log(`Running app in mode: ${mode}`);
 
 // DB
+const brainDb = new BrainDataBase(`brain-db.json`);
 brainDb.initialize();
 // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
 console.debug(brainDb.data);
