@@ -5,9 +5,9 @@ import {
   GridToolbar,
 } from "@mui/x-data-grid";
 import { useState } from "react";
-import { Web3signerGetResponse } from "../../apis/web3signerApi/types";
 import { beaconchaApiParamsMap } from "../../params";
 import KeystoreColumns from "./KeystoreColumns";
+import { Web3signerGetResponse } from "@stakingbrain/common";
 
 export default function KeystoreList({
   rows,

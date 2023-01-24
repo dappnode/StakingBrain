@@ -11,83 +11,72 @@ import ClientsBox from "./components/ClientsBox/ClientsBox";
 //Themes
 import { darkTheme } from "./Themes/globalThemes";
 
-//Logic
-import { getParams } from "./logic/Utils/getParams";
-import { Web3SignerApi } from "./apis/web3signerApi";
-import { Web3SignerStatus } from "./types";
-
 //Other libraries
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
 import { startApi, api } from "./api";
+import { Network, Web3SignerStatus } from "@stakingbrain/common";
 
 function App() {
-  const [currentNetwork, setCurrentNetwork] = React.useState("");
-  const [web3signerApi, setWeb3signerApi] =
-    React.useState<Web3SignerApi | null>(null);
   const [signerStatus, setSignerStatus] =
     React.useState<Web3SignerStatus>("LOADING");
-
-  const testRoute = async () => {
-    console.log(api);
-    console.log(await api.testRoute());
-  };
-
-  const {
-    network,
-    signerAuthToken,
-    signerUrl,
-    consensusClient,
-    executionClient,
-  } = getParams();
-
-  useEffect(() => {
-    setCurrentNetwork(network);
-    if (signerUrl) {
-      setWeb3signerApi(
-        new Web3SignerApi({
-          baseUrl: signerUrl,
-          authToken: signerAuthToken,
-        })
-      );
-    } else {
-      setSignerStatus("ERROR");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [currentNetwork, setCurrentNetwork] = React.useState<Network>();
+  const [consensusClient, setConsensusClient] = React.useState<string>();
+  const [executionClient, setExecutionClient] = React.useState<string>();
 
   // Start API and Socket.io once user has logged in
   useEffect(() => {
-    startApi().catch((e) => console.error("Error on startApi", e));
+    startApi()
+      .then(() => {
+        getStakerConfig();
+        showSignerStatus();
+      })
+      .catch((e) => console.error("Error on startApi", e));
   }, []);
 
-  const showSignerStatus = async () => {
-    if (web3signerApi) {
-      const status = (await web3signerApi.getStatus())?.status;
-      setSignerStatus(status || "ERROR");
+  // Print signer status and staker config use effect
+  useEffect(() => {
+    console.log("signerStatus", signerStatus);
+    console.log("currentNetwork", currentNetwork);
+    console.log("consensusClient", consensusClient);
+    console.log("executionClient", executionClient);
+  }, [signerStatus, currentNetwork, consensusClient, executionClient]);
+
+  const showSignerStatus = async (): Promise<void> => {
+    try {
+      const status = (await api.getStatus()).status;
+      setSignerStatus(status);
+    } catch (e) {
+      console.error("Error on showSignerStatus", e);
+      setSignerStatus("ERROR");
     }
   };
 
-  useEffect(() => {
-    showSignerStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [web3signerApi]);
+  const getStakerConfig = async (): Promise<void> => {
+    try {
+      console.log("clicked");
+      const config = await api.getStakerConfig();
+      console.log("config", config);
+      setCurrentNetwork(config.network);
+      setConsensusClient(config.consensusClient);
+      setExecutionClient(config.executionClient);
+    } catch (e) {
+      console.error("Error on getStakerConfig", e);
+    }
+  };
 
   return (
     <ThemeProvider theme={darkTheme}>
       <TopBar network={currentNetwork} signerStatus={signerStatus} />
       <Container component="main" maxWidth="xl">
-        {web3signerApi && signerStatus === "UP" && currentNetwork ? (
+        {signerStatus === "UP" && currentNetwork ? (
           <BrowserRouter>
             <Routes>
               <Route
                 path="/"
                 element={
                   <>
-                    <ValidatorList
-                      web3signerApi={web3signerApi}
-                      network={currentNetwork}
-                    />
+                    <ValidatorList network={currentNetwork} />
                     {consensusClient && executionClient && (
                       <ClientsBox
                         consensusClient={consensusClient
@@ -101,13 +90,8 @@ function App() {
                   </>
                 }
               />
-              <Route
-                path="import"
-                element={<ImportScreen web3signerApi={web3signerApi} />}
-              />
+              <Route path="import" element={<ImportScreen />} />
             </Routes>
-            {/* Call api.testRoute() when clicked */}
-            <Button onClick={testRoute}>Test Route</Button>
           </BrowserRouter>
         ) : (
           <>
@@ -131,6 +115,7 @@ function App() {
             )}
           </>
         )}
+        <Button onClick={() => getStakerConfig()}>Click me</Button>
       </Container>
     </ThemeProvider>
   );

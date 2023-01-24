@@ -1,7 +1,10 @@
-import { BeaconchaGetResponse } from "./types";
-import { Web3signerGetResponse } from "../web3signerApi/types";
-import { StandardApi } from "../standardApi";
-import { maxValidatorsPerRequest } from "../../params";
+import { StandardApi } from "../index.js";
+import {
+  Web3signerGetResponse,
+  BeaconchaGetResponse,
+} from "@stakingbrain/common";
+
+const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
 export class BeaconchaApi extends StandardApi {
   /*

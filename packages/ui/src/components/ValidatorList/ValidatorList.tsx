@@ -8,26 +8,19 @@ import { Alert, Box, Card, CircularProgress } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 
 //Logic
-import { Web3SignerApi } from "../../apis/web3signerApi";
-import { Web3signerGetResponse } from "../../apis/web3signerApi/types";
+import { Network, Web3signerGetResponse } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
-import { BeaconchaApi } from "../../apis/beaconchaApi";
-import buildValidatorSummaryURL from "../../apis/beaconchaApi/buildValidatorSummaryURL";
+import buildValidatorSummaryURL from "../../logic/Utils/buildValidatorSummaryURL";
 import { beaconchaApiParamsMap } from "../../params";
 import { BeaconchaUrlBuildingStatus } from "../../types";
+import { api } from "../../api";
 
 //Styles
 import { boxStyle } from "../../Styles/listStyles";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { hasIndexes } from "../../logic/Utils/beaconchaUtils";
 
-export default function ValidatorList({
-  web3signerApi,
-  network,
-}: {
-  web3signerApi: Web3SignerApi;
-  network: string;
-}) {
+export default function ValidatorList({ network }: { network: Network }) {
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,12 +32,12 @@ export default function ValidatorList({
 
   async function getKeystores() {
     setLoading(true);
-    const keystoresGet = await web3signerApi.getKeystores();
+    const keystoresGet = await api.getKeystores();
     setKeystoresGet(keystoresGet);
     setLoading(false);
   }
 
-  async function getValidatorSummaryURL(beaconchaApi: BeaconchaApi) {
+  async function getValidatorSummaryURL() {
     if (!keystoresGet) {
       setValidatorSummaryURL("");
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
@@ -53,9 +46,7 @@ export default function ValidatorList({
 
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
-    const allValidatorsInfo = await beaconchaApi.fetchAllValidatorsInfo({
-      keystoresGet: keystoresGet,
-    });
+    const allValidatorsInfo = await api.fetchAllValidatorsInfo(keystoresGet);
 
     try {
       const validatorSummaryURL = buildValidatorSummaryURL({
@@ -93,11 +84,7 @@ export default function ValidatorList({
   async function loadSummaryUrl() {
     if (keystoresGet && beaconchaApiParamsMap.has(network)) {
       const beaconchaParams = beaconchaApiParamsMap.get(network);
-
-      if (beaconchaParams) {
-        const beaconchaApi = new BeaconchaApi(beaconchaParams);
-        getValidatorSummaryURL(beaconchaApi);
-      }
+      if (beaconchaParams) getValidatorSummaryURL();
     }
   }
 
@@ -164,7 +151,6 @@ export default function ValidatorList({
 
               {open && (
                 <KeystoresDeleteDialog
-                  web3signerApi={web3signerApi}
                   rows={keystoresGet.data}
                   selectedRows={selectedRows}
                   setSelectedRows={setSelectedRows}

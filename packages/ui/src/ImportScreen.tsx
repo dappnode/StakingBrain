@@ -26,8 +26,6 @@ import BackupIcon from "@mui/icons-material/Backup";
 import { setUniquePassword } from "./logic/ImportScreen/PasswordManager";
 import { extractPubkey } from "./logic/Utils/dataUtils";
 import { ImportStatus, KeystoreInfo } from "./types";
-import { Web3SignerApi } from "./apis/web3signerApi";
-import { Web3signerPostResponse } from "./apis/web3signerApi/types";
 import FileCardList from "./components/FileCards/FileCardList";
 import ImportDialog from "./components/Dialogs/ImportDialog";
 import {
@@ -35,12 +33,10 @@ import {
   mainImportBoxStyle,
   slashingProtectionBoxStyle,
 } from "./Styles/dialogStyles";
+import { Web3signerPostResponse } from "@stakingbrain/common";
+import { api } from "./api";
 
-export default function ImportScreen({
-  web3signerApi,
-}: {
-  web3signerApi: Web3SignerApi;
-}) {
+export default function ImportScreen() {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
   const [openDialog, setOpenDialog] = useState(false);
@@ -207,7 +203,7 @@ export default function ImportScreen({
               setKeystoresPostResponse(undefined);
               setImportStatus(ImportStatus.Importing);
               handleClickOpenDialog();
-              const results = await web3signerApi.importKeystores({
+              const results = await api.importKeystores({
                 keystores: acceptedFiles.map((f) => f.file),
                 passwords,
                 slashingProtection: slashingFile,

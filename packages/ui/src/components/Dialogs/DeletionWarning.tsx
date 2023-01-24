@@ -1,6 +1,6 @@
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { Web3signerGetResponse } from "../../apis/web3signerApi/types";
 import { shortenPubkey } from "../../logic/Utils/dataUtils";
+import { Web3signerGetResponse } from "@stakingbrain/common";
 
 export default function DeletionWarning({
   selectedRows,

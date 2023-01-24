@@ -12,24 +12,22 @@ import {
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { shortenPubkey, getEmoji } from "../../logic/Utils/dataUtils";
-import { Web3SignerApi } from "../../apis/web3signerApi";
-import {
-  Web3signerDeleteResponse,
-  Web3signerGetResponse,
-} from "../../apis/web3signerApi/types";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
+import {
+  Web3signerGetResponse,
+  Web3signerDeleteResponse,
+} from "@stakingbrain/common";
+import { api } from "../../api";
 
 export default function KeystoresDeleteDialog({
-  web3signerApi,
   rows,
   selectedRows,
   setSelectedRows,
   open,
   setOpen,
 }: {
-  web3signerApi: Web3SignerApi;
   rows: Web3signerGetResponse["data"];
   selectedRows: GridSelectionModel;
   setSelectedRows: (selectedRows: GridSelectionModel) => void;
@@ -43,7 +41,7 @@ export default function KeystoresDeleteDialog({
   async function deleteSelectedKeystores() {
     setKeystoresDelete(undefined);
     setRequestInFlight(true);
-    const keystoresDelete = await web3signerApi.deleteKeystores({
+    const keystoresDelete = await api.deleteKeystores({
       pubkeys: selectedRows.map(
         (row) => rows[parseInt(row.toString())].validating_pubkey
       ),

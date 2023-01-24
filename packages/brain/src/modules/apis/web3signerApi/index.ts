@@ -1,12 +1,12 @@
-import { StandardApi } from "../standardApi";
 import {
+  Web3signerPostRequest,
+  Web3signerPostResponse,
+  Web3signerDeleteRequest,
   Web3signerDeleteResponse,
   Web3signerGetResponse,
-  Web3signerPostResponse,
-  Web3signerPostRequest,
-  Web3signerDeleteRequest,
   Web3signerHealthcheckResponse,
-} from "./types";
+} from "@stakingbrain/common";
+import { StandardApi } from "../index.js";
 
 /**
  * Key Manager API standard

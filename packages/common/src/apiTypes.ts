@@ -1,4 +1,31 @@
-import { Web3SignerStatus } from "../../types";
+export interface BeaconchaGetResponse {
+  status: string;
+  data: {
+    activationeligibilityepoch?: number;
+    activationepoch?: number;
+    balance?: number;
+    effectivebalance?: number;
+    exitepoch?: number;
+    lastattestationslot?: number;
+    name?: string;
+    pubkey?: string;
+    slashed?: boolean;
+    status?: string;
+    validatorindex?: number;
+    withdrawableepoch?: number;
+    withdrawalcredentials?: string;
+  }[];
+  error?: { message: string };
+}
+
+export type Web3SignerStatus = "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
+
+export interface ApiParams {
+  baseUrl: string;
+  apiPath?: string;
+  authToken?: string;
+  host?: string;
+}
 
 export interface Web3signerGetResponse {
   data: {

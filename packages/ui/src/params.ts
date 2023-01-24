@@ -1,4 +1,4 @@
-import { ApiParams } from "./types";
+import { ApiParams } from "@stakingbrain/common";
 
 export const beaconchaApiParamsMap = new Map<string, ApiParams>([
   ["mainnet", { baseUrl: "https://beaconcha.in", apiPath: "/api/v1/" }],
@@ -8,8 +8,6 @@ export const beaconchaApiParamsMap = new Map<string, ApiParams>([
     { baseUrl: "https://beacon.gnosischain.com", apiPath: "/api/v1/" },
   ],
 ]);
-
-export const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
 export interface AppParams {
   network: string;
