@@ -106,7 +106,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.data = {};
       this.write();
     } catch (e) {
+      e.message += `\nError: unable to prune database. Creating a new one...`;
       console.error(e);
+      if (fs.existsSync(this.dbName)) fs.unlinkSync(this.dbName);
+      this.createJsonFile();
     }
   }
 
