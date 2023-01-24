@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "license": "GPL-3.0",
   "scripts": {
+    "test:unit": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'tests/**/*.unit.test.ts'",
     "start:dev": "ln -s ../../ui/build/ ./src && nodemon -w src -e js,ts,json --require dotenv/config -x ts-node src/index.ts",
     "build": "yarn run clean:dist && yarn run clean:ln && tsc -p tsconfig.json",
     "clean": "yarn run clean:modules && yarn run clean:dist",
