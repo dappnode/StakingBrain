@@ -2,6 +2,7 @@ import { StakingBrainDb, Tag, tags } from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
+import logger from "../logger/index.js";
 
 // TODO:
 // This db is not meant for large JavaScript objects (~10-100MB)
@@ -39,14 +40,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
       this.read();
       if (this.data === null) {
-        console.log(
+        logger.info(
           `Database file ${this.dbName} not found. Attemping to perform migration...`
         );
         await this.databaseMigration();
       }
     } catch (e) {
-      e.message += ` Error: unable to initialize the db ${this.dbName}`;
-      console.error(e);
+      e.message += `Unable to initialize the db ${this.dbName}`;
+      logger.error(e);
       this.validateDb();
     }
   }
@@ -71,7 +72,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       if (this.data) {
         for (const pubkey of Object.keys(pubkeys)) {
           if (this.data[pubkey]) {
-            console.warn(`Pubkey ${pubkey} already in the database`);
+            logger.warn(`Pubkey ${pubkey} already in the database`);
             delete pubkeys[pubkey];
           }
         }
@@ -82,7 +83,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.write();
     } catch (e) {
       e.message =
-        `Error: unable to add pubkeys ${Object.keys(pubkeys).join(", ")}` +
+        `Unable to add pubkeys ${Object.keys(pubkeys).join(", ")}` +
         `\n${e.message}`;
       throw Error(e);
     }
@@ -98,7 +99,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       if (this.data) {
         for (const pubkey of Object.keys(pubkeys)) {
           if (!this.data[pubkey]) {
-            console.warn(`Pubkey ${pubkey} not found in the database`);
+            logger.warn(`Pubkey ${pubkey} not found in the database`);
             delete pubkeys[pubkey];
           }
         }
@@ -108,7 +109,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.write();
     } catch (e) {
       e.message =
-        `Error: unable to update pubkeys ${Object.keys(pubkeys).join(", ")}` +
+        `Unable to update pubkeys ${Object.keys(pubkeys).join(", ")}` +
         `\n${e.message}`;
       throw Error(e);
     }
@@ -124,13 +125,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       if (!this.data) return;
       for (const pubkey of pubkeys) {
         if (!this.data[pubkey]) {
-          console.warn(`Pubkey ${pubkey} not found in the database`);
+          logger.warn(`Pubkey ${pubkey} not found in the database`);
         } else delete this.data[pubkey];
         this.write();
       }
     } catch (e) {
       e.message =
-        `Error: unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}` +
+        `Unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}` +
         `\n${e.message}`;
       throw Error(e);
     }
@@ -145,9 +146,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.write();
     } catch (e) {
       e.message =
-        `Error: unable to prune database. Creating a new one...` +
-        `\n${e.message}`;
-      console.error(e);
+        `Unable to prune database. Creating a new one...` + `\n${e.message}`;
+      logger.error(e);
       if (fs.existsSync(this.dbName)) fs.unlinkSync(this.dbName);
       this.createJsonFile();
     }
@@ -162,14 +162,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     try {
       this.read();
       if (this.data === null) {
-        console.warn(`Database file ${this.dbName} not found. Creating it...`);
+        logger.warn(`Database file ${this.dbName} not found. Creating it...`);
         this.createJsonFile();
       }
     } catch (e) {
       e.message =
-        `Error: The database is corrupted. Cleaning database` +
-        `\n${e.message}`;
-      console.error(e);
+        `The database is corrupted. Cleaning database` + `\n${e.message}`;
+      logger.error(e);
       this.deleteDatabase();
       this.read();
     }
