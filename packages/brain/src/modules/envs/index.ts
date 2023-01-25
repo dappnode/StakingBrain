@@ -16,13 +16,14 @@ import {
   ExecutionClient,
   ConsensusClient,
 } from "@stakingbrain/common";
+import * as dotenv from "dotenv";
 
 /**
  * Loads the staker config needed to create the base urls for beacon, validator and signer APIs
  * @returns executionClientUrl, validatorUrl, beaconchainUrl, beaconchaUrl, signerUrl, token
  * @throws Error if environment variables are not set
  */
-export function loadStakerConfig<T extends Network>(): {
+export function loadStakerConfig(): {
   network: Network;
   executionClient: ExecutionClient<Network>;
   consensusClient: ConsensusClient<Network>;
@@ -33,7 +34,9 @@ export function loadStakerConfig<T extends Network>(): {
   signerUrl: string;
   token: string;
 } {
-  const network = process.env.NETWORK as T;
+  dotenv.config();
+
+  const network = process.env.NETWORK as Network;
   if (!network) throw Error("NETWORK environment variable is not set");
   if (!networks.includes(network))
     throw Error(
