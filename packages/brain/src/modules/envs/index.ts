@@ -251,17 +251,17 @@ export function loadEnvs<T extends Network>(
         )
       )
         errors.push(
-          `Execution client is not valid: ${executionClient}. Valid execution clients for mainnet: ${executionClientsMainnet.join(
+          `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsMainnet.join(
             ", "
           )}`
         );
       if (
-        consensusClientsMainnet.includes(
+        !consensusClientsMainnet.includes(
           consensusClient as ConsensusClientMainnet
         )
       )
         errors.push(
-          `Consensus client is not valid: ${consensusClient}. Valid consensus clients for mainnet: ${consensusClientsMainnet.join(
+          `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsMainnet.join(
             ", "
           )}`
         );
@@ -274,7 +274,7 @@ export function loadEnvs<T extends Network>(
         )
       )
         errors.push(
-          `Execution client is not valid: ${executionClient}. Valid execution clients for prater: ${executionClientsPrater.join(
+          `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsPrater.join(
             ", "
           )}`
         );
@@ -284,7 +284,7 @@ export function loadEnvs<T extends Network>(
         )
       )
         errors.push(
-          `Consensus client is not valid: ${consensusClient}. Valid consensus clients for prater: ${consensusClientsPrater.join(
+          `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsPrater.join(
             ", "
           )}`
         );
@@ -296,7 +296,7 @@ export function loadEnvs<T extends Network>(
         )
       )
         errors.push(
-          `Execution client is not valid: ${executionClient}. Valid execution clients for gnosis: ${executionClientsGnosis.join(
+          `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsGnosis.join(
             ", "
           )}`
         );
@@ -306,7 +306,7 @@ export function loadEnvs<T extends Network>(
         )
       )
         errors.push(
-          `Consensus client is not valid: ${consensusClient}. Valid consensus clients for gnosis: ${consensusClientsGnosis.join(
+          `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsGnosis.join(
             ", "
           )}`
         );
