@@ -1,8 +1,8 @@
-import { BeaconchaApi } from "../../apis/beaconchaApi";
+import { BeaconchaApi } from "../../../../../src/modules/apis/beaconchaApi";
 import { expect } from "chai";
-import { beaconchaApiParamsMap } from "../../params";
-import { Web3signerGetResponse } from "../../apis/web3signerApi/types";
 import { networkTestMap } from "./networkTestMap";
+import { Web3signerGetResponse } from "@stakingbrain/common";
+import { beaconchaApiParamsMap } from "../../../../../../ui/src/params";
 require("isomorphic-fetch");
 
 describe("Test for fetching validator indexes in every available network", () => {

@@ -1,4 +1,4 @@
-import { ApiParams } from "../../types";
+import { ApiParams } from "@stakingbrain/common";
 
 export class StandardApi {
   baseUrl: string;

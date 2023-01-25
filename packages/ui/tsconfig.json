@@ -1,6 +1,9 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src"],
+  "include": [
+    "src",
+    "../brain/tests/unit/modules/apis/beaconchaApi/testFetchValidatorIndex.ts"
+  ],
   "exclude": ["./tests/", "./node_modules/", "./dist/"],
   "compilerOptions": {
     "outDir": "dist",
