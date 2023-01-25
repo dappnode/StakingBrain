@@ -2,10 +2,7 @@ import {
   Web3signerGetResponse,
   BeaconchaGetResponse,
 } from "@stakingbrain/common";
-import { BeaconchaApi } from "../modules/apis/beaconchaApi/index.js";
-
-// TODO: implement baseUrl (it shoulñd be determined from envRuntim)
-const beaconchaApi = new BeaconchaApi({ baseUrl: "" });
+import { beaconchaApi } from "../index.js";
 
 export async function fetchValidatorsInfo(
   pubkeys: string[]

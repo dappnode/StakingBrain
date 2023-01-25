@@ -6,10 +6,7 @@ import {
   Web3signerPostRequest,
   Web3signerPostResponse,
 } from "@stakingbrain/common";
-import { Web3SignerApi } from "../modules/apis/web3signerApi/index.js";
-
-// TODO: implement baseUrl (it shoulñd be determined from envRuntim)
-const signerApi = new Web3SignerApi({ baseUrl: "" });
+import { signerApi } from "../index.js";
 
 export async function importKeystores(
   postRequest: Web3signerPostRequest
