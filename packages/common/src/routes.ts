@@ -7,7 +7,7 @@ import {
   Web3signerDeleteRequest,
   Web3signerHealthcheckResponse,
 } from "./apiTypes.js";
-import { StakerConfig } from "./networkTypes.js";
+import { StakerConfig, Network } from "./networkTypes.js";
 
 export interface Routes {
   testRoute: () => Promise<string>;
@@ -26,7 +26,7 @@ export interface Routes {
   getKeystores: () => Promise<Web3signerGetResponse>;
   getStatus: () => Promise<Web3signerHealthcheckResponse>;
   // Network
-  getStakerConfig: () => Promise<StakerConfig>;
+  getStakerConfig: () => Promise<StakerConfig<Network>>;
 }
 
 interface RouteData {
