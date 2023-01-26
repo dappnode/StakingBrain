@@ -225,8 +225,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       const pubkeyDetails = pubkeys[pubkey];
 
       // Validate Ethereum address
-      if (!this.isValidAddress(pubkey))
-        errors.push(`\n  pubkey ${pubkey}: ethereum address is invalid`);
+      if (!this.isValidBlsPubkey(pubkey))
+        errors.push(`\n  pubkey ${pubkey}: bls is invalid`);
 
       if (!pubkeyDetails) {
         errors.push(`\n  pubkey ${pubkey}: pubkey details are missing`);
@@ -253,8 +253,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           errors.push(
             `\n  pubkey ${pubkey}: feeRecipient address is invalid, must be in string format`
           );
-        if (!this.isValidAddress(pubkey))
-          errors.push(`\n  pubkey ${pubkey}: ethereum address is invalid`);
+        if (!this.isValidEcdsa(pubkeyDetails.feeRecipient))
+          errors.push(`\n  pubkey ${pubkey}: fee recipient is invalid`);
       }
 
       // FeeRecipientValidator (it may be empty)
@@ -263,8 +263,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           errors.push(
             `\n  pubkey ${pubkey}: feeRecipientValidator address is invalid, must be in string format`
           );
-        if (!this.isValidAddress(pubkey))
-          errors.push(`\n  pubkey ${pubkey}: ethereum address is invalid`);
+        if (!this.isValidEcdsa(pubkeyDetails.feeRecipientValidator))
+          errors.push(
+            `\n  pubkey ${pubkey}: fee recipient validator is invalid`
+          );
       }
 
       // AutomaticImport
@@ -281,8 +283,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     if (errors.length > 0) throw Error(errors.join("\n"));
   }
 
-  private isValidAddress(address: string): boolean {
-    if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) return false;
+  private isValidEcdsa(address: string): boolean {
+    if (!address.match(/^0x[a-fA-F0-9]{40}$/)) return false;
+    return true;
+  }
+
+  private isValidBlsPubkey(pubkey: string): boolean {
+    if (!pubkey.match(/^0x[a-fA-F0-9]{96}$/)) return false;
     return true;
   }
 

@@ -230,7 +230,7 @@ export function loadStakerConfig(): {
  * Loads the environment variables and validates them. If are not set or are not valid, it throws an error
  * @returns StakerConfig<Network>
  */
-export function loadEnvs<T extends Network>(
+function loadEnvs<T extends Network>(
   network: T
 ): {
   executionClient: ExecutionClient<T>;
