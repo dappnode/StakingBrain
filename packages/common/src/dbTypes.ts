@@ -10,7 +10,7 @@ export interface StakingBrainDb {
   [pubkey: string]: PubkeyDetails;
 }
 
-interface PubkeyDetails {
+export interface PubkeyDetails {
   tag?: Tag;
   feeRecipient?: string;
   feeRecipientValidator?: string;

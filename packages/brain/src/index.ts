@@ -34,7 +34,7 @@ export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
 // TODO: add validator and beaconchain APIs instances
 
 // DB
-const brainDb = new BrainDataBase(`brain-db.json`);
+export const brainDb = new BrainDataBase(`brain-db.json`);
 brainDb.initialize();
 // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
 logger.debug(brainDb.data);
