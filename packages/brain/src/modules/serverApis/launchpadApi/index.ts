@@ -46,8 +46,13 @@ export function startLaunchpadApi(): void {
     const pubkeysDetails = buildPubkeysDetails(keystores, tags, feeRecipients);
 
     // TODO: Load pubkeys and feeRecipients into validator
+    for (const pubkey in pubkeysDetails) {
+      await postValidator().catch((err) => {
+        pubkeysDetails[pubkey].feeRecipientValidator = "";
+      });
+    }
 
-    // Write data on db (even if 3 fails)
+    // Write data on db
     brainDb.addPubkeys(pubkeysDetails);
 
     // Return response
@@ -60,6 +65,8 @@ export function startLaunchpadApi(): void {
     logger.info("Launchpad API listening on port 3000");
   });
 }
+
+async function postValidator(): Promise<void> {}
 
 function buildPubkeysDetails(
   keystores: string[],
