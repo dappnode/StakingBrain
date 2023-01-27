@@ -3,12 +3,10 @@ import { ApiParams } from "@stakingbrain/common";
 export class StandardApi {
   baseUrl: string;
   authToken?: string;
-  host?: string;
   keymanagerEndpoint?: string;
 
   constructor(apiParams: ApiParams) {
     this.authToken = apiParams.authToken;
-    this.host = apiParams.host;
     this.baseUrl = apiParams.baseUrl;
     this.keymanagerEndpoint = apiParams.apiPath;
   }
@@ -27,10 +25,6 @@ export class StandardApi {
 
     if (this.authToken) {
       headers.Authorization = `Bearer ${this.authToken}`;
-    }
-
-    if (this.host) {
-      headers.Host = this.host;
     }
 
     const response = await fetch(url, {
