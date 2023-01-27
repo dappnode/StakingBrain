@@ -36,19 +36,27 @@ export default function KeystoresDeleteDialog({
 }) {
   const [keystoresDelete, setKeystoresDelete] =
     useState<Web3signerDeleteResponse>();
+  const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
   const [requestInFlight, setRequestInFlight] = useState(false);
 
   async function deleteSelectedKeystores() {
-    setKeystoresDelete(undefined);
-    setRequestInFlight(true);
-    const keystoresDelete = await api.deleteKeystores({
-      pubkeys: selectedRows.map(
-        (row) => rows[parseInt(row.toString())].validating_pubkey
-      ),
-    });
-    setRequestInFlight(false);
-    setKeystoresDelete(keystoresDelete);
-    setSelectedRows([]);
+    try {
+      setKeystoresDelete(undefined);
+      setRequestInFlight(true);
+      setRequestInFlight(false);
+      setKeystoresDelete(
+        await api.deleteKeystores({
+          pubkeys: selectedRows.map(
+            (row) => rows[parseInt(row.toString())].validating_pubkey
+          ),
+        })
+      );
+      setKeystoresDeleteError(undefined);
+      setSelectedRows([]);
+    } catch (e) {
+      console.error(e);
+      setKeystoresDeleteError(e.message);
+    }
   }
   const handleClose = () => {
     setOpen(false);
@@ -71,8 +79,8 @@ export default function KeystoresDeleteDialog({
       </DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {keystoresDelete?.error ? (
-            `Error: ${keystoresDelete.error.message}`
+          {keystoresDeleteError ? (
+            `Error: ${keystoresDeleteError}`
           ) : keystoresDelete?.data ? (
             <div>
               {keystoresDelete.data.map((result, index) => (
