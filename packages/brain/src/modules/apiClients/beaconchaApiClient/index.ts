@@ -1,4 +1,4 @@
-import { StandardApi } from "../index.js";
+import { StandardApiClient } from "../index.js";
 import {
   Web3signerGetResponse,
   BeaconchaGetResponse,
@@ -6,7 +6,7 @@ import {
 
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
-export class BeaconchaApi extends StandardApi {
+export class BeaconchaApi extends StandardApiClient {
   /*
    * Fetch info for every validator PK
    */
@@ -48,9 +48,7 @@ export class BeaconchaApi extends StandardApi {
   public async fetchValidatorsInfo(
     pubkeys: string[]
   ): Promise<BeaconchaGetResponse> {
-    const fullUrl = `${this.baseUrl}${
-      this.keymanagerEndpoint
-    }validator/${pubkeys.join(",")}`;
+    const fullUrl = `/api/v1/validator/${pubkeys.join(",")}`;
 
     try {
       return (await this.request("GET", fullUrl)) as BeaconchaGetResponse;

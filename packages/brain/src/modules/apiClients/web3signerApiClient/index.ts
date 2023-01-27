@@ -6,13 +6,13 @@ import {
   Web3signerGetResponse,
   Web3signerHealthcheckResponse,
 } from "@stakingbrain/common";
-import { StandardApi } from "../index.js";
+import { StandardApiClient } from "../index.js";
 
 /**
  * Key Manager API standard
  * https://ethereum.github.io/keymanager-APIs/
  */
-export class Web3SignerApi extends StandardApi {
+export class Web3SignerApi extends StandardApiClient {
   /**
    * Local Key Manager endpoint
    * https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/
@@ -48,11 +48,14 @@ export class Web3SignerApi extends StandardApi {
       }
       return (await this.request(
         "POST",
-        this.baseUrl + this.keymanagerEndpoint,
+        this.keymanagerEndpoint,
+        false, //TODO: True if Teku
         JSON.stringify(data)
       )) as Web3signerPostResponse;
     } catch (e) {
-      throw Error(`Error importing (POST) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error importing (POST) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -69,11 +72,13 @@ export class Web3SignerApi extends StandardApi {
       });
       return (await this.request(
         "DELETE",
-        this.baseUrl + this.keymanagerEndpoint,
+        this.keymanagerEndpoint,
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
-      throw Error(`Error deleting (DELETE) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error deleting (DELETE) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -85,10 +90,12 @@ export class Web3SignerApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        this.baseUrl + this.keymanagerEndpoint
+        this.keymanagerEndpoint
       )) as Web3signerGetResponse;
     } catch (e) {
-      throw Error(`Error getting (GET) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error getting (GET) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -100,7 +107,7 @@ export class Web3SignerApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        this.baseUrl + this.serverStatusEndpoint
+        this.serverStatusEndpoint
       )) as Web3signerHealthcheckResponse;
     } catch (e) {
       return {
@@ -109,5 +116,14 @@ export class Web3SignerApi extends StandardApi {
         outcome: e.message,
       };
     }
+  }
+
+  private async readText(files: File[]): Promise<string[]> {
+    var data: string[] = [];
+    for (var file of files) {
+      const text = await file.text();
+      data.push(text);
+    }
+    return data;
   }
 }
