@@ -20,6 +20,7 @@
     "dev": "tsc -w"
   },
   "dependencies": {
+    "https-agent": "^1.0.0",
     "typescript-json-schema": "^0.55.0"
   },
   "devDependencies": {
