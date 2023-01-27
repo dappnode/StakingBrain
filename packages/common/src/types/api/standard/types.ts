@@ -10,4 +10,4 @@ export interface ApiParams {
   certFile?: CertFile;
 }
 
-export type AllowedMethods = "GET" | "POST";
+export type AllowedMethods = "GET" | "POST" | "DELETE";
