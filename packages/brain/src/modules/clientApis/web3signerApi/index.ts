@@ -52,12 +52,7 @@ export class Web3SignerApi extends StandardApi {
         JSON.stringify(data)
       )) as Web3signerPostResponse;
     } catch (e) {
-      return {
-        data: [],
-        error: {
-          message: e.message,
-        },
-      };
+      throw Error(`Error importing (POST) keystores to ${this.baseUrl}: ${e}`);
     }
   }
 
@@ -78,12 +73,7 @@ export class Web3SignerApi extends StandardApi {
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
-      return {
-        data: [],
-        error: {
-          message: e.message,
-        },
-      };
+      throw Error(`Error deleting (DELETE) keystores to ${this.baseUrl}: ${e}`);
     }
   }
 
@@ -98,12 +88,7 @@ export class Web3SignerApi extends StandardApi {
         this.baseUrl + this.keymanagerEndpoint
       )) as Web3signerGetResponse;
     } catch (e) {
-      return {
-        data: [],
-        error: {
-          message: e.message,
-        },
-      };
+      throw Error(`Error getting (GET) keystores to ${this.baseUrl}: ${e}`);
     }
   }
 

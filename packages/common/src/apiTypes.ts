@@ -33,7 +33,6 @@ export interface Web3signerGetResponse {
     derivation_path: string;
     readonly: boolean;
   }[];
-  error?: { message: string };
 }
 
 export interface Web3signerPostRequest {
@@ -47,7 +46,6 @@ export interface Web3signerPostResponse {
     status: string;
     message: string;
   }[];
-  error?: { message: string };
 }
 
 export interface Web3signerDeleteRequest {
@@ -60,7 +58,6 @@ export interface Web3signerDeleteResponse {
     message: string;
   }[];
   slashing_protection?: string;
-  error?: { message: string };
 }
 
 export interface Web3signerHealthcheckResponse {

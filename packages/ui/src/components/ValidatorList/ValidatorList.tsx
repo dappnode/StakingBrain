@@ -29,12 +29,19 @@ export default function ValidatorList({ network }: { network: Network }) {
     BeaconchaUrlBuildingStatus.NotStarted
   );
   const [keystoresGet, setKeystoresGet] = useState<Web3signerGetResponse>();
+  const [keystoresGetError, setKeystoresGetError] = useState<string>();
 
   async function getKeystores() {
-    setLoading(true);
-    const keystoresGet = await api.getKeystores();
-    setKeystoresGet(keystoresGet);
-    setLoading(false);
+    try {
+      setLoading(true);
+      setKeystoresGet(await api.getKeystores());
+      setKeystoresGetError(undefined);
+      setLoading(false);
+    } catch (e) {
+      console.error(e);
+      setKeystoresGetError(e.message);
+      setLoading(false);
+    }
   }
 
   async function getValidatorSummaryURL() {
@@ -97,16 +104,16 @@ export default function ValidatorList({ network }: { network: Network }) {
             text="Your validator accounts"
           />
 
-          {loading ? (
+          {keystoresGetError ? (
+            <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+              {keystoresGetError}
+            </Alert>
+          ) : loading ? (
             <CircularProgress
               sx={{
                 marginBottom: 4,
               }}
             />
-          ) : keystoresGet?.error ? (
-            <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-              {keystoresGet.error?.message}
-            </Alert>
           ) : keystoresGet?.data ? (
             <>
               <KeystoreList

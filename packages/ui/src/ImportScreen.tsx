@@ -39,6 +39,7 @@ import { api } from "./api";
 export default function ImportScreen() {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
+  const [keystoresPostError, setKeystoresPostError] = useState<string>();
   const [openDialog, setOpenDialog] = useState(false);
   const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
   const [passwords, setPasswords] = useState<string[]>([]);
@@ -90,6 +91,26 @@ export default function ImportScreen() {
   const handleClickOpenDialog = () => {
     setOpenDialog(true);
   };
+
+  async function importKeystores() {
+    try {
+      setImportStatus(ImportStatus.Importing);
+      handleClickOpenDialog();
+      setKeystoresPostResponse(
+        await api.importKeystores({
+          keystores: acceptedFiles.map((f) => f.file),
+          passwords,
+          slashingProtection: slashingFile,
+        })
+      );
+      setKeystoresPostError(undefined);
+      setImportStatus(ImportStatus.Imported);
+    } catch (e) {
+      console.error(e);
+      setKeystoresPostError(e.message);
+      setImportStatus(ImportStatus.NotImported);
+    }
+  }
 
   return (
     <div>
@@ -199,24 +220,7 @@ export default function ImportScreen() {
             size="large"
             endIcon={<BackupIcon />}
             disabled={acceptedFiles.length === 0}
-            onClick={async () => {
-              setKeystoresPostResponse(undefined);
-              setImportStatus(ImportStatus.Importing);
-              handleClickOpenDialog();
-              const results = await api.importKeystores({
-                keystores: acceptedFiles.map((f) => f.file),
-                passwords,
-                slashingProtection: slashingFile,
-              });
-
-              setKeystoresPostResponse(results);
-
-              if (results?.data) {
-                setImportStatus(ImportStatus.Imported);
-              } else {
-                setImportStatus(ImportStatus.NotImported);
-              }
-            }}
+            onClick={importKeystores}
             sx={{ borderRadius: 3 }}
           >
             Submit Keystores
@@ -237,6 +241,7 @@ export default function ImportScreen() {
         open={openDialog}
         setOpen={setOpenDialog}
         keystoresPostResponse={keystoresPostResponse}
+        keystoresPostError={keystoresPostError}
         importStatus={importStatus}
         acceptedFiles={acceptedFiles}
       />

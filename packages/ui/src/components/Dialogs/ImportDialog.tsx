@@ -18,12 +18,14 @@ export default function ImportDialog({
   open,
   setOpen,
   keystoresPostResponse,
+  keystoresPostError,
   importStatus,
   acceptedFiles,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   keystoresPostResponse: Web3signerPostResponse | undefined;
+  keystoresPostError: string | undefined;
   importStatus: string;
   acceptedFiles: KeystoreInfo[];
 }): JSX.Element {
@@ -49,28 +51,26 @@ export default function ImportDialog({
       </DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {keystoresPostResponse ? (
-            keystoresPostResponse.error ? (
-              `Error: ${keystoresPostResponse.error.message}`
-            ) : (
-              <div>
-                {keystoresPostResponse.data.map((result, index) => (
-                  <div style={{ marginBottom: "20px" }} key={index}>
-                    <Typography variant="h5" color="GrayText">
-                      {shortenPubkey(acceptedFiles[index]?.pubkey)}
-                    </Typography>
+          {keystoresPostError ? (
+            `Error: ${keystoresPostError}`
+          ) : keystoresPostResponse ? (
+            <div>
+              {keystoresPostResponse.data.map((result, index) => (
+                <div style={{ marginBottom: "20px" }} key={index}>
+                  <Typography variant="h5" color="GrayText">
+                    {shortenPubkey(acceptedFiles[index]?.pubkey)}
+                  </Typography>
+                  <Typography variant="h6">
+                    <b>Status:</b> {result.status} {getEmoji(result.status)}
+                  </Typography>
+                  {result.message ? (
                     <Typography variant="h6">
-                      <b>Status:</b> {result.status} {getEmoji(result.status)}
+                      <b>Message:</b> {result.message}
                     </Typography>
-                    {result.message ? (
-                      <Typography variant="h6">
-                        <b>Message:</b> {result.message}
-                      </Typography>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )
+                  ) : null}
+                </div>
+              ))}
+            </div>
           ) : (
             <WaitBox />
           )}
