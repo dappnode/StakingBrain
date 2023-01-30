@@ -44,8 +44,8 @@ await brainDb.initialize().catch((e) => {
 logger.debug(brainDb.data);
 
 // Start APIs
-startUiServer(path.resolve(__dirname, "build"));
+startUiServer(path.resolve(__dirname, "uiBuild"));
 startLaunchpadApi();
 
 // Start cron
-job.start();
+// job.start();
