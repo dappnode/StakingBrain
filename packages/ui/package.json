@@ -35,7 +35,8 @@
     "build": "react-scripts build",
     "eject": "react-scripts eject",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/tests/*/*.ts'",
-    "start:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\""
+    "start:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\"",
+    "start:webpack:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\""
   },
   "eslintConfig": {
     "extends": [
