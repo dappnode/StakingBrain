@@ -73,6 +73,7 @@ export class Web3SignerApi extends StandardApiClient {
       return (await this.request(
         "DELETE",
         this.keymanagerEndpoint,
+        false, //TODO: True if Teku
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
