@@ -1,5 +1,4 @@
 import path from "path";
-import webpack from "webpack";
 import { fileURLToPath } from "url";
 import nodeExternals from "webpack-node-externals";
 
@@ -55,5 +54,5 @@ export default {
     // Minimization does not provide great disk space savings, but reduces debug capacity
     minimize: false,
   },
-  devtool: "inline-source-map",
+  devtool: "source-map",
 };
