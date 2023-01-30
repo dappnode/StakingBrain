@@ -8,7 +8,9 @@ export class StandardApiClient {
   requestOptions: https.RequestOptions;
 
   constructor(apiParams: ApiParams) {
-    this.requestOptions = new URL(apiParams.baseUrl + apiParams.apiPath);
+    this.requestOptions = new URL(
+      apiParams.baseUrl + (apiParams.apiPath || "")
+    );
     this.requestOptions.headers = {
       "Content-Type": "application/json",
       Accept: "application/json",
