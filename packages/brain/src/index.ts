@@ -29,14 +29,17 @@ logger.debug(
   `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}}`
 );
 
-// Create API instances
+// Create API instances. Must preceed db initialization
 export const signerApi = new Web3SignerApi({ baseUrl: signerUrl });
 export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
 // TODO: add validator and beaconchain APIs instances
 
-// DB
+// Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
-brainDb.initialize();
+await brainDb.initialize().catch((e) => {
+  logger.error(e);
+  process.exit(1);
+});
 // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
 logger.debug(brainDb.data);
 

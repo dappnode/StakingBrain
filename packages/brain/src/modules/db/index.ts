@@ -3,9 +3,9 @@ import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
 import logger from "../logger/index.js";
+import { signerApi } from "../../index.js";
 
 // TODO:
-// This db is not meant for large JavaScript objects (~10-100MB)
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
 // Implement backup system
 
@@ -201,14 +201,24 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * Performs the database migration for the first run
    */
   private async databaseMigration(): Promise<void> {
-    // TODO: implement migration. Depends on signer and validator API modules
     try {
-      // 0. Create json file
+      // Create json file
       this.createJsonFile();
-      // 1. Get public keys from signer API
-      // 2. Get fee recipient for each pubkey from validator API
-      // 3. Set default tag and automatic import
-    } catch (e) {}
+      // Fetch public keys from signer API
+      const pubkeys = (await signerApi.getKeystores()).data.map(
+        (keystore) => keystore.validating_pubkey
+      );
+      // TODO: Fetch fee recipients for each pubkey from validator API. Depends on validator API implementation
+
+      // Set default tag and automatic import
+
+      // Write to database
+      // this.addPubkeys();
+    } catch (e) {
+      e.message =
+        `Error: Unable to perform database migration` + `\n${e.message}`;
+      throw Error(e);
+    }
     return;
   }
 
