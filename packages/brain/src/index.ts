@@ -7,6 +7,7 @@ import { Web3SignerApi } from "./modules/clientApis/web3signerApi/index.js";
 import { BeaconchaApi } from "./modules/clientApis/beaconchaApi/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
+import { job } from "./modules/cron/index.js";
 
 const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -42,3 +43,6 @@ logger.debug(brainDb.data);
 // Start APIs
 startUiServer(path.resolve(__dirname, "build"));
 startLaunchpadApi();
+
+// Start cron
+job.start();
