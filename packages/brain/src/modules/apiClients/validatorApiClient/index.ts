@@ -3,7 +3,7 @@ import {
   ValidatorPostResponse,
 } from "@stakingbrain/common";
 
-import { StandardApiClient } from "../StandardApiClient/index";
+import { StandardApiClient } from "../index.js";
 
 export default class ValidatorApiClient extends StandardApiClient {
   /**
