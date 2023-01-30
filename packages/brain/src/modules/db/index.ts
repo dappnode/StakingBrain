@@ -6,7 +6,6 @@ import logger from "../logger/index.js";
 import { signerApi } from "../../index.js";
 
 // TODO:
-// This db is not meant for large JavaScript objects (~10-100MB)
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
 // Implement backup system
 
@@ -214,7 +213,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       // Set default tag and automatic import
 
       // Write to database
-      this.addPubkeys();
+      // this.addPubkeys();
     } catch (e) {
       e.message =
         `Error: Unable to perform database migration` + `\n${e.message}`;
