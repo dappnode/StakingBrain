@@ -79,13 +79,11 @@ export default function ValidatorList({ network }: { network: Network }) {
     if (!open) {
       getKeystores();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
     setValidatorSummaryURL("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keystoresGet]);
 
   async function loadSummaryUrl() {

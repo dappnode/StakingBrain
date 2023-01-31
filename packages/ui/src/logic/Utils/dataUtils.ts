@@ -6,8 +6,8 @@ export const extractPubkey = async (file: File): Promise<string> => {
 
 export const shortenPubkey = (key: string | undefined): string => {
   if (!key) return "";
-  var prefix = "";
-  var end = 4;
+  let prefix = "";
+  let end = 4;
   if (!key.startsWith("0x")) {
     prefix = `0x`;
   } else {

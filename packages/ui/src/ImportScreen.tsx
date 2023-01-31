@@ -48,7 +48,7 @@ export default function ImportScreen() {
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
     const keystoresToAdd: KeystoreInfo[] = [];
     const passwordsToAdd: string[] = [];
-    for (var file of files) {
+    for (const file of files) {
       const pubkey = await extractPubkey(file);
       if (pubkey) {
         if (acceptedFiles.some((e) => e.pubkey === pubkey) === false) {
