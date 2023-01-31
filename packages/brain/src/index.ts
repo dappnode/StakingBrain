@@ -31,9 +31,26 @@ logger.debug(
 );
 
 // Create API instances. Must preceed db initialization
-export const signerApi = new Web3SignerApi({ baseUrl: signerUrl, host });
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl, host });
-// TODO: add validator and beaconchain APIs instances
+export const signerApi = new Web3SignerApi({
+  baseUrl: signerUrl,
+  authToken: token,
+  host,
+});
+export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
+
+//TODO: Export CertFile type from @stakingbrain/common
+/*const tekuCertFile: CertFile = {
+  path: path.resolve(
+    __dirname,
+    "modules/clientApis/validatorApiClient/security/teku/prater/teku_client_keystore.p12"
+  ),
+  password: path.resolve(
+    __dirname,
+    "modules/clientApis/validatorApiClient/security/teku/prater/teku_keystore_password.p12"
+  ),
+};*/
+
+// beaconchain APIs instances
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
