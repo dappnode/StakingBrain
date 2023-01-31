@@ -45,6 +45,7 @@ export default function ImportScreen(): JSX.Element {
   const [passwords, setPasswords] = useState<string[]>([]);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
     const keystoresToAdd: KeystoreInfo[] = [];
     const passwordsToAdd: string[] = [];
@@ -62,6 +63,7 @@ export default function ImportScreen(): JSX.Element {
   };
 
   const [slashingFile, setSlashingFile] = useState<File>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const slashingFilesCallback = (files: File[], event: DropEvent) => {
     setSlashingFile(files[0]);
   };
