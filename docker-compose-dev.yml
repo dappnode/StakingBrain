@@ -53,7 +53,7 @@ services:
     networks:
       brain_dev:
         aliases:
-          - web3signer.postgres.dappnode
+          - postgres.web3signer.dappnode
 
   prysm-validator:
     image: gcr.io/prysmaticlabs/prysm/validator:latest
