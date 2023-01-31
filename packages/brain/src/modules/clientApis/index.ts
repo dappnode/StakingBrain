@@ -39,13 +39,4 @@ export class StandardApi {
     if (response.ok) return await response.json();
     throw new Error(response.statusText);
   }
-
-  protected async readText(files: File[]): Promise<string[]> {
-    const data: string[] = [];
-    for (const file of files) {
-      const text = await file.text();
-      data.push(text);
-    }
-    return data;
-  }
 }

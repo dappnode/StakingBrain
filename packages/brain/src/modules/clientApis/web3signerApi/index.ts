@@ -106,4 +106,13 @@ export class Web3SignerApi extends StandardApi {
       throw Error(`Error getting (GET) server status to ${this.baseUrl}: ${e}`);
     }
   }
+
+  private async readText(files: File[]): Promise<string[]> {
+    const data: string[] = [];
+    for (const file of files) {
+      const text = await file.text();
+      data.push(text);
+    }
+    return data;
+  }
 }
