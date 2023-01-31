@@ -17,7 +17,7 @@ import React, { useEffect } from "react";
 import { startApi, api } from "./api";
 import { Network, Web3SignerStatus } from "@stakingbrain/common";
 
-function App() {
+function App(): JSX.Element {
   const [signerStatus, setSignerStatus] =
     React.useState<Web3SignerStatus>("LOADING");
   const [currentNetwork, setCurrentNetwork] = React.useState<Network>();

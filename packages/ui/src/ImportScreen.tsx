@@ -36,7 +36,7 @@ import {
 import { Web3signerPostResponse } from "@stakingbrain/common";
 import { api } from "./api";
 
-export default function ImportScreen() {
+export default function ImportScreen(): JSX.Element {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
@@ -45,10 +45,11 @@ export default function ImportScreen() {
   const [passwords, setPasswords] = useState<string[]>([]);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
     const keystoresToAdd: KeystoreInfo[] = [];
     const passwordsToAdd: string[] = [];
-    for (var file of files) {
+    for (const file of files) {
       const pubkey = await extractPubkey(file);
       if (pubkey) {
         if (acceptedFiles.some((e) => e.pubkey === pubkey) === false) {
@@ -62,6 +63,7 @@ export default function ImportScreen() {
   };
 
   const [slashingFile, setSlashingFile] = useState<File>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const slashingFilesCallback = (files: File[], event: DropEvent) => {
     setSlashingFile(files[0]);
   };

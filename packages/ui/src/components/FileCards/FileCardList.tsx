@@ -19,7 +19,7 @@ const removeFileFromList = (
   passwords: string[],
   setPasswords: (passwords: string[]) => void
 ) => {
-  var indexToRemove = fileInfos.indexOf(fileInfo);
+  const indexToRemove = fileInfos.indexOf(fileInfo);
   setAcceptedFiles(fileInfos.filter((f, index) => index !== indexToRemove));
   setPasswords(passwords.filter((f, index) => index !== indexToRemove));
 };

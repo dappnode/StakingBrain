@@ -1,6 +1,6 @@
 export const networks = ["mainnet", "gnosis", "prater"] as const;
 
-export type Network = typeof networks[number];
+export type Network = (typeof networks)[number];
 
 export interface StakerConfig<T extends Network> {
   network: T;
@@ -43,7 +43,7 @@ export const executionClientsMainnet = [
   "erigon.dnp.dappnode.eth",
   "nethermind.public.dappnode.eth",
 ] as const;
-export type ExecutionClientMainnet = typeof executionClientsMainnet[number];
+export type ExecutionClientMainnet = (typeof executionClientsMainnet)[number];
 
 export const consensusClientsMainnet = [
   "prysm.dnp.dappnode.eth",
@@ -52,7 +52,7 @@ export const consensusClientsMainnet = [
   "nimbus.dnp.dappnode.eth",
   "lodestar.dnp.dappnode.eth",
 ] as const;
-export type ConsensusClientMainnet = typeof consensusClientsMainnet[number];
+export type ConsensusClientMainnet = (typeof consensusClientsMainnet)[number];
 
 // Prater
 
@@ -66,7 +66,7 @@ export const consensusClientsPrater = [
   "nimbus-prater.dnp.dappnode.eth",
   "lodestar-prater.dnp.dappnode.eth",
 ] as const;
-export type ConsensusClientPrater = typeof consensusClientsPrater[number];
+export type ConsensusClientPrater = (typeof consensusClientsPrater)[number];
 
 export const executionClientsPrater = [
   "goerli-geth.dnp.dappnode.eth",
@@ -74,7 +74,7 @@ export const executionClientsPrater = [
   "goerli-nethermind.dnp.dappnode.eth",
   "goerli-besu.dnp.dappnode.eth",
 ] as const;
-export type ExecutionClientPrater = typeof executionClientsPrater[number];
+export type ExecutionClientPrater = (typeof executionClientsPrater)[number];
 
 // Gnosis
 
@@ -84,7 +84,7 @@ export type SignerGnosis = typeof signerGnosis;
 export const executionClientsGnosis = [
   "nethermind-xdai.dnp.dappnode.eth",
 ] as const;
-export type ExecutionClientGnosis = typeof executionClientsGnosis[number];
+export type ExecutionClientGnosis = (typeof executionClientsGnosis)[number];
 
 export const consensusClientsGnosis = [
   "gnosis-beacon-chain-prysm.dnp.dappnode.eth",
@@ -93,4 +93,4 @@ export const consensusClientsGnosis = [
   "nimbus-gnosis.dnp.dappnode.eth",
   "lodestar-gnosis.dnp.dappnode.eth",
 ] as const;
-export type ConsensusClientGnosis = typeof consensusClientsGnosis[number];
+export type ConsensusClientGnosis = (typeof consensusClientsGnosis)[number];

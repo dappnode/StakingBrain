@@ -34,6 +34,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
+    "lint": "eslint src/**/*.tsx src/**/*.ts",
+    "format": "eslint src/**/*.tsx src/**/*.ts --fix",
+    "pretty": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/tests/*/*.ts'",
     "start:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\"",
     "start:webpack:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\""
@@ -60,8 +63,12 @@
     "@types/chai": "^4.3.3",
     "@types/lodash-es": "^4.17.6",
     "@types/mocha": "^9.1.1",
+    "@typescript-eslint/eslint-plugin": "^5.50.0",
+    "@typescript-eslint/parser": "^5.50.0",
     "chai": "^4.3.6",
+    "eslint": "^8.33.0",
     "mocha": "^10.0.0",
+    "prettier": "^2.8.3",
     "ts-node": "^10.9.1"
   }
 }

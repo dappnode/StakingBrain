@@ -19,6 +19,9 @@
     "start:dev": "lerna run start:dev --include-dependencies --stream",
     "start:webpack:dev": "lerna run start:webpack:dev --include-dependencies --stream",
     "test": "lerna run test --include-dependencies --stream",
+    "lint": "lerna run lint --include-dependencies --stream",
+    "format": "lerna run format --include-dependencies --stream",
+    "pretty": "lerna run pretty --include-dependencies --stream",
     "clean": "yarn run clean:build && yarn run clean:libraries",
     "clean:libraries": "rimraf packages/**/node_modules && rimraf node_modules",
     "clean:build": "rimraf packages/**/dist && rimraf packages/**/build"

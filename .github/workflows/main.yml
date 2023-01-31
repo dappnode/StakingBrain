@@ -20,10 +20,18 @@ jobs:
         with:
           node-version: 16.15.0
 
-      # Build
-
       - name: Install dependencies
         run: yarn install
+
+      # Lint and format and prettier
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Prettier
+        run: yarn pretty
+
+      # Build
 
       - name: Build
         run: yarn build

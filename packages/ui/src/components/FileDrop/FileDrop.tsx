@@ -11,7 +11,7 @@ interface Props {
   callback: <T extends File>(files: T[], event: DropEvent) => void;
 }
 
-export default function FileDrop({ callback }: Props) {
+export default function FileDrop({ callback }: Props): JSX.Element {
   const {
     getRootProps,
     getInputProps,

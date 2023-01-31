@@ -20,7 +20,11 @@ import { boxStyle } from "../../Styles/listStyles";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { hasIndexes } from "../../logic/Utils/beaconchaUtils";
 
-export default function ValidatorList({ network }: { network: Network }) {
+export default function ValidatorList({
+  network,
+}: {
+  network: Network;
+}): JSX.Element {
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -79,13 +83,11 @@ export default function ValidatorList({ network }: { network: Network }) {
     if (!open) {
       getKeystores();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
     setValidatorSummaryURL("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keystoresGet]);
 
   async function loadSummaryUrl() {
