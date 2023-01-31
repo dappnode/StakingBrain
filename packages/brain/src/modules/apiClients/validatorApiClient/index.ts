@@ -14,7 +14,7 @@ export default class ValidatorApiClient extends StandardApiClient {
    */
   public async getFeeRecipient(
     publicKey: string,
-    tls: boolean = false
+    tls = false
   ): Promise<ValidatorGetFeeResponse> {
     try {
       return (await this.request(
@@ -36,7 +36,7 @@ export default class ValidatorApiClient extends StandardApiClient {
   public async setFeeRecipient(
     newFeeRecipient: string,
     publicKey: string,
-    tls: boolean = false
+    tls = false
   ): Promise<ValidatorPostFeeResponse> {
     try {
       return (await this.request(
@@ -59,7 +59,7 @@ export default class ValidatorApiClient extends StandardApiClient {
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
   public async getRemoteKeys(
-    tls: boolean = false
+    tls = false
   ): Promise<ValidatorGetRemoteKeysResponse> {
     try {
       return (await this.request(
@@ -78,7 +78,7 @@ export default class ValidatorApiClient extends StandardApiClient {
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
   public async postRemoteKeys(
-    tls: boolean = false
+    tls = false
   ): Promise<ValidatorPostRemoteKeysResponse> {
     try {
       return (await this.request(
