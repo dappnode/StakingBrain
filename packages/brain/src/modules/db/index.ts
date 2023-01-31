@@ -3,7 +3,7 @@ import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
 import logger from "../logger/index.js";
-import { Web3SignerApi } from "../clientApis/web3signerApi/index.js";
+import { Web3SignerApiClient } from "../apiClients/web3signerApiClient/index.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -35,7 +35,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * - If the migration fails, it will create a new empty database
    * - If the database file exists, it will validate it
    */
-  public async initialize(signerApi: Web3SignerApi): Promise<void> {
+  public async initialize(signerApi: Web3SignerApiClient): Promise<void> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
       this.read();
@@ -200,7 +200,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   /**
    * Performs the database migration for the first run
    */
-  private async databaseMigration(signerApi: Web3SignerApi): Promise<void> {
+  private async databaseMigration(
+    signerApi: Web3SignerApiClient
+  ): Promise<void> {
     try {
       // Create json file
       this.createJsonFile();
