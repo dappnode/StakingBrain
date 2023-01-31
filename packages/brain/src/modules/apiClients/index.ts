@@ -23,8 +23,14 @@ export class StandardApiClient {
       Authorization: "Bearer " + apiParams.authToken,
     };
 
-    if (apiParams.certFile) {
-      this.requestOptions.pfx = readFileSync(apiParams.certFile.path);
+    //Check if both cert path and password are provided
+    if (apiParams.certFile?.path && apiParams.certFile?.password) {
+      try {
+        this.requestOptions.pfx = readFileSync(apiParams.certFile.path);
+      } catch (e) {
+        console.log("Error while reading certificate file: " + e);
+        throw e;
+      }
       this.requestOptions.passphrase = apiParams.certFile.password;
     }
   }
