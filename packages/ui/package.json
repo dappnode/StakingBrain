@@ -36,7 +36,7 @@
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.tsx src/**/*.ts",
     "format": "eslint src/**/*.tsx src/**/*.ts --fix",
-    "pretty": "prettier --write \"src/**/*.ts\"",
+    "pretty": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/tests/*/*.ts'",
     "start:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\"",
     "start:webpack:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\""
