@@ -17,15 +17,17 @@ export default function KeystoreList({
   rows: Web3signerGetResponse["data"];
   setSelectedRows: (arg0: GridSelectionModel) => void;
   network: string;
-}) {
+}): JSX.Element {
   const selection = (
     selectionModel: GridSelectionModel,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     details: GridCallbackDetails
   ) => {
     setSelectedRows(selectionModel);
   };
 
   const [pageSize, setPageSize] = useState(10);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const pageSizeChange = (pageSize: number, details: GridCallbackDetails) => {
     setPageSize(pageSize);
   };

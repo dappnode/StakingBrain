@@ -19,7 +19,7 @@ export const shortenPubkey = (key: string | undefined): string => {
   )}`;
 };
 
-export function getEmoji(status: string) {
+export function getEmoji(status: string): string {
   switch (status) {
     case "error":
       return "❌";

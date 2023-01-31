@@ -3,7 +3,7 @@ export const passwordEntered = (
   index: number,
   passwords: string[],
   setPasswords: (passwords: string[]) => void
-) => {
+): void => {
   const pass = event.target.value;
   const newList = Array.from(passwords);
   newList[index] = pass;
@@ -14,7 +14,7 @@ export const setUniquePassword = (
   event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
   passwords: string[],
   setPasswords: (passwords: string[]) => void
-) => {
+): void => {
   const pass = event.target.value;
   const newList = Array.from(passwords);
   newList.fill(pass);

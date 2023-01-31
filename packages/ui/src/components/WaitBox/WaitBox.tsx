@@ -1,7 +1,7 @@
 import { Box, CircularProgress, DialogContentText } from "@mui/material";
 import { waitDialogBoxStyle } from "../../Styles/dialogStyles";
 
-export default function WaitBox() {
+export default function WaitBox(): JSX.Element {
   return (
     <Box sx={waitDialogBoxStyle}>
       <CircularProgress

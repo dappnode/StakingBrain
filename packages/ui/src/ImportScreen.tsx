@@ -36,7 +36,7 @@ import {
 import { Web3signerPostResponse } from "@stakingbrain/common";
 import { api } from "./api";
 
-export default function ImportScreen() {
+export default function ImportScreen(): JSX.Element {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();

@@ -33,7 +33,7 @@ export default function KeystoresDeleteDialog({
   setSelectedRows: (selectedRows: GridSelectionModel) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
-}) {
+}): JSX.Element {
   const [keystoresDelete, setKeystoresDelete] =
     useState<Web3signerDeleteResponse>();
   const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();

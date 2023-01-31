@@ -35,6 +35,7 @@ export const apiRpc: IApiRpc = {
 //Types
 interface RpcPayload {
   method: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any[];
 }
 
