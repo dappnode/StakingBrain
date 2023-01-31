@@ -28,9 +28,6 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Format
-        run: yarn format
-
       - name: Prettier
         run: yarn pretty
 
