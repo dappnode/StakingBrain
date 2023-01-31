@@ -1,0 +1,66 @@
+name: "Build and test"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.15.0
+
+      # Build
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build webpack
+        run: yarn build:webpack
+
+      - name: Build
+        run: yarn build
+
+      # Test
+
+      - name: Test
+        run: yarn test
+
+      # Docker
+
+      - name: Build docker monorepo image
+        run: docker build -t staking-brain:latest .
+
+      - name: Run docker image
+        run: docker run -d -p 3000:3000 staking-brain:latest
+
+      - name: Wait for docker image to start
+        run: sleep 10
+
+      - name: Check docker image
+        run: curl http://localhost:80
+
+      - name: Stop docker image
+        run: docker stop $(docker ps -a -q)
+
+      - name: Build docker webpack image
+        run: docker build -t staking-brain-webpack:latest .
+
+      - name: Run docker webpack image
+        run: docker run -d -p 3000:3000 staking-brain-webpack:latest
+
+      - name: Wait for docker image to start
+        run: sleep 10
+
+      - name: Check docker image
+        run: curl http://localhost:80

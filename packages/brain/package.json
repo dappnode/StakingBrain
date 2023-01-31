@@ -5,6 +5,7 @@
   "license": "GPL-3.0",
   "main": "dist/index.js",
   "scripts": {
+    "test": "yarn run test:unit",
     "test:unit": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'tests/**/*.unit.test.ts'",
     "start:dev": "yarn run link:ui && nodemon -w src -e js,ts,json --require dotenv/config -x ts-node src/index.ts",
     "start:webpack:dev": "yarn build:webpack && yarn run link:ui && webpack --watch --mode development & nodemon -w dist -e js,json --require dotenv/config -x node dist/index.js",
