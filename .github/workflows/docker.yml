@@ -18,7 +18,7 @@ jobs:
         run: docker build -t staking-brain:latest .
 
       - name: Run docker image
-        run: docker run -d -p 3000:3000 staking-brain:latest
+        run: docker run -d staking-brain:latest
 
       - name: Wait for docker image to start
         run: sleep 10
@@ -33,7 +33,7 @@ jobs:
         run: docker build -t staking-brain-webpack:latest -f Dockerfile.webpack .
 
       - name: Run docker webpack image
-        run: docker run -d -p 3000:3000 staking-brain-webpack:latest
+        run: docker run -d staking-brain-webpack:latest
 
       - name: Wait for docker image to start
         run: sleep 10
