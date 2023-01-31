@@ -25,11 +25,11 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Build webpack
-        run: yarn build:webpack
-
       - name: Build
         run: yarn build
+
+      - name: Build webpack
+        run: yarn build:webpack
 
       # Test
 
