@@ -36,7 +36,7 @@ export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
-await brainDb.initialize().catch((e) => {
+await brainDb.initialize(signerApi).catch((e) => {
   logger.error(e);
   process.exit(1);
 });

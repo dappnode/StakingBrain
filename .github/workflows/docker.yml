@@ -1,0 +1,63 @@
+name: Build and push docker image to GHCR
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  push-to-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build docker monorepo image
+        run: docker build -t staking-brain:latest .
+
+      - name: Run docker image
+        run: docker run -d -p 3000:3000 staking-brain:latest
+
+      - name: Wait for docker image to start
+        run: sleep 10
+
+      - name: Check docker image
+        run: curl http://localhost:80
+
+      - name: Stop docker image
+        run: docker stop $(docker ps -a -q)
+
+      - name: Build docker webpack image
+        run: docker build -t staking-brain-webpack:latest -f Dockerfile.webpack .
+
+      - name: Run docker webpack image
+        run: docker run -d -p 3000:3000 staking-brain-webpack:latest
+
+      - name: Wait for docker image to start
+        run: sleep 10
+
+      - name: Check docker image
+        run: curl http://localhost:80
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Staking brain docker monorepo
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/staking-brain:latest
+
+      - name: Build and push Staking brain docker webpack
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfile.webpack
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/staking-brain-webpack:latest
