@@ -13,6 +13,8 @@ services:
           - web3signer.brain.dappnode
   signer:
     image: consensys/web3signer:latest
+    depends_on:
+      - db
     container_name: signer
     command:
       [
@@ -42,6 +44,12 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=web3signer-mainnet
     command: postgres
+    user: postgres
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       brain_dev:
         aliases:

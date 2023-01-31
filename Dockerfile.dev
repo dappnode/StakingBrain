@@ -18,9 +18,6 @@ RUN apk add --no-cache --virtual .build-deps \
   curl \
   && rm -rf /var/cache/apk/*
 
-WORKDIR /app
-COPY . .
-RUN yarn && yarn build:webpack
-WORKDIR /app/packages/brain
+COPY entrypoint-dev.sh /usr/local/bin/entrypoint-dev.sh
 
-CMD [ "yarn", "start:webpack:dev" ]
+ENTRYPOINT [ "/usr/local/bin/entrypoint-dev.sh" ]
