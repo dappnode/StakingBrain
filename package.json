@@ -15,6 +15,7 @@
   },
   "scripts": {
     "build": "lerna run build --include-dependencies --stream",
+    "build:webpack": "lerna run build:webpack --include-dependencies --stream",
     "start:dev": "lerna run start:dev --include-dependencies --stream",
     "start:webpack:dev": "lerna run start:webpack:dev --include-dependencies --stream",
     "test": "lerna run test --include-dependencies --stream",
