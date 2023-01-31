@@ -16,7 +16,9 @@ export class StandardApi {
   protected async request(
     method: string,
     url: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     const headers = {
       "Content-Type": "application/json",
@@ -43,8 +45,8 @@ export class StandardApi {
   }
 
   protected async readText(files: File[]): Promise<string[]> {
-    var data: string[] = [];
-    for (var file of files) {
+    const data: string[] = [];
+    for (const file of files) {
       const text = await file.text();
       data.push(text);
     }

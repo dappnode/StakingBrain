@@ -33,7 +33,7 @@ export class Web3SignerApi extends StandardApi {
     postRequest: Web3signerPostRequest
   ): Promise<Web3signerPostResponse> {
     try {
-      var data;
+      let data;
       if (postRequest.slashingProtection) {
         data = {
           keystores: await this.readText(postRequest.keystores),

@@ -17,7 +17,7 @@ export class BeaconchaApi extends StandardApi {
   }): Promise<BeaconchaGetResponse[]> {
     const validatorsInfo = new Array<BeaconchaGetResponse>();
 
-    let allValidatorPKs = keystoresGet.data.map(
+    const allValidatorPKs = keystoresGet.data.map(
       (keystoreData) => keystoreData.validating_pubkey
     );
 
