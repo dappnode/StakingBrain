@@ -8,14 +8,20 @@ export class StandardApiClient {
   requestOptions: https.RequestOptions;
 
   constructor(apiParams: ApiParams) {
-    this.requestOptions = new URL(
-      apiParams.baseUrl + (apiParams.apiPath || "")
-    );
+    const urlOptions = new URL(apiParams.baseUrl + (apiParams.apiPath || ""));
+
+    this.requestOptions = {
+      hostname: urlOptions.hostname,
+      port: urlOptions.port,
+      path: urlOptions.pathname,
+      protocol: urlOptions.protocol,
+    };
+
     this.requestOptions.headers = {
       "Content-Type": "application/json",
       Accept: "application/json",
+      Authorization: "Bearer " + apiParams.authToken,
     };
-    this.requestOptions.auth = "Bearer " + apiParams.authToken;
 
     if (apiParams.certFile) {
       this.requestOptions.pfx = readFileSync(apiParams.certFile.path);
@@ -32,9 +38,13 @@ export class StandardApiClient {
     let req: http.ClientRequest;
 
     this.requestOptions.method = method;
-    this.requestOptions.path += endpoint;
+    this.requestOptions.path =
+      this.requestOptions.path && this.requestOptions.path !== "/"
+        ? this.requestOptions.path + endpoint
+        : endpoint;
 
     if (tls) {
+      //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       this.requestOptions.rejectUnauthorized = false;
 
       req = https.request(this.requestOptions);
@@ -45,6 +55,10 @@ export class StandardApiClient {
     if (body) {
       req.write(body);
     }
+
+    req.on("error", (e) => {
+      console.error(e);
+    });
 
     req.end();
 
@@ -57,10 +71,11 @@ export class StandardApiClient {
         });
 
         res.on("end", () => {
-          if (res.statusCode === 200) {
+          try {
             resolve(JSON.parse(data));
-          } else {
-            reject(data);
+          } catch (e) {
+            console.log("Error while parsing response:" + e);
+            reject("Error while parsing response:" + e);
           }
         });
       });

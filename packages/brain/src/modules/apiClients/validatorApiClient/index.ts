@@ -1,6 +1,8 @@
 import {
-  ValidatorGetResponse,
-  ValidatorPostResponse,
+  ValidatorGetFeeResponse,
+  ValidatorGetRemoteKeysResponse,
+  ValidatorPostFeeResponse,
+  ValidatorPostRemoteKeysResponse,
 } from "@stakingbrain/common";
 
 import { StandardApiClient } from "../index.js";
@@ -13,13 +15,13 @@ export default class ValidatorApiClient extends StandardApiClient {
   public async getFeeRecipient(
     publicKey: string,
     tls: boolean = false
-  ): Promise<ValidatorGetResponse> {
+  ): Promise<ValidatorGetFeeResponse> {
     try {
       return (await this.request(
         "GET",
-        publicKey + "/feerecipient",
+        "/eth/v1/validator/" + publicKey + "/feerecipient",
         tls
-      )) as ValidatorGetResponse;
+      )) as ValidatorGetFeeResponse;
     } catch (e) {
       return {
         message: { message: e.message },
@@ -35,19 +37,58 @@ export default class ValidatorApiClient extends StandardApiClient {
     newFeeRecipient: string,
     publicKey: string,
     tls: boolean = false
-  ): Promise<ValidatorPostResponse> {
+  ): Promise<ValidatorPostFeeResponse> {
     try {
       return (await this.request(
         "POST",
-        publicKey + "/feerecipient",
+        "/eth/v1/validator/" + publicKey + "/feerecipient",
         tls,
         JSON.stringify({ ethaddress: newFeeRecipient })
-      )) as ValidatorPostResponse;
+      )) as ValidatorPostFeeResponse;
     } catch (e) {
       return {
         message: {
           message: e.message,
         },
+      };
+    }
+  }
+
+  /**
+   * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
+   * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
+   */
+  public async getRemoteKeys(
+    tls: boolean = false
+  ): Promise<ValidatorGetRemoteKeysResponse> {
+    try {
+      return (await this.request(
+        "GET",
+        "/eth/v1/remotekeys",
+        tls
+      )) as ValidatorGetRemoteKeysResponse;
+    } catch (e) {
+      return {
+        message: { message: e.message },
+      };
+    }
+  }
+  /**
+   * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
+   * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
+   */
+  public async postRemoteKeys(
+    tls: boolean = false
+  ): Promise<ValidatorPostRemoteKeysResponse> {
+    try {
+      return (await this.request(
+        "POST",
+        "/eth/v1/remotekeys",
+        tls
+      )) as ValidatorPostRemoteKeysResponse;
+    } catch (e) {
+      return {
+        message: { message: e.message },
       };
     }
   }
