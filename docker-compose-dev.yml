@@ -3,7 +3,8 @@ services:
   brain:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+    container_name: brain
     volumes:
       - .:/app
     networks:
@@ -12,8 +13,7 @@ services:
           - web3signer.brain.dappnode
   signer:
     image: consensys/web3signer:latest
-    environment:
-      - JAVA_OPTS="-Xmx2g -Xms128m"
+    container_name: signer
     command:
       [
         "--key-store-path=/keystores",
@@ -35,6 +35,7 @@ services:
           - web3signer.web3signer.dappnode
   db:
     image: postgres:14.1-bullseye
+    container_name: signer-db
     environment:
       - POSTGRES_PASSWORD=mainnet
       - PGPASSWORD=mainnet
@@ -48,6 +49,7 @@ services:
 
   prysm-validator:
     image: gcr.io/prysmaticlabs/prysm/validator:latest
+    container_name: prysm-validator
     command:
       [
         "--mainnet",

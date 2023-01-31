@@ -48,4 +48,4 @@ startUiServer(path.resolve(__dirname, "uiBuild"));
 startLaunchpadApi();
 
 // Start cron
-job.start();
+//job.start();
