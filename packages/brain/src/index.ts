@@ -8,6 +8,7 @@ import { BeaconchaApi } from "./modules/clientApis/beaconchaApi/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
 import { job } from "./modules/cron/index.js";
+import { ValidatorApi } from "./modules/clientApis/validatorApi/index.js";
 
 const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -49,6 +50,12 @@ export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
     "modules/clientApis/validatorApiClient/security/teku/prater/teku_keystore_password.p12"
   ),
 };*/
+
+export const validatorApi = new ValidatorApi({
+  baseUrl: validatorUrl,
+  authToken: token,
+  //certFile: tekuCertFile,
+});
 
 // beaconchain APIs instances
 
