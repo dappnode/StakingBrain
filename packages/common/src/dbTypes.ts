@@ -30,6 +30,6 @@ export const tags = [
 /**
  * Tag describes the protocol of the public key imported
  */
-export type Tag = typeof tags[number];
+export type Tag = (typeof tags)[number];
 
 // TODO: add types for ethereum addresses so the JSON schemas validate them
