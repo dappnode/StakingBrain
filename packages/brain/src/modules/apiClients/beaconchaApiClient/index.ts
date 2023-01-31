@@ -6,7 +6,7 @@ import {
 
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
-export class BeaconchaApi extends StandardApiClient {
+export class BeaconchaApiClient extends StandardApiClient {
   /*
    * Fetch info for every validator PK
    */

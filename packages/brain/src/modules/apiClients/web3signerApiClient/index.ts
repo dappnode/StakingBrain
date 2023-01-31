@@ -12,7 +12,7 @@ import { StandardApiClient } from "../index.js";
  * Key Manager API standard
  * https://ethereum.github.io/keymanager-APIs/
  */
-export class Web3SignerApi extends StandardApiClient {
+export class Web3SignerApiClient extends StandardApiClient {
   /**
    * Local Key Manager endpoint
    * https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/

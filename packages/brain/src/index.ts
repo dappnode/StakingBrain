@@ -3,10 +3,11 @@ import { fileURLToPath } from "url";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
-import { Web3SignerApi } from "./modules/apiClients/web3signerApiClient/index.js";
-import { BeaconchaApi } from "./modules/apiClients/beaconchaApiClient/index.js";
+import { Web3SignerApiClient } from "./modules/apiClients/web3signerApiClient/index.js";
+import { BeaconchaApiClient } from "./modules/apiClients/beaconchaApiClient/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
+import ValidatorApiClient from "./modules/apiClients/validatorApiClient/index.js";
 import { job } from "./modules/cron/index.js";
 
 const mode = process.env.NODE_ENV || "development";
@@ -26,13 +27,24 @@ export const {
   token,
 } = loadStakerConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}`
 );
 
 // Create API instances. Must preceed db initialization
-export const signerApi = new Web3SignerApi({ baseUrl: signerUrl });
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
-// TODO: add validator and beaconchain APIs instances
+export const signerApi = new Web3SignerApiClient({ baseUrl: signerUrl });
+export const beaconchaApi = new BeaconchaApiClient({ baseUrl: beaconchaUrl });
+export const validatorApi = new ValidatorApiClient({
+  baseUrl: validatorUrl,
+  authToken: token,
+  //TODO: Add certFile for Teku (HTTPS)
+  /*certFile: {
+    path: path.resolve(
+      __dirname,
+      "modules/apiClients/validatorApiClient/security/teku/prater/teku_client_keystore.p12"
+    ),
+    password: "dappnode",
+  },*/
+});
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
