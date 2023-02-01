@@ -3,7 +3,7 @@ services:
   brain:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.brain.dev
     container_name: brain
     volumes:
       - .:/app
@@ -36,13 +36,12 @@ services:
         aliases:
           - web3signer.web3signer.dappnode
   db:
-    image: postgres:14.1-bullseye
+    build:
+      context: .
+      dockerfile: Dockerfile.db.dev
+      args:
+        UPSTREAM_VERSION: 23.1.0
     container_name: signer-db
-    environment:
-      - POSTGRES_PASSWORD=mainnet
-      - PGPASSWORD=mainnet
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=web3signer-mainnet
     command: postgres
     user: postgres
     healthcheck:
