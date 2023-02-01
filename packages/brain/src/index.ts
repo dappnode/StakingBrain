@@ -3,12 +3,12 @@ import { fileURLToPath } from "url";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
-import { Web3SignerApi } from "./modules/clientApis/web3signerApi/index.js";
-import { BeaconchaApi } from "./modules/clientApis/beaconchaApi/index.js";
+import { Web3SignerApiClient } from "./modules/apiClients/web3signerApiClient/index.js";
+import { BeaconchaApiClient } from "./modules/apiClients/beaconchaApiClient/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
 import { job } from "./modules/cron/index.js";
-import { ValidatorApi } from "./modules/clientApis/validatorApi/index.js";
+import { ValidatorApiClient } from "./modules/apiClients/validatorApiClient/index.js";
 import { CertFile } from "@stakingbrain/common";
 
 const mode = process.env.NODE_ENV || "development";
@@ -33,12 +33,12 @@ logger.debug(
 );
 
 // Create API instances. Must preceed db initialization
-export const signerApi = new Web3SignerApi({
+export const signerApi = new Web3SignerApiClient({
   baseUrl: signerUrl,
   authToken: token,
   host,
 });
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
+export const beaconchaApi = new BeaconchaApiClient({ baseUrl: beaconchaUrl });
 
 const tekuCertFile: CertFile = {
   path: path.resolve(
@@ -51,7 +51,7 @@ const tekuCertFile: CertFile = {
   ),
 };
 
-export const validatorApi = new ValidatorApi({
+export const validatorApi = new ValidatorApiClient({
   baseUrl: validatorUrl,
   authToken: token,
   certFile: consensusClient.includes("teku") ? tekuCertFile : undefined,

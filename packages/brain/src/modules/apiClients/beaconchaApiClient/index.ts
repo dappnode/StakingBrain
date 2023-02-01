@@ -1,4 +1,4 @@
-import { StandardApi } from "../index.js";
+import { StandardApiClient } from "../index.js";
 import {
   Web3signerGetResponse,
   BeaconchaGetResponse,
@@ -6,7 +6,7 @@ import {
 
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
-export class BeaconchaApi extends StandardApi {
+export class BeaconchaApiClient extends StandardApiClient {
   /*
    * Fetch info for every validator PK
    */

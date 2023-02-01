@@ -1,6 +1,6 @@
 import { ApiParams } from "@stakingbrain/common";
 
-export class StandardApi {
+export class StandardApiClient {
   baseUrl: string;
   host: string;
   authToken?: string;
