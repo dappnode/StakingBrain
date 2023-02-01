@@ -27,11 +27,15 @@ export class StandardApiClient {
     if (apiParams.certFile?.path && apiParams.certFile?.password) {
       try {
         this.requestOptions.pfx = readFileSync(apiParams.certFile.path);
+        this.requestOptions.passphrase = readFileSync(
+          apiParams.certFile.password
+        ).toString();
       } catch (e) {
-        console.log("Error while reading certificate file: " + e);
+        console.log(
+          "Error while reading certificate file or its password: " + e
+        );
         throw e;
       }
-      this.requestOptions.passphrase = apiParams.certFile.password;
     }
   }
 

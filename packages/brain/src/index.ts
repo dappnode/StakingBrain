@@ -43,11 +43,11 @@ export const beaconchaApi = new BeaconchaApiClient({ baseUrl: beaconchaUrl });
 const tekuCertFile: CertFile = {
   path: path.resolve(
     __dirname,
-    "modules/clientApis/validatorApiClient/security/teku/prater/teku_client_keystore.p12"
+    "modules/apiClients/validatorApiClient/security/teku/prater/teku_client_keystore.p12"
   ),
   password: path.resolve(
     __dirname,
-    "modules/clientApis/validatorApiClient/security/teku/prater/teku_keystore_password.p12"
+    "modules/apiClients/validatorApiClient/security/teku/prater/teku_keystore_password.txt"
   ),
 };
 
