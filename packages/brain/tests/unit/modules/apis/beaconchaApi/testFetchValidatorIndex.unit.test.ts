@@ -82,10 +82,28 @@ const networkTestMap = new Map<
 // TODO: move below to common
 
 const beaconchaApiParamsMap = new Map<string, ApiParams>([
-  ["mainnet", { baseUrl: "https://beaconcha.in", apiPath: "/api/v1/" }],
-  ["prater", { baseUrl: "https://prater.beaconcha.in", apiPath: "/api/v1/" }],
+  [
+    "mainnet",
+    {
+      baseUrl: "https://beaconcha.in",
+      host: "brain.web3signer.dappnode",
+      apiPath: "/api/v1/",
+    },
+  ],
+  [
+    "prater",
+    {
+      baseUrl: "https://prater.beaconcha.in",
+      host: "brain.web3signer-prater.dappnode",
+      apiPath: "/api/v1/",
+    },
+  ],
   [
     "gnosis",
-    { baseUrl: "https://beacon.gnosischain.com", apiPath: "/api/v1/" },
+    {
+      baseUrl: "https://beacon.gnosischain.com",
+      host: "brain.web3signer-gnosis.dappnode",
+      apiPath: "/api/v1/",
+    },
   ],
 ]);
