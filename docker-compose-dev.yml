@@ -7,14 +7,20 @@ services:
     container_name: brain
     volumes:
       - .:/app
+    environment:
+      - NETWORK=mainnet
+      - _DAPPNODE_CONSENSUS_CLIENT_MAINNET=prysm.dnp.dappnode.eth
+      - _DAPPNODE_EXECUTION_CLIENT_MAINNET_VERSION=geth.dnp.dappnode.eth
     networks:
-      brain_dev:
+      dncore_network:
         aliases:
           - brain.web3signer.dappnode
   signer:
     image: consensys/web3signer:latest
     depends_on:
       - db
+    security_opt:
+      - "seccomp:unconfined"
     container_name: signer
     command:
       [
@@ -32,7 +38,7 @@ services:
         "--key-manager-api-enabled=true",
       ]
     networks:
-      brain_dev:
+      dncore_network:
         aliases:
           - web3signer.web3signer.dappnode
   db:
@@ -50,7 +56,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      brain_dev:
+      dncore_network:
         aliases:
           - postgres.web3signer.dappnode
 
@@ -75,10 +81,10 @@ services:
         "--enable-doppelganger",
       ]
     networks:
-      brain_dev:
+      dncore_network:
         aliases:
           - validator.prysm.dappnode
 
 networks:
-  brain_dev:
-    name: brain_dev
+  dncore_network:
+    external: true
