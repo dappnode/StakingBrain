@@ -17,6 +17,7 @@ services:
       dncore_network:
         aliases:
           - brain.web3signer-prater.dappnode
+
   signer:
     image: consensys/web3signer:latest
     depends_on:
@@ -43,6 +44,7 @@ services:
       dncore_network:
         aliases:
           - web3signer.web3signer-prater.dappnode
+
   db:
     build:
       context: .
@@ -86,6 +88,41 @@ services:
       dncore_network:
         aliases:
           - validator.prysm-prater.dappnode
+
+  lighthouse-validator:
+    image: sigp/lighthouse:latest-modern
+    container_name: lighthouse-validator
+    security_opt:
+      - "seccomp:unconfined"
+    command:
+      [
+        "lighthouse",
+        "--network=prater",
+        "validator",
+        "--enable-doppelganger-protection",
+        "--init-slashing-protection",
+        "--beacon-node=http://beacon-chain.lighthouse-prater.dappnode:3500",
+        "--graffiti=validating_from_DAppNode",
+        "--http",
+        "--http-address=0.0.0.0",
+        "--http-port=3500",
+        "--http-allow-origin=*",
+        "--unencrypted-http-transport",
+      ]
+    networks:
+      dncore_network:
+        aliases:
+          - validator.lighthouse-prater.dappnode
+
+  teku-validator:
+    container_name: teku-validator
+    build:
+      context: .
+      dockerfile: Dockerfile.teku.dev
+    networks:
+      dncore_network:
+        aliases:
+          - validator.teku-prater.dappnode
 
 networks:
   dncore_network:
