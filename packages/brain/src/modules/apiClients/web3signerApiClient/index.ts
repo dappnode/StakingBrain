@@ -111,7 +111,7 @@ export class Web3SignerApiClient extends StandardApiClient {
         this.serverStatusEndpoint
       )) as Web3signerHealthcheckResponse;
     } catch (e) {
-      throw Error(`Error getting (GET) server status to ${this.baseUrl}: ${e}`);
+      throw Error(`Error getting (GET) server status to ${this.requestOptions.hostname}: ${e}`);
     }
   }
 

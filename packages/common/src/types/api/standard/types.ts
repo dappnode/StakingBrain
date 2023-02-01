@@ -5,7 +5,7 @@ export interface CertFile {
 
 export interface ApiParams {
   baseUrl: string;
-  host: string;
+  host?: string;
   apiPath?: string;
   authToken?: string;
   certFile?: CertFile;

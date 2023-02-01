@@ -21,6 +21,7 @@ export class StandardApiClient {
       "Content-Type": "application/json",
       Accept: "application/json",
       Authorization: "Bearer " + apiParams.authToken,
+      ...(apiParams.host && { Host: apiParams.host }),
     };
 
     //Check if both cert path and password are provided
