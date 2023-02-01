@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ApiParams, Web3signerGetResponse } from "@stakingbrain/common";
-import { BeaconchaApiClient } from "../../../../../src/modules/apiClients/beaconchaApiClient/index.js";
+import { BeaconchaApi } from "../../../../../src/modules/apiClients/beaconcha/index.js";
 
 describe.skip("Test for fetching validator indexes in every available network", () => {
   it("should return data corresponding to every validator PK", async () => {
@@ -25,7 +25,7 @@ describe.skip("Test for fetching validator indexes in every available network", 
         ],
       } as Web3signerGetResponse;
 
-      const beaconchaApi = new BeaconchaApiClient(
+      const beaconchaApi = new BeaconchaApi(
         beaconchaApiParamsMap.get(network)!
       );
 
