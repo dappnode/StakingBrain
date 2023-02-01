@@ -24,35 +24,33 @@ function App(): JSX.Element {
   const [consensusClient, setConsensusClient] = React.useState<string>();
   const [executionClient, setExecutionClient] = React.useState<string>();
 
-  // Start API and Socket.io once user has logged in
   useEffect(() => {
+    // Start API and Socket.io once user has logged in
     startApi()
       .then(() => {
         getStakerConfig();
-        showSignerStatus();
       })
       .catch((e) => console.error("Error on startApi", e));
   }, []);
 
-  // Print signer status and staker config use effect
   useEffect(() => {
-    console.log("signerStatus", signerStatus);
-    console.log("currentNetwork", currentNetwork);
-    console.log("consensusClient", consensusClient);
-    console.log("executionClient", executionClient);
-  }, [signerStatus, currentNetwork, consensusClient, executionClient]);
+    const interval = setInterval(() => {
+      signerGetStatus();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const showSignerStatus = async (): Promise<void> => {
+  async function signerGetStatus(): Promise<void> {
     try {
       const status = (await api.signerGetStatus()).status;
       setSignerStatus(status);
     } catch (e) {
-      console.error("Error on showSignerStatus", e);
+      console.error("Error on signerGetStatus", e);
       setSignerStatus("ERROR");
     }
-  };
+  }
 
-  const getStakerConfig = async (): Promise<void> => {
+  async function getStakerConfig(): Promise<void> {
     try {
       console.log("clicked");
       const config = await api.getStakerConfig();
@@ -63,7 +61,7 @@ function App(): JSX.Element {
     } catch (e) {
       console.error("Error on getStakerConfig", e);
     }
-  };
+  }
 
   return (
     <ThemeProvider theme={darkTheme}>
