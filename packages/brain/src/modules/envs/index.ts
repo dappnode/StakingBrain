@@ -37,7 +37,7 @@ export function loadStakerConfig(): {
   signerUrl: string;
   token: string;
   host: string;
-  tls?: Buffer;
+  tlsCert?: Buffer;
 } {
   dotenv.config();
 
@@ -54,7 +54,7 @@ export function loadStakerConfig(): {
     validatorUrl: string,
     beaconchainUrl: string,
     token: string,
-    tls: Buffer | undefined;
+    tlsCert: Buffer | undefined;
 
   if (network === "mainnet") {
     const { executionClient, consensusClient } = loadEnvs("mainnet");
@@ -91,7 +91,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         validatorUrl = `https://validator.teku.dappnode:3500`;
         beaconchainUrl = `http://beacon-chain.teku.dappnode:3500`;
-        tls = fs.readFileSync(
+        tlsCert = fs.readFileSync(
           path.join(__dirname, "tls", "mainnet", "teku_client_keystore.p12")
         );
         break;
@@ -121,7 +121,7 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer.dappnode:9000`,
       token,
       host: `brain.web3signer.dappnode`,
-      tls,
+      tlsCert,
     };
   } else if (network === "gnosis") {
     const { executionClient, consensusClient } = loadEnvs("gnosis");
@@ -144,7 +144,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-gnosis.dappnode:3500`;
         validatorUrl = `https://validator.teku-gnosis.dappnode:3500`;
-        tls = fs.readFileSync(
+        tlsCert = fs.readFileSync(
           path.join(__dirname, "tls", "gnosis", "teku_client_keystore.p12")
         );
         break;
@@ -174,7 +174,7 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-gnosis.dappnode:9000`,
       token,
       host: `brain.web3signer-gnosis.dappnode`,
-      tls,
+      tlsCert,
     };
   } else if (network === "prater") {
     const { executionClient, consensusClient } = loadEnvs("prater");
@@ -205,7 +205,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-prater.dappnode:3500`;
         validatorUrl = `https://validator.teku-prater.dappnode:3500`;
-        tls = fs.readFileSync(
+        tlsCert = fs.readFileSync(
           path.join(__dirname, "tls", "prater", "teku_client_keystore.p12")
         );
         break;
@@ -240,7 +240,7 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-prater.dappnode:9000`,
       token,
       host: `brain.web3signer-prater.dappnode`,
-      tls,
+      tlsCert,
     };
   } else {
     throw Error(`Unknown network ${network}`);

@@ -27,7 +27,7 @@ export const {
   signerUrl,
   token,
   host,
-  tls,
+  tlsCert,
 } = loadStakerConfig();
 logger.debug(
   `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}`
@@ -43,7 +43,7 @@ export const beaconchaApi = new BeaconchaApiClient({ baseUrl: beaconchaUrl });
 export const validatorApi = new ValidatorApiClient({
   baseUrl: validatorUrl,
   authToken: token,
-  tls,
+  tlsCert,
 });
 
 // Create DB instance

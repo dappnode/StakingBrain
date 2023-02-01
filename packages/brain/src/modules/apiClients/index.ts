@@ -1,6 +1,5 @@
 import https from "node:https";
 import http from "node:http";
-
 import { ApiParams, AllowedMethods } from "@stakingbrain/common";
 
 export class StandardApiClient {
@@ -23,8 +22,8 @@ export class StandardApiClient {
       ...(apiParams.host && { Host: apiParams.host }),
     };
 
-    if (apiParams.tls) {
-      this.requestOptions.pfx = apiParams.tls;
+    if (apiParams.tlsCert) {
+      this.requestOptions.pfx = apiParams.tlsCert;
       this.requestOptions.passphrase = "dappnode";
     }
   }

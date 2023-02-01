@@ -13,14 +13,12 @@ export class ValidatorApiClient extends StandardApiClient {
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
   public async getFeeRecipient(
-    publicKey: string,
-    tls = false
+    publicKey: string
   ): Promise<ValidatorGetFeeResponse> {
     try {
       return (await this.request(
         "GET",
-        "/eth/v1/validator/" + publicKey + "/feerecipient",
-        tls
+        "/eth/v1/validator/" + publicKey + "/feerecipient"
       )) as ValidatorGetFeeResponse;
     } catch (e) {
       return {
