@@ -2,7 +2,7 @@ import https from "node:https";
 import http from "node:http";
 import { ApiParams, AllowedMethods } from "@stakingbrain/common";
 
-export class StandardApiClient {
+export class StandardApi {
   requestOptions: https.RequestOptions;
 
   constructor(apiParams: ApiParams) {

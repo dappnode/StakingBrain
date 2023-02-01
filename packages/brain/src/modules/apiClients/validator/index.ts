@@ -5,9 +5,9 @@ import {
   ValidatorPostRemoteKeysResponse,
 } from "@stakingbrain/common";
 
-import { StandardApiClient } from "../index.js";
+import { StandardApi } from "../index.js";
 
-export class ValidatorApiClient extends StandardApiClient {
+export class ValidatorApi extends StandardApi {
   /**
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient

@@ -3,11 +3,11 @@ import { fileURLToPath } from "url";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
-import { Web3SignerApiClient } from "./modules/apiClients/web3signerApiClient/index.js";
-import { BeaconchaApiClient } from "./modules/apiClients/beaconchaApiClient/index.js";
+import { Web3SignerApi } from "./modules/apiClients/web3signer/index.js";
+import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
-import { ValidatorApiClient } from "./modules/apiClients/validatorApiClient/index.js";
+import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import { job } from "./modules/cron/index.js";
 
 export const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,13 +34,13 @@ logger.debug(
 );
 
 // Create API instances. Must preceed db initialization
-export const signerApi = new Web3SignerApiClient({
+export const signerApi = new Web3SignerApi({
   baseUrl: signerUrl,
   authToken: token,
   host,
 });
-export const beaconchaApi = new BeaconchaApiClient({ baseUrl: beaconchaUrl });
-export const validatorApi = new ValidatorApiClient({
+export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
+export const validatorApi = new ValidatorApi({
   baseUrl: validatorUrl,
   authToken: token,
   tlsCert,
