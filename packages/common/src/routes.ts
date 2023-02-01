@@ -1,13 +1,13 @@
 import {
   Web3signerDeleteResponse,
   Web3signerGetResponse,
-  BeaconchaGetResponse,
   Web3signerPostResponse,
   Web3signerPostRequest,
   Web3signerDeleteRequest,
   Web3signerHealthcheckResponse,
-} from "./apiTypes.js";
-import { StakerConfig, Network } from "./networkTypes.js";
+} from "./types/api/web3signer/types.js";
+import { BeaconchaGetResponse } from "./types/api/beaconchain/types.js";
+import { StakerConfig, Network } from "./types/network/types.js";
 
 export interface Routes {
   testRoute: () => Promise<string>;
