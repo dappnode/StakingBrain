@@ -7,7 +7,7 @@ import {
 
 import { StandardApiClient } from "../index.js";
 
-export default class ValidatorApiClient extends StandardApiClient {
+export class ValidatorApiClient extends StandardApiClient {
   /**
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
