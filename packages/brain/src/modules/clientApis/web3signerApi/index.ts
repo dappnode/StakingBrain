@@ -103,15 +103,7 @@ export class Web3SignerApi extends StandardApi {
         this.baseUrl + this.serverStatusEndpoint
       )) as Web3signerHealthcheckResponse;
     } catch (e) {
-      console.error(
-        `Error getting (GET) signer status to ${this.baseUrl}: ${e}`
-      );
-      // TODO: there must be thrown an error and handle it properly in the UI
-      return {
-        status: "UNKNOWN",
-        checks: [],
-        outcome: e.message,
-      };
+      throw Error(`Error getting (GET) server status to ${this.baseUrl}: ${e}`);
     }
   }
 }
