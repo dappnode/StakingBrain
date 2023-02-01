@@ -1,0 +1,4 @@
+FROM consensys/teku:latest
+COPY packages/brain/tls/prater/teku_client_keystore.p12 /cert/teku_client_keystore.p12
+COPY packages/brain/tls/prater/teku_keystore_password.txt /cert/teku_keystore_password.txt
+CMD ["validator-client","--network=prater","--data-base-path=/opt/teku/data","--beacon-node-api-endpoint=http://beacon-chain.teku-prater.dappnode:3500","--validators-external-signer-url=http://web3signer.web3signer-prater.dappnode:9000","--validator-api-enabled=true","--validator-api-interface=0.0.0.0","--validator-api-port=3500","--validator-api-host-allowlist=*","--validators-graffiti=validating_from_DAppNode","--validator-api-keystore-file=/cert/teku_client_keystore.p12","--validator-api-keystore-password-file=/cert/teku_keystore_password.txt","--logging=ALL"]
