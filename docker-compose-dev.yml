@@ -65,50 +65,22 @@ services:
           - postgres.web3signer-prater.dappnode
 
   prysm-validator:
-    image: gcr.io/prysmaticlabs/prysm/validator:latest
     container_name: prysm-validator
-    command:
-      [
-        "--prater",
-        "--datadir=/data",
-        "--wallet-dir=/root/.eth2validators",
-        "--beacon-rpc-provider=beacon-chain.prysm-prater.dappnode:4000",
-        "--beacon-rpc-gateway-provider=beacon-chain.prysm-prater.dappnode:3500",
-        "--validators-external-signer-url=http://web3signer.web3signer-prater.dappnode:9000",
-        "--grpc-gateway-host=0.0.0.0 ",
-        "--grpc-gateway-port=3500",
-        "--grpc-gateway-corsdomain=http://0.0.0.0:3500",
-        "--graffiti=validating_from_DAppNode",
-        "--suggested-fee-recipient=0x0000000000000000000000000000000000000000",
-        "--web",
-        "--accept-terms-of-use",
-        "--enable-doppelganger",
-      ]
+    build:
+      context: .
+      dockerfile: Dockerfile.prysm.dev
     networks:
       dncore_network:
         aliases:
           - validator.prysm-prater.dappnode
 
   lighthouse-validator:
-    image: sigp/lighthouse:latest-modern
     container_name: lighthouse-validator
     security_opt:
       - "seccomp:unconfined"
-    command:
-      [
-        "lighthouse",
-        "--network=prater",
-        "validator",
-        "--enable-doppelganger-protection",
-        "--init-slashing-protection",
-        "--beacon-node=http://beacon-chain.lighthouse-prater.dappnode:3500",
-        "--graffiti=validating_from_DAppNode",
-        "--http",
-        "--http-address=0.0.0.0",
-        "--http-port=3500",
-        "--http-allow-origin=*",
-        "--unencrypted-http-transport",
-      ]
+    build:
+      context: .
+      dockerfile: Dockerfile.lighthouse.dev
     networks:
       dncore_network:
         aliases:
