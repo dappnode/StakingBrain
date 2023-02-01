@@ -71,10 +71,14 @@ services:
         "--grpc-gateway-corsdomain=http://0.0.0.0:3500",
         "--graffiti=validating_from_DAppNode",
         "--suggested-fee-recipient=0x0000000000000000000000000000000000000000",
-        "--web ",
+        "--web",
         "--accept-terms-of-use",
         "--enable-doppelganger",
       ]
+    networks:
+      brain_dev:
+        aliases:
+          - validator.prysm.dappnode
 
 networks:
   brain_dev:
