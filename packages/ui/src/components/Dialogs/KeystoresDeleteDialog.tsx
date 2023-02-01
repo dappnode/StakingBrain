@@ -45,7 +45,7 @@ export default function KeystoresDeleteDialog({
       setRequestInFlight(true);
       setRequestInFlight(false);
       setKeystoresDelete(
-        await api.deleteKeystores({
+        await api.signerDeleteKeystores({
           pubkeys: selectedRows.map(
             (row) => rows[parseInt(row.toString())].validating_pubkey
           ),

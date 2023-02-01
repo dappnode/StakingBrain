@@ -10,21 +10,22 @@ import { BeaconchaGetResponse } from "./types/api/beaconchain/types.js";
 import { StakerConfig, Network } from "./types/network/types.js";
 
 export interface Routes {
-  testRoute: () => Promise<string>;
   // BeaconchaApi
-  fetchAllValidatorsInfo: (
+  beaconchaFetchAllValidatorsInfo: (
     keystoresGet: Web3signerGetResponse
   ) => Promise<BeaconchaGetResponse[]>;
-  fetchValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse>;
+  beaconchaFetchValidatorsInfo: (
+    pubkeys: string[]
+  ) => Promise<BeaconchaGetResponse>;
   // SignerApi
-  importKeystores: (
+  signerImportKeystores: (
     postRequest: Web3signerPostRequest
   ) => Promise<Web3signerPostResponse>;
-  deleteKeystores: (
+  signerDeleteKeystores: (
     deleteRequest: Web3signerDeleteRequest
   ) => Promise<Web3signerDeleteResponse>;
-  getKeystores: () => Promise<Web3signerGetResponse>;
-  getStatus: () => Promise<Web3signerHealthcheckResponse>;
+  signerGetKeystores: () => Promise<Web3signerGetResponse>;
+  signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   // Network
   getStakerConfig: () => Promise<StakerConfig<Network>>;
 }
@@ -34,12 +35,11 @@ interface RouteData {
 }
 
 export const routesData: { [P in keyof Routes]: RouteData } = {
-  testRoute: { log: true },
-  fetchAllValidatorsInfo: { log: true },
-  fetchValidatorsInfo: { log: true },
-  importKeystores: { log: true },
-  deleteKeystores: { log: true },
-  getKeystores: { log: true },
-  getStatus: { log: true },
+  beaconchaFetchAllValidatorsInfo: { log: true },
+  beaconchaFetchValidatorsInfo: { log: true },
+  signerImportKeystores: { log: true },
+  signerDeleteKeystores: { log: true },
+  signerGetKeystores: { log: true },
+  signerGetStatus: { log: true },
   getStakerConfig: { log: true },
 };
