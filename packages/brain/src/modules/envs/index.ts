@@ -83,7 +83,7 @@ export function loadStakerConfig(): {
         beaconchainUrl = `http://beacon-chain.lighthouse.dappnode:3500`;
         break;
       case "teku.dnp.dappnode.eth":
-        token = ``;
+        token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         validatorUrl = `https://validator.teku.dappnode:3500`;
         beaconchainUrl = `http://beacon-chain.teku.dappnode:3500`;
         break;
@@ -132,7 +132,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://validator.gnosis-beacon-chain-prysm.dappnode:3500`;
         break;
       case "teku-gnosis.dnp.dappnode.eth":
-        token = ``;
+        token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-gnosis.dappnode:3500`;
         validatorUrl = `https://validator.teku-gnosis.dappnode:3500`;
         break;
@@ -189,7 +189,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://validator.prysm-prater.dappnode:3500`;
         break;
       case "teku-prater.dnp.dappnode.eth":
-        token = ``;
+        token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-prater.dappnode:3500`;
         validatorUrl = `https://validator.teku-prater.dappnode:3500`;
         break;
