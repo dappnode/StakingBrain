@@ -3,6 +3,7 @@ import http from "node:http";
 import { ApiParams, AllowedMethods } from "@stakingbrain/common";
 
 export class StandardApi {
+  private useTls = false;
   requestOptions: https.RequestOptions;
 
   constructor(apiParams: ApiParams) {
@@ -25,13 +26,13 @@ export class StandardApi {
     if (apiParams.tlsCert) {
       this.requestOptions.pfx = apiParams.tlsCert;
       this.requestOptions.passphrase = "dappnode";
+      this.useTls = true;
     }
   }
 
   protected async request(
     method: AllowedMethods,
     endpoint: string,
-    tls = false,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body?: any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,7 +42,7 @@ export class StandardApi {
     this.requestOptions.method = method;
     this.requestOptions.path = endpoint;
 
-    if (tls) {
+    if (this.useTls) {
       //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       this.requestOptions.rejectUnauthorized = false;
 

@@ -49,7 +49,6 @@ export class Web3SignerApi extends StandardApi {
       return (await this.request(
         "POST",
         this.keymanagerEndpoint,
-        false, //True for Teku
         JSON.stringify(data)
       )) as Web3signerPostResponse;
     } catch (e) {
@@ -73,7 +72,6 @@ export class Web3SignerApi extends StandardApi {
       return (await this.request(
         "DELETE",
         this.keymanagerEndpoint,
-        false, //True for Teku
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
