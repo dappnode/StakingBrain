@@ -1,6 +1,6 @@
 import { ApiParams } from "@stakingbrain/common";
 
-export const beaconchaApiParamsMap = new Map<string, ApiParams>([
+export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
   ["mainnet", { baseUrl: "https://beaconcha.in", apiPath: "/api/v1/" }],
   ["prater", { baseUrl: "https://prater.beaconcha.in", apiPath: "/api/v1/" }],
   [
