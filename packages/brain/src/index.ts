@@ -9,6 +9,7 @@ import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
 import { job } from "./modules/cron/index.js";
 import { ValidatorApi } from "./modules/clientApis/validatorApi/index.js";
+import { CertFile } from "@stakingbrain/common";
 
 const mode = process.env.NODE_ENV || "development";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -39,8 +40,7 @@ export const signerApi = new Web3SignerApi({
 });
 export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
 
-//TODO: Export CertFile type from @stakingbrain/common
-/*const tekuCertFile: CertFile = {
+const tekuCertFile: CertFile = {
   path: path.resolve(
     __dirname,
     "modules/clientApis/validatorApiClient/security/teku/prater/teku_client_keystore.p12"
@@ -49,12 +49,12 @@ export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
     __dirname,
     "modules/clientApis/validatorApiClient/security/teku/prater/teku_keystore_password.p12"
   ),
-};*/
+};
 
 export const validatorApi = new ValidatorApi({
   baseUrl: validatorUrl,
   authToken: token,
-  //certFile: tekuCertFile,
+  certFile: consensusClient.includes("teku") ? tekuCertFile : undefined,
 });
 
 // beaconchain APIs instances
