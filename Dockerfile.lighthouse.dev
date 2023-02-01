@@ -1,0 +1,6 @@
+FROM sigp/lighthouse:latest-modern
+
+RUN echo "api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d" > /root/.lighthouse/validators/api-token.txt
+
+CMD [ "lighthouse", "--network=prater", "validator", "--enable-doppelganger-protection", "--init-slashing-protection", "--beacon-node=http://beacon-chain.lighthouse-prater.dappnode:3500", "--graffiti=validating_from_DAppNode", "--http", "--http-address=0.0.0.0", "--http-port=3500", "--http-allow-origin=*", "--unencrypted-http-transport" ]
+      
