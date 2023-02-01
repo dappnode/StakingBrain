@@ -3,7 +3,7 @@ import { expect } from "chai";
 import sinon from "sinon";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
-import { Web3SignerApiClient } from "../../../../src/modules/apiClients/web3signerApiClient/index.js";
+import { Web3SignerApi } from "../../../../src/modules/apiClients/web3signer/index.js";
 
 describe("DataBase", () => {
   const testDbName = "testDb.json";
@@ -32,7 +32,7 @@ describe("DataBase", () => {
       async function databaseMigration(): Promise<void> {
         throw new Error("Database migration failed");
       }
-      const signerApi = sinon.createStubInstance(Web3SignerApiClient);
+      const signerApi = sinon.createStubInstance(Web3SignerApi);
       sinon.stub(db, <any>"databaseMigration").callsFake(databaseMigration);
       await db.initialize(signerApi);
 
@@ -47,7 +47,7 @@ describe("DataBase", () => {
     it("Should do nothing if the database file exists and is valid", () => {
       const db = new BrainDataBase(testDbName);
       fs.writeFileSync(testDbName, JSON.stringify({}));
-      const signerApi = sinon.createStubInstance(Web3SignerApiClient);
+      const signerApi = sinon.createStubInstance(Web3SignerApi);
       db.initialize(signerApi);
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
