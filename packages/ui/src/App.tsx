@@ -34,11 +34,8 @@ function App(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      signerGetStatus();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    signerGetStatus();
+  }, [30 * 1000]);
 
   async function signerGetStatus(): Promise<void> {
     try {
