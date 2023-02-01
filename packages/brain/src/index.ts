@@ -24,14 +24,15 @@ export const {
   beaconchainUrl,
   signerUrl,
   token,
+  host,
 } = loadStakerConfig();
 logger.debug(
   `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}}`
 );
 
 // Create API instances. Must preceed db initialization
-export const signerApi = new Web3SignerApi({ baseUrl: signerUrl });
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
+export const signerApi = new Web3SignerApi({ baseUrl: signerUrl, host });
+export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl, host });
 // TODO: add validator and beaconchain APIs instances
 
 // Create DB instance

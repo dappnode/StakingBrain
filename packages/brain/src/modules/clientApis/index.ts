@@ -2,12 +2,14 @@ import { ApiParams } from "@stakingbrain/common";
 
 export class StandardApi {
   baseUrl: string;
+  host: string;
   authToken?: string;
   keymanagerEndpoint?: string;
 
   constructor(apiParams: ApiParams) {
     this.authToken = apiParams.authToken;
     this.baseUrl = apiParams.baseUrl;
+    this.host = apiParams.host;
     this.keymanagerEndpoint = apiParams.apiPath;
   }
 

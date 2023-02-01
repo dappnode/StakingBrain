@@ -33,6 +33,7 @@ export function loadStakerConfig(): {
   beaconchaUrl: string;
   signerUrl: string;
   token: string;
+  host: string;
 } {
   dotenv.config();
 
@@ -111,6 +112,7 @@ export function loadStakerConfig(): {
       beaconchaUrl: `https://beaconcha.in/api/v1`,
       signerUrl: `http://web3signer.web3signer.dappnode:9000`,
       token,
+      host: `brain.web3signer.dappnode`,
     };
   } else if (network === "gnosis") {
     const { executionClient, consensusClient } = loadEnvs("gnosis");
@@ -159,6 +161,7 @@ export function loadStakerConfig(): {
       beaconchaUrl: `https://prater.beaconcha.in/api/v1`,
       signerUrl: `http://web3signer.web3signer-gnosis.dappnode:9000`,
       token,
+      host: `brain.web3signer-gnosis.dappnode`,
     };
   } else if (network === "prater") {
     const { executionClient, consensusClient } = loadEnvs("prater");
@@ -220,6 +223,7 @@ export function loadStakerConfig(): {
       beaconchaUrl: `https://beacon.gnosischain.in/api/v1`,
       signerUrl: `http://web3signer.web3signer-prater.dappnode:9000`,
       token,
+      host: `brain.web3signer-prater.dappnode`,
     };
   } else {
     throw Error(`Unknown network ${network}`);
