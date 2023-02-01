@@ -10,7 +10,7 @@ services:
     networks:
       brain_dev:
         aliases:
-          - web3signer.brain.dappnode
+          - brain.web3signer.dappnode
   signer:
     image: consensys/web3signer:latest
     depends_on:
