@@ -18,6 +18,7 @@ RUN apk add --no-cache --virtual .build-deps \
   curl \
   && rm -rf /var/cache/apk/*
 
+COPY ./packages/brain/tls /app/packages/brain/src/
 COPY entrypoint-dev.sh /usr/local/bin/entrypoint-dev.sh
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint-dev.sh" ]

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import sinon from "sinon";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
-import { Web3SignerApi } from "../../../../src/modules/clientApis/web3signerApi/index.js";
+import { Web3SignerApi } from "../../../../src/modules/apiClients/web3signer/index.js";
 
 describe("DataBase", () => {
   const testDbName = "testDb.json";

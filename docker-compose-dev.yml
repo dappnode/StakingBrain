@@ -8,13 +8,15 @@ services:
     volumes:
       - .:/app
     environment:
-      - NETWORK=mainnet
-      - _DAPPNODE_CONSENSUS_CLIENT_MAINNET=prysm.dnp.dappnode.eth
+      - NETWORK=prater
+      - _DAPPNODE_CONSENSUS_CLIENT_MAINNET=teku.dnp.dappnode.eth
       - _DAPPNODE_EXECUTION_CLIENT_MAINNET_VERSION=geth.dnp.dappnode.eth
+      - _DAPPNODE_CONSENSUS_CLIENT_PRATER=teku-prater.dnp.dappnode.eth
+      - _DAPPNODE_EXECUTION_CLIENT_PRATER_VERSION=goerli-geth.dnp.dappnode.eth
     networks:
       dncore_network:
         aliases:
-          - brain.web3signer.dappnode
+          - brain.web3signer-prater.dappnode
   signer:
     image: consensys/web3signer:latest
     depends_on:
@@ -27,20 +29,20 @@ services:
         "--key-store-path=/keystores",
         "--http-listen-port=9000",
         "--http-listen-host=0.0.0.0",
-        "--http-host-allowlist=validator.prysm.dappnode,brain.web3signer.dappnode",
+        "--http-host-allowlist=validator.prysm-prater.dappnode,brain.web3signer-prater.dappnode",
         "--http-cors-origins=*",
         "--idle-connection-timeout-seconds=90",
         "eth2",
-        "--network=mainnet",
-        "--slashing-protection-db-url=jdbc:postgresql://postgres.web3signer.dappnode:5432/web3signer-mainnet",
+        "--network=prater",
+        "--slashing-protection-db-url=jdbc:postgresql://postgres.web3signer-prater.dappnode:5432/web3signer-prater",
         "--slashing-protection-db-username=postgres",
-        "--slashing-protection-db-password=mainnet",
+        "--slashing-protection-db-password=prater",
         "--key-manager-api-enabled=true",
       ]
     networks:
       dncore_network:
         aliases:
-          - web3signer.web3signer.dappnode
+          - web3signer.web3signer-prater.dappnode
   db:
     build:
       context: .
@@ -58,19 +60,19 @@ services:
     networks:
       dncore_network:
         aliases:
-          - postgres.web3signer.dappnode
+          - postgres.web3signer-prater.dappnode
 
   prysm-validator:
     image: gcr.io/prysmaticlabs/prysm/validator:latest
     container_name: prysm-validator
     command:
       [
-        "--mainnet",
+        "--prater",
         "--datadir=/data",
         "--wallet-dir=/root/.eth2validators",
-        "--beacon-rpc-provider=beacon-chain.prysm.dappnode:4000",
-        "--beacon-rpc-gateway-provider=beacon-chain.prysm.dappnode:3500",
-        "--validators-external-signer-url=http://web3signer.web3signer.dappnode:9000",
+        "--beacon-rpc-provider=beacon-chain.prysm-prater.dappnode:4000",
+        "--beacon-rpc-gateway-provider=beacon-chain.prysm-prater.dappnode:3500",
+        "--validators-external-signer-url=http://web3signer.web3signer-prater.dappnode:9000",
         "--grpc-gateway-host=0.0.0.0 ",
         "--grpc-gateway-port=3500",
         "--grpc-gateway-corsdomain=http://0.0.0.0:3500",
@@ -83,7 +85,7 @@ services:
     networks:
       dncore_network:
         aliases:
-          - validator.prysm.dappnode
+          - validator.prysm-prater.dappnode
 
 networks:
   dncore_network:

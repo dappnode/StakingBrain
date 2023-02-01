@@ -3,7 +3,7 @@ import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
 import logger from "../logger/index.js";
-import { Web3SignerApi } from "../clientApis/web3signerApi/index.js";
+import { Web3SignerApi } from "../apiClients/web3signer/index.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema

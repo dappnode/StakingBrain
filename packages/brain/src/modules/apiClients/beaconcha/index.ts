@@ -48,12 +48,10 @@ export class BeaconchaApi extends StandardApi {
   public async fetchValidatorsInfo(
     pubkeys: string[]
   ): Promise<BeaconchaGetResponse> {
-    const fullUrl = `${this.baseUrl}${
-      this.keymanagerEndpoint
-    }validator/${pubkeys.join(",")}`;
+    const endpoint = `/api/v1/validator/${pubkeys.join(",")}`;
 
     try {
-      return (await this.request("GET", fullUrl)) as BeaconchaGetResponse;
+      return (await this.request("GET", endpoint)) as BeaconchaGetResponse;
     } catch (e) {
       return {
         status: "error",

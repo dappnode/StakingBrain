@@ -48,11 +48,13 @@ export class Web3SignerApi extends StandardApi {
       }
       return (await this.request(
         "POST",
-        this.baseUrl + this.keymanagerEndpoint,
+        this.keymanagerEndpoint,
         JSON.stringify(data)
       )) as Web3signerPostResponse;
     } catch (e) {
-      throw Error(`Error importing (POST) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error importing (POST) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -69,11 +71,13 @@ export class Web3SignerApi extends StandardApi {
       });
       return (await this.request(
         "DELETE",
-        this.baseUrl + this.keymanagerEndpoint,
+        this.keymanagerEndpoint,
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
-      throw Error(`Error deleting (DELETE) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error deleting (DELETE) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -85,10 +89,12 @@ export class Web3SignerApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        this.baseUrl + this.keymanagerEndpoint
+        this.keymanagerEndpoint
       )) as Web3signerGetResponse;
     } catch (e) {
-      throw Error(`Error getting (GET) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error getting (GET) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -100,10 +106,21 @@ export class Web3SignerApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        this.baseUrl + this.serverStatusEndpoint
+        this.serverStatusEndpoint
       )) as Web3signerHealthcheckResponse;
     } catch (e) {
-      throw Error(`Error getting (GET) server status to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error getting (GET) server status to ${this.requestOptions.hostname}: ${e}`
+      );
     }
+  }
+
+  private async readText(files: File[]): Promise<string[]> {
+    const data: string[] = [];
+    for (const file of files) {
+      const text = await file.text();
+      data.push(text);
+    }
+    return data;
   }
 }

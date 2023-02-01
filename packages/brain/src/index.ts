@@ -3,14 +3,16 @@ import { fileURLToPath } from "url";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
-import { Web3SignerApi } from "./modules/clientApis/web3signerApi/index.js";
-import { BeaconchaApi } from "./modules/clientApis/beaconchaApi/index.js";
+import { Web3SignerApi } from "./modules/apiClients/web3signer/index.js";
+import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
+import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import { job } from "./modules/cron/index.js";
 
+export const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const mode = process.env.NODE_ENV || "development";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 logger.debug(`Running app in mode: ${mode}`);
 
 // Load staker config
@@ -25,15 +27,24 @@ export const {
   signerUrl,
   token,
   host,
+  tlsCert,
 } = loadStakerConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token} \n  - Host: ${host}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}`
 );
 
 // Create API instances. Must preceed db initialization
-export const signerApi = new Web3SignerApi({ baseUrl: signerUrl, host });
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl, host });
-// TODO: add validator and beaconchain APIs instances
+export const signerApi = new Web3SignerApi({
+  baseUrl: signerUrl,
+  authToken: token,
+  host,
+});
+export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
+export const validatorApi = new ValidatorApi({
+  baseUrl: validatorUrl,
+  authToken: token,
+  tlsCert,
+});
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
