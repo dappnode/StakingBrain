@@ -48,11 +48,14 @@ export class Web3SignerApiClient extends StandardApiClient {
       }
       return (await this.request(
         "POST",
-        this.baseUrl + this.keymanagerEndpoint,
+        this.keymanagerEndpoint,
+        false, //True for Teku
         JSON.stringify(data)
       )) as Web3signerPostResponse;
     } catch (e) {
-      throw Error(`Error importing (POST) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error importing (POST) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -69,11 +72,14 @@ export class Web3SignerApiClient extends StandardApiClient {
       });
       return (await this.request(
         "DELETE",
-        this.baseUrl + this.keymanagerEndpoint,
+        this.keymanagerEndpoint,
+        false, //True for Teku
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
-      throw Error(`Error deleting (DELETE) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error deleting (DELETE) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -85,10 +91,12 @@ export class Web3SignerApiClient extends StandardApiClient {
     try {
       return (await this.request(
         "GET",
-        this.baseUrl + this.keymanagerEndpoint
+        this.keymanagerEndpoint
       )) as Web3signerGetResponse;
     } catch (e) {
-      throw Error(`Error getting (GET) keystores to ${this.baseUrl}: ${e}`);
+      throw Error(
+        `Error getting (GET) keystores to ${this.requestOptions.hostname}: ${e}`
+      );
     }
   }
 
@@ -100,7 +108,7 @@ export class Web3SignerApiClient extends StandardApiClient {
     try {
       return (await this.request(
         "GET",
-        this.baseUrl + this.serverStatusEndpoint
+        this.serverStatusEndpoint
       )) as Web3signerHealthcheckResponse;
     } catch (e) {
       throw Error(`Error getting (GET) server status to ${this.baseUrl}: ${e}`);
