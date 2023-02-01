@@ -1,7 +1,11 @@
 import {
+  ValidatorDeleteFeeResponse,
+  ValidatorDeleteRemoteKeysRequest,
+  ValidatorDeleteRemoteKeysResponse,
   ValidatorGetFeeResponse,
   ValidatorGetRemoteKeysResponse,
   ValidatorPostFeeResponse,
+  ValidatorPostRemoteKeysRequest,
   ValidatorPostRemoteKeysResponse,
 } from "@stakingbrain/common";
 
@@ -49,6 +53,25 @@ export class ValidatorApi extends StandardApi {
   }
 
   /**
+   * Removes the validator client fee recipient for a specific public key.
+   * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/deleteFeeRecipient
+   */
+  public async deleteFeeRecipient(
+    publicKey: string
+  ): Promise<ValidatorDeleteFeeResponse> {
+    try {
+      return (await this.request(
+        "DELETE",
+        "/eth/v1/validator/" + publicKey + "/feerecipient"
+      )) as ValidatorPostFeeResponse;
+    } catch (e) {
+      throw Error(
+        `Error removing (DELETE) fee recipient for ${publicKey} on ${this.requestOptions.hostname}: ${e}`
+      );
+    }
+  }
+
+  /**
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
@@ -68,15 +91,38 @@ export class ValidatorApi extends StandardApi {
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
-  public async postRemoteKeys(): Promise<ValidatorPostRemoteKeysResponse> {
+  public async postRemoteKeys(
+    remoteKeys: ValidatorPostRemoteKeysRequest
+  ): Promise<ValidatorPostRemoteKeysResponse> {
     try {
       return (await this.request(
         "POST",
-        "/eth/v1/remotekeys"
+        "/eth/v1/remotekeys",
+        JSON.stringify(remoteKeys)
       )) as ValidatorPostRemoteKeysResponse;
     } catch (e) {
       throw Error(
         `Error posting (POST) remote keys to ${this.requestOptions.hostname}: ${e}`
+      );
+    }
+  }
+
+  /**
+   * Delete the selected keys from the remote keystore in the validator client.
+   * https://ethereum.github.io/keymanager-APIs/#/Remote%20Keystore/deleteRemoteKeys
+   */
+  public async deleteRemoteKeys(
+    pubkeys: ValidatorDeleteRemoteKeysRequest
+  ): Promise<ValidatorDeleteRemoteKeysResponse> {
+    try {
+      return (await this.request(
+        "DELETE",
+        "/eth/v1/remotekeys",
+        JSON.stringify(pubkeys)
+      )) as ValidatorDeleteRemoteKeysResponse;
+    } catch (e) {
+      throw Error(
+        `Error deleting (DELETE) remote keys from ${this.requestOptions.hostname}: ${e}`
       );
     }
   }

@@ -14,6 +14,10 @@ export interface ValidatorPostFeeResponse {
   message: { message: string };
 }
 
+export interface ValidatorDeleteFeeResponse {
+  message: { message: string };
+}
+
 export interface ValidatorPostRemoteKeysRequest {
   remote_keys: {
     pubkey: string;
