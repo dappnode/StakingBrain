@@ -24,7 +24,7 @@ export class StandardApi {
       "Content-Type": "application/json",
       Accept: "application/json",
       Authorization: "",
-      Host: "",
+      Host: this.host,
     };
 
     if (this.authToken) {
