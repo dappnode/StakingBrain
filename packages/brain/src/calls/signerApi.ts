@@ -8,22 +8,22 @@ import {
 } from "@stakingbrain/common";
 import { signerApi } from "../index.js";
 
-export async function importKeystores(
+export async function signerImportKeystores(
   postRequest: Web3signerPostRequest
 ): Promise<Web3signerPostResponse> {
   return await signerApi.importKeystores(postRequest);
 }
 
-export async function deleteKeystores(
+export async function signerDeleteKeystores(
   deleteRequest: Web3signerDeleteRequest
 ): Promise<Web3signerDeleteResponse> {
   return await signerApi.deleteKeystores(deleteRequest);
 }
 
-export async function getKeystores(): Promise<Web3signerGetResponse> {
+export async function signerGetKeystores(): Promise<Web3signerGetResponse> {
   return await signerApi.getKeystores();
 }
 
-export async function getStatus(): Promise<Web3signerHealthcheckResponse> {
+export async function signerGetStatus(): Promise<Web3signerHealthcheckResponse> {
   return await signerApi.getStatus();
 }

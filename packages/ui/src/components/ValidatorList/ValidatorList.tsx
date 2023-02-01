@@ -38,7 +38,7 @@ export default function ValidatorList({
   async function getKeystores() {
     try {
       setLoading(true);
-      setKeystoresGet(await api.getKeystores());
+      setKeystoresGet(await api.signerGetKeystores());
       setKeystoresGetError(undefined);
       setLoading(false);
     } catch (e) {
@@ -57,7 +57,9 @@ export default function ValidatorList({
 
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
-    const allValidatorsInfo = await api.fetchAllValidatorsInfo(keystoresGet);
+    const allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
+      keystoresGet
+    );
 
     try {
       const validatorSummaryURL = buildValidatorSummaryURL({

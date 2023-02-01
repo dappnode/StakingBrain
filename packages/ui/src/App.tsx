@@ -44,7 +44,7 @@ function App(): JSX.Element {
 
   const showSignerStatus = async (): Promise<void> => {
     try {
-      const status = (await api.getStatus()).status;
+      const status = (await api.signerGetStatus()).status;
       setSignerStatus(status);
     } catch (e) {
       console.error("Error on showSignerStatus", e);

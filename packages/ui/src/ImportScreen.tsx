@@ -99,7 +99,7 @@ export default function ImportScreen(): JSX.Element {
       setImportStatus(ImportStatus.Importing);
       handleClickOpenDialog();
       setKeystoresPostResponse(
-        await api.importKeystores({
+        await api.signerImportKeystores({
           keystores: acceptedFiles.map((f) => f.file),
           passwords,
           slashingProtection: slashingFile,
