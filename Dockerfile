@@ -53,6 +53,9 @@ RUN yarn build
 
 FROM node:${NODE_VERSION}-alpine 
 WORKDIR /app
+
+COPY ./packages/brain/tls .
+
 # Copy root app
 COPY --from=build-stage /app/node_modules ./node_modules
 COPY --from=build-stage /app/package.json ./package.json

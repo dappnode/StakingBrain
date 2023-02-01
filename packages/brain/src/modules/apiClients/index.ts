@@ -1,4 +1,3 @@
-import { readFileSync } from "fs";
 import https from "node:https";
 import http from "node:http";
 
@@ -24,19 +23,9 @@ export class StandardApiClient {
       ...(apiParams.host && { Host: apiParams.host }),
     };
 
-    //Check if both cert path and password are provided
-    if (apiParams.certFile?.path && apiParams.certFile?.password) {
-      try {
-        this.requestOptions.pfx = readFileSync(apiParams.certFile.path);
-        this.requestOptions.passphrase = readFileSync(
-          apiParams.certFile.password
-        ).toString();
-      } catch (e) {
-        console.log(
-          "Error while reading certificate file or its password: " + e
-        );
-        throw e;
-      }
+    if (apiParams.tls) {
+      this.requestOptions.pfx = apiParams.tls;
+      this.requestOptions.passphrase = "dappnode";
     }
   }
 
@@ -44,7 +33,9 @@ export class StandardApiClient {
     method: AllowedMethods,
     endpoint: string,
     tls = false,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     let req: http.ClientRequest;
 

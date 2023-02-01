@@ -8,7 +8,7 @@ export interface ApiParams {
   host?: string;
   apiPath?: string;
   authToken?: string;
-  certFile?: CertFile;
+  tls?: Buffer;
 }
 
 export type AllowedMethods = "GET" | "POST" | "DELETE";

@@ -7,12 +7,12 @@ import { Web3SignerApiClient } from "./modules/apiClients/web3signerApiClient/in
 import { BeaconchaApiClient } from "./modules/apiClients/beaconchaApiClient/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
-import { job } from "./modules/cron/index.js";
 import { ValidatorApiClient } from "./modules/apiClients/validatorApiClient/index.js";
-import { CertFile } from "@stakingbrain/common";
+import { job } from "./modules/cron/index.js";
+
+export const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const mode = process.env.NODE_ENV || "development";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 logger.debug(`Running app in mode: ${mode}`);
 
 // Load staker config
@@ -27,9 +27,10 @@ export const {
   signerUrl,
   token,
   host,
+  tls,
 } = loadStakerConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token} \n  - Host: ${host}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}`
 );
 
 // Create API instances. Must preceed db initialization
@@ -39,25 +40,11 @@ export const signerApi = new Web3SignerApiClient({
   host,
 });
 export const beaconchaApi = new BeaconchaApiClient({ baseUrl: beaconchaUrl });
-
-const tekuCertFile: CertFile = {
-  path: path.resolve(
-    __dirname,
-    "modules/apiClients/validatorApiClient/security/teku/prater/teku_client_keystore.p12"
-  ),
-  password: path.resolve(
-    __dirname,
-    "modules/apiClients/validatorApiClient/security/teku/prater/teku_keystore_password.txt"
-  ),
-};
-
 export const validatorApi = new ValidatorApiClient({
   baseUrl: validatorUrl,
   authToken: token,
-  certFile: consensusClient.includes("teku") ? tekuCertFile : undefined,
+  tls,
 });
-
-// beaconchain APIs instances
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
