@@ -44,10 +44,7 @@ export class StandardApiClient {
     let req: http.ClientRequest;
 
     this.requestOptions.method = method;
-    this.requestOptions.path =
-      this.requestOptions.path && this.requestOptions.path !== "/"
-        ? this.requestOptions.path + endpoint
-        : endpoint;
+    this.requestOptions.path = endpoint;
 
     if (tls) {
       //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
