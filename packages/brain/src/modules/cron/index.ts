@@ -15,16 +15,19 @@ import { StakingBrainDb } from "@stakingbrain/common";
 export async function reloadData(): Promise<void> {
   try {
     // 1. Read DB (pubkeys, fee recipients, tags)
+    // TODO: add test
     brainDb.read();
     if (!brainDb.data) logger.warn(`[Cron] Database is empty`);
     // 2. GET signer API pubkeys
+    // TODO: add test
     const signerPubkeys = (await signerApi.getKeystores()).data.map(
       (keystore) => keystore.validating_pubkey
     );
     // 3. GET validator API pubkeys and fee recipients
+    // TODO: add test
     const validatorPubkeysFeeRecipients = new Map();
     const validatorPubkeys =
-      (await validatorApi.getRemoteKeys()).data?.map(
+      (await validatorApi.getRemoteKeys()).data.map(
         (keystore) => keystore.pubkey
       ) || [];
     for (const pubkey of validatorPubkeys) {
@@ -32,7 +35,8 @@ export async function reloadData(): Promise<void> {
       validatorPubkeysFeeRecipients.set(pubkey, feeRecipient);
     }
     // 4. DELETE from signer API pubkeys that are not in DB
-    const signerPubkeysToRemove = signerPubkeys?.filter(
+    // TODO: add test
+    const signerPubkeysToRemove = signerPubkeys.filter(
       (pubkey) => !(brainDb.data as StakingBrainDb)[pubkey]
     );
     if (signerPubkeysToRemove.length > 0) {
@@ -42,6 +46,7 @@ export async function reloadData(): Promise<void> {
       await signerApi.deleteKeystores({ pubkeys: signerPubkeysToRemove });
     }
     // 5. DELETE from DB pubkeys that are not in signer API
+    // TODO: add test
     const brainDbPubkeysToRemove = Object.keys(
       brainDb.data as StakingBrainDb
     ).filter((pubkey) => !signerPubkeys.includes(pubkey));
@@ -52,6 +57,7 @@ export async function reloadData(): Promise<void> {
       brainDb.deletePubkeys(brainDbPubkeysToRemove);
     }
     // 6. POST to validator API pubkeys that are in DB and not in validator API
+    // TODO: add test
     const brainDbPubkeysToAdd = Object.keys(
       brainDb.data as StakingBrainDb
     ).filter((pubkey) => !validatorPubkeys.includes(pubkey));
@@ -67,6 +73,7 @@ export async function reloadData(): Promise<void> {
       });
     }
     // 7. DELETE to validator API pubkeys that are in validator API and not in DB
+    // TODO: add test
     const validatorPubkeysToRemove = validatorPubkeys.filter(
       (pubkey) => !(brainDb.data as StakingBrainDb)[pubkey]
     );
@@ -79,6 +86,7 @@ export async function reloadData(): Promise<void> {
       });
     }
     // 8. POST to validator API fee recipients that are in DB and not in validator API
+    // TODO: add test
     const brainDbPubkeysFeeRecipientsToAdd = Array.from(
       validatorPubkeysFeeRecipients.entries()
     ).filter(
