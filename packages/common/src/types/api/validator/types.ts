@@ -1,21 +1,12 @@
 export interface ValidatorGetFeeResponse {
-  data?: {
+  data: {
     pubkey: string;
     ethaddress: string;
   };
-  message?: { message: string };
 }
 
 export interface ValidatorPostFeeRequest {
   ethaddress: string;
-}
-
-export interface ValidatorPostFeeResponse {
-  message: { message: string };
-}
-
-export interface ValidatorDeleteFeeResponse {
-  message: { message: string };
 }
 
 export interface ValidatorPostRemoteKeysRequest {
@@ -26,28 +17,25 @@ export interface ValidatorPostRemoteKeysRequest {
 }
 
 export interface ValidatorPostRemoteKeysResponse {
-  data?: {
+  data: {
     status: string;
     message: string;
   }[];
-  message?: { message: string };
 }
 export interface ValidatorGetRemoteKeysResponse {
-  data?: {
+  data: {
     pubkey: string;
     url: string;
     readonly: boolean;
   }[];
-  message?: { message: string };
 }
 export interface ValidatorDeleteRemoteKeysRequest {
   pubkeys: string[];
 }
 
 export interface ValidatorDeleteRemoteKeysResponse {
-  data?: {
+  data: {
     status: string;
     message: string;
   }[];
-  message?: { message: string };
 }

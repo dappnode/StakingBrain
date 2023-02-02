@@ -45,7 +45,6 @@ export class StandardApi {
     if (this.useTls) {
       //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       this.requestOptions.rejectUnauthorized = false;
-
       req = https.request(this.requestOptions);
     } else {
       req = http.request(this.requestOptions);
