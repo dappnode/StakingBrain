@@ -33,23 +33,10 @@ export class Web3SignerApi extends StandardApi {
     postRequest: Web3signerPostRequest
   ): Promise<Web3signerPostResponse> {
     try {
-      let data;
-      if (postRequest.slashingProtection) {
-        data = {
-          keystores: await this.readText(postRequest.keystores),
-          passwords: postRequest.passwords,
-          slashing_protection: await postRequest.slashingProtection?.text(),
-        };
-      } else {
-        data = {
-          keystores: await this.readText(postRequest.keystores),
-          passwords: postRequest.passwords,
-        };
-      }
       return (await this.request(
         "POST",
         this.keymanagerEndpoint,
-        JSON.stringify(data)
+        JSON.stringify(postRequest)
       )) as Web3signerPostResponse;
     } catch (e) {
       throw Error(
@@ -113,14 +100,5 @@ export class Web3SignerApi extends StandardApi {
         `Error getting (GET) server status to ${this.requestOptions.hostname}: ${e}`
       );
     }
-  }
-
-  private async readText(files: File[]): Promise<string[]> {
-    const data: string[] = [];
-    for (const file of files) {
-      const text = await file.text();
-      data.push(text);
-    }
-    return data;
   }
 }
