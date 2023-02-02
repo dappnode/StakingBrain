@@ -1,10 +1,8 @@
 import {
-  ValidatorDeleteFeeResponse,
   ValidatorDeleteRemoteKeysRequest,
   ValidatorDeleteRemoteKeysResponse,
   ValidatorGetFeeResponse,
   ValidatorGetRemoteKeysResponse,
-  ValidatorPostFeeResponse,
   ValidatorPostRemoteKeysRequest,
   ValidatorPostRemoteKeysResponse,
 } from "@stakingbrain/common";
@@ -38,13 +36,13 @@ export class ValidatorApi extends StandardApi {
   public async setFeeRecipient(
     newFeeRecipient: string,
     publicKey: string
-  ): Promise<ValidatorPostFeeResponse> {
+  ): Promise<void> {
     try {
-      return (await this.request(
+      await this.request(
         "POST",
         "/eth/v1/validator/" + publicKey + "/feerecipient",
         JSON.stringify({ ethaddress: newFeeRecipient })
-      )) as ValidatorPostFeeResponse;
+      );
     } catch (e) {
       throw Error(
         `Error setting (POST) fee recipient for ${publicKey} to ${newFeeRecipient} on ${this.requestOptions.hostname}: ${e}`
@@ -56,14 +54,12 @@ export class ValidatorApi extends StandardApi {
    * Removes the validator client fee recipient for a specific public key.
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/deleteFeeRecipient
    */
-  public async deleteFeeRecipient(
-    publicKey: string
-  ): Promise<ValidatorDeleteFeeResponse> {
+  public async deleteFeeRecipient(publicKey: string): Promise<void> {
     try {
-      return (await this.request(
+      await this.request(
         "DELETE",
         "/eth/v1/validator/" + publicKey + "/feerecipient"
-      )) as ValidatorPostFeeResponse;
+      );
     } catch (e) {
       throw Error(
         `Error removing (DELETE) fee recipient for ${publicKey} on ${this.requestOptions.hostname}: ${e}`
