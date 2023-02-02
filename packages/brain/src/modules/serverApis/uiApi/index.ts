@@ -33,8 +33,7 @@ export function startUiServer(uiBuildPath: string): void {
           .then(callback)
           .catch((error) => callback({ error }))
           .catch((error) => {
-            error.message = `Error on JSON RPC over WS cb: ${error.message}`;
-            logger.error(error);
+            logger.error(`on JSON RPC over WS cb`, error);
           });
       }
     );
