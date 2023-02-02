@@ -2,9 +2,9 @@ import {
   Web3signerDeleteResponse,
   Web3signerGetResponse,
   Web3signerPostResponse,
-  Web3signerPostRequest,
   Web3signerDeleteRequest,
   Web3signerHealthcheckResponse,
+  Web3signerPostRequestFromUi,
 } from "./types/api/web3signer/types.js";
 import { BeaconchaGetResponse } from "./types/api/beaconchain/types.js";
 import { StakerConfig, Network } from "./types/network/types.js";
@@ -19,7 +19,7 @@ export interface Routes {
   ) => Promise<BeaconchaGetResponse>;
   // SignerApi
   signerImportKeystores: (
-    postRequest: Web3signerPostRequest
+    postRequest: Web3signerPostRequestFromUi
   ) => Promise<Web3signerPostResponse>;
   signerDeleteKeystores: (
     deleteRequest: Web3signerDeleteRequest

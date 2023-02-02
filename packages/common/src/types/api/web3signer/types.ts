@@ -8,9 +8,15 @@ export interface Web3signerGetResponse {
   }[];
 }
 export interface Web3signerPostRequest {
+  keystores: string[];
+  passwords: string[];
+  slashing_protection?: string;
+}
+
+export interface Web3signerPostRequestFromUi {
   keystores: File[];
   passwords: string[];
-  slashingProtection: File | undefined;
+  slashing_protection?: File;
 }
 export interface Web3signerPostResponse {
   data: {

@@ -36,7 +36,7 @@ export function startLaunchpadApi(): void {
       .importKeystores({
         keystores,
         passwords,
-        slashingProtection,
+        slashing_protection: slashingProtection,
       })
       .catch((err) => {
         logger.error(err);

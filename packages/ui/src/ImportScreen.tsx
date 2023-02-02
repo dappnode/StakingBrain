@@ -102,7 +102,7 @@ export default function ImportScreen(): JSX.Element {
         await api.signerImportKeystores({
           keystores: acceptedFiles.map((f) => f.file),
           passwords,
-          slashingProtection: slashingFile,
+          slashing_protection: slashingFile,
         })
       );
       setKeystoresPostError(undefined);
