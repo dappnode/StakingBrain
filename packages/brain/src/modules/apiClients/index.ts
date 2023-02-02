@@ -21,6 +21,7 @@ export class StandardApi {
       Accept: "application/json",
       Authorization: "Bearer " + apiParams.authToken,
       ...(apiParams.host && { Host: apiParams.host }),
+      "Transfer-Encoding": "chunked", //To avoid the body being ignored in DELETE requests
     };
 
     if (apiParams.tlsCert) {
