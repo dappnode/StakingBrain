@@ -1,7 +1,8 @@
-import { CronJob } from "cron";
 import { brainDb, signerApi, signerUrl, validatorApi } from "../../index.js";
 import logger from "../logger/index.js";
 import { StakingBrainDb } from "@stakingbrain/common";
+
+// execute the reloadData async function every minute
 
 /**
  * The cronjob must execute the follwing tasks:
@@ -11,9 +12,8 @@ import { StakingBrainDb } from "@stakingbrain/common";
  *
  * WARNING: What happens if there is no fee recipient for a given validator? default?
  */
-export const job = new CronJob(
-  "* * * * * *",
-  async function (): Promise<void> {
+export async function reloadData(): Promise<void> {
+  try {
     // 1. Read DB (pubkeys, fee recipients, tags)
     brainDb.read();
     if (!brainDb.data) logger.warn(`[Cron] Database is empty`);
@@ -94,7 +94,8 @@ export const job = new CronJob(
         await validatorApi.setFeeRecipient(feeRecipient, pubkey);
       }
     }
-  },
-  null,
-  false
-);
+  } catch (e) {
+    console.log("hey");
+    logger.error(`[Cron] ${e}`);
+  }
+}

@@ -8,7 +8,7 @@ import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
-import { job } from "./modules/cron/index.js";
+import { reloadData } from "./modules/cron/index.js";
 
 export const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,4 +59,6 @@ startUiServer(path.resolve(__dirname, "uiBuild"));
 startLaunchpadApi();
 
 // Start cron
-job.start();
+setInterval(async () => {
+  await reloadData();
+}, 2000);
