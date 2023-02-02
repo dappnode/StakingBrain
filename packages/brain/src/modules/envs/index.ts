@@ -239,7 +239,7 @@ export function loadStakerConfig(): {
       beaconchaUrl: `https://beacon.gnosischain.in/api/v1`,
       signerUrl: `http://web3signer.web3signer-prater.dappnode:9000`,
       token,
-      host: `brain.web3signer-prater.dappnode`,
+      host: `web3signer.web3signer-prater.dappnode`,
       tlsCert,
     };
   } else {

@@ -61,4 +61,4 @@ startLaunchpadApi();
 // Start cron
 setInterval(async () => {
   await reloadData();
-}, 2000);
+}, 10 * 1000);

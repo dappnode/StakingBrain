@@ -32,7 +32,7 @@ export async function reloadData(): Promise<void> {
       validatorPubkeysFeeRecipients.set(pubkey, feeRecipient);
     }
     // 4. DELETE from signer API pubkeys that are not in DB
-    const signerPubkeysToRemove = signerPubkeys.filter(
+    const signerPubkeysToRemove = signerPubkeys?.filter(
       (pubkey) => !(brainDb.data as StakingBrainDb)[pubkey]
     );
     if (signerPubkeysToRemove.length > 0) {
@@ -95,7 +95,24 @@ export async function reloadData(): Promise<void> {
       }
     }
   } catch (e) {
-    console.log("hey");
-    logger.error(`[Cron] ${e}`);
+    console.error(e);
+    // TODO: handle all possible errors:
+    /**
+     * ERROR PKG not installed (addr not found)
+      ```
+      Error: getaddrinfo ENOTFOUND validator.lighthouse-prater.dappnode
+        at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:107:26) {
+        errno: -3008,
+        code: 'ENOTFOUND',
+        syscall: 'getaddrinfo',
+        hostname: 'validator.lighthouse-prater.dappnode'
+        }
+       ```
+
+      * ERROR brain host not authorized
+       ```
+       { message: 'Host not authorized.' }
+       ```
+     */
   }
 }
