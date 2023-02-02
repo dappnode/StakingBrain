@@ -52,7 +52,6 @@ await brainDb.initialize(signerApi).catch((e) => {
   logger.error(e);
   process.exit(1);
 });
-// TODO: Right after initializing db it should be updated with sources of truth: signer and validator
 logger.debug(brainDb.data);
 
 // Start APIs
@@ -60,4 +59,4 @@ startUiServer(path.resolve(__dirname, "uiBuild"));
 startLaunchpadApi();
 
 // Start cron
-//job.start();
+job.start();
