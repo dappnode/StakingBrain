@@ -38,7 +38,6 @@ export class StandardApi {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     let req: http.ClientRequest;
-
     this.requestOptions.method = method;
     this.requestOptions.path = endpoint;
 
@@ -46,14 +45,11 @@ export class StandardApi {
       //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       this.requestOptions.rejectUnauthorized = false;
       req = https.request(this.requestOptions);
-    } else {
-      req = http.request(this.requestOptions);
-    }
+    } else req = http.request(this.requestOptions);
 
     if (body) {
-      if (req.method !== "POST") {
-        req.setHeader("Transfer-Encoding", "chunked"); //To avoid the body being ignored in DELETE requests
-      }
+      // To avoid the body being ignored in DELETE requests
+      if (req.method !== "POST") req.setHeader("Transfer-Encoding", "chunked");
       req.write(body);
     }
 

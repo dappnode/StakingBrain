@@ -44,6 +44,9 @@ export async function reloadData(): Promise<void> {
         `[Cron] Found ${signerPubkeysToRemove.length} validators to remove from signer`
       );
       await signerApi.deleteKeystores({ pubkeys: signerPubkeysToRemove });
+      logger.debug(
+        `[Cron] Deleted ${signerPubkeysToRemove.length} validators from signer`
+      );
     }
     // 5. DELETE from DB pubkeys that are not in signer API
     // TODO: add test
@@ -55,6 +58,9 @@ export async function reloadData(): Promise<void> {
         `[Cron] Found ${brainDbPubkeysToRemove.length} validators to remove from DB`
       );
       brainDb.deletePubkeys(brainDbPubkeysToRemove);
+      logger.debug(
+        `[Cron] Deleted ${brainDbPubkeysToRemove.length} validators from DB`
+      );
     }
     // 6. POST to validator API pubkeys that are in DB and not in validator API
     // TODO: add test
@@ -71,6 +77,9 @@ export async function reloadData(): Promise<void> {
           url: signerUrl,
         })),
       });
+      logger.debug(
+        `[Cron] Added ${brainDbPubkeysToAdd.length} validators to validator API`
+      );
     }
     // 7. DELETE to validator API pubkeys that are in validator API and not in DB
     // TODO: add test
@@ -84,6 +93,9 @@ export async function reloadData(): Promise<void> {
       await validatorApi.deleteRemoteKeys({
         pubkeys: validatorPubkeysToRemove,
       });
+      logger.debug(
+        `[Cron] Removed ${validatorPubkeysToRemove.length} validators from validator API`
+      );
     }
     // 8. POST to validator API fee recipients that are in DB and not in validator API
     // TODO: add test
@@ -101,9 +113,12 @@ export async function reloadData(): Promise<void> {
       for (const [pubkey, feeRecipient] of brainDbPubkeysFeeRecipientsToAdd) {
         await validatorApi.setFeeRecipient(feeRecipient, pubkey);
       }
+      logger.debug(
+        `[Cron] Added ${brainDbPubkeysFeeRecipientsToAdd.length} validators to validator API`
+      );
     }
   } catch (e) {
-    console.error(e);
+    logger.error(`[Cron] reloading data`, e);
     // TODO: handle all possible errors:
     /**
      * ERROR PKG not installed (addr not found)

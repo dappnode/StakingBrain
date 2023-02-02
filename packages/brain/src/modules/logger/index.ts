@@ -49,12 +49,13 @@ class Logger {
     }
   }
 
-  error(message: string | object | null): void {
+  error(message: string | object | null, error?: Error): void {
     if (this.logLevel === "error") {
       const errorColor = "\x1b[31m%s\x1b[0m";
       console.log(
         `${errorColor}[ERROR]${errorColor} ${this.parseMessage(message)}`
       );
+      if (error) console.error(error);
     }
   }
 

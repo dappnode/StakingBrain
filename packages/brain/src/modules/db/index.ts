@@ -51,8 +51,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       }
       // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
     } catch (e) {
-      e.message += `Unable to initialize the db ${this.dbName}`;
-      logger.error(e);
+      logger.error(`unable to initialize the db ${this.dbName}`, e);
       this.validateDb();
     }
   }
