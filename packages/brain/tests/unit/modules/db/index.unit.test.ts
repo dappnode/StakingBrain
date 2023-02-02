@@ -4,6 +4,7 @@ import sinon from "sinon";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import { Web3SignerApi } from "../../../../src/modules/apiClients/web3signer/index.js";
+import { ValidatorApi } from "../../../../src/modules/apiClients/validator/index.js";
 
 describe("DataBase", () => {
   const testDbName = "testDb.json";
@@ -33,8 +34,9 @@ describe("DataBase", () => {
         throw new Error("Database migration failed");
       }
       const signerApi = sinon.createStubInstance(Web3SignerApi);
+      const validatorApi = sinon.createStubInstance(ValidatorApi);
       sinon.stub(db, <any>"databaseMigration").callsFake(databaseMigration);
-      await db.initialize(signerApi);
+      await db.initialize(signerApi, validatorApi);
 
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
@@ -48,7 +50,8 @@ describe("DataBase", () => {
       const db = new BrainDataBase(testDbName);
       fs.writeFileSync(testDbName, JSON.stringify({}));
       const signerApi = sinon.createStubInstance(Web3SignerApi);
-      db.initialize(signerApi);
+      const validatorApi = sinon.createStubInstance(ValidatorApi);
+      db.initialize(signerApi, validatorApi);
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
       expect(db.data).to.be.empty;
