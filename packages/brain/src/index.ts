@@ -8,7 +8,7 @@ import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
 import { startUiServer } from "./modules/serverApis/uiApi/index.js";
 import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
-import { job } from "./modules/cron/index.js";
+import { reloadData } from "./modules/cron/index.js";
 
 export const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -48,11 +48,10 @@ export const validatorApi = new ValidatorApi({
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
-await brainDb.initialize(signerApi).catch((e) => {
+await brainDb.initialize(signerApi, validatorApi).catch((e) => {
   logger.error(e);
   process.exit(1);
 });
-// TODO: Right after initializing db it should be updated with sources of truth: signer and validator
 logger.debug(brainDb.data);
 
 // Start APIs
@@ -60,4 +59,6 @@ startUiServer(path.resolve(__dirname, "uiBuild"));
 startLaunchpadApi();
 
 // Start cron
-//job.start();
+setInterval(async () => {
+  await reloadData();
+}, 10 * 1000);

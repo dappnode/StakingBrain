@@ -8,7 +8,6 @@ export interface ValidatorGetFeeResponse {
 export interface ValidatorPostFeeRequest {
   ethaddress: string;
 }
-
 export interface ValidatorPostRemoteKeysRequest {
   remote_keys: {
     pubkey: string;

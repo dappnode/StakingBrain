@@ -4,6 +4,7 @@ import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
 import logger from "../logger/index.js";
 import { Web3SignerApi } from "../apiClients/web3signer/index.js";
+import { ValidatorApi } from "../apiClients/validator/index.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -35,7 +36,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * - If the migration fails, it will create a new empty database
    * - If the database file exists, it will validate it
    */
-  public async initialize(signerApi: Web3SignerApi): Promise<void> {
+  public async initialize(
+    signerApi: Web3SignerApi,
+    validatorApi: ValidatorApi
+  ): Promise<void> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
       this.read();
@@ -43,8 +47,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         logger.info(
           `Database file ${this.dbName} not found. Attemping to perform migration...`
         );
-        await this.databaseMigration(signerApi);
+        await this.databaseMigration(signerApi, validatorApi);
       }
+      // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
     } catch (e) {
       e.message += `Unable to initialize the db ${this.dbName}`;
       logger.error(e);
@@ -200,7 +205,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   /**
    * Performs the database migration for the first run
    */
-  private async databaseMigration(signerApi: Web3SignerApi): Promise<void> {
+  private async databaseMigration(
+    signerApi: Web3SignerApi,
+    validatorApi: ValidatorApi
+  ): Promise<void> {
     try {
       // Create json file
       this.createJsonFile();
@@ -208,12 +216,23 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       const pubkeys = (await signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
-      // TODO: Fetch fee recipients for each pubkey from validator API. Depends on validator API implementation
+      if (pubkeys.length === 0) {
+        logger.info(`No public keys found in the signer API`);
+        return;
+      }
+      const defaultFeeRecipient =
+        (await validatorApi.getFeeRecipient(pubkeys[0])).data?.ethaddress ||
+        "0x0000000000000000000000000000000000000000";
+      const defaultTag = "solo";
 
-      // Set default tag and automatic import
-
-      // Write to database
-      // this.addPubkeys();
+      const pubkeysDb: StakingBrainDb = {};
+      for (const pubkey of pubkeys) {
+        pubkeysDb[pubkey] = {
+          feeRecipient: defaultFeeRecipient,
+          tag: defaultTag,
+        };
+      }
+      this.addPubkeys(pubkeysDb);
     } catch (e) {
       e.message =
         `Error: Unable to perform database migration` + `\n${e.message}`;
@@ -227,6 +246,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    */
   private createJsonFile(): void {
     fs.writeFileSync(this.dbName, "{}");
+    this.read();
   }
 
   private validatePubkeys(pubkeys: StakingBrainDb): void {
