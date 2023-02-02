@@ -51,6 +51,9 @@ export class StandardApi {
     }
 
     if (body) {
+      if (req.method !== "POST") {
+        req.setHeader("Transfer-Encoding", "chunked"); //To avoid the body being ignored in DELETE requests
+      }
       req.write(body);
     }
 
