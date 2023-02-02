@@ -21,7 +21,6 @@ export class StandardApi {
       Accept: "application/json",
       Authorization: "Bearer " + apiParams.authToken,
       ...(apiParams.host && { Host: apiParams.host }),
-      "Transfer-Encoding": "chunked", //To avoid the body being ignored in DELETE requests
     };
 
     if (apiParams.tlsCert) {
@@ -52,6 +51,9 @@ export class StandardApi {
     }
 
     if (body) {
+      if (req.method !== "POST") {
+        req.setHeader("Transfer-Encoding", "chunked"); //To avoid the body being ignored in DELETE requests
+      }
       req.write(body);
     }
 
