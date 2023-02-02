@@ -3,9 +3,9 @@ export {
   beaconchaFetchValidatorsInfo,
 } from "./beaconchaApi.js";
 export {
-  signerDeleteKeystores,
-  signerGetKeystores,
-  signerImportKeystores,
-  signerGetStatus,
-} from "./signerApi.js";
+  deleteValidators,
+  getValidators,
+  importValidators,
+} from "./validators.js";
+export { signerGetStatus } from "./signerGetStatus.js";
 export { getStakerConfig } from "./getStakerConfig.js";

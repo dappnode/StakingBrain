@@ -18,13 +18,13 @@ export interface Routes {
     pubkeys: string[]
   ) => Promise<BeaconchaGetResponse>;
   // SignerApi
-  signerImportKeystores: (
+  importValidators: (
     postRequest: Web3signerPostRequestFromUi
   ) => Promise<Web3signerPostResponse>;
-  signerDeleteKeystores: (
+  deleteValidators: (
     deleteRequest: Web3signerDeleteRequest
   ) => Promise<Web3signerDeleteResponse>;
-  signerGetKeystores: () => Promise<Web3signerGetResponse>;
+  getValidators: () => Promise<Web3signerGetResponse>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   // Network
   getStakerConfig: () => Promise<StakerConfig<Network>>;
@@ -37,9 +37,9 @@ interface RouteData {
 export const routesData: { [P in keyof Routes]: RouteData } = {
   beaconchaFetchAllValidatorsInfo: { log: true },
   beaconchaFetchValidatorsInfo: { log: true },
-  signerImportKeystores: { log: true },
-  signerDeleteKeystores: { log: true },
-  signerGetKeystores: { log: true },
+  importValidators: { log: true },
+  deleteValidators: { log: true },
+  getValidators: { log: true },
   signerGetStatus: { log: true },
   getStakerConfig: { log: true },
 };

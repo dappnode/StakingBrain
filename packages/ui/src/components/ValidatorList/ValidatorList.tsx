@@ -38,7 +38,7 @@ export default function ValidatorList({
   async function getKeystores() {
     try {
       setLoading(true);
-      setKeystoresGet(await api.signerGetKeystores());
+      setKeystoresGet(await api.getValidators());
       setKeystoresGetError(undefined);
       setLoading(false);
     } catch (e) {
