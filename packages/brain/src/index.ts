@@ -84,6 +84,7 @@ process.on("SIGINT", () => {
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   // TODO: set braindb permissions to read-only
+  brainDb.close();
   clearInterval(cron);
   uiServer.close();
   launchpadServer.close();

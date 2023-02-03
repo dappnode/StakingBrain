@@ -43,17 +43,26 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
       this.read();
+      // If db.json doesn't exist, db.data will be null
       if (this.data === null) {
         logger.info(
           `Database file ${this.dbName} not found. Attemping to perform migration...`
         );
         await this.databaseMigration(signerApi, validatorApi);
       }
+      this.setOwnerWriteRead();
       // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
       this.validateDb();
     }
+  }
+
+  /**
+   * Closes the database
+   */
+  public close(): void {
+    this.setOwnerRead();
   }
 
   /**
@@ -171,6 +180,20 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   // Utils
+
+  /**
+   * Set write permissions to the database file
+   */
+  private setOwnerWriteRead(): void {
+    fs.chmodSync(this.dbName, 0o600);
+  }
+
+  /**
+   * Set read permissions to the database file
+   */
+  private setOwnerRead(): void {
+    fs.chmodSync(this.dbName, 0o400);
+  }
 
   /**
    * Builds the object to be added to the braindb
