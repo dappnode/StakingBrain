@@ -349,7 +349,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   private isValidBlsPubkey(pubkey: string): boolean {
-    if (!pubkey.match(/^0x[a-fA-F0-9]{96}$/)) return false;
+    if (!pubkey.match(/^[a-fA-F0-9]{96}$/)) return false;
     return true;
   }
 
