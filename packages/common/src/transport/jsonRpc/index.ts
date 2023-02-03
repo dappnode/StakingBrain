@@ -1,3 +1,5 @@
+import { RpcResponse } from "../../types/index.js";
+
 /**
  * Parse RPC response, to be used in the client
  * RPC response must always have code 200
@@ -20,15 +22,11 @@ export async function parseRpcResponse<R>(body: RpcResponse<R>): Promise<R> {
  */
 class JsonRpcResError extends Error {
   code: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   constructor(jsonRpcError: RpcResponse["error"]) {
     super(jsonRpcError?.message);
     this.code = jsonRpcError?.code || -32603;
     this.data = jsonRpcError?.data;
   }
-}
-
-export interface RpcResponse<R = any> {
-  result?: R;
-  error?: { code: number; message: string; data?: any };
 }

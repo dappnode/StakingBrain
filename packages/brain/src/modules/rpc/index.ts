@@ -1,4 +1,4 @@
-import { Routes, RpcResponse } from "@stakingbrain/common";
+import { Routes, RpcPayload, RpcResponse } from "@stakingbrain/common";
 
 /**
  * Given a set of method handlers, parse a RPC request and handle it
@@ -9,6 +9,7 @@ export const getRpcHandler = (methods: Routes) => {
       const { method, params } = parseRpcRequest(body);
 
       // Get handler
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const handler = methods[method] as (...params: any[]) => Promise<any>;
       if (!handler) throw new JsonRpcReqError(`Method not found ${method}`);
 
@@ -30,6 +31,7 @@ export const getRpcHandler = (methods: Routes) => {
  */
 function parseRpcRequest(body: RpcPayload): {
   method: keyof Routes;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any[];
 } {
   if (typeof body !== "object")
@@ -42,14 +44,6 @@ function parseRpcRequest(body: RpcPayload): {
   return { method: method as keyof Routes, params };
 }
 
-function tryToParseRpcRequest(body: any): { method?: string; params?: any[] } {
-  try {
-    return parseRpcRequest(body);
-  } catch {
-    return {};
-  }
-}
-
 /**
  * Errors specific to JSON RPC request payload formating
  */
@@ -60,10 +54,3 @@ class JsonRpcReqError extends Error {
     this.code = code || -32603;
   }
 }
-
-export interface RpcPayload {
-  method: string;
-  params: Args;
-}
-
-type Args = any[];

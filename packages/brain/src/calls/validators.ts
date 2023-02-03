@@ -65,10 +65,11 @@ export async function importValidators(
 
   // 3. Import feeRecipient on Validator API
   for (const [index, pubkey] of pubkeys.entries())
-    await validatorApi.setFeeRecipient(
-      postRequest.feeRecipients[index],
-      pubkey
-    );
+    await validatorApi
+      .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
+      .catch((err) => {
+        logger.error(`on posting validator feeRecipient`, err);
+      });
 
   // 4. Write on db
   brainDb.addPubkeys({
