@@ -67,7 +67,7 @@ const cron = setInterval(async () => {
 // Graceful shutdown
 ["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) =>
   process.on(signal, () => {
-    logger.info("SIGINT received. Shutting down...");
+    logger.info(`${signal} received. Shutting down...`);
     // TODO: set braindb permissions to read-only
     clearInterval(cron);
     uiServer.close();
