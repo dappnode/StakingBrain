@@ -5,8 +5,8 @@ import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
 import { Web3SignerApi } from "./modules/apiClients/web3signer/index.js";
 import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
-import { startUiServer } from "./modules/serverApis/uiApi/index.js";
-import { startLaunchpadApi } from "./modules/serverApis/launchpadApi/index.js";
+import { startUiServer } from "./modules/apiServers/ui/index.js";
+import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import { reloadData } from "./modules/cron/index.js";
 

@@ -1,5 +1,5 @@
 import io from "socket.io-client";
-import { RpcResponse } from "@stakingbrain/common";
+import { IApiRpc, RpcPayload, RpcResponse } from "@stakingbrain/common";
 
 //No need to set the port, because back and front are served in the same port
 const socket = io();
@@ -31,15 +31,3 @@ export const apiRpc: IApiRpc = {
     socket.on("disconnect", handleConnectionError);
   },
 };
-
-//Types
-interface RpcPayload {
-  method: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  params: any[];
-}
-
-interface IApiRpc {
-  start(onConnect: () => void, onError: (errorMessage: string) => void): void;
-  call<R>(payload: RpcPayload): Promise<RpcResponse<R>>;
-}
