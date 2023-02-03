@@ -69,14 +69,27 @@ const cron = setInterval(async () => {
   await reloadData();
 }, 10 * 1000);
 
+// handle sigterm
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received. Shutting down...");
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log("SIGINT received. Shutting down...");
+  process.exit(0);
+});
+
 // Graceful shutdown
-["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) =>
-  process.on(signal, () => {
-    logger.info(`${signal} received. Shutting down...`);
-    // TODO: set braindb permissions to read-only
-    clearInterval(cron);
-    uiServer.close();
-    launchpadServer.close();
-    process.exit(0);
-  })
-);
+function handle(signal: string): void {
+  logger.info(`${signal} received. Shutting down...`);
+  // TODO: set braindb permissions to read-only
+  clearInterval(cron);
+  uiServer.close();
+  launchpadServer.close();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => handle("SIGTERM"));
+process.on("SIGINT", () => handle("SIGINT"));
+process.on("SIGQUIT", () => handle("SIGQUIT"));
