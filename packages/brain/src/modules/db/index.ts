@@ -69,21 +69,34 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * }
    * ```
    */
-  public addPubkeys(pubkeys: StakingBrainDb): void {
+  public addPubkeys({
+    pubkeys,
+    tags,
+    feeRecipients,
+  }: {
+    pubkeys: string[];
+    tags: Tag[];
+    feeRecipients: string[];
+  }): void {
     try {
+      const pubkeyDetails = this.buildPubkeysDetails(
+        pubkeys,
+        tags,
+        feeRecipients
+      );
       this.validateDb();
       // Remove pubkeys that already exist
       if (this.data) {
-        for (const pubkey of Object.keys(pubkeys)) {
+        for (const pubkey of Object.keys(pubkeyDetails)) {
           if (this.data[pubkey]) {
             logger.warn(`Pubkey ${pubkey} already in the database`);
-            delete pubkeys[pubkey];
+            delete pubkeyDetails[pubkey];
           }
         }
       }
-      this.ensureDbMaxSize(pubkeys);
-      this.validatePubkeys(pubkeys);
-      this.data = { ...this.data, ...pubkeys };
+      this.ensureDbMaxSize(pubkeyDetails);
+      this.validatePubkeys(pubkeyDetails);
+      this.data = { ...this.data, ...pubkeyDetails };
       this.write();
     } catch (e) {
       e.message =
@@ -160,6 +173,27 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   // Utils
 
   /**
+   * Builds the object to be added to the braindb
+   */
+  private buildPubkeysDetails(
+    pubkeys: string[],
+    tags: Tag[],
+    feeRecipients: string[],
+    automaticImport = true
+  ): StakingBrainDb {
+    const pubkeysDetails: StakingBrainDb = {};
+    for (let i = 0; i < pubkeys.length; i++) {
+      pubkeysDetails[pubkeys[i]] = {
+        tag: tags[i],
+        feeRecipient: feeRecipients[i],
+        feeRecipientValidator: feeRecipients[i],
+        automaticImport,
+      };
+    }
+    return pubkeysDetails;
+  }
+
+  /**
    * Validates the database it is in the correct format
    */
   private validateDb(): void {
@@ -224,14 +258,11 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         "0x0000000000000000000000000000000000000000";
       const defaultTag = "solo";
 
-      const pubkeysDb: StakingBrainDb = {};
-      for (const pubkey of pubkeys) {
-        pubkeysDb[pubkey] = {
-          feeRecipient: defaultFeeRecipient,
-          tag: defaultTag,
-        };
-      }
-      this.addPubkeys(pubkeysDb);
+      this.addPubkeys({
+        pubkeys,
+        tags: Array(pubkeys.length).fill(defaultTag),
+        feeRecipients: Array(pubkeys.length).fill(defaultFeeRecipient),
+      });
     } catch (e) {
       e.message =
         `Error: Unable to perform database migration` + `\n${e.message}`;

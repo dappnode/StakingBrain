@@ -16,7 +16,7 @@ import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
 import {
-  Web3signerGetResponse,
+  CustomValidatorGetResponse,
   Web3signerDeleteResponse,
 } from "@stakingbrain/common";
 import { api } from "../../api";
@@ -28,7 +28,7 @@ export default function KeystoresDeleteDialog({
   open,
   setOpen,
 }: {
-  rows: Web3signerGetResponse["data"];
+  rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
   setSelectedRows: (selectedRows: GridSelectionModel) => void;
   open: boolean;
@@ -45,7 +45,7 @@ export default function KeystoresDeleteDialog({
       setRequestInFlight(true);
       setRequestInFlight(false);
       setKeystoresDelete(
-        await api.signerDeleteKeystores({
+        await api.deleteValidators({
           pubkeys: selectedRows.map(
             (row) => rows[parseInt(row.toString())].validating_pubkey
           ),

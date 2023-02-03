@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ApiParams, Web3signerGetResponse } from "@stakingbrain/common";
+import { ApiParams } from "@stakingbrain/common";
 import { BeaconchaApi } from "../../../../../src/modules/apiClients/beaconcha/index.js";
 
 describe.skip("Test for fetching validator indexes in every available network", () => {
@@ -9,28 +9,15 @@ describe.skip("Test for fetching validator indexes in every available network", 
     for (const network of networks) {
       console.log("NETWORK: ", network);
 
-      const keystoresGet = {
-        status: "ok",
-        data: [
-          {
-            validating_pubkey: networkTestMap.get(network)!.pubkeys[0],
-            derivation_path: "",
-            readonly: false,
-          },
-          {
-            validating_pubkey: networkTestMap.get(network)!.pubkeys[1],
-            derivation_path: "",
-            readonly: false,
-          },
-        ],
-      } as Web3signerGetResponse;
-
       const beaconchaApi = new BeaconchaApi(
         beaconchaApiParamsMap.get(network)!
       );
 
       const allValidatorsInfo = await beaconchaApi.fetchAllValidatorsInfo({
-        keystoresGet,
+        pubkeys: [
+          networkTestMap.get(network)!.pubkeys[0],
+          networkTestMap.get(network)!.pubkeys[1],
+        ],
       });
 
       expect(allValidatorsInfo[0].data[0].validatorindex).to.equal(

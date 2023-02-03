@@ -1,8 +1,5 @@
 import { StandardApi } from "../index.js";
-import {
-  Web3signerGetResponse,
-  BeaconchaGetResponse,
-} from "@stakingbrain/common";
+import { BeaconchaGetResponse } from "@stakingbrain/common";
 
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
@@ -11,20 +8,16 @@ export class BeaconchaApi extends StandardApi {
    * Fetch info for every validator PK
    */
   public async fetchAllValidatorsInfo({
-    keystoresGet,
+    pubkeys,
   }: {
-    keystoresGet: Web3signerGetResponse;
+    pubkeys: string[];
   }): Promise<BeaconchaGetResponse[]> {
     const validatorsInfo = new Array<BeaconchaGetResponse>();
 
-    const allValidatorPKs = keystoresGet.data.map(
-      (keystoreData) => keystoreData.validating_pubkey
-    );
-
     const chunkSize = maxValidatorsPerRequest;
 
-    for (let i = 0; i < allValidatorPKs.length; i += chunkSize) {
-      const chunk = allValidatorPKs.slice(i, i + chunkSize);
+    for (let i = 0; i < pubkeys.length; i += chunkSize) {
+      const chunk = pubkeys.slice(i, i + chunkSize);
       const chunkResponse = await this.fetchValidatorsInfo(chunk);
       validatorsInfo.push(chunkResponse);
     }

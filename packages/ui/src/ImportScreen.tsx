@@ -99,10 +99,12 @@ export default function ImportScreen(): JSX.Element {
       setImportStatus(ImportStatus.Importing);
       handleClickOpenDialog();
       setKeystoresPostResponse(
-        await api.signerImportKeystores({
+        await api.importValidators({
           keystores: acceptedFiles.map((f) => f.file),
           passwords,
           slashing_protection: slashingFile,
+          tags: [], // TODO: Add tags
+          feeRecipients: [], // TODO  Add fee recipients
         })
       );
       setKeystoresPostError(undefined);

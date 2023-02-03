@@ -1,7 +1,4 @@
-import {
-  Web3signerGetResponse,
-  BeaconchaGetResponse,
-} from "@stakingbrain/common";
+import { BeaconchaGetResponse } from "@stakingbrain/common";
 import { beaconchaApi } from "../index.js";
 
 export async function beaconchaFetchValidatorsInfo(
@@ -11,7 +8,7 @@ export async function beaconchaFetchValidatorsInfo(
 }
 
 export async function beaconchaFetchAllValidatorsInfo(
-  keystoresGet: Web3signerGetResponse
+  pubkeys: string[]
 ): Promise<BeaconchaGetResponse[]> {
-  return await beaconchaApi.fetchAllValidatorsInfo({ keystoresGet });
+  return await beaconchaApi.fetchAllValidatorsInfo({ pubkeys });
 }
