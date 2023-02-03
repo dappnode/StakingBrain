@@ -1,10 +1,10 @@
-import { RpcResponse } from "@stakingbrain/common";
+import { RpcPayload, RpcResponse } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
 import { Server } from "socket.io";
 import logger from "../../logger/index.js";
-import { getRpcHandler, RpcPayload } from "../../rpc/index.js";
+import { getRpcHandler } from "../../rpc/index.js";
 import * as routes from "../../../calls/index.js";
 import http from "http";
 
