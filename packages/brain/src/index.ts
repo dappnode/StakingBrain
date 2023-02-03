@@ -9,12 +9,17 @@ import { startUiServer } from "./modules/apiServers/ui/index.js";
 import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import { reloadData } from "./modules/cron/index.js";
+import * as dotenv from "dotenv";
 import process from "node:process";
 
-export const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
+dotenv.config();
 const mode = process.env.NODE_ENV || "development";
 logger.debug(`Running app in mode: ${mode}`);
+
+export const __dirname =
+  mode === "development"
+    ? path.dirname(fileURLToPath(import.meta.url))
+    : process.cwd();
 
 // Load staker config
 export const {

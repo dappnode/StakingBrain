@@ -19,7 +19,6 @@ import {
 import { __dirname } from "../../index.js";
 import path from "path";
 import fs from "fs";
-import * as dotenv from "dotenv";
 
 /**
  * Loads the staker config needed to create the base urls for beacon, validator and signer APIs
@@ -39,8 +38,6 @@ export function loadStakerConfig(): {
   host: string;
   tlsCert?: Buffer;
 } {
-  dotenv.config();
-
   const network = process.env.NETWORK as Network;
   if (!network) throw Error("NETWORK environment variable is not set");
   if (!networks.includes(network))
