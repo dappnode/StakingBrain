@@ -5,6 +5,7 @@ import fs from "fs";
 import logger from "../logger/index.js";
 import { Web3SignerApi } from "../apiClients/web3signer/index.js";
 import { ValidatorApi } from "../apiClients/validator/index.js";
+import { defaultFeeRecipient } from "../../index.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -269,6 +270,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       // Create json file
       this.createJsonFile();
       // Fetch public keys from signer API
+      // TODO: implement a retry system
       const pubkeys = (await signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
@@ -276,20 +278,32 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         logger.info(`No public keys found in the signer API`);
         return;
       }
-      const defaultFeeRecipient =
-        (await validatorApi.getFeeRecipient(pubkeys[0])).data?.ethaddress ||
-        "0x0000000000000000000000000000000000000000";
+
+      let feeRecipient = "";
+      await validatorApi
+        .getFeeRecipient(pubkeys[0])
+        .then((response) => {
+          feeRecipient = response.data.ethaddress;
+        })
+        .catch((e) => {
+          logger.error(
+            `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${defaultFeeRecipient}}`,
+            e
+          );
+          feeRecipient = defaultFeeRecipient;
+        });
+
       const defaultTag = "solo";
 
       this.addPubkeys({
         pubkeys,
         tags: Array(pubkeys.length).fill(defaultTag),
-        feeRecipients: Array(pubkeys.length).fill(defaultFeeRecipient),
+        feeRecipients: Array(pubkeys.length).fill(feeRecipient),
       });
     } catch (e) {
       e.message =
         `Error: Unable to perform database migration` + `\n${e.message}`;
-      throw Error(e);
+      throw e;
     }
     return;
   }

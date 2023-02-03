@@ -36,6 +36,7 @@ export function loadStakerConfig(): {
   signerUrl: string;
   token: string;
   host: string;
+  defaultFeeRecipient: string;
   tlsCert?: Buffer;
 } {
   const network = process.env.NETWORK as Network;
@@ -46,6 +47,10 @@ export function loadStakerConfig(): {
         ", "
       )}`
     );
+
+  const defaultFeeRecipient =
+    process.env.DEFAULT_FEE_RECIPIENT ||
+    "0x0000000000000000000000000000000000000000";
 
   let executionClientUrl: string,
     validatorUrl: string,
@@ -118,6 +123,7 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer.dappnode:9000`,
       token,
       host: `brain.web3signer.dappnode`,
+      defaultFeeRecipient,
       tlsCert,
     };
   } else if (network === "gnosis") {
@@ -171,6 +177,7 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-gnosis.dappnode:9000`,
       token,
       host: `brain.web3signer-gnosis.dappnode`,
+      defaultFeeRecipient,
       tlsCert,
     };
   } else if (network === "prater") {
@@ -237,6 +244,7 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-prater.dappnode:9000`,
       token,
       host: `web3signer.web3signer-prater.dappnode`,
+      defaultFeeRecipient,
       tlsCert,
     };
   } else {
