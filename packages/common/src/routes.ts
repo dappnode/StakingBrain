@@ -1,30 +1,31 @@
 import {
   Web3signerDeleteResponse,
-  Web3signerGetResponse,
-  Web3signerPostResponse,
   Web3signerDeleteRequest,
   Web3signerHealthcheckResponse,
-  Web3signerPostRequestFromUi,
-} from "./types/api/web3signer/types.js";
-import { BeaconchaGetResponse } from "./types/api/beaconchain/types.js";
-import { StakerConfig, Network } from "./types/network/types.js";
+  CustomValidatorsImportRequest,
+  BeaconchaGetResponse,
+  StakerConfig,
+  Network,
+  CustomValidatorGetResponse,
+  Web3signerPostResponse,
+} from "./index.js";
 
 export interface Routes {
   // BeaconchaApi
   beaconchaFetchAllValidatorsInfo: (
-    keystoresGet: Web3signerGetResponse
+    pubkeys: string[]
   ) => Promise<BeaconchaGetResponse[]>;
   beaconchaFetchValidatorsInfo: (
     pubkeys: string[]
   ) => Promise<BeaconchaGetResponse>;
   // SignerApi
   importValidators: (
-    postRequest: Web3signerPostRequestFromUi
+    postRequest: CustomValidatorsImportRequest
   ) => Promise<Web3signerPostResponse>;
   deleteValidators: (
     deleteRequest: Web3signerDeleteRequest
   ) => Promise<Web3signerDeleteResponse>;
-  getValidators: () => Promise<Web3signerGetResponse>;
+  getValidators: () => Promise<CustomValidatorGetResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   // Network
   getStakerConfig: () => Promise<StakerConfig<Network>>;

@@ -8,7 +8,7 @@ import { Alert, Box, Card, CircularProgress } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 
 //Logic
-import { Network, Web3signerGetResponse } from "@stakingbrain/common";
+import { Network, CustomValidatorGetResponse } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import buildValidatorSummaryURL from "../../logic/Utils/buildValidatorSummaryURL";
 import { beaconchaApiParamsMap } from "../../params";
@@ -32,24 +32,25 @@ export default function ValidatorList({
   const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
     BeaconchaUrlBuildingStatus.NotStarted
   );
-  const [keystoresGet, setKeystoresGet] = useState<Web3signerGetResponse>();
-  const [keystoresGetError, setKeystoresGetError] = useState<string>();
+  const [validatorsGet, setValidatorsGet] =
+    useState<CustomValidatorGetResponse[]>();
+  const [validatorsGetError, setValidatorsGetError] = useState<string>();
 
   async function getKeystores() {
     try {
       setLoading(true);
-      setKeystoresGet(await api.getValidators());
-      setKeystoresGetError(undefined);
+      setValidatorsGet(await api.getValidators());
+      setValidatorsGetError(undefined);
       setLoading(false);
     } catch (e) {
       console.error(e);
-      setKeystoresGetError(e.message);
+      setValidatorsGetError(e.message);
       setLoading(false);
     }
   }
 
   async function getValidatorSummaryURL() {
-    if (!keystoresGet) {
+    if (!validatorsGet) {
       setValidatorSummaryURL("");
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
       return;
@@ -58,7 +59,7 @@ export default function ValidatorList({
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
     const allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
-      keystoresGet
+      validatorsGet.map((keystore) => keystore.validating_pubkey)
     );
 
     try {
@@ -90,10 +91,10 @@ export default function ValidatorList({
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
     setValidatorSummaryURL("");
-  }, [keystoresGet]);
+  }, [validatorsGet]);
 
   async function loadSummaryUrl() {
-    if (keystoresGet && beaconchaApiParamsMap.has(network)) {
+    if (validatorsGet && beaconchaApiParamsMap.has(network)) {
       const beaconchaParams = beaconchaApiParamsMap.get(network);
       if (beaconchaParams) getValidatorSummaryURL();
     }
@@ -108,9 +109,9 @@ export default function ValidatorList({
             text="Your validator accounts"
           />
 
-          {keystoresGetError ? (
+          {validatorsGetError ? (
             <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-              {keystoresGetError}
+              {validatorsGetError}
             </Alert>
           ) : loading ? (
             <CircularProgress
@@ -118,16 +119,16 @@ export default function ValidatorList({
                 marginBottom: 4,
               }}
             />
-          ) : keystoresGet?.data ? (
+          ) : validatorsGet ? (
             <>
               <KeystoreList
-                rows={keystoresGet.data}
+                rows={validatorsGet}
                 setSelectedRows={setSelectedRows}
                 network={network}
               />
               <ButtonsBox
                 areRowsSelected={selectedRows.length !== 0}
-                isTableEmpty={keystoresGet.data.length === 0}
+                isTableEmpty={validatorsGet.length === 0}
                 setOpen={setOpen}
                 validatorSummaryURL={validatorSummaryURL}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
@@ -162,7 +163,7 @@ export default function ValidatorList({
 
               {open && (
                 <KeystoresDeleteDialog
-                  rows={keystoresGet.data}
+                  rows={validatorsGet}
                   selectedRows={selectedRows}
                   setSelectedRows={setSelectedRows}
                   open={open}

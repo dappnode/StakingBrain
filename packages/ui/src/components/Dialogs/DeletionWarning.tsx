@@ -1,13 +1,13 @@
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { shortenPubkey } from "../../logic/Utils/dataUtils";
-import { Web3signerGetResponse } from "@stakingbrain/common";
+import { CustomValidatorGetResponse } from "@stakingbrain/common";
 
 export default function DeletionWarning({
   selectedRows,
   rows,
 }: {
   selectedRows: GridSelectionModel;
-  rows: Web3signerGetResponse["data"];
+  rows: CustomValidatorGetResponse[];
 }): JSX.Element {
   return (
     <>

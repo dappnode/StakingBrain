@@ -7,14 +7,14 @@ import {
 import { useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
 import KeystoreColumns from "./KeystoreColumns";
-import { Web3signerGetResponse } from "@stakingbrain/common";
+import { CustomValidatorGetResponse } from "@stakingbrain/common";
 
 export default function KeystoreList({
   rows,
   setSelectedRows,
   network,
 }: {
-  rows: Web3signerGetResponse["data"];
+  rows: CustomValidatorGetResponse[];
   setSelectedRows: (arg0: GridSelectionModel) => void;
   network: string;
 }): JSX.Element {

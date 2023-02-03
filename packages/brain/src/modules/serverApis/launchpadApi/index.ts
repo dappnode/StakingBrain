@@ -1,12 +1,7 @@
 import express from "express";
-import {
-  tags as availableTags,
-  PubkeyDetails,
-  StakingBrainDb,
-  Tag,
-} from "@stakingbrain/common";
+import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
-import { brainDb, signerApi } from "../../../index.js";
+import { brainDb, signerApi, signerUrl, validatorApi } from "../../../index.js";
 
 export function startLaunchpadApi(): void {
   const app = express();
@@ -31,34 +26,51 @@ export function startLaunchpadApi(): void {
     if (errors.length > 0)
       res.status(400).send({ message: `Bad request: ${errors.join(". ")}` });
 
-    // Import keystores + passwords + slashingProtection onto the web3signer
-    await signerApi
-      .importKeystores({
+    try {
+      // Import keystores + passwords + slashingProtection onto the web3signer
+      await signerApi.importKeystores({
         keystores,
         passwords,
         slashing_protection: slashingProtection,
-      })
-      .catch((err) => {
-        logger.error(err);
-        res.status(500).send({ message: "Internal server error" });
       });
 
-    const pubkeysDetails = buildPubkeysDetails(keystores, tags, feeRecipients);
+      const pubkeys = keystores.map(
+        (keystore: string) => JSON.parse(keystore).pubkey
+      );
 
-    // TODO: Load pubkeys and feeRecipients into validator
-    for (const pubkey in pubkeysDetails) {
-      await postValidator().catch((err) => {
-        pubkeysDetails[pubkey].feeRecipientValidator = "";
+      await validatorApi
+        .postRemoteKeys({
+          remote_keys: pubkeys.map((pubkey: string) => {
+            return {
+              pubkey,
+              url: signerUrl,
+            };
+          }),
+        })
+        .catch((err) => {
+          logger.error(err);
+        });
+      for (const [index, pubkey] of pubkeys.entries())
+        await validatorApi
+          .setFeeRecipient(feeRecipients[index], pubkey)
+          .catch((err) => {
+            logger.error(err);
+            feeRecipients[index] = "";
+          });
+
+      // Write data on db
+      brainDb.addPubkeys({ pubkeys, tags, feeRecipients });
+
+      // TODO: research for 2.x.x proper http code to return and the message with the possible errors
+
+      // Return response
+      res.status(200).send({
+        data: [{ status: "imported", message: "successfully imported" }],
       });
+    } catch (e) {
+      logger.error(e);
+      res.status(500).send({ message: "Internal server error" });
     }
-
-    // Write data on db
-    brainDb.addPubkeys(pubkeysDetails);
-
-    // Return response
-    res.status(200).send({
-      data: [{ status: "imported", message: "successfully imported" }],
-    });
   });
 
   app.listen(3000, () => {
@@ -66,48 +78,14 @@ export function startLaunchpadApi(): void {
   });
 }
 
-async function postValidator(): Promise<void> {}
-
-function buildPubkeysDetails(
-  keystores: string[],
-  tags: Tag[],
-  feeRecipients: string[]
-): StakingBrainDb {
-  const pubkeys = keystores.map((keystore: string) => {
-    const keystoreJson = JSON.parse(keystore);
-    return keystoreJson.pubkey;
-  });
-
-  // Create an object where each key is the pubkey and the value is an object with the tag and feeRecipient
-  const pubkeysDetails: StakingBrainDb = pubkeys.reduce(
-    (
-      acc: {
-        [x: string]: {
-          tag: Tag;
-          feeRecipient: string;
-          feeRecipientValidator: string;
-          automaticImport: boolean;
-        };
-      },
-      pubkey: string
-    ) => {
-      acc[pubkey] = {
-        tag: tags[pubkeys.indexOf(pubkey)],
-        feeRecipient: feeRecipients[pubkeys.indexOf(pubkey)],
-        feeRecipientValidator: feeRecipients[pubkeys.indexOf(pubkey)],
-        automaticImport: true,
-      };
-      return acc;
-    },
-    {} as { [pubkey: string]: PubkeyDetails }
-  );
-  return pubkeysDetails;
-}
-
 function validateRequestBody(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   keystores: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   passwords: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tags: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   feeRecipients: any
 ): string[] {
   const errors: string[] = [];
