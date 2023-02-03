@@ -2,7 +2,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import nodeExternals from "webpack-node-externals";
 
-const { NODE_ENV = "development" } = process.env;
+const { NODE_ENV = "production" } = process.env;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,7 +27,7 @@ export default {
   },
   // externals: [/node_modules/, "bufferutil", "utf-8-validate"],
   externalsPresets: { node: true },
-  target: "node16.2",
+  target: "node18.13",
   externals: [nodeExternals()],
   resolve: {
     extensions: [".tsx", ".ts", ".js"],

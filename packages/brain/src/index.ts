@@ -9,11 +9,17 @@ import { startUiServer } from "./modules/apiServers/ui/index.js";
 import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import { reloadData } from "./modules/cron/index.js";
+import * as dotenv from "dotenv";
+import process from "node:process";
 
-export const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
+dotenv.config();
 const mode = process.env.NODE_ENV || "development";
 logger.debug(`Running app in mode: ${mode}`);
+
+export const __dirname =
+  mode === "development"
+    ? path.dirname(fileURLToPath(import.meta.url))
+    : process.cwd();
 
 // Load staker config
 export const {
@@ -55,10 +61,35 @@ await brainDb.initialize(signerApi, validatorApi).catch((e) => {
 logger.debug(brainDb.data);
 
 // Start APIs
-startUiServer(path.resolve(__dirname, "uiBuild"));
-startLaunchpadApi();
+const uiServer = startUiServer(path.resolve(__dirname, "uiBuild"));
+const launchpadServer = startLaunchpadApi();
 
 // Start cron
-setInterval(async () => {
+const cron = setInterval(async () => {
   await reloadData();
 }, 10 * 1000);
+
+// handle sigterm
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received. Shutting down...");
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log("SIGINT received. Shutting down...");
+  process.exit(0);
+});
+
+// Graceful shutdown
+function handle(signal: string): void {
+  logger.info(`${signal} received. Shutting down...`);
+  // TODO: set braindb permissions to read-only
+  clearInterval(cron);
+  uiServer.close();
+  launchpadServer.close();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => handle("SIGTERM"));
+process.on("SIGINT", () => handle("SIGINT"));
+process.on("SIGQUIT", () => handle("SIGQUIT"));
