@@ -9,6 +9,7 @@ import { startUiServer } from "./modules/apiServers/ui/index.js";
 import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import { reloadData } from "./modules/cron/index.js";
+import process from "node:process";
 
 export const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -55,10 +56,22 @@ await brainDb.initialize(signerApi, validatorApi).catch((e) => {
 logger.debug(brainDb.data);
 
 // Start APIs
-startUiServer(path.resolve(__dirname, "uiBuild"));
-startLaunchpadApi();
+const uiServer = startUiServer(path.resolve(__dirname, "uiBuild"));
+const launchpadServer = startLaunchpadApi();
 
 // Start cron
-setInterval(async () => {
+const cron = setInterval(async () => {
   await reloadData();
 }, 10 * 1000);
+
+// Graceful shutdown
+["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) =>
+  process.on(signal, () => {
+    logger.info("SIGINT received. Shutting down...");
+    // TODO: set braindb permissions to read-only
+    clearInterval(cron);
+    uiServer.close();
+    launchpadServer.close();
+    process.exit(0);
+  })
+);

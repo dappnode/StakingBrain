@@ -8,7 +8,7 @@ import { getRpcHandler } from "../../rpc/index.js";
 import * as routes from "../../../calls/index.js";
 import http from "http";
 
-export function startUiServer(uiBuildPath: string): void {
+export function startUiServer(uiBuildPath: string): http.Server {
   const app = express();
   const server = http.createServer(app);
 
@@ -54,4 +54,6 @@ export function startUiServer(uiBuildPath: string): void {
   server.listen(80, () => {
     logger.info("Server listening on *:80");
   });
+
+  return server;
 }

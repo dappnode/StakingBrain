@@ -2,9 +2,11 @@ import express from "express";
 import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
 import { brainDb, signerApi, signerUrl, validatorApi } from "../../../index.js";
+import http from "node:http";
 
-export function startLaunchpadApi(): void {
+export function startLaunchpadApi(): http.Server {
   const app = express();
+  const server = new http.Server(app);
   app.use(express.json());
   app.post("/eth/v1/keystores", async (req, res) => {
     const {
@@ -73,9 +75,11 @@ export function startLaunchpadApi(): void {
     }
   });
 
-  app.listen(3000, () => {
+  server.listen(3000, () => {
     logger.info("Launchpad API listening on port 3000");
   });
+
+  return server;
 }
 
 function validateRequestBody(
