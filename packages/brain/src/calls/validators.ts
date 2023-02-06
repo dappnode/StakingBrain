@@ -103,7 +103,7 @@ export async function deleteValidators(
   });
   // 3. Delete feeRecipient on Validator API
   for (const pubkey of deleteRequest.pubkeys)
-    await validatorApi.setFeeRecipient("", pubkey).catch((err) => {
+    await validatorApi.deleteFeeRecipient(pubkey).catch((err) => {
       logger.error(`on deleting validator feeRecipient`, err);
     });
   // 4. Write on db
