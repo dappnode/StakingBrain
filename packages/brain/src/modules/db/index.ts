@@ -55,8 +55,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           validatorApi,
           defaultFeeRecipient
         );
-      }
-      this.setOwnerWriteRead();
+      } else this.setOwnerWriteRead();
       await this.reloadData(signerApi, validatorApi, signerUrl);
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
@@ -84,7 +83,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       // 1. Read DB (pubkeys, fee recipients, tags)
       // TODO: add test
       this.read();
-      if (!this.data) logger.warn(`[Cron] Database is empty`);
+      if (!this.data) logger.warn(`Database is empty`);
       // 2. GET signer API pubkeys
       // TODO: add test
       const signerPubkeys = (await signerApi.getKeystores()).data.map(
@@ -99,7 +98,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         ) || [];
       for (const pubkey of validatorPubkeys) {
         const feeRecipient = await validatorApi.getFeeRecipient(pubkey);
-        validatorPubkeysFeeRecipients.set(pubkey, feeRecipient);
+        validatorPubkeysFeeRecipients.set(pubkey, feeRecipient.data.ethaddress);
       }
       // 4. DELETE from signer API pubkeys that are not in DB
       // TODO: add test
@@ -108,11 +107,11 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       );
       if (signerPubkeysToRemove.length > 0) {
         logger.debug(
-          `[Cron] Found ${signerPubkeysToRemove.length} validators to remove from signer`
+          `Found ${signerPubkeysToRemove.length} validators to remove from signer`
         );
         await signerApi.deleteKeystores({ pubkeys: signerPubkeysToRemove });
         logger.debug(
-          `[Cron] Deleted ${signerPubkeysToRemove.length} validators from signer`
+          `Deleted ${signerPubkeysToRemove.length} validators from signer`
         );
       }
       // 5. DELETE from DB pubkeys that are not in signer API
@@ -122,11 +121,11 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       ).filter((pubkey) => !signerPubkeys.includes(pubkey));
       if (brainDbPubkeysToRemove.length > 0) {
         logger.debug(
-          `[Cron] Found ${brainDbPubkeysToRemove.length} validators to remove from DB`
+          `Found ${brainDbPubkeysToRemove.length} validators to remove from DB`
         );
         this.deletePubkeys(brainDbPubkeysToRemove);
         logger.debug(
-          `[Cron] Deleted ${brainDbPubkeysToRemove.length} validators from DB`
+          `Deleted ${brainDbPubkeysToRemove.length} validators from DB`
         );
       }
       // 6. POST to validator API pubkeys that are in DB and not in validator API
@@ -136,7 +135,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       ).filter((pubkey) => !validatorPubkeys.includes(pubkey));
       if (brainDbPubkeysToAdd.length > 0) {
         logger.debug(
-          `[Cron] Found ${brainDbPubkeysToAdd.length} validators to add to validator API`
+          `Found ${brainDbPubkeysToAdd.length} validators to add to validator API`
         );
         await validatorApi.postRemoteKeys({
           remote_keys: brainDbPubkeysToAdd.map((pubkey) => ({
@@ -145,7 +144,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           })),
         });
         logger.debug(
-          `[Cron] Added ${brainDbPubkeysToAdd.length} validators to validator API`
+          `Added ${brainDbPubkeysToAdd.length} validators to validator API`
         );
       }
       // 7. DELETE to validator API pubkeys that are in validator API and not in DB
@@ -155,13 +154,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       );
       if (validatorPubkeysToRemove.length > 0) {
         logger.debug(
-          `[Cron] Found ${validatorPubkeysToRemove.length} validators to remove from validator API`
+          `Found ${validatorPubkeysToRemove.length} validators to remove from validator API`
         );
         await validatorApi.deleteRemoteKeys({
           pubkeys: validatorPubkeysToRemove,
         });
         logger.debug(
-          `[Cron] Removed ${validatorPubkeysToRemove.length} validators from validator API`
+          `Removed ${validatorPubkeysToRemove.length} validators from validator API`
         );
       }
       // 8. POST to validator API fee recipients that are in DB and not in validator API
@@ -175,17 +174,16 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       );
       if (brainDbPubkeysFeeRecipientsToAdd.length > 0) {
         logger.debug(
-          `[Cron] Found ${brainDbPubkeysFeeRecipientsToAdd.length} validators to add to validator API`
+          `Found ${brainDbPubkeysFeeRecipientsToAdd.length} validators to add to validator API`
         );
-        for (const [pubkey, feeRecipient] of brainDbPubkeysFeeRecipientsToAdd) {
+        for (const [pubkey, feeRecipient] of brainDbPubkeysFeeRecipientsToAdd)
           await validatorApi.setFeeRecipient(feeRecipient, pubkey);
-        }
         logger.debug(
-          `[Cron] Added ${brainDbPubkeysFeeRecipientsToAdd.length} validators to validator API`
+          `Added ${brainDbPubkeysFeeRecipientsToAdd.length} validators to validator API`
         );
       }
     } catch (e) {
-      logger.error(`[Cron] reloading data`, e);
+      logger.error(`Reloading data`, e);
       // TODO: handle all possible errors:
       /**
      * ERROR PKG not installed (addr not found)
@@ -411,6 +409,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     try {
       // Create json file
       this.createJsonFile();
+      // Add permissions
+      this.setOwnerWriteRead();
       // Fetch public keys from signer API
       // TODO: implement a retry system
       const pubkeys = (await signerApi.getKeystores()).data.map(
