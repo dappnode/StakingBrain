@@ -234,11 +234,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         feeRecipients
       );
       this.validateDb();
-      // Remove pubkeys that already exist
+      // Remove pubkeys that already exist and add 0x prefix if needed
       if (this.data) {
         for (const pubkey of Object.keys(pubkeyDetails)) {
           if (this.data[pubkey]) {
             logger.warn(`Pubkey ${pubkey} already in the database`);
+            delete pubkeyDetails[pubkey];
+          } else if (!pubkey.startsWith("0x")) {
+            pubkeyDetails[`0x${pubkey}`] = pubkeyDetails[pubkey];
             delete pubkeyDetails[pubkey];
           }
         }
