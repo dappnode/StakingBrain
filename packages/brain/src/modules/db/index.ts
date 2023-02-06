@@ -39,7 +39,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   public async initialize(
     signerApi: Web3SignerApi,
     validatorApi: ValidatorApi,
-    defaultFeeRecipient: string
+    defaultFeeRecipient: string,
+    signerUrl: string
   ): Promise<void> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
@@ -56,7 +57,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         );
       }
       this.setOwnerWriteRead();
-      // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
+      await this.reloadData(signerApi, validatorApi, signerUrl);
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
       this.validateDb();
@@ -68,6 +69,142 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    */
   public close(): void {
     this.setOwnerRead();
+  }
+
+  /**
+   * Reload db data based on truth sources: validator and signer APIs
+   */
+  public async reloadData(
+    signerApi: Web3SignerApi,
+    validatorApi: ValidatorApi,
+    signerUrl: string
+  ) {
+    try {
+      logger.info(`Reloading database data...`);
+      // 1. Read DB (pubkeys, fee recipients, tags)
+      // TODO: add test
+      this.read();
+      if (!this.data) logger.warn(`[Cron] Database is empty`);
+      // 2. GET signer API pubkeys
+      // TODO: add test
+      const signerPubkeys = (await signerApi.getKeystores()).data.map(
+        (keystore) => keystore.validating_pubkey
+      );
+      // 3. GET validator API pubkeys and fee recipients
+      // TODO: add test
+      const validatorPubkeysFeeRecipients = new Map();
+      const validatorPubkeys =
+        (await validatorApi.getRemoteKeys()).data.map(
+          (keystore) => keystore.pubkey
+        ) || [];
+      for (const pubkey of validatorPubkeys) {
+        const feeRecipient = await validatorApi.getFeeRecipient(pubkey);
+        validatorPubkeysFeeRecipients.set(pubkey, feeRecipient);
+      }
+      // 4. DELETE from signer API pubkeys that are not in DB
+      // TODO: add test
+      const signerPubkeysToRemove = signerPubkeys.filter(
+        (pubkey) => !(this.data as StakingBrainDb)[pubkey]
+      );
+      if (signerPubkeysToRemove.length > 0) {
+        logger.debug(
+          `[Cron] Found ${signerPubkeysToRemove.length} validators to remove from signer`
+        );
+        await signerApi.deleteKeystores({ pubkeys: signerPubkeysToRemove });
+        logger.debug(
+          `[Cron] Deleted ${signerPubkeysToRemove.length} validators from signer`
+        );
+      }
+      // 5. DELETE from DB pubkeys that are not in signer API
+      // TODO: add test
+      const brainDbPubkeysToRemove = Object.keys(
+        this.data as StakingBrainDb
+      ).filter((pubkey) => !signerPubkeys.includes(pubkey));
+      if (brainDbPubkeysToRemove.length > 0) {
+        logger.debug(
+          `[Cron] Found ${brainDbPubkeysToRemove.length} validators to remove from DB`
+        );
+        this.deletePubkeys(brainDbPubkeysToRemove);
+        logger.debug(
+          `[Cron] Deleted ${brainDbPubkeysToRemove.length} validators from DB`
+        );
+      }
+      // 6. POST to validator API pubkeys that are in DB and not in validator API
+      // TODO: add test
+      const brainDbPubkeysToAdd = Object.keys(
+        this.data as StakingBrainDb
+      ).filter((pubkey) => !validatorPubkeys.includes(pubkey));
+      if (brainDbPubkeysToAdd.length > 0) {
+        logger.debug(
+          `[Cron] Found ${brainDbPubkeysToAdd.length} validators to add to validator API`
+        );
+        await validatorApi.postRemoteKeys({
+          remote_keys: brainDbPubkeysToAdd.map((pubkey) => ({
+            pubkey,
+            url: signerUrl,
+          })),
+        });
+        logger.debug(
+          `[Cron] Added ${brainDbPubkeysToAdd.length} validators to validator API`
+        );
+      }
+      // 7. DELETE to validator API pubkeys that are in validator API and not in DB
+      // TODO: add test
+      const validatorPubkeysToRemove = validatorPubkeys.filter(
+        (pubkey) => !(this.data as StakingBrainDb)[pubkey]
+      );
+      if (validatorPubkeysToRemove.length > 0) {
+        logger.debug(
+          `[Cron] Found ${validatorPubkeysToRemove.length} validators to remove from validator API`
+        );
+        await validatorApi.deleteRemoteKeys({
+          pubkeys: validatorPubkeysToRemove,
+        });
+        logger.debug(
+          `[Cron] Removed ${validatorPubkeysToRemove.length} validators from validator API`
+        );
+      }
+      // 8. POST to validator API fee recipients that are in DB and not in validator API
+      // TODO: add test
+      const brainDbPubkeysFeeRecipientsToAdd = Array.from(
+        validatorPubkeysFeeRecipients.entries()
+      ).filter(
+        ([pubkey, feeRecipient]) =>
+          ((this.data as StakingBrainDb)[pubkey] as StakingBrainDb) &&
+          (this.data as StakingBrainDb)[pubkey].feeRecipient !== feeRecipient
+      );
+      if (brainDbPubkeysFeeRecipientsToAdd.length > 0) {
+        logger.debug(
+          `[Cron] Found ${brainDbPubkeysFeeRecipientsToAdd.length} validators to add to validator API`
+        );
+        for (const [pubkey, feeRecipient] of brainDbPubkeysFeeRecipientsToAdd) {
+          await validatorApi.setFeeRecipient(feeRecipient, pubkey);
+        }
+        logger.debug(
+          `[Cron] Added ${brainDbPubkeysFeeRecipientsToAdd.length} validators to validator API`
+        );
+      }
+    } catch (e) {
+      logger.error(`[Cron] reloading data`, e);
+      // TODO: handle all possible errors:
+      /**
+     * ERROR PKG not installed (addr not found)
+      ```
+      Error: getaddrinfo ENOTFOUND validator.lighthouse-prater.dappnode
+        at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:107:26) {
+        errno: -3008,
+        code: 'ENOTFOUND',
+        syscall: 'getaddrinfo',
+        hostname: 'validator.lighthouse-prater.dappnode'
+        }
+       ```
+
+      * ERROR brain host not authorized
+       ```
+       { message: 'Host not authorized.' }
+       ```
+     */
+    }
   }
 
   /**
