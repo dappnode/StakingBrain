@@ -1,22 +1,16 @@
 import express from "express";
 import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
-import { brainDb, signerApi, signerUrl, validatorApi } from "../../../index.js";
 import http from "node:http";
+import { importValidators } from "../../../calls/validators.js";
 
 export function startLaunchpadApi(): http.Server {
   const app = express();
   const server = new http.Server(app);
   app.use(express.json());
   app.post("/eth/v1/keystores", async (req, res) => {
-    const {
-      keystores,
-      passwords,
-      slashingProtection,
-      tags,
-      feeRecipients,
-      dvtPubkey,
-    } = req.body;
+    const { keystores, passwords, slashingProtection, tags, feeRecipients } =
+      req.body;
 
     // Validate request body
     const errors = validateRequestBody(
@@ -29,46 +23,15 @@ export function startLaunchpadApi(): http.Server {
       res.status(400).send({ message: `Bad request: ${errors.join(". ")}` });
 
     try {
-      // Import keystores + passwords + slashingProtection onto the web3signer
-      await signerApi.importKeystores({
+      const importResponse = await importValidators({
         keystores,
         passwords,
         slashing_protection: slashingProtection,
+        tags,
+        feeRecipients,
       });
 
-      const pubkeys = keystores.map(
-        (keystore: string) => JSON.parse(keystore).pubkey
-      );
-
-      await validatorApi
-        .postRemoteKeys({
-          remote_keys: pubkeys.map((pubkey: string) => {
-            return {
-              pubkey,
-              url: signerUrl,
-            };
-          }),
-        })
-        .catch((err) => {
-          logger.error(err);
-        });
-      for (const [index, pubkey] of pubkeys.entries())
-        await validatorApi
-          .setFeeRecipient(feeRecipients[index], pubkey)
-          .catch((err) => {
-            logger.error(err);
-            feeRecipients[index] = "";
-          });
-
-      // Write data on db
-      brainDb.addPubkeys({ pubkeys, tags, feeRecipients });
-
-      // TODO: research for 2.x.x proper http code to return and the message with the possible errors
-
-      // Return response
-      res.status(200).send({
-        data: [{ status: "imported", message: "successfully imported" }],
-      });
+      res.status(200).send(importResponse);
     } catch (e) {
       logger.error(e);
       res.status(500).send({ message: "Internal server error" });

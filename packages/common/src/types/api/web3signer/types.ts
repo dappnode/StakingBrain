@@ -14,7 +14,7 @@ export interface Web3signerPostRequest {
 }
 
 export interface Web3signerPostRequestFromUi {
-  keystores: File[];
+  keystores: File[] | string[];
   passwords: string[];
   slashing_protection?: File;
 }
