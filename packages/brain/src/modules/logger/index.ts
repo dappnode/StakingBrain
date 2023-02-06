@@ -14,13 +14,8 @@ class Logger {
   }
 
   debug(message: string | object | null): void {
-    if (
-      this.logLevel === "debug" ||
-      this.logLevel === "info" ||
-      this.logLevel === "warn" ||
-      this.logLevel === "error"
-    ) {
-      const debugColor = "\x1b[90m%s\x1b[0m";
+    if (this.print("debug")) {
+      const debugColor = "\x1b[90m\x1b[0m";
       console.log(
         `${debugColor}[DEBUG]${debugColor} ${this.parseMessage(message)}`
       );
@@ -28,12 +23,8 @@ class Logger {
   }
 
   info(message: string | object | null): void {
-    if (
-      this.logLevel === "info" ||
-      this.logLevel === "warn" ||
-      this.logLevel === "error"
-    ) {
-      const infoColor = "\x1b[34m%s\x1b[0m";
+    if (this.print("info")) {
+      const infoColor = "\x1b[34m\x1b[0m";
       console.log(
         `${infoColor}[INFO]${infoColor} ${this.parseMessage(message)}`
       );
@@ -41,8 +32,8 @@ class Logger {
   }
 
   warn(message: string | object | null): void {
-    if (this.logLevel === "warn" || this.logLevel === "error") {
-      const warnColor = "\x1b[33m%s\x1b[0m";
+    if (this.print("warn")) {
+      const warnColor = "\x1b[33m\x1b[0m";
       console.log(
         `${warnColor}[WARN]${warnColor} ${this.parseMessage(message)}`
       );
@@ -50,8 +41,8 @@ class Logger {
   }
 
   error(message: string | object | null, error?: Error): void {
-    if (this.logLevel === "error") {
-      const errorColor = "\x1b[31m%s\x1b[0m";
+    if (this.print("error")) {
+      const errorColor = "\x1b[31m\x1b[0m";
       console.log(
         `${errorColor}[ERROR]${errorColor} ${this.parseMessage(message)}`
       );
@@ -63,6 +54,21 @@ class Logger {
     if (typeof message === "string") return message;
     if (typeof message === "object") return JSON.stringify(message, null, 2);
     return message;
+  }
+
+  private print(logger: "debug" | "info" | "warn" | "error"): boolean {
+    switch (this.logLevel) {
+      case "debug":
+        return true;
+      case "info":
+        return logger !== "debug";
+      case "warn":
+        return logger !== "debug" && logger !== "info";
+      case "error":
+        return logger !== "debug" && logger !== "info" && logger !== "warn";
+      default:
+        return false;
+    }
   }
 }
 
