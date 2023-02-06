@@ -48,10 +48,18 @@ export async function importValidators(
   const web3signerPostResponse: Web3signerPostResponse =
     await signerApi.importKeystores(importSignerData);
 
-  // 2. Import pubkeys on validator API
   const pubkeys: string[] = keystores.map(
     (keystore) => JSON.parse(keystore).pubkey
   );
+
+  // 2. Write on db
+  brainDb.addPubkeys({
+    pubkeys,
+    tags: postRequest.tags,
+    feeRecipients: postRequest.feeRecipients,
+  });
+
+  // 3. Import pubkeys on validator API
   await validatorApi
     .postRemoteKeys({
       remote_keys: pubkeys.map((pubkey) => ({
@@ -63,20 +71,14 @@ export async function importValidators(
       logger.error(`on posting signer keystores`, err);
     });
 
-  // 3. Import feeRecipient on Validator API
-  for (const [index, pubkey] of pubkeys.entries())
+  // 4. Import feeRecipient on Validator API
+  for (const [index, pubkey] of pubkeys.entries()) {
     await validatorApi
       .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
       .catch((err) => {
         logger.error(`on posting validator feeRecipient`, err);
       });
-
-  // 4. Write on db
-  brainDb.addPubkeys({
-    pubkeys,
-    tags: postRequest.tags,
-    feeRecipients: postRequest.feeRecipients,
-  });
+  }
 
   return web3signerPostResponse;
 }

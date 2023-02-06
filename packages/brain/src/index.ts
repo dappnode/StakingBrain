@@ -71,7 +71,7 @@ const launchpadServer = startLaunchpadApi();
 // Start cron
 const cron = setInterval(async () => {
   await brainDb.reloadData(signerApi, validatorApi, defaultFeeRecipient);
-}, 10 * 1000);
+}, 60 * 1000);
 
 // Graceful shutdown
 function handle(signal: string): void {

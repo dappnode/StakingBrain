@@ -40,7 +40,9 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request(
         "POST",
-        "/eth/v1/validator/" + publicKey + "/feerecipient",
+        "/eth/v1/validator/" + !publicKey.startsWith("0x")
+          ? "0x" + publicKey
+          : publicKey + "/feerecipient",
         JSON.stringify({ ethaddress: newFeeRecipient })
       );
     } catch (e) {
