@@ -55,10 +55,12 @@ export const validatorApi = new ValidatorApi({
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
-await brainDb.initialize(signerApi, validatorApi).catch((e) => {
-  logger.error(`initializing db`, e);
-  process.exit(1);
-});
+await brainDb
+  .initialize(signerApi, validatorApi, defaultFeeRecipient)
+  .catch((e) => {
+    logger.error(`initializing db`, e);
+    process.exit(1);
+  });
 logger.debug(brainDb.data);
 
 // Start APIs

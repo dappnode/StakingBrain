@@ -5,7 +5,6 @@ import fs from "fs";
 import logger from "../logger/index.js";
 import { Web3SignerApi } from "../apiClients/web3signer/index.js";
 import { ValidatorApi } from "../apiClients/validator/index.js";
-import { defaultFeeRecipient } from "../../index.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -39,7 +38,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    */
   public async initialize(
     signerApi: Web3SignerApi,
-    validatorApi: ValidatorApi
+    validatorApi: ValidatorApi,
+    defaultFeeRecipient: string
   ): Promise<void> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
@@ -49,7 +49,11 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         logger.info(
           `Database file ${this.dbName} not found. Attemping to perform migration...`
         );
-        await this.databaseMigration(signerApi, validatorApi);
+        await this.databaseMigration(
+          signerApi,
+          validatorApi,
+          defaultFeeRecipient
+        );
       }
       this.setOwnerWriteRead();
       // TODO: Right after initializing db it should be updated with sources of truth: signer and validator
@@ -264,7 +268,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    */
   private async databaseMigration(
     signerApi: Web3SignerApi,
-    validatorApi: ValidatorApi
+    validatorApi: ValidatorApi,
+    defaultFeeRecipient: string
   ): Promise<void> {
     try {
       // Create json file
