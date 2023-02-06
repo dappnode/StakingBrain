@@ -48,8 +48,7 @@ export class StandardApi {
     } else req = http.request(this.requestOptions);
 
     if (body) {
-      // To avoid the body being ignored in DELETE requests
-      if (req.method !== "POST") req.setHeader("Transfer-Encoding", "chunked");
+      req.setHeader("Content-Length", Buffer.byteLength(body));
       req.write(body);
     }
 
@@ -64,15 +63,22 @@ export class StandardApi {
         let data = "";
 
         res.on("data", (chunk) => {
-          data = chunk;
+          data += chunk;
         });
 
         res.on("end", () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            console.log("Error while parsing response:" + e);
-            reject("Error while parsing response:" + e);
+          if (res.statusCode?.toString().startsWith("2")) {
+            if (data) {
+              try {
+                resolve(JSON.parse(data));
+              } catch (e) {
+                resolve("" + data); //Needed to parse from buffer to string
+              }
+            } else {
+              resolve("OK");
+            }
+          } else {
+            reject("Code " + res.statusCode + ": " + data);
           }
         });
       });
