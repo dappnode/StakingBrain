@@ -63,7 +63,7 @@ export class StandardApi {
         let data = "";
 
         res.on("data", (chunk) => {
-          data = chunk;
+          data += chunk;
         });
 
         res.on("end", () => {
@@ -72,7 +72,7 @@ export class StandardApi {
               try {
                 resolve(JSON.parse(data));
               } catch (e) {
-                resolve(data);
+                resolve("" + data); //Needed to parse from buffer to string
               }
             } else {
               resolve("OK");
