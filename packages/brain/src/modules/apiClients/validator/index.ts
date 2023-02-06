@@ -20,7 +20,7 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        "/eth/v1/validator/" + publicKey + "/feerecipient"
+        "/eth/v1/validator/" + this.prefix0xPubkey(publicKey) + "/feerecipient"
       )) as ValidatorGetFeeResponse;
     } catch (e) {
       throw Error(
@@ -40,9 +40,7 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request(
         "POST",
-        "/eth/v1/validator/" + !publicKey.startsWith("0x")
-          ? "0x" + publicKey
-          : publicKey + "/feerecipient",
+        "/eth/v1/validator/" + this.prefix0xPubkey(publicKey) + "/feerecipient",
         JSON.stringify({ ethaddress: newFeeRecipient })
       );
     } catch (e) {
@@ -60,7 +58,7 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request(
         "DELETE",
-        "/eth/v1/validator/" + publicKey + "/feerecipient"
+        "/eth/v1/validator/" + this.prefix0xPubkey(publicKey) + "/feerecipient"
       );
     } catch (e) {
       throw Error(
@@ -123,5 +121,12 @@ export class ValidatorApi extends StandardApi {
         `Error deleting (DELETE) remote keys from ${this.requestOptions.hostname}: ${e}`
       );
     }
+  }
+
+  /**
+   * Handling pubkey not starting by 0x (returns 4XX error)
+   */
+  private prefix0xPubkey(pubkey: string): string {
+    return pubkey.startsWith("0x") ? pubkey : "0x" + pubkey;
   }
 }
