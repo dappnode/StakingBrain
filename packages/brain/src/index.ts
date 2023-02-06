@@ -11,6 +11,8 @@ import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import * as dotenv from "dotenv";
 import process from "node:process";
 
+logger.info(`Starting brain...`);
+
 dotenv.config();
 const mode = process.env.NODE_ENV || "development";
 logger.debug(`Running app in mode: ${mode}`);
