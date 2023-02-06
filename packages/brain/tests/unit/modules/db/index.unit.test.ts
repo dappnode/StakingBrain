@@ -36,7 +36,12 @@ describe("DataBase", () => {
       const signerApi = sinon.createStubInstance(Web3SignerApi);
       const validatorApi = sinon.createStubInstance(ValidatorApi);
       sinon.stub(db, <any>"databaseMigration").callsFake(databaseMigration);
-      await db.initialize(signerApi, validatorApi);
+      await db.initialize(
+        signerApi,
+        validatorApi,
+        "0x0000000000000000000000000000000000000000",
+        "http://web3signer.web3signer-prater.dappnode:9000"
+      );
 
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
@@ -51,7 +56,12 @@ describe("DataBase", () => {
       fs.writeFileSync(testDbName, JSON.stringify({}));
       const signerApi = sinon.createStubInstance(Web3SignerApi);
       const validatorApi = sinon.createStubInstance(ValidatorApi);
-      db.initialize(signerApi, validatorApi);
+      db.initialize(
+        signerApi,
+        validatorApi,
+        "0x0000000000000000000000000000000000000000",
+        "http://web3signer.web3signer-prater.dappnode:9000"
+      );
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
       expect(db.data).to.be.empty;

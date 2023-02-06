@@ -8,7 +8,6 @@ import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
 import { startUiServer } from "./modules/apiServers/ui/index.js";
 import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
-import { reloadData } from "./modules/cron/index.js";
 import * as dotenv from "dotenv";
 import process from "node:process";
 
@@ -33,10 +32,11 @@ export const {
   signerUrl,
   token,
   host,
+  defaultFeeRecipient,
   tlsCert,
 } = loadStakerConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}\n  - Default fee recipient: ${defaultFeeRecipient}`
 );
 
 // Create API instances. Must preceed db initialization
@@ -54,10 +54,12 @@ export const validatorApi = new ValidatorApi({
 
 // Create DB instance
 export const brainDb = new BrainDataBase(`brain-db.json`);
-await brainDb.initialize(signerApi, validatorApi).catch((e) => {
-  logger.error(`initializing db`, e);
-  process.exit(1);
-});
+await brainDb
+  .initialize(signerApi, validatorApi, defaultFeeRecipient, signerUrl)
+  .catch((e) => {
+    logger.error(`initializing db`, e);
+    process.exit(1);
+  });
 logger.debug(brainDb.data);
 
 // Start APIs
@@ -66,24 +68,13 @@ const launchpadServer = startLaunchpadApi();
 
 // Start cron
 const cron = setInterval(async () => {
-  await reloadData();
+  await brainDb.reloadData(signerApi, validatorApi, defaultFeeRecipient);
 }, 10 * 1000);
-
-// handle sigterm
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received. Shutting down...");
-  process.exit(0);
-});
-
-process.on("SIGINT", () => {
-  console.log("SIGINT received. Shutting down...");
-  process.exit(0);
-});
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
-  // TODO: set braindb permissions to read-only
+  brainDb.close();
   clearInterval(cron);
   uiServer.close();
   launchpadServer.close();
