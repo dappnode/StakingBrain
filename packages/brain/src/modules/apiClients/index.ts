@@ -48,8 +48,7 @@ export class StandardApi {
     } else req = http.request(this.requestOptions);
 
     if (body) {
-      // To avoid the body being ignored in DELETE requests
-      if (req.method !== "POST") req.setHeader("Transfer-Encoding", "chunked");
+      req.setHeader("Content-Length", Buffer.byteLength(body));
       req.write(body);
     }
 
