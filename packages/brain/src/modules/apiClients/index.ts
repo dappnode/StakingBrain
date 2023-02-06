@@ -67,11 +67,18 @@ export class StandardApi {
         });
 
         res.on("end", () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            console.log("Error while parsing response:" + e);
-            reject("Error while parsing response:" + e);
+          if (res.statusCode?.toString().startsWith("2")) {
+            if (data) {
+              try {
+                resolve(JSON.parse(data));
+              } catch (e) {
+                resolve(data);
+              }
+            } else {
+              resolve("OK");
+            }
+          } else {
+            reject("Code " + res.statusCode + ": " + data);
           }
         });
       });
