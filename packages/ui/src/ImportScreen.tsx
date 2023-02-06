@@ -103,8 +103,10 @@ export default function ImportScreen(): JSX.Element {
           keystores: acceptedFiles.map((f) => f.file),
           passwords,
           slashing_protection: slashingFile,
-          tags: [], // TODO: Add tags
-          feeRecipients: [], // TODO  Add fee recipients
+          tags: acceptedFiles.map(() => "solo"), // TODO: Add tags
+          feeRecipients: acceptedFiles.map(
+            () => "0x0000000000000000000000000000000000000000"
+          ), // TODO  Add fee recipients
         })
       );
       setKeystoresPostError(undefined);

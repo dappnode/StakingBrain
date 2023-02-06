@@ -113,7 +113,7 @@ export async function deleteValidators(
 }
 
 /**
- * Get keystores: TODO
+ * Get keystores
  * 1. Get keystores on web3signer API
  * 2. Get pubkeys on validator API
  * 3. Get feeRecipient on Validator API
@@ -121,7 +121,6 @@ export async function deleteValidators(
  * @returns
  */
 export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
-  // TODO: reload data on this call
   const data = brainDb.data;
   if (!data) return [];
   const validators: CustomValidatorGetResponse[] = [];
@@ -132,6 +131,5 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
       feeRecipient,
     });
   }
-
   return validators;
 }
