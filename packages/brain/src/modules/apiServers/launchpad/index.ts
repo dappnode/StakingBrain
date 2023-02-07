@@ -24,6 +24,7 @@ export function startLaunchpadApi(): http.Server {
 
     try {
       const importResponse = await importValidators({
+        importFrom: "api",
         keystores,
         passwords,
         slashing_protection: slashingProtection,

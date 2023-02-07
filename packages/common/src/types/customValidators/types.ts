@@ -1,11 +1,13 @@
-import { Tag, Web3signerPostRequestFromUi } from "../index.js";
+import { Tag } from "../index.js";
 
-export interface CustomValidatorsImportRequest
-  extends Web3signerPostRequestFromUi {
+export interface CustomValidatorsImportRequest {
+  importFrom: "ui" | "api";
   tags: Tag[];
   feeRecipients: string[];
+  keystores: File[] | string[];
+  passwords: string[];
+  slashing_protection?: File | string;
 }
-
 export interface CustomValidatorGetResponse {
   validating_pubkey: string;
   tag?: Tag;
