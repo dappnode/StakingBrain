@@ -12,11 +12,11 @@ import logger from "../modules/logger/index.js";
 /**
  * Import keystores:
  * 1. Import keystores + passwords on web3signer API
- * 2. Import pubkeys on validator API
- * 3. Import feeRecipient on Validator API
- * 4. Write on db
+ * 2. Write on db
+ * 3. Import pubkeys on validator API
+ * 4. Import feeRecipient on Validator API
  * @param postRequest
- * @returns Web3signerPostResponse t
+ * @returns Web3signerPostResponse
  */
 export async function importValidators(
   postRequest: CustomValidatorsImportRequest
@@ -54,6 +54,11 @@ export async function importValidators(
   // 1. Import keystores and passwords on web3signer API
   const web3signerPostResponse: Web3signerPostResponse =
     await signerApi.importKeystores(importSignerData);
+  logger.debug(
+    `Imported keystores into web3signer API: ${JSON.stringify(
+      web3signerPostResponse.data
+    )}`
+  );
 
   const pubkeys: string[] = keystores.map(
     (keystore) => JSON.parse(keystore).pubkey
@@ -65,6 +70,7 @@ export async function importValidators(
     tags: postRequest.tags,
     feeRecipients: postRequest.feeRecipients,
   });
+  logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
 
   // 3. Import pubkeys on validator API
   await validatorApi
@@ -75,15 +81,17 @@ export async function importValidators(
       })),
     })
     .catch((err) => {
-      logger.error(`Posting validator pubkeys`, err);
+      logger.error(`Error setting validator pubkeys`, err);
     });
+  logger.debug(`Added pubkeys to validator API`);
 
   // 4. Import feeRecipient on Validator API
   for (const [index, pubkey] of pubkeys.entries())
     await validatorApi
       .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
+      .then(() => logger.debug(`Added feeRecipient to validator API`))
       .catch((err) => {
-        logger.error(`Posting validator feeRecipient`, err);
+        logger.error(`Error setting validator feeRecipient`, err);
         // Set fee recipient to empty string if error
         postRequest.feeRecipients[index] = "";
       });
@@ -93,41 +101,41 @@ export async function importValidators(
 
 /**
  * Delete keystores:
- * 1. Delete keystores on web3signer API
- * 2. Delete pubkeys on validator API
- * 3. Delete feeRecipient on Validator API
- * 4. Write on db
+ * 1. Write on db
+ * 2. Delete keystores on web3signer API
+ * 3. Delete pubkeys on validator API
+ * 4. Delete feeRecipient on Validator API
  * @param deleteRequest
  * @returns
  */
 export async function deleteValidators(
   deleteRequest: Web3signerDeleteRequest
 ): Promise<Web3signerDeleteResponse> {
-  //  1. Delete keystores on web3signer API
+  // Write on db
+  brainDb.deletePubkeys(deleteRequest.pubkeys);
+  // Delete keystores on web3signer API
   const web3signerDeleteResponse = await signerApi.deleteKeystores(
     deleteRequest
   );
-  // 2. Delete pubkeys on validator API
-  await validatorApi.deleteRemoteKeys(deleteRequest).catch((err) => {
-    logger.error(`on deleting validator pubkeys`, err);
-  });
-  // 3. Delete feeRecipient on Validator API
+  // Delete feeRecipient on Validator API
   for (const pubkey of deleteRequest.pubkeys)
-    await validatorApi.deleteFeeRecipient(pubkey).catch((err) => {
-      logger.error(`on deleting validator feeRecipient`, err);
-    });
-  // 4. Write on db
-  brainDb.deletePubkeys(deleteRequest.pubkeys);
+    await validatorApi
+      .deleteFeeRecipient(pubkey)
+      .then(() => logger.debug(`Deleted fee recipient to validator API`))
+      .catch((err) =>
+        logger.error(`Error deleting validator feeRecipient`, err)
+      );
+  // Delete pubkeys on validator API
+  await validatorApi
+    .deleteRemoteKeys(deleteRequest)
+    .then(() => logger.debug(`Deleted pubkeys to validator API}`))
+    .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
 
   return web3signerDeleteResponse;
 }
 
 /**
- * Get keystores
- * 1. Get keystores on web3signer API
- * 2. Get pubkeys on validator API
- * 3. Get feeRecipient on Validator API
- * 4. Compare and Write on db
+ * Get all validators from db
  * @returns
  */
 export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
