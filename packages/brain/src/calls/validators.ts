@@ -11,8 +11,8 @@ import logger from "../modules/logger/index.js";
 
 /**
  * Import keystores:
- * 1. Import keystores + passwords on web3signer API
- * 2. Write on db
+ * 1. Write on db
+ * 2. Import keystores + passwords on web3signer API
  * 3. Import pubkeys on validator API
  * 4. Import feeRecipient on Validator API
  * @param postRequest
@@ -51,26 +51,32 @@ export async function importValidators(
       passwords: postRequest.passwords,
     };
   }
-  // 1. Import keystores and passwords on web3signer API
-  const web3signerPostResponse: Web3signerPostResponse =
-    await signerApi.importKeystores(importSignerData);
-  logger.debug(
-    `Imported keystores into web3signer API: ${JSON.stringify(
-      web3signerPostResponse.data
-    )}`
-  );
 
   const pubkeys: string[] = keystores.map(
     (keystore) => JSON.parse(keystore).pubkey
   );
 
-  // 2. Write on db
+  // 1. Write on db
   brainDb.addPubkeys({
     pubkeys,
     tags: postRequest.tags,
     feeRecipients: postRequest.feeRecipients,
   });
   logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
+
+  // 2. Import keystores and passwords on web3signer API
+  const web3signerPostResponse: Web3signerPostResponse = await signerApi
+    .importKeystores(importSignerData)
+    .catch((err) => {
+      brainDb.deletePubkeys(pubkeys);
+      throw err;
+    });
+
+  logger.debug(
+    `Imported keystores into web3signer API: ${JSON.stringify(
+      web3signerPostResponse.data
+    )}`
+  );
 
   // 3. Import pubkeys on validator API
   await validatorApi
