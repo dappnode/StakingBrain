@@ -100,6 +100,7 @@ export default function ImportScreen(): JSX.Element {
       handleClickOpenDialog();
       setKeystoresPostResponse(
         await api.importValidators({
+          importFrom: "ui",
           keystores: acceptedFiles.map((f) => f.file),
           passwords,
           slashing_protection: slashingFile,

@@ -29,14 +29,21 @@ export async function importValidators(
       fileContents.push(file.toString());
     return fileContents;
   }
-  const keystores = readFile(postRequest.keystores);
+
+  const keystores =
+    postRequest.importFrom === "ui"
+      ? readFile(postRequest.keystores as File[])
+      : (postRequest.keystores as string[]);
 
   let importSignerData: Web3signerPostRequest;
   if (postRequest.slashing_protection) {
     importSignerData = {
       keystores,
       passwords: postRequest.passwords,
-      slashing_protection: readFile([postRequest.slashing_protection])[0],
+      slashing_protection:
+        postRequest.importFrom === "ui"
+          ? readFile([[postRequest.slashing_protection] as unknown as File])[0]
+          : (postRequest.slashing_protection as string),
     };
   } else {
     importSignerData = {
@@ -68,17 +75,18 @@ export async function importValidators(
       })),
     })
     .catch((err) => {
-      logger.error(`on posting signer keystores`, err);
+      logger.error(`Posting validator pubkeys`, err);
     });
 
   // 4. Import feeRecipient on Validator API
-  for (const [index, pubkey] of pubkeys.entries()) {
+  for (const [index, pubkey] of pubkeys.entries())
     await validatorApi
       .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
       .catch((err) => {
-        logger.error(`on posting validator feeRecipient`, err);
+        logger.error(`Posting validator feeRecipient`, err);
+        // Set fee recipient to empty string if error
+        postRequest.feeRecipients[index] = "";
       });
-  }
 
   return web3signerPostResponse;
 }
