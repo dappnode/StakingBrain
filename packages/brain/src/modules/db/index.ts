@@ -79,7 +79,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     signerUrl: string
   ) {
     try {
-      logger.info(`Reloading database data...`);
+      logger.info(`Reloading data...`);
       // 1. Read DB (pubkeys, fee recipients, tags)
       // TODO: add test
       this.read();
@@ -174,16 +174,27 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       );
       if (brainDbPubkeysFeeRecipientsToAdd.length > 0) {
         logger.debug(
-          `Found ${brainDbPubkeysFeeRecipientsToAdd.length} validators to add to validator API`
+          `Found ${brainDbPubkeysFeeRecipientsToAdd.length} fee recipients to add to validator API`
         );
         for (const [pubkey, feeRecipient] of brainDbPubkeysFeeRecipientsToAdd)
-          await validatorApi.setFeeRecipient(feeRecipient, pubkey);
-        logger.debug(
-          `Added ${brainDbPubkeysFeeRecipientsToAdd.length} validators to validator API`
-        );
+          await validatorApi
+            .setFeeRecipient(feeRecipient, pubkey)
+            .then(() => {
+              (this.data as StakingBrainDb)[pubkey].feeRecipient = feeRecipient;
+              this.write();
+              logger.debug(
+                `Added fee recipient ${feeRecipient} to validator API for pubkey ${pubkey}`
+              );
+            })
+            .catch((e) =>
+              logger.error(
+                `Error adding fee recipient ${feeRecipient} to validator API for pubkey ${pubkey}`,
+                e
+              )
+            );
       }
     } catch (e) {
-      logger.error(`Reloading data`, e);
+      logger.error(`Error reloading data`, e);
       // TODO: handle all possible errors:
       /**
      * ERROR PKG not installed (addr not found)
