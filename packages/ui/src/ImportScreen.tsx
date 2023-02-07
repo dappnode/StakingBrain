@@ -1,29 +1,21 @@
-//Internal components
 import FileDrop from "./components/FileDrop/FileDrop";
 import { SecondaryInfoTypography } from "./Styles/Typographies";
-
-//External components
 import {
   Box,
   Button,
   Card,
   Switch,
   TextField,
+  Select,
   Typography,
   FormGroup,
   FormControlLabel,
+  MenuItem,
 } from "@mui/material";
-
-//React
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
 import { useState } from "react";
-
-//Icons
 import BackupIcon from "@mui/icons-material/Backup";
-
-//Logic
-import { setUniquePassword } from "./logic/ImportScreen/PasswordManager";
 import { extractPubkey } from "./logic/Utils/dataUtils";
 import { ImportStatus, KeystoreInfo } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
@@ -43,6 +35,11 @@ export default function ImportScreen(): JSX.Element {
   const [openDialog, setOpenDialog] = useState(false);
   const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
   const [passwords, setPasswords] = useState<string[]>([]);
+  const [useSamePassword, setUseSamePassword] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [useSameTag, setUseSameTag] = useState(false);
+  const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
+  const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -66,18 +63,6 @@ export default function ImportScreen(): JSX.Element {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const slashingFilesCallback = (files: File[], event: DropEvent) => {
     setSlashingFile(files[0]);
-  };
-
-  //USE SAME PASSWORD SWITCH
-  const [useSamePassword, setUseSamePassword] = useState(false); //Same password for all keystores
-  const handleUseSamePasswordSwitch = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    checked: boolean
-  ) => {
-    setUseSamePassword(checked);
-    const emptyPasswords = Array.from(passwords);
-    emptyPasswords.fill("");
-    setPasswords(emptyPasswords);
   };
 
   // SLASHING PROTECTION SWITCH
@@ -156,8 +141,28 @@ export default function ImportScreen(): JSX.Element {
             <>
               <FormGroup sx={{ marginTop: "6px" }}>
                 <FormControlLabel
-                  control={<Switch onChange={handleUseSamePasswordSwitch} />}
+                  control={
+                    <Switch
+                      onChange={() => setUseSamePassword(!useSamePassword)}
+                    />
+                  }
                   label="Use same password for every file"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      onChange={() =>
+                        setUseSameFeerecipient(!useSameFeerecipient)
+                      }
+                    />
+                  }
+                  label="Use same fee recipient for every file"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch onChange={() => setUseSameTag(!useSameTag)} />
+                  }
+                  label="Use same tag for every file"
                 />
               </FormGroup>
               {useSamePassword && (
@@ -165,11 +170,39 @@ export default function ImportScreen(): JSX.Element {
                   id="outlined-password-input"
                   label="Keystores Password"
                   type="password"
-                  onChange={(event) =>
-                    setUniquePassword(event, passwords, setPasswords)
+                  onChange={(e) =>
+                    setPasswords(
+                      Array(acceptedFiles.length).fill(e.target.value)
+                    )
                   }
                   sx={{ marginTop: 2, width: "60%" }}
                 />
+              )}
+              {useSameFeerecipient && (
+                <TextField
+                  id="outlined-fee-recipient-input"
+                  label="Fee Recipient"
+                  onChange={(e) =>
+                    setFeeRecipients(
+                      Array(acceptedFiles.length).fill(e.target.value)
+                    )
+                  }
+                  sx={{ marginTop: 2, width: "60%" }}
+                />
+              )}
+              {useSameTag && (
+                <Select
+                  id="outlined-tag-input"
+                  label="Tag"
+                  onChange={(e) =>
+                    setTags(Array(acceptedFiles.length).fill(e.target.value))
+                  }
+                  sx={{ marginTop: 2, width: "60%" }}
+                >
+                  <MenuItem value={"solo"}>Solo</MenuItem>
+                  <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+                  <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+                </Select>
               )}
             </>
           )}
@@ -179,7 +212,13 @@ export default function ImportScreen(): JSX.Element {
             setAcceptedFiles,
             passwords,
             setPasswords,
-            useSamePassword
+            useSamePassword,
+            tags,
+            setTags,
+            useSameTag,
+            feeRecipients,
+            setFeeRecipients,
+            useSameFeerecipient
           )}
 
           <Box sx={slashingProtectionBoxStyle}>

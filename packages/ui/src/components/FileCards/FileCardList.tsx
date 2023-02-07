@@ -1,15 +1,14 @@
-//External components
-import { Card, Box, Typography, TextField } from "@mui/material";
-
-//Internal components
+import {
+  Card,
+  Box,
+  Typography,
+  TextField,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { KeystoreInfo } from "../../types";
-
-//Logic
 import CloseIcon from "@mui/icons-material/Close";
-import { passwordEntered } from "../../logic/ImportScreen/PasswordManager";
 import { shortenPubkey } from "../../logic/Utils/dataUtils";
-
-//Style
 import "./FileCardList.css";
 
 const removeFileFromList = (
@@ -29,7 +28,13 @@ export default function FileCardList(
   setAcceptedFiles: (passwords: KeystoreInfo[]) => void,
   passwords: string[],
   setPasswords: (passwords: string[]) => void,
-  useSamePassword: boolean
+  useSamePassword: boolean,
+  tags: string[],
+  setTags: (tags: string[]) => void,
+  useSameTag: boolean,
+  feeRecipients: string[],
+  setFeeRecipients: (feeRecipients: string[]) => void,
+  useSameFeeRecipient: boolean
 ): JSX.Element[] {
   return Array.from(fileInfos).map((fileInfo, index) => (
     <Card
@@ -66,11 +71,32 @@ export default function FileCardList(
           id={`outlined-password-input-${index}`}
           label="Keystore Password"
           type="password"
+          onChange={(event) => setPasswords([...passwords, event.target.value])}
+          sx={{ marginTop: 2, width: "60%" }}
+        />
+      )}
+      {!useSameFeeRecipient && (
+        <TextField
+          id={`outlined-fee-recipient-input-${index}`}
+          label="Fee Recipient"
+          type="text"
           onChange={(event) =>
-            passwordEntered(event, index, passwords, setPasswords)
+            setFeeRecipients([...feeRecipients, event.target.value])
           }
           sx={{ marginTop: 2, width: "60%" }}
         />
+      )}
+      {!useSameTag && (
+        <Select
+          id="outlined-tag-input"
+          label="Tag"
+          onChange={(event) => setTags([...tags, event.target.value])}
+          sx={{ marginTop: 2, width: "60%" }}
+        >
+          <MenuItem value={"solo"}>Solo</MenuItem>
+          <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+          <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+        </Select>
       )}
     </Card>
   ));
