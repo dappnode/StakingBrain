@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ApiParams } from "@stakingbrain/common";
-import { BeaconchaApi } from "../../../../../src/modules/apiClients/beaconcha/index.js";
+import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index.js";
 
 describe.skip("Test for fetching validator indexes in every available network", () => {
   it("should return data corresponding to every validator PK", async () => {

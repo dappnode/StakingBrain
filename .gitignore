@@ -10,3 +10,6 @@ packages/brain/webpack
 
 # Brain db
 packages/brain/brain-db.json
+
+# Keystores
+packages/brain/keystores
