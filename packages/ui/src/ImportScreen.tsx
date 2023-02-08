@@ -1,29 +1,23 @@
-//Internal components
 import FileDrop from "./components/FileDrop/FileDrop";
 import { SecondaryInfoTypography } from "./Styles/Typographies";
-
-//External components
 import {
   Box,
   Button,
   Card,
   Switch,
   TextField,
+  Select,
   Typography,
   FormGroup,
   FormControlLabel,
+  MenuItem,
+  FormControl,
+  FormHelperText,
 } from "@mui/material";
-
-//React
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
 import { useState } from "react";
-
-//Icons
 import BackupIcon from "@mui/icons-material/Backup";
-
-//Logic
-import { setUniquePassword } from "./logic/ImportScreen/PasswordManager";
 import { extractPubkey } from "./logic/Utils/dataUtils";
 import { ImportStatus, KeystoreInfo } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
@@ -33,7 +27,7 @@ import {
   mainImportBoxStyle,
   slashingProtectionBoxStyle,
 } from "./Styles/dialogStyles";
-import { Web3signerPostResponse } from "@stakingbrain/common";
+import { Web3signerPostResponse, Tag } from "@stakingbrain/common";
 import { api } from "./api";
 
 export default function ImportScreen(): JSX.Element {
@@ -43,6 +37,11 @@ export default function ImportScreen(): JSX.Element {
   const [openDialog, setOpenDialog] = useState(false);
   const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
   const [passwords, setPasswords] = useState<string[]>([]);
+  const [useSamePassword, setUseSamePassword] = useState(false);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [useSameTag, setUseSameTag] = useState(false);
+  const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
+  const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,18 +67,6 @@ export default function ImportScreen(): JSX.Element {
     setSlashingFile(files[0]);
   };
 
-  //USE SAME PASSWORD SWITCH
-  const [useSamePassword, setUseSamePassword] = useState(false); //Same password for all keystores
-  const handleUseSamePasswordSwitch = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    checked: boolean
-  ) => {
-    setUseSamePassword(checked);
-    const emptyPasswords = Array.from(passwords);
-    emptyPasswords.fill("");
-    setPasswords(emptyPasswords);
-  };
-
   // SLASHING PROTECTION SWITCH
   const [slashingProtectionIncluded, setSlashingProtectionIncluded] =
     useState(true);
@@ -98,16 +85,17 @@ export default function ImportScreen(): JSX.Element {
     try {
       setImportStatus(ImportStatus.Importing);
       handleClickOpenDialog();
+      console.log(passwords);
+      console.log(tags);
+      console.log(feeRecipients);
       setKeystoresPostResponse(
         await api.importValidators({
           importFrom: "ui",
           keystores: acceptedFiles.map((f) => f.file),
           passwords,
           slashing_protection: slashingFile,
-          tags: acceptedFiles.map(() => "solo"), // TODO: Add tags
-          feeRecipients: acceptedFiles.map(
-            () => "0x0000000000000000000000000000000000000000"
-          ), // TODO  Add fee recipients
+          tags,
+          feeRecipients,
         })
       );
       setKeystoresPostError(undefined);
@@ -156,20 +144,91 @@ export default function ImportScreen(): JSX.Element {
             <>
               <FormGroup sx={{ marginTop: "6px" }}>
                 <FormControlLabel
-                  control={<Switch onChange={handleUseSamePasswordSwitch} />}
+                  control={
+                    <Switch
+                      onChange={() => setUseSamePassword(!useSamePassword)}
+                    />
+                  }
                   label="Use same password for every file"
                 />
-              </FormGroup>
-              {useSamePassword && (
-                <TextField
-                  id="outlined-password-input"
-                  label="Keystores Password"
-                  type="password"
-                  onChange={(event) =>
-                    setUniquePassword(event, passwords, setPasswords)
+                <FormControlLabel
+                  control={
+                    <Switch
+                      onChange={() =>
+                        setUseSameFeerecipient(!useSameFeerecipient)
+                      }
+                    />
                   }
-                  sx={{ marginTop: 2, width: "60%" }}
+                  label="Use same fee recipient for every file"
                 />
+                <FormControlLabel
+                  control={
+                    <Switch onChange={() => setUseSameTag(!useSameTag)} />
+                  }
+                  label="Use same tag for every file"
+                />
+              </FormGroup>
+              {(useSameTag || useSameFeerecipient || useSamePassword) && (
+                <FormControl sx={{ marginTop: 2, width: "100%" }}>
+                  {useSamePassword && (
+                    <>
+                      <TextField
+                        id={`outlined-password-input`}
+                        label="Keystore Password"
+                        type="password"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setPasswords(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      />
+                      <FormHelperText>
+                        Password to decrypt the keystore(s)
+                      </FormHelperText>
+                    </>
+                  )}
+                  {useSameFeerecipient && (
+                    <>
+                      <TextField
+                        id={`outlined-fee-recipient-input`}
+                        label="Fee Recipient"
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setFeeRecipients(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      />
+                      <FormHelperText>
+                        The address you wish to receive the transaction fees
+                      </FormHelperText>
+                    </>
+                  )}
+                  {useSameTag && (
+                    <>
+                      <Select
+                        id="outlined-tag-input"
+                        label="Tag"
+                        value={tags[0]}
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setTags(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      >
+                        <MenuItem value={"solo"}>Solo</MenuItem>
+                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+                      </Select>
+                      <FormHelperText>Staking protocol</FormHelperText>
+                    </>
+                  )}
+                </FormControl>
               )}
             </>
           )}
@@ -179,7 +238,13 @@ export default function ImportScreen(): JSX.Element {
             setAcceptedFiles,
             passwords,
             setPasswords,
-            useSamePassword
+            useSamePassword,
+            tags,
+            setTags,
+            useSameTag,
+            feeRecipients,
+            setFeeRecipients,
+            useSameFeerecipient
           )}
 
           <Box sx={slashingProtectionBoxStyle}>

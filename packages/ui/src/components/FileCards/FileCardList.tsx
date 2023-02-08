@@ -1,36 +1,52 @@
-//External components
-import { Card, Box, Typography, TextField } from "@mui/material";
-
-//Internal components
+import {
+  Card,
+  Box,
+  Typography,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  FormHelperText,
+} from "@mui/material";
 import { KeystoreInfo } from "../../types";
-
-//Logic
 import CloseIcon from "@mui/icons-material/Close";
-import { passwordEntered } from "../../logic/ImportScreen/PasswordManager";
 import { shortenPubkey } from "../../logic/Utils/dataUtils";
-
-//Style
 import "./FileCardList.css";
-
-const removeFileFromList = (
-  fileInfo: KeystoreInfo,
-  fileInfos: KeystoreInfo[],
-  setAcceptedFiles: (passwords: KeystoreInfo[]) => void,
-  passwords: string[],
-  setPasswords: (passwords: string[]) => void
-) => {
-  const indexToRemove = fileInfos.indexOf(fileInfo);
-  setAcceptedFiles(fileInfos.filter((f, index) => index !== indexToRemove));
-  setPasswords(passwords.filter((f, index) => index !== indexToRemove));
-};
+import { Tag } from "@stakingbrain/common";
 
 export default function FileCardList(
   fileInfos: KeystoreInfo[],
   setAcceptedFiles: (passwords: KeystoreInfo[]) => void,
   passwords: string[],
   setPasswords: (passwords: string[]) => void,
-  useSamePassword: boolean
+  useSamePassword: boolean,
+  tags: Tag[],
+  setTags: (tags: Tag[]) => void,
+  useSameTag: boolean,
+  feeRecipients: string[],
+  setFeeRecipients: (feeRecipients: string[]) => void,
+  useSameFeeRecipient: boolean
 ): JSX.Element[] {
+  const removeFileFromList = (
+    fileInfo: KeystoreInfo,
+    fileInfos: KeystoreInfo[],
+    setAcceptedFiles: (passwords: KeystoreInfo[]) => void,
+    passwords: string[],
+    setPasswords: (passwords: string[]) => void,
+    feeRecipients: string[],
+    setFeeRecipients: (feeRecipients: string[]) => void,
+    tags: Tag[],
+    setTags: (tags: Tag[]) => void
+  ) => {
+    const indexToRemove = fileInfos.indexOf(fileInfo);
+    setAcceptedFiles(fileInfos.filter((f, index) => index !== indexToRemove));
+    setPasswords(passwords.filter((f, index) => index !== indexToRemove));
+    setFeeRecipients(
+      feeRecipients.filter((f, index) => index !== indexToRemove)
+    );
+    setTags(tags.filter((f, index) => index !== indexToRemove));
+  };
+
   return Array.from(fileInfos).map((fileInfo, index) => (
     <Card
       key={index}
@@ -54,23 +70,73 @@ export default function FileCardList(
               fileInfos,
               setAcceptedFiles,
               passwords,
-              setPasswords
+              setPasswords,
+              feeRecipients,
+              setFeeRecipients,
+              tags,
+              setTags
             )
           }
         >
           <CloseIcon color="action" />
         </button>
       </Box>
-      {!useSamePassword && (
-        <TextField
-          id={`outlined-password-input-${index}`}
-          label="Keystore Password"
-          type="password"
-          onChange={(event) =>
-            passwordEntered(event, index, passwords, setPasswords)
-          }
-          sx={{ marginTop: 2, width: "60%" }}
-        />
+
+      {(!useSameTag || !useSameFeeRecipient || !useSamePassword) && (
+        <FormControl sx={{ marginTop: 2, width: "100%" }}>
+          {!useSamePassword && (
+            <>
+              <TextField
+                id={`outlined-password-input-${index}`}
+                label="Keystore Password"
+                type="password"
+                sx={{ marginTop: 2 }}
+                onChange={(event) => {
+                  passwords[index] = event.target.value;
+                }}
+              />
+              <FormHelperText>
+                Password to decrypt the keystore(s)
+              </FormHelperText>
+            </>
+          )}
+          {!useSameFeeRecipient && (
+            <>
+              <TextField
+                id={`outlined-fee-recipient-input-${index}`}
+                label="Fee Recipient"
+                type="text"
+                sx={{ marginTop: 2 }}
+                onChange={(event) => {
+                  feeRecipients[index] = event.target.value;
+                }}
+              />
+              <FormHelperText>
+                The address you wish to receive the transaction fees
+              </FormHelperText>
+            </>
+          )}
+          {!useSameTag && (
+            <>
+              <Select
+                id="outlined-tag-input"
+                label="Tag"
+                value={tags[index]}
+                type="text"
+                sx={{ marginTop: 2 }}
+                onChange={(event) => {
+                  tags[index] = event.target.value as Tag;
+                }}
+              >
+                <MenuItem value={"solo"}>Solo</MenuItem>
+                <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+                <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+                <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+              </Select>
+              <FormHelperText>Staking protocol</FormHelperText>
+            </>
+          )}
+        </FormControl>
       )}
     </Card>
   ));
