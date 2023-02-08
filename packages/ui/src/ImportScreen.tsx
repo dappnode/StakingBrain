@@ -11,6 +11,8 @@ import {
   FormGroup,
   FormControlLabel,
   MenuItem,
+  FormControl,
+  FormHelperText,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
@@ -25,7 +27,7 @@ import {
   mainImportBoxStyle,
   slashingProtectionBoxStyle,
 } from "./Styles/dialogStyles";
-import { Web3signerPostResponse } from "@stakingbrain/common";
+import { Web3signerPostResponse, Tag } from "@stakingbrain/common";
 import { api } from "./api";
 
 export default function ImportScreen(): JSX.Element {
@@ -36,7 +38,7 @@ export default function ImportScreen(): JSX.Element {
   const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
   const [passwords, setPasswords] = useState<string[]>([]);
   const [useSamePassword, setUseSamePassword] = useState(false);
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [useSameTag, setUseSameTag] = useState(false);
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
@@ -83,16 +85,17 @@ export default function ImportScreen(): JSX.Element {
     try {
       setImportStatus(ImportStatus.Importing);
       handleClickOpenDialog();
+      console.log(passwords);
+      console.log(tags);
+      console.log(feeRecipients);
       setKeystoresPostResponse(
         await api.importValidators({
           importFrom: "ui",
           keystores: acceptedFiles.map((f) => f.file),
           passwords,
           slashing_protection: slashingFile,
-          tags: acceptedFiles.map(() => "solo"), // TODO: Add tags
-          feeRecipients: acceptedFiles.map(
-            () => "0x0000000000000000000000000000000000000000"
-          ), // TODO  Add fee recipients
+          tags,
+          feeRecipients,
         })
       );
       setKeystoresPostError(undefined);
@@ -165,44 +168,67 @@ export default function ImportScreen(): JSX.Element {
                   label="Use same tag for every file"
                 />
               </FormGroup>
-              {useSamePassword && (
-                <TextField
-                  id="outlined-password-input"
-                  label="Keystores Password"
-                  type="password"
-                  onChange={(e) =>
-                    setPasswords(
-                      Array(acceptedFiles.length).fill(e.target.value)
-                    )
-                  }
-                  sx={{ marginTop: 2, width: "60%" }}
-                />
-              )}
-              {useSameFeerecipient && (
-                <TextField
-                  id="outlined-fee-recipient-input"
-                  label="Fee Recipient"
-                  onChange={(e) =>
-                    setFeeRecipients(
-                      Array(acceptedFiles.length).fill(e.target.value)
-                    )
-                  }
-                  sx={{ marginTop: 2, width: "60%" }}
-                />
-              )}
-              {useSameTag && (
-                <Select
-                  id="outlined-tag-input"
-                  label="Tag"
-                  onChange={(e) =>
-                    setTags(Array(acceptedFiles.length).fill(e.target.value))
-                  }
-                  sx={{ marginTop: 2, width: "60%" }}
-                >
-                  <MenuItem value={"solo"}>Solo</MenuItem>
-                  <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
-                  <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
-                </Select>
+              {(useSameTag || useSameFeerecipient || useSamePassword) && (
+                <FormControl sx={{ marginTop: 2, width: "100%" }}>
+                  {useSamePassword && (
+                    <>
+                      <TextField
+                        id={`outlined-password-input`}
+                        label="Keystore Password"
+                        type="password"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setPasswords(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      />
+                      <FormHelperText>
+                        Password to decrypt the keystore(s)
+                      </FormHelperText>
+                    </>
+                  )}
+                  {useSameFeerecipient && (
+                    <>
+                      <TextField
+                        id={`outlined-fee-recipient-input`}
+                        label="Fee Recipient"
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setFeeRecipients(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      />
+                      <FormHelperText>
+                        The address you wish to receive the transaction fees
+                      </FormHelperText>
+                    </>
+                  )}
+                  {useSameTag && (
+                    <>
+                      <Select
+                        id="outlined-tag-input"
+                        label="Tag"
+                        value={tags[0]}
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setTags(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      >
+                        <MenuItem value={"solo"}>Solo</MenuItem>
+                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+                      </Select>
+                      <FormHelperText>Staking protocol</FormHelperText>
+                    </>
+                  )}
+                </FormControl>
               )}
             </>
           )}
