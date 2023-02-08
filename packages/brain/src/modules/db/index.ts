@@ -193,6 +193,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
               )
             );
       }
+      logger.info(`Finished reloading data`);
     } catch (e) {
       logger.error(`Error reloading data`, e);
       // TODO: handle all possible errors:

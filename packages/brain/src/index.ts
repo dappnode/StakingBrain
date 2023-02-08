@@ -68,16 +68,28 @@ logger.debug(brainDb.data);
 const uiServer = startUiServer(path.resolve(__dirname, "uiBuild"));
 const launchpadServer = startLaunchpadApi();
 
+// CRON
+let cron: NodeJS.Timer;
+export function startCron(): void {
+  cron = setInterval(async () => {
+    await brainDb.reloadData(signerApi, validatorApi, defaultFeeRecipient);
+  }, 60 * 1000);
+}
+export function stopCron(): void {
+  clearInterval(cron);
+}
+export function restartCron(): void {
+  stopCron();
+  startCron();
+}
 // Start cron
-const cron = setInterval(async () => {
-  await brainDb.reloadData(signerApi, validatorApi, defaultFeeRecipient);
-}, 60 * 1000);
+startCron();
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   brainDb.close();
-  clearInterval(cron);
+  stopCron();
   uiServer.close();
   launchpadServer.close();
   process.exit(0);
