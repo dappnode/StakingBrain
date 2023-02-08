@@ -1,4 +1,10 @@
-import { StakingBrainDb, Tag, tags } from "@stakingbrain/common";
+import {
+  StakingBrainDb,
+  Tag,
+  isValidEcdsaPubkey,
+  isValidTag,
+  isValidBlsPubkey,
+} from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
@@ -479,7 +485,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       const pubkeyDetails = pubkeys[pubkey];
 
       // Validate Ethereum address
-      if (!this.isValidBlsPubkey(pubkey))
+      if (!isValidBlsPubkey(pubkey))
         errors.push(`\n  pubkey ${pubkey}: bls is invalid`);
 
       if (!pubkeyDetails) {
@@ -495,7 +501,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           errors.push(
             `\n  pubkey ${pubkey}: tag is invalid, must be in string format`
           );
-        if (!this.isValidTag(pubkeyDetails.tag))
+        if (!isValidTag(pubkeyDetails.tag))
           errors.push(`\n  pubkey ${pubkey}: tag is invalid`);
       }
 
@@ -507,7 +513,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           errors.push(
             `\n  pubkey ${pubkey}: feeRecipient address is invalid, must be in string format`
           );
-        if (!this.isValidEcdsa(pubkeyDetails.feeRecipient))
+        if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
           errors.push(`\n  pubkey ${pubkey}: fee recipient is invalid`);
       }
 
@@ -517,7 +523,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           errors.push(
             `\n  pubkey ${pubkey}: feeRecipientValidator address is invalid, must be in string format`
           );
-        if (!this.isValidEcdsa(pubkeyDetails.feeRecipientValidator))
+        if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipientValidator))
           errors.push(
             `\n  pubkey ${pubkey}: fee recipient validator is invalid`
           );
@@ -535,20 +541,5 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     });
 
     if (errors.length > 0) throw Error(errors.join("\n"));
-  }
-
-  private isValidEcdsa(address: string): boolean {
-    if (!address.match(/^0x[a-fA-F0-9]{40}$/)) return false;
-    return true;
-  }
-
-  private isValidBlsPubkey(pubkey: string): boolean {
-    if (!pubkey.match(/^0x[a-fA-F0-9]{96}$/)) return false;
-    return true;
-  }
-
-  private isValidTag(tag: Tag): boolean {
-    if (!tags.includes(tag)) return false;
-    return true;
   }
 }
