@@ -246,6 +246,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     feeRecipients: string[];
   }): void {
     try {
+      if (
+        pubkeys.length !== tags.length ||
+        pubkeys.length !== feeRecipients.length
+      )
+        throw Error(
+          `Pubkeys, tags and fee recipients must have the same length`
+        );
+
       const pubkeyDetails = this.buildPubkeysDetails(
         pubkeys,
         tags,
@@ -253,7 +261,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       );
       this.validateDb();
       // Remove pubkeys that already exist and add 0x prefix if needed
-      if (this.data) {
+      if (this.data)
         for (const pubkey of Object.keys(pubkeyDetails)) {
           if (this.data[pubkey]) {
             logger.warn(`Pubkey ${pubkey} already in the database`);
@@ -263,15 +271,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             delete pubkeyDetails[pubkey];
           }
         }
-      }
+
       this.ensureDbMaxSize(pubkeyDetails);
       this.validatePubkeys(pubkeyDetails);
       this.data = { ...this.data, ...pubkeyDetails };
       this.write();
     } catch (e) {
-      e.message =
-        `Unable to add pubkeys ${Object.keys(pubkeys).join(", ")}` +
-        `\n${e.message}`;
+      e.message += `Unable to add pubkeys ${Object.keys(pubkeys).join(", ")}`;
       throw Error(e);
     }
   }
@@ -279,26 +285,49 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   /**
    * Updates 1 or more public keys details from the database
    */
-  public updatePubkeys(pubkeys: StakingBrainDb): void {
+  public updatePubkeys({
+    pubkeys,
+    tags,
+    feeRecipients,
+  }: {
+    pubkeys: string[];
+    tags: Tag[];
+    feeRecipients: string[];
+  }): void {
     try {
+      if (
+        pubkeys.length !== tags.length ||
+        pubkeys.length !== feeRecipients.length
+      )
+        throw Error(
+          `Pubkeys, tags and fee recipients must have the same length`
+        );
+
+      const pubkeyDetails = this.buildPubkeysDetails(
+        pubkeys,
+        tags,
+        feeRecipients
+      );
       this.validateDb();
-      // Remove pubkeys that don't exist
-      if (this.data) {
-        for (const pubkey of Object.keys(pubkeys)) {
+      this.validatePubkeys(pubkeyDetails);
+      if (this.data)
+        for (const pubkey of Object.keys(pubkeyDetails)) {
           if (!this.data[pubkey]) {
+            // Remove pubkeys that don't exist
             logger.warn(`Pubkey ${pubkey} not found in the database`);
-            delete pubkeys[pubkey];
+            delete pubkeyDetails[pubkey];
+          } else {
+            this.data[pubkey].tag = pubkeyDetails[pubkey].tag;
+            this.data[pubkey].feeRecipient = pubkeyDetails[pubkey].feeRecipient;
           }
         }
-      }
-      this.validatePubkeys(pubkeys);
-      this.data = { ...pubkeys, ...this.data };
+
       this.write();
     } catch (e) {
-      e.message =
-        `Unable to update pubkeys ${Object.keys(pubkeys).join(", ")}` +
-        `\n${e.message}`;
-      throw Error(e);
+      e.message += `Unable to update pubkeys ${Object.keys(pubkeys).join(
+        ", "
+      )}`;
+      throw e;
     }
   }
 
@@ -317,10 +346,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         this.write();
       }
     } catch (e) {
-      e.message =
-        `Unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}` +
-        `\n${e.message}`;
-      throw Error(e);
+      e.message += `Unable to delete pubkeys ${Object.keys(pubkeys).join(
+        ", "
+      )}`;
+      throw e;
     }
   }
 
@@ -332,8 +361,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.data = {};
       this.write();
     } catch (e) {
-      e.message =
-        `Unable to prune database. Creating a new one...` + `\n${e.message}`;
+      e.message += `Unable to prune database. Creating a new one...`;
       logger.error(e);
       if (fs.existsSync(this.dbName)) fs.unlinkSync(this.dbName);
       this.createJsonFile();
@@ -388,8 +416,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         this.createJsonFile();
       }
     } catch (e) {
-      e.message =
-        `The database is corrupted. Cleaning database` + `\n${e.message}`;
+      e.message += `The database is corrupted. Cleaning database`;
       logger.error(e);
       this.deleteDatabase();
       this.read();
@@ -464,8 +491,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         feeRecipients: Array(pubkeys.length).fill(feeRecipient),
       });
     } catch (e) {
-      e.message =
-        `Error: Unable to perform database migration` + `\n${e.message}`;
+      e.message += `Unable to perform database migration`;
       throw e;
     }
     return;

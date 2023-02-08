@@ -6,6 +6,7 @@ export {
   deleteValidators,
   getValidators,
   importValidators,
+  updateValidators,
 } from "./validators.js";
 export { signerGetStatus } from "./signerGetStatus.js";
 export { getStakerConfig } from "./getStakerConfig.js";
