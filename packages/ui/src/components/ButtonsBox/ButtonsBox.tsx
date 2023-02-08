@@ -1,22 +1,26 @@
 import { Box, Button, CircularProgress } from "@mui/material";
 import { Link } from "react-router-dom";
 import { buttonsBoxStyle } from "../../Styles/buttonsBoxStyles";
+import { BeaconchaUrlBuildingStatus } from "../../types";
+
 //Icons
 import BackupIcon from "@mui/icons-material/Backup";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import { BeaconchaUrlBuildingStatus } from "../../types";
+import EditIcon from "@mui/icons-material/Edit";
 
 export default function ButtonsBox({
   areRowsSelected,
   isTableEmpty,
-  setOpen,
+  setDeleteOpen,
+  setEditFeesOpen,
   validatorSummaryURL,
   summaryUrlBuildingStatus,
   loadSummaryUrl,
 }: {
   areRowsSelected: boolean;
   isTableEmpty: boolean;
-  setOpen(open: boolean): void;
+  setDeleteOpen(open: boolean): void;
+  setEditFeesOpen(open: boolean): void;
   validatorSummaryURL: string;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   loadSummaryUrl(): void;
@@ -40,9 +44,21 @@ export default function ButtonsBox({
         disabled={!areRowsSelected}
         sx={{ marginRight: 4, borderRadius: 3 }}
         endIcon={<DeleteForeverIcon />}
-        onClick={() => setOpen(true)}
+        onClick={() => setDeleteOpen(true)}
       >
         Delete Keystores
+      </Button>
+
+      <Button
+        variant="contained"
+        size="large"
+        color="success"
+        disabled={!areRowsSelected}
+        sx={{ marginRight: 4, borderRadius: 3 }}
+        endIcon={<EditIcon />}
+        onClick={() => setEditFeesOpen(true)}
+      >
+        Edit Fee Recipients
       </Button>
 
       {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NotStarted ? (
