@@ -20,10 +20,10 @@ import logger from "../modules/logger/index.js";
 
 /**
  * Import keystores:
- * 1. Write on db
- * 2. Import keystores + passwords on web3signer API
- * 3. Import pubkeys on validator API
- * 4. Import feeRecipient on Validator API
+ * 1. Import keystores + passwords on web3signer API
+ * 2. Import pubkeys on validator API
+ * 3. Import feeRecipient on Validator API
+ * 4. Write on db must go last because if signerApi fails does not make sense to write on db since cron will not delete them at some point
  * @param postRequest
  * @returns Web3signerPostResponse
  */
@@ -72,29 +72,16 @@ export async function importValidators(
       (keystore) => JSON.parse(keystore).pubkey
     );
 
-    // 1. Write on db
-    brainDb.addPubkeys({
-      pubkeys,
-      tags: postRequest.tags,
-      feeRecipients: postRequest.feeRecipients,
-    });
-    logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
-
-    // 2. Import keystores and passwords on web3signer API
-    const web3signerPostResponse: Web3signerPostResponse = await signerApi
-      .importKeystores(importSignerData)
-      .catch((err) => {
-        brainDb.deletePubkeys(pubkeys);
-        throw err;
-      });
-
+    // 1. Import keystores and passwords on web3signer API
+    const web3signerPostResponse: Web3signerPostResponse =
+      await signerApi.importKeystores(importSignerData);
     logger.debug(
       `Imported keystores into web3signer API: ${JSON.stringify(
         web3signerPostResponse.data
       )}`
     );
 
-    // 3. Import pubkeys on validator API
+    // 2. Import pubkeys on validator API
     await validatorApi
       .postRemoteKeys({
         remote_keys: pubkeys.map((pubkey) => ({
@@ -107,15 +94,23 @@ export async function importValidators(
       });
     logger.debug(`Added pubkeys to validator API`);
 
-    // 4. Import feeRecipient on Validator API
+    // 3. Import feeRecipient on Validator API
     for (const [index, pubkey] of pubkeys.entries())
       await validatorApi
         .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
         .then(() => logger.debug(`Added feeRecipient to validator API`))
         .catch((err) => {
           logger.error(`Error setting validator feeRecipient`, err);
-          // TODO: write empty fee recipient on db
+          postRequest.feeRecipients[index] = "";
         });
+
+    // 4. Write on db
+    brainDb.addPubkeys({
+      pubkeys,
+      tags: postRequest.tags,
+      feeRecipients: postRequest.feeRecipients,
+    });
+    logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
 
     // IMPORTANT: start the cron
     startCron();
@@ -128,7 +123,7 @@ export async function importValidators(
 
 /**
  * Updates validators on DB:
- * 1. Write on db
+ * 1. Write on db MUST goes first because if signerApi fails, cron will try to delete them
  * 2. Import feeRecipient on Validator API
  * @param param0
  */
