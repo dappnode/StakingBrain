@@ -6,7 +6,15 @@ import {
   Web3signerPostResponse,
   CustomValidatorGetResponse,
 } from "@stakingbrain/common";
-import { brainDb, signerApi, signerUrl, validatorApi } from "../index.js";
+import {
+  brainDb,
+  restartCron,
+  signerApi,
+  signerUrl,
+  startCron,
+  stopCron,
+  validatorApi,
+} from "../index.js";
 import logger from "../modules/logger/index.js";
 
 /**
@@ -21,88 +29,101 @@ import logger from "../modules/logger/index.js";
 export async function importValidators(
   postRequest: CustomValidatorsImportRequest
 ): Promise<Web3signerPostResponse> {
-  // 0. Check if already exists?
-  function readFile(files: File[]): string[] {
-    const fileContents: string[] = [];
-    // Type File is from the web, cast it to Buffer
-    for (const file of files as unknown as Buffer[])
-      fileContents.push(file.toString());
-    return fileContents;
-  }
+  try {
+    // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
+    // and prevents the cron from running while we are importing validators
+    stopCron();
 
-  const keystores =
-    postRequest.importFrom === "ui"
-      ? readFile(postRequest.keystores as File[])
-      : (postRequest.keystores as string[]);
+    // 0. Check if already exists?
+    function readFile(files: File[]): string[] {
+      const fileContents: string[] = [];
+      // Type File is from the web, cast it to Buffer
+      for (const file of files as unknown as Buffer[])
+        fileContents.push(file.toString());
+      return fileContents;
+    }
 
-  let importSignerData: Web3signerPostRequest;
-  if (postRequest.slashing_protection) {
-    importSignerData = {
-      keystores,
-      passwords: postRequest.passwords,
-      slashing_protection:
-        postRequest.importFrom === "ui"
-          ? readFile([[postRequest.slashing_protection] as unknown as File])[0]
-          : (postRequest.slashing_protection as string),
-    };
-  } else {
-    importSignerData = {
-      keystores,
-      passwords: postRequest.passwords,
-    };
-  }
+    const keystores =
+      postRequest.importFrom === "ui"
+        ? readFile(postRequest.keystores as File[])
+        : (postRequest.keystores as string[]);
 
-  const pubkeys: string[] = keystores.map(
-    (keystore) => JSON.parse(keystore).pubkey
-  );
+    let importSignerData: Web3signerPostRequest;
+    if (postRequest.slashing_protection) {
+      importSignerData = {
+        keystores,
+        passwords: postRequest.passwords,
+        slashing_protection:
+          postRequest.importFrom === "ui"
+            ? readFile([
+                [postRequest.slashing_protection] as unknown as File,
+              ])[0]
+            : (postRequest.slashing_protection as string),
+      };
+    } else {
+      importSignerData = {
+        keystores,
+        passwords: postRequest.passwords,
+      };
+    }
 
-  // 1. Write on db
-  brainDb.addPubkeys({
-    pubkeys,
-    tags: postRequest.tags,
-    feeRecipients: postRequest.feeRecipients,
-  });
-  logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
+    const pubkeys: string[] = keystores.map(
+      (keystore) => JSON.parse(keystore).pubkey
+    );
 
-  // 2. Import keystores and passwords on web3signer API
-  const web3signerPostResponse: Web3signerPostResponse = await signerApi
-    .importKeystores(importSignerData)
-    .catch((err) => {
-      brainDb.deletePubkeys(pubkeys);
-      throw err;
+    // 1. Write on db
+    brainDb.addPubkeys({
+      pubkeys,
+      tags: postRequest.tags,
+      feeRecipients: postRequest.feeRecipients,
     });
+    logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
 
-  logger.debug(
-    `Imported keystores into web3signer API: ${JSON.stringify(
-      web3signerPostResponse.data
-    )}`
-  );
-
-  // 3. Import pubkeys on validator API
-  await validatorApi
-    .postRemoteKeys({
-      remote_keys: pubkeys.map((pubkey) => ({
-        pubkey,
-        url: signerUrl,
-      })),
-    })
-    .catch((err) => {
-      logger.error(`Error setting validator pubkeys`, err);
-    });
-  logger.debug(`Added pubkeys to validator API`);
-
-  // 4. Import feeRecipient on Validator API
-  for (const [index, pubkey] of pubkeys.entries())
-    await validatorApi
-      .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
-      .then(() => logger.debug(`Added feeRecipient to validator API`))
+    // 2. Import keystores and passwords on web3signer API
+    const web3signerPostResponse: Web3signerPostResponse = await signerApi
+      .importKeystores(importSignerData)
       .catch((err) => {
-        logger.error(`Error setting validator feeRecipient`, err);
-        // Set fee recipient to empty string if error
-        postRequest.feeRecipients[index] = "";
+        brainDb.deletePubkeys(pubkeys);
+        throw err;
       });
 
-  return web3signerPostResponse;
+    logger.debug(
+      `Imported keystores into web3signer API: ${JSON.stringify(
+        web3signerPostResponse.data
+      )}`
+    );
+
+    // 3. Import pubkeys on validator API
+    await validatorApi
+      .postRemoteKeys({
+        remote_keys: pubkeys.map((pubkey) => ({
+          pubkey,
+          url: signerUrl,
+        })),
+      })
+      .catch((err) => {
+        logger.error(`Error setting validator pubkeys`, err);
+      });
+    logger.debug(`Added pubkeys to validator API`);
+
+    // 4. Import feeRecipient on Validator API
+    for (const [index, pubkey] of pubkeys.entries())
+      await validatorApi
+        .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
+        .then(() => logger.debug(`Added feeRecipient to validator API`))
+        .catch((err) => {
+          logger.error(`Error setting validator feeRecipient`, err);
+          // Set fee recipient to empty string if error
+          postRequest.feeRecipients[index] = "";
+        });
+
+    // IMPORTANT: start the cron
+    startCron();
+    return web3signerPostResponse;
+  } catch (e) {
+    restartCron();
+    throw e;
+  }
 }
 
 /**
@@ -117,27 +138,38 @@ export async function importValidators(
 export async function deleteValidators(
   deleteRequest: Web3signerDeleteRequest
 ): Promise<Web3signerDeleteResponse> {
-  // Write on db
-  brainDb.deletePubkeys(deleteRequest.pubkeys);
-  // Delete keystores on web3signer API
-  const web3signerDeleteResponse = await signerApi.deleteKeystores(
-    deleteRequest
-  );
-  // Delete feeRecipient on Validator API
-  for (const pubkey of deleteRequest.pubkeys)
-    await validatorApi
-      .deleteFeeRecipient(pubkey)
-      .then(() => logger.debug(`Deleted fee recipient to validator API`))
-      .catch((err) =>
-        logger.error(`Error deleting validator feeRecipient`, err)
-      );
-  // Delete pubkeys on validator API
-  await validatorApi
-    .deleteRemoteKeys(deleteRequest)
-    .then(() => logger.debug(`Deleted pubkeys to validator API}`))
-    .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+  try {
+    // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
+    // and prevents the cron from running while we are deleting validators
+    stopCron();
 
-  return web3signerDeleteResponse;
+    // Write on db
+    brainDb.deletePubkeys(deleteRequest.pubkeys);
+    // Delete keystores on web3signer API
+    const web3signerDeleteResponse = await signerApi.deleteKeystores(
+      deleteRequest
+    );
+    // Delete feeRecipient on Validator API
+    for (const pubkey of deleteRequest.pubkeys)
+      await validatorApi
+        .deleteFeeRecipient(pubkey)
+        .then(() => logger.debug(`Deleted fee recipient to validator API`))
+        .catch((err) =>
+          logger.error(`Error deleting validator feeRecipient`, err)
+        );
+    // Delete pubkeys on validator API
+    await validatorApi
+      .deleteRemoteKeys(deleteRequest)
+      .then(() => logger.debug(`Deleted pubkeys to validator API}`))
+      .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+
+    // IMPORTANT: start the cron
+    startCron();
+    return web3signerDeleteResponse;
+  } catch (e) {
+    restartCron();
+    throw e;
+  }
 }
 
 /**
