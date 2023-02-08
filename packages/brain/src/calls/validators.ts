@@ -158,6 +158,7 @@ export async function updateValidators({
         .setFeeRecipient(feeRecipients[index], pubkey)
         .then(() => logger.debug(`Added feeRecipient to validator API`))
         .catch((err) =>
+          // TODO: write empty fee recipient on db
           logger.error(`Error setting validator feeRecipient`, err)
         );
 
