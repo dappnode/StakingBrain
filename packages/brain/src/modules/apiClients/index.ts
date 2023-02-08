@@ -52,13 +52,13 @@ export class StandardApi {
       req.write(body);
     }
 
-    req.on("error", (e) => {
-      console.error(e);
-    });
-
     req.end();
 
     return new Promise((resolve, reject) => {
+      req.on("error", (e) => {
+        reject(e);
+      });
+
       req.on("response", (res) => {
         let data = "";
 
