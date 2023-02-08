@@ -8,6 +8,7 @@ FROM node:${NODE_VERSION}-alpine as build-stage
 # Fixes error on `react-scripts-build`
 # error:0308010C:digital envelope routines::unsupported https://stackoverflow.com/questions/69692842/error-message-error0308010cdigital-envelope-routinesunsupported
 ENV NODE_OPTIONS=--openssl-legacy-provider
+ENV NODE_ENV=development
 
 RUN apk add --no-cache --virtual .build-deps \
   build-base \
@@ -18,7 +19,6 @@ RUN apk add --no-cache --virtual .build-deps \
   curl \
   && rm -rf /var/cache/apk/*
 
-COPY ./packages/brain/tls /app/packages/brain/src/
 COPY entrypoint-dev.sh /usr/local/bin/entrypoint-dev.sh
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint-dev.sh" ]

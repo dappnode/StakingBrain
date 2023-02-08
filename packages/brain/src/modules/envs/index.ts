@@ -16,7 +16,7 @@ import {
   ExecutionClient,
   ConsensusClient,
 } from "@stakingbrain/common";
-import { __dirname } from "../../index.js";
+import { mode, __dirname } from "../../index.js";
 import path from "path";
 import fs from "fs";
 
@@ -47,6 +47,11 @@ export function loadStakerConfig(): {
         ", "
       )}`
     );
+
+  const certDir = path.join(
+    mode === "development" ? process.cwd() : __dirname,
+    "tls"
+  );
 
   const defaultFeeRecipient =
     process.env.DEFAULT_FEE_RECIPIENT ||
@@ -94,12 +99,7 @@ export function loadStakerConfig(): {
         validatorUrl = `https://validator.teku.dappnode:3500`;
         beaconchainUrl = `http://beacon-chain.teku.dappnode:3500`;
         tlsCert = fs.readFileSync(
-          path.join(
-            path.resolve(__dirname, ".."),
-            "tls",
-            "mainnet",
-            "teku_client_keystore.p12"
-          )
+          path.join(certDir, "mainnet", "teku_client_keystore.p12")
         );
         break;
       case "lodestar.dnp.dappnode.eth":
@@ -153,12 +153,7 @@ export function loadStakerConfig(): {
         beaconchainUrl = `http://beacon-chain.teku-gnosis.dappnode:3500`;
         validatorUrl = `https://validator.teku-gnosis.dappnode:3500`;
         tlsCert = fs.readFileSync(
-          path.join(
-            path.resolve(__dirname, ".."),
-            "tls",
-            "gnosis",
-            "teku_client_keystore.p12"
-          )
+          path.join(certDir, "gnosis", "teku_client_keystore.p12")
         );
         break;
       case "lighthouse-gnosis.dnp.dappnode.eth":
@@ -220,12 +215,7 @@ export function loadStakerConfig(): {
         beaconchainUrl = `http://beacon-chain.teku-prater.dappnode:3500`;
         validatorUrl = `https://validator.teku-prater.dappnode:3500`;
         tlsCert = fs.readFileSync(
-          path.join(
-            path.resolve(__dirname, ".."),
-            "tls",
-            "prater",
-            "teku_client_keystore.p12"
-          )
+          path.join(certDir, "prater", "teku_client_keystore.p12")
         );
         break;
       case "lighthouse-prater.dnp.dappnode.eth":
