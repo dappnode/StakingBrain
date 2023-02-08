@@ -40,6 +40,8 @@ export default function KeystoreList({
     beaconcha_url: beaconchaBaseUrl
       ? beaconchaBaseUrl + "/validator/" + row.validating_pubkey
       : "",
+    fee_recipient: row.feeRecipient || "No fee recipient",
+    tag: row.tag || "No tag", //TODO: Add icon?? Then put the name of the tag when hovering over it
     id: index,
   }));
 
