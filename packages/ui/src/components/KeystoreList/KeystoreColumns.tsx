@@ -71,9 +71,11 @@ export default function KeystoreColumns(): GridColDef[] {
       sortable: false,
       align: "center",
       headerAlign: "center",
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       renderCell: (rowData) => (
         <button
           style={{ color: "grey" }}
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           onClick={(event) => {
             /*setSeletectedValidatorPK(rowData.row.validating_pubkey);
             setIsFeeDialogOpen(true);*/
