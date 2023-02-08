@@ -71,11 +71,13 @@ const launchpadServer = startLaunchpadApi();
 // CRON
 let cron: NodeJS.Timer;
 export function startCron(): void {
+  logger.debug(`Starting cron...`);
   cron = setInterval(async () => {
     await brainDb.reloadData(signerApi, validatorApi, defaultFeeRecipient);
   }, 60 * 1000);
 }
 export function stopCron(): void {
+  logger.debug(`Stopping cron...`);
   clearInterval(cron);
 }
 export function restartCron(): void {
