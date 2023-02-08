@@ -138,27 +138,38 @@ export async function importValidators(
 export async function deleteValidators(
   deleteRequest: Web3signerDeleteRequest
 ): Promise<Web3signerDeleteResponse> {
-  // Write on db
-  brainDb.deletePubkeys(deleteRequest.pubkeys);
-  // Delete keystores on web3signer API
-  const web3signerDeleteResponse = await signerApi.deleteKeystores(
-    deleteRequest
-  );
-  // Delete feeRecipient on Validator API
-  for (const pubkey of deleteRequest.pubkeys)
-    await validatorApi
-      .deleteFeeRecipient(pubkey)
-      .then(() => logger.debug(`Deleted fee recipient to validator API`))
-      .catch((err) =>
-        logger.error(`Error deleting validator feeRecipient`, err)
-      );
-  // Delete pubkeys on validator API
-  await validatorApi
-    .deleteRemoteKeys(deleteRequest)
-    .then(() => logger.debug(`Deleted pubkeys to validator API}`))
-    .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+  try {
+    // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
+    // and prevents the cron from running while we are deleting validators
+    stopCron();
 
-  return web3signerDeleteResponse;
+    // Write on db
+    brainDb.deletePubkeys(deleteRequest.pubkeys);
+    // Delete keystores on web3signer API
+    const web3signerDeleteResponse = await signerApi.deleteKeystores(
+      deleteRequest
+    );
+    // Delete feeRecipient on Validator API
+    for (const pubkey of deleteRequest.pubkeys)
+      await validatorApi
+        .deleteFeeRecipient(pubkey)
+        .then(() => logger.debug(`Deleted fee recipient to validator API`))
+        .catch((err) =>
+          logger.error(`Error deleting validator feeRecipient`, err)
+        );
+    // Delete pubkeys on validator API
+    await validatorApi
+      .deleteRemoteKeys(deleteRequest)
+      .then(() => logger.debug(`Deleted pubkeys to validator API}`))
+      .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+
+    // IMPORTANT: start the cron
+    startCron();
+    return web3signerDeleteResponse;
+  } catch (e) {
+    restartCron();
+    throw e;
+  }
 }
 
 /**
