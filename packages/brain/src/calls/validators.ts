@@ -5,6 +5,7 @@ import {
   CustomValidatorsImportRequest,
   Web3signerPostResponse,
   CustomValidatorGetResponse,
+  Tag,
 } from "@stakingbrain/common";
 import {
   brainDb,
@@ -113,13 +114,55 @@ export async function importValidators(
         .then(() => logger.debug(`Added feeRecipient to validator API`))
         .catch((err) => {
           logger.error(`Error setting validator feeRecipient`, err);
-          // Set fee recipient to empty string if error
-          postRequest.feeRecipients[index] = "";
+          // TODO: write empty fee recipient on db
         });
 
     // IMPORTANT: start the cron
     startCron();
     return web3signerPostResponse;
+  } catch (e) {
+    restartCron();
+    throw e;
+  }
+}
+
+/**
+ * Updates validators on DB:
+ * 1. Write on db
+ * 2. Import feeRecipient on Validator API
+ * @param param0
+ */
+export async function updateValidators({
+  pubkeys,
+  feeRecipients,
+  tags,
+}: {
+  pubkeys: string[];
+  feeRecipients: string[];
+  tags: Tag[];
+}): Promise<void> {
+  try {
+    // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
+    // and prevents the cron from running while we are importing validators
+    stopCron();
+
+    brainDb.updatePubkeys({
+      pubkeys,
+      tags,
+      feeRecipients,
+    });
+
+    // Import feeRecipient on Validator API
+    for (const [index, pubkey] of pubkeys.entries())
+      await validatorApi
+        .setFeeRecipient(feeRecipients[index], pubkey)
+        .then(() => logger.debug(`Added feeRecipient to validator API`))
+        .catch((err) =>
+          logger.error(`Error setting validator feeRecipient`, err)
+        );
+
+    // IMPORTANT: start the cron
+    startCron();
   } catch (e) {
     restartCron();
     throw e;
