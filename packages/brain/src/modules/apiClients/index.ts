@@ -6,6 +6,7 @@ import {
   ErrnoException,
 } from "@stakingbrain/common";
 import { ApiError } from "./error.js";
+import logger from "../logger/index.js";
 
 export class StandardApi {
   private useTls = false;
@@ -90,12 +91,20 @@ export class StandardApi {
           });
 
           res.on("end", () => {
-            if (res.statusCode?.toString().startsWith("2")) {
+            if (
+              res.statusCode &&
+              res.statusCode >= 200 &&
+              res.statusCode < 300
+            ) {
               if (data.length > 0) {
                 try {
                   resolve(JSON.parse(Buffer.concat(data).toString()));
                 } catch (e) {
-                  resolve(Buffer.concat(data).toString()); //Needed to parse from buffer to string
+                  logger.error(
+                    `Error parsing response from ${this.requestOptions.hostname} ${endpoint} ${e.message}`,
+                    e
+                  );
+                  resolve(Buffer.concat(data).toString());
                 }
               } else {
                 resolve();
