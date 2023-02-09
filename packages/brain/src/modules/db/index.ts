@@ -4,6 +4,7 @@ import {
   isValidEcdsaPubkey,
   isValidTag,
   isValidBlsPubkey,
+  prefix0xPubkey,
 } from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
@@ -262,18 +263,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         feeRecipients
       );
       this.validateDb();
-      // Remove pubkeys that already exist and add 0x prefix if needed
+      // Remove pubkeys that already exist
       if (this.data)
-        for (const pubkey of Object.keys(pubkeyDetails)) {
+        for (const pubkey of Object.keys(pubkeyDetails))
           if (this.data[pubkey]) {
             logger.warn(`Pubkey ${pubkey} already in the database`);
             delete pubkeyDetails[pubkey];
-          } else if (!pubkey.startsWith("0x")) {
-            // TODO: this must be implemented in a utility function
-            pubkeyDetails[`0x${pubkey}`] = pubkeyDetails[pubkey];
-            delete pubkeyDetails[pubkey];
           }
-        }
 
       this.ensureDbMaxSize(pubkeyDetails);
       this.validateValidators(pubkeyDetails);
@@ -394,7 +390,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Builds the object to be added to the braindb
+   * Builds the object to be added to the braindb and adds the prefix 0x to the public keys if needed
    *
    * @param pubkeys - The public keys to add
    * @param tags - The tags to add
@@ -417,6 +413,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     feeRecipients: string[],
     automaticImport = true
   ): StakingBrainDb {
+    pubkeys = pubkeys.map((pubkey) => prefix0xPubkey(pubkey));
     const pubkeysDetails: StakingBrainDb = {};
     for (let i = 0; i < pubkeys.length; i++) {
       pubkeysDetails[pubkeys[i]] = {
