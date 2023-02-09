@@ -20,6 +20,7 @@ import {
   Web3signerDeleteResponse,
 } from "@stakingbrain/common";
 import { api } from "../../api";
+import { SlideTransition } from "./Transitions";
 
 export default function KeystoresDeleteDialog({
   rows,
@@ -73,6 +74,7 @@ export default function KeystoresDeleteDialog({
       }}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      TransitionComponent={SlideTransition}
     >
       <DialogTitle id="alert-dialog-title">
         {keystoresDelete ? "Done" : "Delete Keystores?"}

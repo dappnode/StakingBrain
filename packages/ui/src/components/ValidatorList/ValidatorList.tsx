@@ -2,6 +2,7 @@
 import KeystoreList from "../KeystoreList/KeystoreList";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import ButtonsBox from "../ButtonsBox/ButtonsBox";
+import EditFeesDialog from "../Dialogs/EditFeesDialog";
 
 //External components
 import { Alert, Box, Card, CircularProgress } from "@mui/material";
@@ -26,7 +27,8 @@ export default function ValidatorList({
   network: Network;
 }): JSX.Element {
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
-  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editFeesOpen, setEditFeesOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
   const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
@@ -83,10 +85,10 @@ export default function ValidatorList({
   }
 
   useEffect(() => {
-    if (!open) {
+    if (!deleteOpen) {
       getKeystores();
     }
-  }, [open]);
+  }, [deleteOpen]);
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
@@ -129,7 +131,8 @@ export default function ValidatorList({
               <ButtonsBox
                 areRowsSelected={selectedRows.length !== 0}
                 isTableEmpty={validatorsGet.length === 0}
-                setOpen={setOpen}
+                setDeleteOpen={setDeleteOpen}
+                setEditFeesOpen={setEditFeesOpen}
                 validatorSummaryURL={validatorSummaryURL}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 loadSummaryUrl={loadSummaryUrl}
@@ -161,13 +164,22 @@ export default function ValidatorList({
                 </Alert>
               )}
 
-              {open && (
+              {deleteOpen && (
                 <KeystoresDeleteDialog
                   rows={validatorsGet}
                   selectedRows={selectedRows}
                   setSelectedRows={setSelectedRows}
-                  open={open}
-                  setOpen={setOpen}
+                  open={deleteOpen}
+                  setOpen={setDeleteOpen}
+                />
+              )}
+
+              {editFeesOpen && (
+                <EditFeesDialog
+                  rows={validatorsGet}
+                  selectedRows={selectedRows}
+                  open={editFeesOpen}
+                  setOpen={setEditFeesOpen}
                 />
               )}
             </>
