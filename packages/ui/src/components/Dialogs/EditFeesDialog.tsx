@@ -1,0 +1,192 @@
+//External components
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from "@mui/material";
+import { GridSelectionModel } from "@mui/x-data-grid";
+import {
+  CustomValidatorGetResponse,
+  burnAddress,
+  isValidEcdsaPubkey,
+} from "@stakingbrain/common";
+import React from "react";
+
+//Logic
+import { useEffect, useState } from "react";
+import { api } from "../../api";
+
+//Styles
+import { importDialogBoxStyle } from "../../Styles/dialogStyles";
+import WaitBox from "../WaitBox/WaitBox";
+import { SlideTransition } from "./Transitions";
+
+export default function FeeRecipientDialog({
+  open,
+  setOpen,
+  rows,
+  selectedRows,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  rows: CustomValidatorGetResponse[];
+  selectedRows: GridSelectionModel;
+}): JSX.Element {
+  const [newFeeRecipient, setNewFeeRecipient] = useState("");
+  //const [wrongPostPubkeys, setWrongPostPubkeys] = useState(new Array<string>());
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleClose = () => {
+    setOpen(false);
+    setErrorMessage("");
+    setSuccessMessage("");
+    //setWrongPostPubkeys(new Array<string>());
+  };
+
+  const handleNewFeeRecipientChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setNewFeeRecipient(event.target.value);
+  };
+
+  //To hide success message after 5 seconds
+  useEffect(() => {
+    const timeId = setTimeout(() => {
+      setSuccessMessage("");
+      setErrorMessage("");
+    }, 3000);
+
+    return () => {
+      clearTimeout(timeId);
+    };
+  }, [successMessage]);
+
+  const updateFeeRecipients = async (newFeeRecipient: string) => {
+    if (newFeeRecipient === burnAddress) {
+      setErrorMessage(
+        "It is not possible to set the fee recipient to the burn address"
+      );
+      return;
+    }
+
+    /*if (!isValidEcdsaPubkey(newFeeRecipient)) {
+      setErrorMessage("Invalid address");
+      return;
+    }*/
+
+    let error = false;
+
+    const validatorPubkeys = selectedRows.map(
+      (row) => rows[parseInt(row.toString())].validating_pubkey
+    );
+
+    const validatorTags = selectedRows.map(
+      (row) => rows[parseInt(row.toString())].tag || "solo" //TODO: Check how to make this cleaner
+    );
+
+    const feeRecipients = new Array<string>(validatorPubkeys.length).fill(
+      newFeeRecipient
+    );
+
+    setLoading(true);
+
+    try {
+      api.updateValidators({
+        pubkeys: validatorPubkeys,
+        feeRecipients: feeRecipients,
+        tags: validatorTags,
+      });
+    } catch (err) {
+      setErrorMessage(
+        "There was an error updating some fee recipients: " + err
+      );
+      error = true;
+    }
+
+    setLoading(false);
+
+    if (!error) {
+      setSuccessMessage("Fee recipients updated successfully");
+    }
+  };
+
+  return (
+    <Dialog
+      disableEscapeKeyDown={true}
+      open={open}
+      fullWidth={true}
+      onClose={(event, reason) => {
+        if (!reason) {
+          handleClose();
+        }
+      }}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+      TransitionComponent={SlideTransition}
+    >
+      <DialogTitle
+        id="alert-dialog-title"
+        sx={{ fontWeight: 700, fontSize: 24 }}
+      >
+        Edit Fee Recipient For Selected Validators
+      </DialogTitle>
+      <>
+        <DialogContent>
+          <Box sx={importDialogBoxStyle}>
+            <TextField
+              onChange={handleNewFeeRecipientChange}
+              sx={{ marginTop: 2 }}
+              label="New Fee Recipient"
+            />
+            {successMessage && (
+              <Alert severity="success" variant="filled" sx={{ marginTop: 2 }}>
+                {successMessage}
+              </Alert>
+            )}
+            {errorMessage && (
+              <Alert severity="error" variant="filled" sx={{ marginTop: 2 }}>
+                {errorMessage}
+              </Alert>
+            )}
+            {/*wrongPostPubkeys.length > 0 && (
+              <Alert severity="error" variant="filled" sx={{ marginTop: 2 }}>
+                There was an error updating fee recipient for the following
+                validators: {wrongPostPubkeys.join(", ")}
+              </Alert>
+            )*/}
+          </Box>
+        </DialogContent>
+        {!loading ? (
+          <DialogActions>
+            {!errorMessage && (
+              <Button
+                onClick={() => updateFeeRecipients(newFeeRecipient)}
+                variant="contained"
+                sx={{ margin: 2, borderRadius: 3 }}
+                disabled={!isValidEcdsaPubkey(newFeeRecipient)}
+              >
+                Apply changes
+              </Button>
+            )}
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              sx={{ margin: 2, borderRadius: 3 }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        ) : (
+          <WaitBox />
+        )}
+      </>
+    </Dialog>
+  );
+}

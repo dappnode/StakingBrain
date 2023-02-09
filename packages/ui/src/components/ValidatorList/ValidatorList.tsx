@@ -2,6 +2,7 @@
 import KeystoreList from "../KeystoreList/KeystoreList";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import ButtonsBox from "../ButtonsBox/ButtonsBox";
+import EditFeesDialog from "../Dialogs/EditFeesDialog";
 
 //External components
 import { Alert, Box, Card, CircularProgress } from "@mui/material";
@@ -170,6 +171,15 @@ export default function ValidatorList({
                   setSelectedRows={setSelectedRows}
                   open={deleteOpen}
                   setOpen={setDeleteOpen}
+                />
+              )}
+
+              {editFeesOpen && (
+                <EditFeesDialog
+                  rows={validatorsGet}
+                  selectedRows={selectedRows}
+                  open={editFeesOpen}
+                  setOpen={setEditFeesOpen}
                 />
               )}
             </>
