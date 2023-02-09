@@ -158,12 +158,6 @@ export default function FeeRecipientDialog({
                 {errorMessage}
               </Alert>
             )}
-            {/*wrongPostPubkeys.length > 0 && (
-              <Alert severity="error" variant="filled" sx={{ marginTop: 2 }}>
-                There was an error updating fee recipient for the following
-                validators: {wrongPostPubkeys.join(", ")}
-              </Alert>
-            )*/}
           </Box>
         </DialogContent>
         {!loading ? (
