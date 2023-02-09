@@ -13,6 +13,7 @@ import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import { KeystoreInfo } from "../../types";
 import WaitBox from "../WaitBox/WaitBox";
 import { Web3signerPostResponse } from "@stakingbrain/common";
+import { SlideTransition } from "./Transitions";
 
 export default function ImportDialog({
   open,
@@ -45,6 +46,7 @@ export default function ImportDialog({
       }}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      TransitionComponent={SlideTransition}
     >
       <DialogTitle id="alert-dialog-title" sx={{ fontWeight: "bolder" }}>
         {importStatus}

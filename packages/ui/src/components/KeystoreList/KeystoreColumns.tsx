@@ -1,7 +1,6 @@
 //External components
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
-import { Edit } from "@mui/icons-material";
 
 export default function KeystoreColumns(): GridColDef[] {
   return [
