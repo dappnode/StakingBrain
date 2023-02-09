@@ -5,7 +5,7 @@ packages/*/node_modules
 # Builds
 packages/*/dist
 packages/*/build
-packages/brain/src/uiBuild
+packages/brain/uiBuild
 packages/brain/webpack
 
 # Brain db
