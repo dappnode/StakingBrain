@@ -58,56 +58,65 @@ export class StandardApi {
 
     req.end();
 
-    return new Promise((resolve, reject) => {
-      req.on("error", (e: ErrnoException) => {
-        reject(
-          new ApiError({
-            name: e.name || "Standard ApiError",
-            message: `${e.message}. ` || "",
-            errno: e.errno || -1,
-            code: e.code || "UNKNOWN",
-            path: endpoint,
-            syscall: method,
-            hostname: this.requestOptions.hostname || undefined,
-            address: e.address,
-            port: e.port,
-          })
-        );
-      });
-
-      req.on("response", (res) => {
-        let data = "";
-
-        res.on("data", (chunk) => {
-          data += chunk;
+    return new Promise(
+      (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolve: (data?: any) => void | string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        reject: (error: any) => void | ApiError
+      ) => {
+        req.on("error", (e: ErrnoException) => {
+          reject(
+            new ApiError({
+              name: e.name || "Standard ApiError",
+              message: `${e.message}. ` || "",
+              errno: e.errno || -1,
+              code: e.code || "UNKNOWN",
+              path: endpoint,
+              syscall: method,
+              hostname: this.requestOptions.hostname || undefined,
+              address: e.address,
+              port: e.port,
+            })
+          );
         });
 
-        res.on("end", () => {
-          if (res.statusCode?.toString().startsWith("2")) {
-            if (data) {
-              try {
-                resolve(JSON.parse(data));
-              } catch (e) {
-                resolve("" + data); //Needed to parse from buffer to string
+        req.on("response", (res) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const data: any[] = [];
+
+          res.on("data", (chunk) => {
+            data.push(chunk);
+          });
+
+          res.on("end", () => {
+            if (res.statusCode?.toString().startsWith("2")) {
+              if (data.length > 0) {
+                try {
+                  resolve(JSON.parse(Buffer.concat(data).toString()));
+                } catch (e) {
+                  resolve(Buffer.concat(data).toString()); //Needed to parse from buffer to string
+                }
+              } else {
+                resolve();
               }
             } else {
-              resolve("OK");
+              reject(
+                new ApiError({
+                  name: "Standard ApiError",
+                  message:
+                    JSON.parse(Buffer.concat(data).toString())?.message || "",
+                  errno: res.statusCode,
+                  code: "ERR_HTTP",
+                  path: endpoint,
+                  syscall: method,
+                  hostname: this.requestOptions.hostname || undefined,
+                })
+              );
             }
-          } else {
-            reject(
-              new ApiError({
-                name: "Standard ApiError",
-                message: data,
-                errno: res.statusCode,
-                code: "ERR_HTTP",
-                path: endpoint,
-                syscall: method,
-                hostname: this.requestOptions.hostname || undefined,
-              })
-            );
-          }
+          });
         });
-      });
-    });
+      }
+    );
   }
 }
