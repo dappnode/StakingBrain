@@ -69,18 +69,6 @@ export default function FeeRecipientDialog({
   }, [successMessage]);
 
   const updateFeeRecipients = async (newFeeRecipient: string) => {
-    if (newFeeRecipient === burnAddress) {
-      setErrorMessage(
-        "It is not possible to set the fee recipient to the burn address"
-      );
-      return;
-    }
-
-    /*if (!isValidEcdsaPubkey(newFeeRecipient)) {
-      setErrorMessage("Invalid address");
-      return;
-    }*/
-
     let error = false;
 
     const validatorPubkeys = selectedRows.map(
@@ -135,7 +123,7 @@ export default function FeeRecipientDialog({
         id="alert-dialog-title"
         sx={{ fontWeight: 700, fontSize: 24 }}
       >
-        Edit Fee Recipient For Selected Validators
+        Edit Fee Recipient (for selected validators)
       </DialogTitle>
       <>
         <DialogContent>
@@ -144,6 +132,18 @@ export default function FeeRecipientDialog({
               onChange={handleNewFeeRecipientChange}
               sx={{ marginTop: 2 }}
               label="New Fee Recipient"
+              error={
+                !isValidEcdsaPubkey(newFeeRecipient) ||
+                newFeeRecipient === burnAddress
+              }
+              helperText={
+                !isValidEcdsaPubkey(newFeeRecipient)
+                  ? "Invalid address"
+                  : newFeeRecipient === burnAddress
+                  ? "It is not possible to set the fee recipient to the burn address"
+                  : "The fee recipient is the address where the validator will send the fees"
+              }
+              value={newFeeRecipient}
             />
             {successMessage && (
               <Alert severity="success" variant="filled" sx={{ marginTop: 2 }}>
@@ -170,7 +170,10 @@ export default function FeeRecipientDialog({
                 onClick={() => updateFeeRecipients(newFeeRecipient)}
                 variant="contained"
                 sx={{ margin: 2, borderRadius: 3 }}
-                disabled={!isValidEcdsaPubkey(newFeeRecipient)}
+                disabled={
+                  !isValidEcdsaPubkey(newFeeRecipient) ||
+                  newFeeRecipient === burnAddress
+                }
               >
                 Apply changes
               </Button>
