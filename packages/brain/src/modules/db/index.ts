@@ -13,6 +13,7 @@ import logger from "../logger/index.js";
 import { Web3SignerApi } from "../apiClients/web3signer/index.js";
 import { ValidatorApi } from "../apiClients/validator/index.js";
 import { params } from "../../params.js";
+import { ApiError } from "../apiClients/error.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -210,25 +211,27 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       }
       logger.info(`Finished reloading data`);
     } catch (e) {
-      logger.error(`Error reloading data`, e);
-      // TODO: handle all possible errors:
-      /**
-     * ERROR PKG not installed (addr not found)
-      ```
-      Error: getaddrinfo ENOTFOUND validator.lighthouse-prater.dappnode
-        at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:107:26) {
-        errno: -3008,
-        code: 'ENOTFOUND',
-        syscall: 'getaddrinfo',
-        hostname: 'validator.lighthouse-prater.dappnode'
+      if (e instanceof ApiError && e.code) {
+        switch (e.code) {
+          case "ECONNREFUSED":
+            e.message += `Connection refused by the server ${e.hostname}. Make sure the port is open and the server is running`;
+            break;
+          case "ECONNRESET":
+            e.message += `Connection reset by the server ${e.hostname}, check server logs`;
+            break;
+          case "ENNOTFOUND":
+            e.message += `Host ${e.hostname} not found. Make sure the server is running and the hostname is correct`;
+            break;
+          case "ERR_HTTP":
+            e.message += `HTTP error code ${e.errno}`;
+            break;
+          default:
+            e.message += `Unknown error`;
+            break;
         }
-       ```
 
-      * ERROR brain host not authorized
-       ```
-       { message: 'Host not authorized.' }
-       ```
-     */
+        logger.error(`Error reloading data`, e);
+      }
     }
   }
 

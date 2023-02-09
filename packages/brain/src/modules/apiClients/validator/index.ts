@@ -40,9 +40,8 @@ export class ValidatorApi extends StandardApi {
         )
       )) as ValidatorGetFeeResponse;
     } catch (e) {
-      throw Error(
-        `Error getting (GET) fee recipient for ${publicKey} from ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error getting (GET) fee recipient for pubkey ${publicKey} from validator. `;
+      throw e;
     }
   }
 
@@ -65,9 +64,8 @@ export class ValidatorApi extends StandardApi {
         JSON.stringify({ ethaddress: newFeeRecipient })
       );
     } catch (e) {
-      throw Error(
-        `Error setting (POST) fee recipient for ${publicKey} to ${newFeeRecipient} on ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error setting (POST) fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. `;
+      throw e;
     }
   }
 
@@ -84,9 +82,8 @@ export class ValidatorApi extends StandardApi {
         )
       );
     } catch (e) {
-      throw Error(
-        `Error removing (DELETE) fee recipient for ${publicKey} on ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error deleting (DELETE) fee recipient for pubkey ${publicKey} from validator. `;
+      throw e;
     }
   }
 
@@ -101,9 +98,8 @@ export class ValidatorApi extends StandardApi {
         this.remoteKeymanagerEndpoint
       )) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
-      throw Error(
-        `Error getting (GET) remote keys from ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error getting (GET) remote keys from validator. `;
+      throw e;
     }
   }
   /**
@@ -124,9 +120,8 @@ export class ValidatorApi extends StandardApi {
         JSON.stringify(remoteKeys)
       )) as ValidatorPostRemoteKeysResponse;
     } catch (e) {
-      throw Error(
-        `Error posting (POST) remote keys to ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error posting (POST) remote keys to validator. `;
+      throw e;
     }
   }
 
@@ -146,9 +141,8 @@ export class ValidatorApi extends StandardApi {
         JSON.stringify(pubkeys)
       )) as ValidatorDeleteRemoteKeysResponse;
     } catch (e) {
-      throw Error(
-        `Error deleting (DELETE) remote keys from ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error deleting (DELETE) remote keys from validator. `;
+      throw e;
     }
   }
 }

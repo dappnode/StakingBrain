@@ -1,6 +1,11 @@
 import https from "node:https";
 import http from "node:http";
-import { ApiParams, AllowedMethods } from "@stakingbrain/common";
+import {
+  ApiParams,
+  AllowedMethods,
+  ErrnoException,
+} from "@stakingbrain/common";
+import { ApiError } from "./error.js";
 
 export class StandardApi {
   private useTls = false;
@@ -42,7 +47,6 @@ export class StandardApi {
     this.requestOptions.path = endpoint;
 
     if (this.useTls) {
-      //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       this.requestOptions.rejectUnauthorized = false;
       req = https.request(this.requestOptions);
     } else req = http.request(this.requestOptions);
@@ -55,8 +59,20 @@ export class StandardApi {
     req.end();
 
     return new Promise((resolve, reject) => {
-      req.on("error", (e) => {
-        reject(e);
+      req.on("error", (e: ErrnoException) => {
+        reject(
+          new ApiError({
+            name: e.name || "Standard ApiError",
+            message: `${e.message}. ` || "",
+            errno: e.errno || -1,
+            code: e.code || "UNKNOWN",
+            path: endpoint,
+            syscall: method,
+            hostname: this.requestOptions.hostname || undefined,
+            address: e.address,
+            port: e.port,
+          })
+        );
       });
 
       req.on("response", (res) => {
@@ -78,7 +94,17 @@ export class StandardApi {
               resolve("OK");
             }
           } else {
-            reject("Code " + res.statusCode + ": " + data);
+            reject(
+              new ApiError({
+                name: "Standard ApiError",
+                message: data,
+                errno: res.statusCode,
+                code: "ERR_HTTP",
+                path: endpoint,
+                syscall: method,
+                hostname: this.requestOptions.hostname || undefined,
+              })
+            );
           }
         });
       });
