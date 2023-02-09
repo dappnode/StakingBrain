@@ -61,33 +61,5 @@ export default function KeystoreColumns(): GridColDef[] {
       headerClassName: "tableHeader",
       width: 60,
     },
-    {
-      field: "edit_fee_recipients",
-      headerName: "",
-      description: "Edit the fee recipient for this validator",
-      disableReorder: true,
-      disableColumnMenu: true,
-      disableExport: true,
-      sortable: false,
-      align: "center",
-      headerAlign: "center",
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      renderCell: (rowData) => (
-        <button
-          style={{ color: "grey" }}
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          onClick={(event) => {
-            /*setSeletectedValidatorPK(rowData.row.validating_pubkey);
-            setIsFeeDialogOpen(true);*/
-            //TODO
-          }}
-        >
-          <Edit />
-        </button>
-      ),
-      headerClassName: "tableHeader",
-      cellClassName: "tableCell",
-      width: 60,
-    },
   ];
 }
