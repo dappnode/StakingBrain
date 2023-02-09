@@ -41,9 +41,8 @@ export class Web3SignerApi extends StandardApi {
         JSON.stringify(postRequest)
       )) as Web3signerPostResponse;
     } catch (e) {
-      throw Error(
-        `Error importing (POST) keystores to ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error importing (POST) keystores to remote signer. `;
+      throw e;
     }
   }
 
@@ -68,9 +67,8 @@ export class Web3SignerApi extends StandardApi {
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
-      throw Error(
-        `Error deleting (DELETE) keystores to ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error deleting (DELETE) keystores from remote signer. `;
+      throw e;
     }
   }
 
@@ -85,9 +83,8 @@ export class Web3SignerApi extends StandardApi {
         this.localKeymanagerEndpoint
       )) as Web3signerGetResponse;
     } catch (e) {
-      throw Error(
-        `Error getting (GET) keystores to ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error getting (GET) keystores from remote signer. `;
+      throw e;
     }
   }
 
@@ -102,9 +99,8 @@ export class Web3SignerApi extends StandardApi {
         this.serverStatusEndpoint
       )) as Web3signerHealthcheckResponse;
     } catch (e) {
-      throw Error(
-        `Error getting (GET) server status to ${this.requestOptions.hostname}: ${e}`
-      );
+      e.message += `Error getting (GET) server status. Is Web3Signer running? `;
+      throw e;
     }
   }
 }
