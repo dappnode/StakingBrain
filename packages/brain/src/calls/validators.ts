@@ -105,7 +105,7 @@ export async function importValidators(
         });
 
     // 4. Write on db
-    brainDb.addPubkeys({
+    brainDb.addValidators({
       pubkeys,
       tags: postRequest.tags,
       feeRecipients: postRequest.feeRecipients,
@@ -141,7 +141,7 @@ export async function updateValidators({
     // and prevents the cron from running while we are importing validators
     stopCron();
 
-    brainDb.updatePubkeys({
+    brainDb.updateValidators({
       pubkeys,
       tags,
       feeRecipients,
@@ -183,7 +183,7 @@ export async function deleteValidators(
     stopCron();
 
     // Write on db
-    brainDb.deletePubkeys(deleteRequest.pubkeys);
+    brainDb.deleteValidators(deleteRequest.pubkeys);
     // Delete keystores on web3signer API
     const web3signerDeleteResponse = await signerApi.deleteKeystores(
       deleteRequest

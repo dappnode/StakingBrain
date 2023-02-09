@@ -1,5 +1,4 @@
 import path from "path";
-import { fileURLToPath } from "url";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
@@ -10,17 +9,15 @@ import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import * as dotenv from "dotenv";
 import process from "node:process";
+import { params } from "./params.js";
 
 logger.info(`Starting brain...`);
 
 dotenv.config();
-export const mode = process.env.NODE_ENV || "development";
+const mode = process.env.NODE_ENV || "development";
 logger.debug(`Running app in mode: ${mode}`);
 
-export const __dirname =
-  mode === "development"
-    ? path.dirname(fileURLToPath(import.meta.url))
-    : process.cwd();
+export const __dirname = process.cwd();
 
 // Load staker config
 export const {
@@ -55,17 +52,17 @@ export const validatorApi = new ValidatorApi({
 });
 
 // Create DB instance
-export const brainDb = new BrainDataBase(`brain-db.json`);
+export const brainDb = new BrainDataBase(params.brainDbName);
 await brainDb
   .initialize(signerApi, validatorApi, defaultFeeRecipient, signerUrl)
   .catch((e) => {
-    logger.error(`initializing db`, e);
+    logger.error(`Initializing db`, e);
     process.exit(1);
   });
 logger.debug(brainDb.data);
 
-// Start APIs
-const uiServer = startUiServer(path.resolve(__dirname, "uiBuild"));
+// Start server APIs
+const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName));
 const launchpadServer = startLaunchpadApi();
 
 // CRON
@@ -73,7 +70,11 @@ let cron: NodeJS.Timer;
 export function startCron(): void {
   logger.debug(`Starting cron...`);
   cron = setInterval(async () => {
-    await brainDb.reloadData(signerApi, validatorApi, defaultFeeRecipient);
+    await brainDb.reloadValidators(
+      signerApi,
+      validatorApi,
+      defaultFeeRecipient
+    );
   }, 60 * 1000);
 }
 export function stopCron(): void {
@@ -90,8 +91,8 @@ startCron();
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
-  brainDb.close();
   stopCron();
+  brainDb.close();
   uiServer.close();
   launchpadServer.close();
   process.exit(0);

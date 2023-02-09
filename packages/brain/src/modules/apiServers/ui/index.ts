@@ -7,6 +7,7 @@ import logger from "../../logger/index.js";
 import { getRpcHandler } from "../../rpc/index.js";
 import * as routes from "../../../calls/index.js";
 import http from "http";
+import { params } from "../../../params.js";
 
 export function startUiServer(uiBuildPath: string): http.Server {
   const app = express();
@@ -51,8 +52,8 @@ export function startUiServer(uiBuildPath: string): http.Server {
     res.sendFile(path.join(uiBuildPath, "index.html"));
   });
 
-  server.listen(80, () => {
-    logger.info("Server listening on *:80");
+  server.listen(params.uiPort, () => {
+    logger.info(`Server listening on *:${params.uiPort}`);
   });
 
   return server;

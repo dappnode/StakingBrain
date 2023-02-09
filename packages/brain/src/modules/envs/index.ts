@@ -16,14 +16,28 @@ import {
   ExecutionClient,
   ConsensusClient,
 } from "@stakingbrain/common";
-import { mode, __dirname } from "../../index.js";
 import path from "path";
 import fs from "fs";
+import { params } from "../../params.js";
+import { __dirname } from "../../index.js";
+import { isValidEcdsaPubkey } from "@stakingbrain/common";
 
 /**
  * Loads the staker config needed to create the base urls for beacon, validator and signer APIs
- * @returns executionClientUrl, validatorUrl, beaconchainUrl, beaconchaUrl, signerUrl, token
- * @throws Error if environment variables are not set
+ *
+ * @throws NETWORK environment variable is not set
+ * This exception is thrown if the NETWORK environment variable is not set
+ *
+ * @throws NETWORK environment variable is not valid
+ * This exception is thrown if the NETWORK environment variable is different from mainnet, prater or gnosis
+ *
+ * @throws execution client is not valid for <network>: <execution client>. Valid execution clients for <network>: <execution clients>
+ * This exception is thrown if the execution client is not valid for the network
+ *
+ * @throws consensus client is not valid for <network>: <consensus client>. Valid consensus clients for <network>: <consensus clients>
+ * This exception is thrown if the consensus client is not valid for the network
+ *
+ * @returns executionClientUrl, validatorUrl, beaconchainUrl, beaconchaUrl, signerUrl, token, host, defaultFeeRecipient, tlsCert
  */
 export function loadStakerConfig(): {
   network: Network;
@@ -48,14 +62,13 @@ export function loadStakerConfig(): {
       )}`
     );
 
-  const certDir = path.join(
-    mode === "development" ? process.cwd() : __dirname,
-    "tls"
-  );
+  const certDir = path.join(__dirname, params.certDirName);
 
   const defaultFeeRecipient =
-    process.env.DEFAULT_FEE_RECIPIENT ||
-    "0x0000000000000000000000000000000000000000";
+    process.env.DEFAULT_FEE_RECIPIENT &&
+    isValidEcdsaPubkey(process.env.DEFAULT_FEE_RECIPIENT)
+      ? process.env.DEFAULT_FEE_RECIPIENT
+      : params.burnAddress;
 
   let executionClientUrl: string,
     validatorUrl: string,

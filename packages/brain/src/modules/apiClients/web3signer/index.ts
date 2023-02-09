@@ -15,19 +15,19 @@ import { StandardApi } from "../index.js";
 export class Web3SignerApi extends StandardApi {
   /**
    * Local Key Manager endpoint
-   * https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/
+   * @see https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/
    */
-  keymanagerEndpoint = "/eth/v1/keystores";
+  localKeymanagerEndpoint = "/eth/v1/keystores";
 
   /**
    * Server Healthcheck endpoint
-   * https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Health-Status
+   * @see https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Health-Status
    */
   serverStatusEndpoint = "/healthcheck";
 
   /**
    * Import remote keys for the validator client to request duties for.
-   * https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/ListKeys
+   * @see https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/ListKeys
    */
   public async importKeystores(
     postRequest: Web3signerPostRequest
@@ -35,7 +35,7 @@ export class Web3SignerApi extends StandardApi {
     try {
       return (await this.request(
         "POST",
-        this.keymanagerEndpoint,
+        this.localKeymanagerEndpoint,
         JSON.stringify(postRequest)
       )) as Web3signerPostResponse;
     } catch (e) {
@@ -58,7 +58,7 @@ export class Web3SignerApi extends StandardApi {
       });
       return (await this.request(
         "DELETE",
-        this.keymanagerEndpoint,
+        this.localKeymanagerEndpoint,
         data
       )) as Web3signerDeleteResponse;
     } catch (e) {
@@ -76,7 +76,7 @@ export class Web3SignerApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        this.keymanagerEndpoint
+        this.localKeymanagerEndpoint
       )) as Web3signerGetResponse;
     } catch (e) {
       throw Error(

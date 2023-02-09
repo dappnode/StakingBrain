@@ -11,6 +11,7 @@ import fs from "fs";
 import logger from "../logger/index.js";
 import { Web3SignerApi } from "../apiClients/web3signer/index.js";
 import { ValidatorApi } from "../apiClients/validator/index.js";
+import { params } from "../../params.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -61,8 +62,11 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           validatorApi,
           defaultFeeRecipient
         );
-      } else this.setOwnerWriteRead();
-      await this.reloadData(signerApi, validatorApi, signerUrl);
+      } else {
+        this.setOwnerWriteRead();
+        // Reload validators from truth sources on startup
+        await this.reloadValidators(signerApi, validatorApi, signerUrl);
+      }
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
       this.validateDb();
@@ -77,9 +81,21 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Reload db data based on truth sources: validator and signer APIs
+   * Reload db data based on truth sources: validator and signer APIs:
+   * - GET signer API pubkeys
+   * - GET validator API pubkeys and fee recipients
+   * - DELETE from signer API pubkeys that are not in DB
+   * - DELETE from DB pubkeys that are not in signer API
+   * - DELETE to validator API pubkeys that are in validator API and not in DB
+   * - POST to validator API fee recipients that are in DB and not in validator API
+   *
+   * TODO: this function is critical, it must have strict tests
+   *
+   * @param signerApi Web3SignerApi
+   * @param validatorApi ValidatorApi
+   * @param signerUrl string
    */
-  public async reloadData(
+  public async reloadValidators(
     signerApi: Web3SignerApi,
     validatorApi: ValidatorApi,
     signerUrl: string
@@ -87,16 +103,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     try {
       logger.info(`Reloading data...`);
       // 1. Read DB (pubkeys, fee recipients, tags)
-      // TODO: add test
       this.read();
       if (!this.data) logger.warn(`Database is empty`);
       // 2. GET signer API pubkeys
-      // TODO: add test
       const signerPubkeys = (await signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
       // 3. GET validator API pubkeys and fee recipients
-      // TODO: add test
       const validatorPubkeysFeeRecipients = new Map();
       const validatorPubkeys =
         (await validatorApi.getRemoteKeys()).data.map(
@@ -107,7 +120,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         validatorPubkeysFeeRecipients.set(pubkey, feeRecipient.data.ethaddress);
       }
       // 4. DELETE from signer API pubkeys that are not in DB
-      // TODO: add test
       const signerPubkeysToRemove = signerPubkeys.filter(
         (pubkey) => !(this.data as StakingBrainDb)[pubkey]
       );
@@ -121,7 +133,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         );
       }
       // 5. DELETE from DB pubkeys that are not in signer API
-      // TODO: add test
       const brainDbPubkeysToRemove = Object.keys(
         this.data as StakingBrainDb
       ).filter((pubkey) => !signerPubkeys.includes(pubkey));
@@ -129,13 +140,12 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         logger.debug(
           `Found ${brainDbPubkeysToRemove.length} validators to remove from DB`
         );
-        this.deletePubkeys(brainDbPubkeysToRemove);
+        this.deleteValidators(brainDbPubkeysToRemove);
         logger.debug(
           `Deleted ${brainDbPubkeysToRemove.length} validators from DB`
         );
       }
       // 6. POST to validator API pubkeys that are in DB and not in validator API
-      // TODO: add test
       const brainDbPubkeysToAdd = Object.keys(
         this.data as StakingBrainDb
       ).filter((pubkey) => !validatorPubkeys.includes(pubkey));
@@ -154,7 +164,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         );
       }
       // 7. DELETE to validator API pubkeys that are in validator API and not in DB
-      // TODO: add test
       const validatorPubkeysToRemove = validatorPubkeys.filter(
         (pubkey) => !(this.data as StakingBrainDb)[pubkey]
       );
@@ -170,7 +179,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         );
       }
       // 8. POST to validator API fee recipients that are in DB and not in validator API
-      // TODO: add test
       const brainDbPubkeysFeeRecipientsToAdd = Array.from(
         validatorPubkeysFeeRecipients.entries()
       ).filter(
@@ -225,18 +233,12 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
   /**
    * Adds 1 or more public keys and their details to the database
-   * @param pubkeys - object containing the public keys and their details
-   * ```
-   * { "pubkey1": {
-   *   "tag": "obol",
-   *   "feeRecipient": "0x1234567890",
-   *   "feeRecipientValidator": "0x123456
-   *   "automaticImport": true
-   *   },
-   * }
-   * ```
+   *
+   * @param pubkeys Array of public keys
+   * @param tags Array of tags
+   * @param feeRecipients Array of fee recipients
    */
-  public addPubkeys({
+  public addValidators({
     pubkeys,
     tags,
     feeRecipients,
@@ -254,7 +256,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           `Pubkeys, tags and fee recipients must have the same length`
         );
 
-      const pubkeyDetails = this.buildPubkeysDetails(
+      const pubkeyDetails = this.buildValidatorsDetails(
         pubkeys,
         tags,
         feeRecipients
@@ -267,13 +269,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             logger.warn(`Pubkey ${pubkey} already in the database`);
             delete pubkeyDetails[pubkey];
           } else if (!pubkey.startsWith("0x")) {
+            // TODO: this must be implemented in a utility function
             pubkeyDetails[`0x${pubkey}`] = pubkeyDetails[pubkey];
             delete pubkeyDetails[pubkey];
           }
         }
 
       this.ensureDbMaxSize(pubkeyDetails);
-      this.validatePubkeys(pubkeyDetails);
+      this.validateValidators(pubkeyDetails);
       this.data = { ...this.data, ...pubkeyDetails };
       this.write();
     } catch (e) {
@@ -284,8 +287,12 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
   /**
    * Updates 1 or more public keys details from the database
+   *
+   * @param pubkeys Array of public keys
+   * @param tags Array of tags
+   * @param feeRecipients Array of fee recipients
    */
-  public updatePubkeys({
+  public updateValidators({
     pubkeys,
     tags,
     feeRecipients,
@@ -303,13 +310,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           `Pubkeys, tags and fee recipients must have the same length`
         );
 
-      const pubkeyDetails = this.buildPubkeysDetails(
+      const pubkeyDetails = this.buildValidatorsDetails(
         pubkeys,
         tags,
         feeRecipients
       );
       this.validateDb();
-      this.validatePubkeys(pubkeyDetails);
+      this.validateValidators(pubkeyDetails);
       if (this.data)
         for (const pubkey of Object.keys(pubkeyDetails)) {
           if (!this.data[pubkey]) {
@@ -335,7 +342,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * Deletes 1 or more public keys and its details from the database
    * @param pubkeys - The public keys to delete
    */
-  public deletePubkeys(pubkeys: string[]): void {
+  public deleteValidators(pubkeys: string[]): void {
     try {
       this.validateDb();
       if (!this.data) return;
@@ -353,10 +360,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     }
   }
 
+  // PRVATE METHODS //
+
   /**
-   * Cleans the database
+   * Cleans the database:
+   * - Writes an empty object to the database
+   * - On error deletes the database file and creates a new one
    */
-  public deleteDatabase(): void {
+  private pruneDatabase(): void {
     try {
       this.data = {};
       this.write();
@@ -364,11 +375,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       e.message += `Unable to prune database. Creating a new one...`;
       logger.error(e);
       if (fs.existsSync(this.dbName)) fs.unlinkSync(this.dbName);
-      this.createJsonFile();
+      this.createJsonFileAndPermissions();
     }
   }
-
-  // Utils
 
   /**
    * Set write permissions to the database file
@@ -386,8 +395,23 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
   /**
    * Builds the object to be added to the braindb
+   *
+   * @param pubkeys - The public keys to add
+   * @param tags - The tags to add
+   * @param feeRecipients - The fee recipients to add
+   * @param automaticImport - Whether the validator was automatically imported
+   *
+   * @returns The object to be added to the braindb
+   * @example
+   * { "pubkey1": {
+   *   "tag": "obol",
+   *   "feeRecipient": "0x1234567890",
+   *   "feeRecipientValidator": "0x123456"
+   *   "automaticImport": true
+   *   },
+   * }
    */
-  private buildPubkeysDetails(
+  private buildValidatorsDetails(
     pubkeys: string[],
     tags: Tag[],
     feeRecipients: string[],
@@ -406,19 +430,21 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Validates the database it is in the correct format
+   * Validates the database it is in the correct format:
+   * - Creates JSON file if it doesn't exist
+   * - Deletes the database if it is corrupted and creates a new one
    */
   private validateDb(): void {
     try {
       this.read();
       if (this.data === null) {
         logger.warn(`Database file ${this.dbName} not found. Creating it...`);
-        this.createJsonFile();
+        this.createJsonFileAndPermissions();
       }
     } catch (e) {
       e.message += `The database is corrupted. Cleaning database`;
       logger.error(e);
-      this.deleteDatabase();
+      this.pruneDatabase();
       this.read();
     }
   }
@@ -447,7 +473,16 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Performs the database migration for the first run
+   * Performs the database migration for the first run:
+   * - Fetches the public keys from the signer API
+   * - Fetches the fee recipient from the validator API (if not available uses the default fee recipient, no error is thrown)
+   * - Adds the public keys to the database
+   *
+   * @throws Error if signer API is not available
+   *
+   * @param signerApi - The signer API
+   * @param validatorApi - The validator API
+   * @param defaultFeeRecipient - The default fee recipient to use if the validator API is not available
    */
   private async databaseMigration(
     signerApi: Web3SignerApi,
@@ -456,9 +491,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   ): Promise<void> {
     try {
       // Create json file
-      this.createJsonFile();
-      // Add permissions
-      this.setOwnerWriteRead();
+      this.createJsonFileAndPermissions();
       // Fetch public keys from signer API
       // TODO: implement a retry system
       const pubkeys = (await signerApi.getKeystores()).data.map(
@@ -483,29 +516,27 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           feeRecipient = defaultFeeRecipient;
         });
 
-      const defaultTag = "solo";
-
-      this.addPubkeys({
+      this.addValidators({
         pubkeys,
-        tags: Array(pubkeys.length).fill(defaultTag),
+        tags: Array(pubkeys.length).fill(params.defaultTag),
         feeRecipients: Array(pubkeys.length).fill(feeRecipient),
       });
     } catch (e) {
       e.message += `Unable to perform database migration`;
       throw e;
     }
-    return;
   }
 
   /**
-   * Creates a new database file if does not exist
+   * Creates a new database file if does not exist and sets the correct permissions
    */
-  private createJsonFile(): void {
+  private createJsonFileAndPermissions(): void {
     fs.writeFileSync(this.dbName, "{}");
+    this.setOwnerWriteRead();
     this.read();
   }
 
-  private validatePubkeys(pubkeys: StakingBrainDb): void {
+  private validateValidators(pubkeys: StakingBrainDb): void {
     const errors: string[] = [];
     Object.keys(pubkeys).forEach((pubkey) => {
       const pubkeyDetails = pubkeys[pubkey];

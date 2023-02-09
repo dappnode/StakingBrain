@@ -6,13 +6,25 @@ import {
   ValidatorPostRemoteKeysRequest,
   ValidatorPostRemoteKeysResponse,
 } from "@stakingbrain/common";
-
 import { StandardApi } from "../index.js";
+import path from "path";
 
 export class ValidatorApi extends StandardApi {
   /**
+   * Remote Key Manager endpoint
+   * @see https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager
+   */
+  remoteKeymanagerEndpoint = "/eth/v1/remotekeys";
+
+  /**
+   * Fee recipient endpoint
+   * @see https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient
+   */
+  feeRecipientEndpoint = "/eth/v1/validator";
+
+  /**
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
-   * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
+   * @see https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
   public async getFeeRecipient(
     publicKey: string
@@ -20,7 +32,11 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        "/eth/v1/validator/" + this.prefix0xPubkey(publicKey) + "/feerecipient"
+        path.join(
+          this.feeRecipientEndpoint,
+          this.prefix0xPubkey(publicKey),
+          "feerecipient"
+        )
       )) as ValidatorGetFeeResponse;
     } catch (e) {
       throw Error(
@@ -40,7 +56,11 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request(
         "POST",
-        "/eth/v1/validator/" + this.prefix0xPubkey(publicKey) + "/feerecipient",
+        path.join(
+          this.feeRecipientEndpoint,
+          this.prefix0xPubkey(publicKey),
+          "feerecipient"
+        ),
         JSON.stringify({ ethaddress: newFeeRecipient })
       );
     } catch (e) {
@@ -58,7 +78,11 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request(
         "DELETE",
-        "/eth/v1/validator/" + this.prefix0xPubkey(publicKey) + "/feerecipient"
+        path.join(
+          this.feeRecipientEndpoint +
+            this.prefix0xPubkey(publicKey) +
+            "feerecipient"
+        )
       );
     } catch (e) {
       throw Error(
@@ -75,7 +99,7 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        "/eth/v1/remotekeys"
+        this.remoteKeymanagerEndpoint
       )) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
       throw Error(
@@ -93,7 +117,7 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request(
         "POST",
-        "/eth/v1/remotekeys",
+        this.remoteKeymanagerEndpoint,
         JSON.stringify(remoteKeys)
       )) as ValidatorPostRemoteKeysResponse;
     } catch (e) {
@@ -113,7 +137,7 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request(
         "DELETE",
-        "/eth/v1/remotekeys",
+        this.remoteKeymanagerEndpoint,
         JSON.stringify(pubkeys)
       )) as ValidatorDeleteRemoteKeysResponse;
     } catch (e) {
@@ -125,6 +149,7 @@ export class ValidatorApi extends StandardApi {
 
   /**
    * Handling pubkey not starting by 0x (returns 4XX error)
+   * TODO: move this function as a utilitary function to be used by all API and the db. Debug if possible to import with 0x EVERYWHERE
    */
   private prefix0xPubkey(pubkey: string): string {
     return pubkey.startsWith("0x") ? pubkey : "0x" + pubkey;
