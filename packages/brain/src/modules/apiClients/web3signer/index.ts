@@ -5,6 +5,7 @@ import {
   Web3signerDeleteResponse,
   Web3signerGetResponse,
   Web3signerHealthcheckResponse,
+  prefix0xPubkey,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 
@@ -33,6 +34,7 @@ export class Web3SignerApi extends StandardApi {
     postRequest: Web3signerPostRequest
   ): Promise<Web3signerPostResponse> {
     try {
+      // IMPORTANT: do not edit the keystore data, it must be exactly as it was received from the remote signer
       return (await this.request(
         "POST",
         this.localKeymanagerEndpoint,
@@ -53,6 +55,10 @@ export class Web3SignerApi extends StandardApi {
     deleteRequest: Web3signerDeleteRequest
   ): Promise<Web3signerDeleteResponse> {
     try {
+      // Make sure all pubkeys are prefixed with 0x
+      deleteRequest.pubkeys = deleteRequest.pubkeys.map((k) =>
+        prefix0xPubkey(k)
+      );
       const data = JSON.stringify({
         pubkeys: deleteRequest.pubkeys,
       });

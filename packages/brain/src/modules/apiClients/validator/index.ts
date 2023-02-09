@@ -5,6 +5,7 @@ import {
   ValidatorGetRemoteKeysResponse,
   ValidatorPostRemoteKeysRequest,
   ValidatorPostRemoteKeysResponse,
+  prefix0xPubkey,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 import path from "path";
@@ -34,7 +35,7 @@ export class ValidatorApi extends StandardApi {
         "GET",
         path.join(
           this.feeRecipientEndpoint,
-          this.prefix0xPubkey(publicKey),
+          prefix0xPubkey(publicKey),
           "feerecipient"
         )
       )) as ValidatorGetFeeResponse;
@@ -58,7 +59,7 @@ export class ValidatorApi extends StandardApi {
         "POST",
         path.join(
           this.feeRecipientEndpoint,
-          this.prefix0xPubkey(publicKey),
+          prefix0xPubkey(publicKey),
           "feerecipient"
         ),
         JSON.stringify({ ethaddress: newFeeRecipient })
@@ -79,9 +80,7 @@ export class ValidatorApi extends StandardApi {
       await this.request(
         "DELETE",
         path.join(
-          this.feeRecipientEndpoint +
-            this.prefix0xPubkey(publicKey) +
-            "feerecipient"
+          this.feeRecipientEndpoint + prefix0xPubkey(publicKey) + "feerecipient"
         )
       );
     } catch (e) {
@@ -115,6 +114,10 @@ export class ValidatorApi extends StandardApi {
     remoteKeys: ValidatorPostRemoteKeysRequest
   ): Promise<ValidatorPostRemoteKeysResponse> {
     try {
+      // Make sure all pubkeys are prefixed with 0x
+      remoteKeys.remote_keys = remoteKeys.remote_keys.map((k) => {
+        return { pubkey: prefix0xPubkey(k.pubkey), url: k.url };
+      });
       return (await this.request(
         "POST",
         this.remoteKeymanagerEndpoint,
@@ -135,6 +138,8 @@ export class ValidatorApi extends StandardApi {
     pubkeys: ValidatorDeleteRemoteKeysRequest
   ): Promise<ValidatorDeleteRemoteKeysResponse> {
     try {
+      // Make sure all pubkeys are prefixed with 0x
+      pubkeys.pubkeys = pubkeys.pubkeys.map((k) => prefix0xPubkey(k));
       return (await this.request(
         "DELETE",
         this.remoteKeymanagerEndpoint,
@@ -145,13 +150,5 @@ export class ValidatorApi extends StandardApi {
         `Error deleting (DELETE) remote keys from ${this.requestOptions.hostname}: ${e}`
       );
     }
-  }
-
-  /**
-   * Handling pubkey not starting by 0x (returns 4XX error)
-   * TODO: move this function as a utilitary function to be used by all API and the db. Debug if possible to import with 0x EVERYWHERE
-   */
-  private prefix0xPubkey(pubkey: string): string {
-    return pubkey.startsWith("0x") ? pubkey : "0x" + pubkey;
   }
 }
