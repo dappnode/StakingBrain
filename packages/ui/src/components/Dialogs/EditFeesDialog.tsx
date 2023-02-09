@@ -133,15 +133,18 @@ export default function FeeRecipientDialog({
               sx={{ marginTop: 2 }}
               label="New Fee Recipient"
               error={
-                !isValidEcdsaPubkey(newFeeRecipient) ||
-                newFeeRecipient === burnAddress
+                newFeeRecipient !== "" &&
+                (!isValidEcdsaPubkey(newFeeRecipient) ||
+                  newFeeRecipient === burnAddress)
               }
               helperText={
-                !isValidEcdsaPubkey(newFeeRecipient)
+                newFeeRecipient === ""
+                  ? "The fee recipient is the address where the validator will send the fees"
+                  : !isValidEcdsaPubkey(newFeeRecipient)
                   ? "Invalid address"
                   : newFeeRecipient === burnAddress
                   ? "It is not possible to set the fee recipient to the burn address"
-                  : "The fee recipient is the address where the validator will send the fees"
+                  : "Address is valid"
               }
               value={newFeeRecipient}
             />
