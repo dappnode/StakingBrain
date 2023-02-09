@@ -227,7 +227,7 @@ describe("DataBase", () => {
 
     const db = new BrainDataBase(testDbName);
     fs.writeFileSync(testDbName, JSON.stringify(dbData));
-    db.updatePubkeys({
+    db.updateValidators({
       pubkeys: [
         "0x821a80380122281580ba8a56cd21956933d43c62fdc8f5b4ec31b2c620e8534e80b6b816c9a2cc8d25568dc4ebcfd47a",
         "0x86d25af52627204ab822a20ac70da6767952841edbcb0b83c84a395205313661de5f7f76efa475a46f45fa89d95c1dd7",
