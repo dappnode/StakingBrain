@@ -98,7 +98,12 @@ export class StandardApi {
             ) {
               if (data.length > 0) {
                 try {
-                  resolve(JSON.parse(Buffer.concat(data).toString()));
+                  if (
+                    res.headers["content-type"] &&
+                    res.headers["content-type"].includes("application/json")
+                  )
+                    resolve(JSON.parse(Buffer.concat(data).toString()));
+                  else resolve(Buffer.concat(data).toString());
                 } catch (e) {
                   logger.error(
                     `Error parsing response from ${this.requestOptions.hostname} ${endpoint} ${e.message}`,
