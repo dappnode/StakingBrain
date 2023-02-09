@@ -3,6 +3,7 @@ import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
 import http from "node:http";
 import { importValidators } from "../../../calls/validators.js";
+import { params } from "../../../params.js";
 
 export function startLaunchpadApi(): http.Server {
   const app = express();
@@ -39,8 +40,8 @@ export function startLaunchpadApi(): http.Server {
     }
   });
 
-  server.listen(3000, () => {
-    logger.info("Launchpad API listening on port 3000");
+  server.listen(params.launchpadPort, () => {
+    logger.info(`Launchpad API listening on port ${params.launchpadPort}}`);
   });
 
   return server;
