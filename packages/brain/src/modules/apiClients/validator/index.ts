@@ -6,8 +6,8 @@ import {
   ValidatorPostRemoteKeysRequest,
   ValidatorPostRemoteKeysResponse,
 } from "@stakingbrain/common";
-
 import { StandardApi } from "../index.js";
+import path from "path";
 
 export class ValidatorApi extends StandardApi {
   /**
@@ -32,9 +32,11 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request(
         "GET",
-        this.feeRecipientEndpoint +
-          this.prefix0xPubkey(publicKey) +
-          "/feerecipient"
+        path.join(
+          this.feeRecipientEndpoint,
+          this.prefix0xPubkey(publicKey),
+          "feerecipient"
+        )
       )) as ValidatorGetFeeResponse;
     } catch (e) {
       throw Error(
@@ -54,9 +56,11 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request(
         "POST",
-        this.feeRecipientEndpoint +
-          this.prefix0xPubkey(publicKey) +
-          "/feerecipient",
+        path.join(
+          this.feeRecipientEndpoint,
+          this.prefix0xPubkey(publicKey),
+          "feerecipient"
+        ),
         JSON.stringify({ ethaddress: newFeeRecipient })
       );
     } catch (e) {
@@ -74,9 +78,11 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request(
         "DELETE",
-        this.feeRecipientEndpoint +
-          this.prefix0xPubkey(publicKey) +
-          "/feerecipient"
+        path.join(
+          this.feeRecipientEndpoint +
+            this.prefix0xPubkey(publicKey) +
+            "feerecipient"
+        )
       );
     } catch (e) {
       throw Error(
