@@ -18,13 +18,13 @@ export class Web3SignerApi extends StandardApi {
    * Local Key Manager endpoint
    * @see https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/
    */
-  localKeymanagerEndpoint = "/eth/v1/keystores";
+  private localKeymanagerEndpoint = "/eth/v1/keystores";
 
   /**
    * Server Healthcheck endpoint
    * @see https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Health-Status
    */
-  serverStatusEndpoint = "/healthcheck";
+  private serverStatusEndpoint = "/healthcheck";
 
   /**
    * Import remote keys for the validator client to request duties for.
