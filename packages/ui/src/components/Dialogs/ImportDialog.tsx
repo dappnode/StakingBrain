@@ -8,11 +8,11 @@ import {
   DialogActions,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { getEmoji, shortenPubkey } from "../../logic/Utils/dataUtils";
+import { getEmoji } from "../../logic/Utils/dataUtils";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import { KeystoreInfo } from "../../types";
 import WaitBox from "../WaitBox/WaitBox";
-import { Web3signerPostResponse } from "@stakingbrain/common";
+import { Web3signerPostResponse, shortenPubkey } from "@stakingbrain/common";
 import { SlideTransition } from "./Transitions";
 
 export default function ImportDialog({
@@ -78,7 +78,7 @@ export default function ImportDialog({
           )}
         </Box>
       </DialogContent>
-      {keystoresPostResponse ? (
+      {keystoresPostError ? (
         <DialogActions>
           <Link to={{ pathname: "/", search: window.location.search }}>
             <Button

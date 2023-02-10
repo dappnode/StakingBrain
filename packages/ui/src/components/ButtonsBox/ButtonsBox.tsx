@@ -34,7 +34,7 @@ export default function ButtonsBox({
           sx={{ borderRadius: 3 }}
           endIcon={<BackupIcon />}
         >
-          Import Keystores
+          Import
         </Button>
       </Link>
       <Button
@@ -46,7 +46,7 @@ export default function ButtonsBox({
         endIcon={<DeleteForeverIcon />}
         onClick={() => setDeleteOpen(true)}
       >
-        Delete Keystores
+        Delete
       </Button>
 
       <Button
@@ -58,7 +58,7 @@ export default function ButtonsBox({
         endIcon={<EditIcon />}
         onClick={() => setEditFeesOpen(true)}
       >
-        Edit Fee Recipients
+        Edit
       </Button>
 
       {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NotStarted ? (
@@ -69,7 +69,7 @@ export default function ButtonsBox({
             sx={{ marginRight: 4, borderRadius: 3 }}
             onClick={loadSummaryUrl}
           >
-            Load summary dashboard
+            Load dashboard
           </Button>
         )
       ) : summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NoIndexes ? (
