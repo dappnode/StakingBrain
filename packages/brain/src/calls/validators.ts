@@ -6,6 +6,7 @@ import {
   Web3signerPostResponse,
   CustomValidatorGetResponse,
   Tag,
+  shortenPubkey,
 } from "@stakingbrain/common";
 import {
   brainDb,
@@ -75,6 +76,25 @@ export async function importValidators(
     // 1. Import keystores and passwords on web3signer API
     const web3signerPostResponse: Web3signerPostResponse =
       await signerApi.importKeystores(importSignerData);
+    // Signer API import keystore may fail for some keystores, but not all
+    // @see https://github.com/ConsenSys/web3signer/issues/713
+    // Remove the pubkeys to avoid adding them to the db
+    for (const [index, pubkey] of pubkeys.entries())
+      if (web3signerPostResponse.data[index].status === "error") {
+        logger.error(
+          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
+            web3signerPostResponse.data[index].message
+          }`
+        );
+        pubkeys.splice(index, 1);
+        // Set same legnth to all arrays
+        postRequest.feeRecipients = postRequest.feeRecipients.slice(
+          0,
+          pubkeys.length
+        );
+        postRequest.tags = postRequest.tags.slice(0, pubkeys.length);
+      }
+
     logger.debug(
       `Imported keystores into web3signer API: ${JSON.stringify(
         web3signerPostResponse.data
