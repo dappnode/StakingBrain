@@ -38,6 +38,19 @@ export default function ValidatorList({
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
 
+  useEffect(() => {
+    getKeystores();
+    const interval = setInterval(() => {
+      getKeystores();
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
+    setValidatorSummaryURL("");
+  }, [validatorsGet]);
+
   async function getKeystores() {
     try {
       setLoading(true);
@@ -83,17 +96,6 @@ export default function ValidatorList({
       console.log(e);
     }
   }
-
-  useEffect(() => {
-    if (!deleteOpen) {
-      getKeystores();
-    }
-  }, [deleteOpen]);
-
-  useEffect(() => {
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-    setValidatorSummaryURL("");
-  }, [validatorsGet]);
 
   async function loadSummaryUrl() {
     if (validatorsGet && beaconchaApiParamsMap.has(network)) {
