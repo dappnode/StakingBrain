@@ -15,13 +15,13 @@ export class ValidatorApi extends StandardApi {
    * Remote Key Manager endpoint
    * @see https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager
    */
-  remoteKeymanagerEndpoint = "/eth/v1/remotekeys";
+  private remoteKeymanagerEndpoint = "/eth/v1/remotekeys";
 
   /**
    * Fee recipient endpoint
    * @see https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient
    */
-  feeRecipientEndpoint = "/eth/v1/validator";
+  private feeRecipientEndpoint = "/eth/v1/validator";
 
   /**
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
