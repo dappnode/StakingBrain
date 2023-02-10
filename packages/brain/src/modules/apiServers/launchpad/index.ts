@@ -41,7 +41,7 @@ export function startLaunchpadApi(): http.Server {
   });
 
   server.listen(params.launchpadPort, () => {
-    logger.info(`Launchpad API listening on port ${params.launchpadPort}}`);
+    logger.info(`Launchpad API listening on port ${params.launchpadPort}`);
   });
 
   return server;
