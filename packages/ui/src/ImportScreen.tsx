@@ -288,7 +288,10 @@ export default function ImportScreen(): JSX.Element {
             variant="contained"
             size="large"
             endIcon={<BackupIcon />}
-            disabled={acceptedFiles.length === 0}
+            disabled={
+              acceptedFiles.length === 0 ||
+              (!slashingFile && slashingProtectionIncluded)
+            }
             onClick={importKeystores}
             sx={{ borderRadius: 3 }}
           >
