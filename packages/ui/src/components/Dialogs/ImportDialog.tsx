@@ -78,19 +78,18 @@ export default function ImportDialog({
           )}
         </Box>
       </DialogContent>
-      {keystoresPostError ? (
-        <DialogActions>
-          <Link to={{ pathname: "/", search: window.location.search }}>
-            <Button
-              onClick={handleClose}
-              variant="contained"
-              sx={{ borderRadius: 3 }}
-            >
-              Close
-            </Button>
-          </Link>
-        </DialogActions>
-      ) : null}
+
+      <DialogActions>
+        <Link to={{ pathname: "/", search: window.location.search }}>
+          <Button
+            onClick={handleClose}
+            variant="contained"
+            sx={{ borderRadius: 3 }}
+          >
+            Close
+          </Button>
+        </Link>
+      </DialogActions>
     </Dialog>
   );
 }
