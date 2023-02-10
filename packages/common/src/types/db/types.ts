@@ -11,10 +11,9 @@ export interface StakingBrainDb {
 }
 
 export interface PubkeyDetails {
-  tag?: Tag;
-  feeRecipient?: string;
-  feeRecipientValidator?: string;
-  automaticImport?: boolean;
+  tag: Tag;
+  feeRecipient: string;
+  automaticImport: boolean;
 }
 
 export const tags = [

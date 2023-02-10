@@ -237,6 +237,7 @@ describe("DataBase", () => {
         "0x1000000000000000000000000000000000000000",
         "0x2000000000000000000000000000000000000000",
       ],
+      automaticImports: [true, true],
     });
     expect(db.data).to.deep.equal(expectedDbData);
   });

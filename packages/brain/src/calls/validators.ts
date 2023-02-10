@@ -109,6 +109,10 @@ export async function importValidators(
       pubkeys,
       tags: postRequest.tags,
       feeRecipients: postRequest.feeRecipients,
+      automaticImports:
+        postRequest.importFrom === "ui"
+          ? Array(pubkeys.length).fill(false)
+          : Array(pubkeys.length).fill(true),
     });
     logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
 
@@ -145,6 +149,7 @@ export async function updateValidators({
       pubkeys,
       tags,
       feeRecipients,
+      automaticImports: Array(pubkeys.length).fill(false),
     });
 
     // Import feeRecipient on Validator API

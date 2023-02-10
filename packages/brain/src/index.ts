@@ -70,11 +70,7 @@ let cron: NodeJS.Timer;
 export function startCron(): void {
   logger.debug(`Starting cron...`);
   cron = setInterval(async () => {
-    await brainDb.reloadValidators(
-      signerApi,
-      validatorApi,
-      defaultFeeRecipient
-    );
+    await brainDb.reloadValidators(signerApi, validatorApi, signerUrl);
   }, 60 * 1000);
 }
 export function stopCron(): void {
