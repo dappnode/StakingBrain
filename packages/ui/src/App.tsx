@@ -13,16 +13,24 @@ import { darkTheme } from "./Themes/globalThemes";
 
 //Other libraries
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { startApi, api } from "./api";
-import { Network, Web3SignerStatus } from "@stakingbrain/common";
+import {
+  CustomValidatorGetResponse,
+  Network,
+  Web3SignerStatus,
+} from "@stakingbrain/common";
 
 function App(): JSX.Element {
-  const [signerStatus, setSignerStatus] =
-    React.useState<Web3SignerStatus>("LOADING");
-  const [currentNetwork, setCurrentNetwork] = React.useState<Network>();
-  const [consensusClient, setConsensusClient] = React.useState<string>();
-  const [executionClient, setExecutionClient] = React.useState<string>();
+  const [signerStatus, setSignerStatus] = useState<Web3SignerStatus>("LOADING");
+  const [validatorsGet, setValidatorsGet] = useState<
+    CustomValidatorGetResponse[]
+  >([]);
+  const [validatorsGetError, setValidatorsGetError] = useState<string>();
+  const [validatorsGetLoading, setValidatorsGetLoading] = useState(false);
+  const [currentNetwork, setCurrentNetwork] = useState<Network>();
+  const [consensusClient, setConsensusClient] = useState<string>();
+  const [executionClient, setExecutionClient] = useState<string>();
 
   useEffect(() => {
     // Start API and Socket.io once user has logged in
@@ -35,7 +43,26 @@ function App(): JSX.Element {
 
   useEffect(() => {
     signerGetStatus();
-  }, [30 * 1000]);
+    if (signerStatus === "UP") getValidators();
+    const interval = setInterval(() => {
+      signerGetStatus();
+      if (signerStatus === "UP") getValidators();
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  async function getValidators(): Promise<void> {
+    try {
+      setValidatorsGetLoading(true);
+      setValidatorsGet(await api.getValidators());
+      setValidatorsGetError(undefined);
+      setValidatorsGetLoading(false);
+    } catch (e) {
+      console.error(e);
+      setValidatorsGetError(e.message);
+      setValidatorsGetLoading(false);
+    }
+  }
 
   async function signerGetStatus(): Promise<void> {
     try {
@@ -71,7 +98,12 @@ function App(): JSX.Element {
                 path="/"
                 element={
                   <>
-                    <ValidatorList network={currentNetwork} />
+                    <ValidatorList
+                      network={currentNetwork}
+                      validatorsGet={validatorsGet}
+                      validatorsGetLoading={validatorsGetLoading}
+                      validatorsGetError={validatorsGetError}
+                    />
                     {consensusClient && executionClient && (
                       <ClientsBox
                         consensusClient={consensusClient
@@ -85,7 +117,10 @@ function App(): JSX.Element {
                   </>
                 }
               />
-              <Route path="import" element={<ImportScreen />} />
+              <Route
+                path="import"
+                element={<ImportScreen getValidators={getValidators} />}
+              />
             </Routes>
           </BrowserRouter>
         ) : (

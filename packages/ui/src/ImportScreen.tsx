@@ -30,7 +30,11 @@ import {
 import { Web3signerPostResponse, Tag } from "@stakingbrain/common";
 import { api } from "./api";
 
-export default function ImportScreen(): JSX.Element {
+export default function ImportScreen({
+  getValidators,
+}: {
+  getValidators(): Promise<void>;
+}): JSX.Element {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
@@ -95,6 +99,8 @@ export default function ImportScreen(): JSX.Element {
           feeRecipients,
         })
       );
+      // Reload validators
+      await getValidators();
       setKeystoresPostError(undefined);
       setImportStatus(ImportStatus.Imported);
     } catch (e) {

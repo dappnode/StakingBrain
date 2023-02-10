@@ -23,33 +23,27 @@ import { hasIndexes } from "../../logic/Utils/beaconchaUtils";
 
 export default function ValidatorList({
   network,
+  validatorsGet,
+  validatorsGetLoading,
+  validatorsGetError,
 }: {
   network: Network;
+  validatorsGet: CustomValidatorGetResponse[];
+  validatorsGetLoading: boolean;
+  validatorsGetError?: string;
 }): JSX.Element {
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFeesOpen, setEditFeesOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
   const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
     BeaconchaUrlBuildingStatus.NotStarted
   );
-  const [validatorsGet, setValidatorsGet] =
-    useState<CustomValidatorGetResponse[]>();
-  const [validatorsGetError, setValidatorsGetError] = useState<string>();
 
-  async function getKeystores() {
-    try {
-      setLoading(true);
-      setValidatorsGet(await api.getValidators());
-      setValidatorsGetError(undefined);
-      setLoading(false);
-    } catch (e) {
-      console.error(e);
-      setValidatorsGetError(e.message);
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
+    setValidatorSummaryURL("");
+  }, [validatorsGet]);
 
   async function getValidatorSummaryURL() {
     if (!validatorsGet) {
@@ -84,19 +78,8 @@ export default function ValidatorList({
     }
   }
 
-  useEffect(() => {
-    if (!deleteOpen) {
-      getKeystores();
-    }
-  }, [deleteOpen]);
-
-  useEffect(() => {
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-    setValidatorSummaryURL("");
-  }, [validatorsGet]);
-
   async function loadSummaryUrl() {
-    if (validatorsGet && beaconchaApiParamsMap.has(network)) {
+    if (validatorsGet.length > 0 && beaconchaApiParamsMap.has(network)) {
       const beaconchaParams = beaconchaApiParamsMap.get(network);
       if (beaconchaParams) getValidatorSummaryURL();
     }
@@ -115,7 +98,7 @@ export default function ValidatorList({
             <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
               {validatorsGetError}
             </Alert>
-          ) : loading ? (
+          ) : validatorsGetLoading ? (
             <CircularProgress
               sx={{
                 marginBottom: 4,
