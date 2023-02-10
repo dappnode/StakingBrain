@@ -540,9 +540,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             `Unable to perform database migration. Retrying in 6 seconds...`,
             e
           );
-          setTimeout(() => {
-            logger.info(`Retrying database migration for ${retries} time...`);
-          }, 6 * 1000);
+          await new Promise((resolve) => {
+            logger.info(
+              `Retrying database migration for ${(
+                retries + 1
+              ).toString()} time...`
+            );
+            setTimeout(resolve, 6 * 1000);
+          });
         } else {
           e.message += `Unable to perform database migration`;
           throw e;
