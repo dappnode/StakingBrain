@@ -6,6 +6,7 @@ export interface StakerConfig<T extends Network> {
   network: T;
   executionClient: ExecutionClient<T>;
   consensusClient: ConsensusClient<T>;
+  defaultFeeRecipient?: string;
 }
 
 export type ExecutionClient<T extends Network> = T extends "mainnet"

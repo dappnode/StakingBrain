@@ -48,7 +48,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   public async initialize(
     signerApi: Web3SignerApi,
     validatorApi: ValidatorApi,
-    defaultFeeRecipient: string,
+    defaultFeeRecipient: string | undefined,
     signerUrl: string
   ): Promise<void> {
     try {
@@ -185,7 +185,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         validatorPubkeysFeeRecipients.entries()
       ).filter(
         ([pubkey, feeRecipient]) =>
-          ((this.data as StakingBrainDb)[pubkey] as StakingBrainDb) &&
+          (this.data as StakingBrainDb)[pubkey] &&
           (this.data as StakingBrainDb)[pubkey].feeRecipient !== feeRecipient
       );
       if (brainDbPubkeysFeeRecipientsToAdd.length > 0) {
@@ -246,10 +246,12 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     pubkeys,
     tags,
     feeRecipients,
+    automaticImports,
   }: {
     pubkeys: string[];
     tags: Tag[];
     feeRecipients: string[];
+    automaticImports: boolean[];
   }): void {
     try {
       if (
@@ -263,7 +265,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       const pubkeyDetails = this.buildValidatorsDetails(
         pubkeys,
         tags,
-        feeRecipients
+        feeRecipients,
+        automaticImports
       );
       this.validateDb();
       // Remove pubkeys that already exist
@@ -295,10 +298,12 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     pubkeys,
     tags,
     feeRecipients,
+    automaticImports,
   }: {
     pubkeys: string[];
     tags: Tag[];
     feeRecipients: string[];
+    automaticImports: boolean[];
   }): void {
     try {
       if (
@@ -312,7 +317,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       const pubkeyDetails = this.buildValidatorsDetails(
         pubkeys,
         tags,
-        feeRecipients
+        feeRecipients,
+        automaticImports
       );
       this.validateDb();
       this.validateValidators(pubkeyDetails);
@@ -414,7 +420,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     pubkeys: string[],
     tags: Tag[],
     feeRecipients: string[],
-    automaticImport = true
+    automaticImports: boolean[]
   ): StakingBrainDb {
     pubkeys = pubkeys.map((pubkey) => prefix0xPubkey(pubkey));
     const pubkeysDetails: StakingBrainDb = {};
@@ -422,8 +428,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       pubkeysDetails[pubkeys[i]] = {
         tag: tags[i],
         feeRecipient: feeRecipients[i],
-        feeRecipientValidator: feeRecipients[i],
-        automaticImport,
+        automaticImport: automaticImports[i],
       };
     }
     return pubkeysDetails;
@@ -487,7 +492,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   private async databaseMigration(
     signerApi: Web3SignerApi,
     validatorApi: ValidatorApi,
-    defaultFeeRecipient: string
+    defaultFeeRecipient?: string
   ): Promise<void> {
     try {
       // Create json file
@@ -513,13 +518,18 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${defaultFeeRecipient}}`,
             e
           );
-          feeRecipient = defaultFeeRecipient;
+          if (defaultFeeRecipient) {
+            feeRecipient = defaultFeeRecipient;
+          } else {
+            feeRecipient = params.burnAddress;
+          }
         });
 
       this.addValidators({
         pubkeys,
         tags: Array(pubkeys.length).fill(params.defaultTag),
         feeRecipients: Array(pubkeys.length).fill(feeRecipient),
+        automaticImports: Array(pubkeys.length).fill(false),
       });
     } catch (e) {
       e.message += `Unable to perform database migration`;
@@ -572,18 +582,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           );
         if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
           errors.push(`\n  pubkey ${pubkey}: fee recipient is invalid`);
-      }
-
-      // FeeRecipientValidator (it may be empty)
-      if (pubkeyDetails.feeRecipientValidator) {
-        if (typeof pubkeyDetails.feeRecipientValidator !== "string")
-          errors.push(
-            `\n  pubkey ${pubkey}: feeRecipientValidator address is invalid, must be in string format`
-          );
-        if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipientValidator))
-          errors.push(
-            `\n  pubkey ${pubkey}: fee recipient validator is invalid`
-          );
       }
 
       // AutomaticImport

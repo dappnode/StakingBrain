@@ -50,7 +50,7 @@ export function loadStakerConfig(): {
   signerUrl: string;
   token: string;
   host: string;
-  defaultFeeRecipient: string;
+  defaultFeeRecipient?: string;
   tlsCert?: Buffer;
 } {
   const network = process.env.NETWORK as Network;
@@ -64,12 +64,6 @@ export function loadStakerConfig(): {
 
   const certDir = path.join(__dirname, params.certDirName);
 
-  const defaultFeeRecipient =
-    process.env.DEFAULT_FEE_RECIPIENT &&
-    isValidEcdsaPubkey(process.env.DEFAULT_FEE_RECIPIENT)
-      ? process.env.DEFAULT_FEE_RECIPIENT
-      : params.burnAddress;
-
   let executionClientUrl: string,
     validatorUrl: string,
     beaconchainUrl: string,
@@ -77,7 +71,8 @@ export function loadStakerConfig(): {
     tlsCert: Buffer | undefined;
 
   if (network === "mainnet") {
-    const { executionClient, consensusClient } = loadEnvs("mainnet");
+    const { executionClient, consensusClient, defaultFeeRecipient } =
+      loadEnvs("mainnet");
     switch (executionClient) {
       case "geth.dnp.dappnode.eth":
         executionClientUrl = `http://geth.dappnode:8545`;
@@ -141,11 +136,15 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer.dappnode:9000`,
       token,
       host: `brain.web3signer.dappnode`,
-      defaultFeeRecipient,
+      defaultFeeRecipient:
+        defaultFeeRecipient && isValidEcdsaPubkey(defaultFeeRecipient)
+          ? defaultFeeRecipient
+          : undefined,
       tlsCert,
     };
   } else if (network === "gnosis") {
-    const { executionClient, consensusClient } = loadEnvs("gnosis");
+    const { executionClient, consensusClient, defaultFeeRecipient } =
+      loadEnvs("gnosis");
     switch (executionClient) {
       case "nethermind-xdai.dnp.dappnode.eth":
         executionClientUrl = `http://nethermind-xdai.dappnode:8545`;
@@ -195,11 +194,15 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-gnosis.dappnode:9000`,
       token,
       host: `brain.web3signer-gnosis.dappnode`,
-      defaultFeeRecipient,
+      defaultFeeRecipient:
+        defaultFeeRecipient && isValidEcdsaPubkey(defaultFeeRecipient)
+          ? defaultFeeRecipient
+          : undefined,
       tlsCert,
     };
   } else if (network === "prater") {
-    const { executionClient, consensusClient } = loadEnvs("prater");
+    const { executionClient, consensusClient, defaultFeeRecipient } =
+      loadEnvs("prater");
     switch (executionClient) {
       case "goerli-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://goerli-nethermind.dappnode:8545`;
@@ -262,7 +265,10 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-prater.dappnode:9000`,
       token,
       host: `web3signer.web3signer-prater.dappnode`,
-      defaultFeeRecipient,
+      defaultFeeRecipient:
+        defaultFeeRecipient && isValidEcdsaPubkey(defaultFeeRecipient)
+          ? defaultFeeRecipient
+          : undefined,
       tlsCert,
     };
   } else {
@@ -279,9 +285,14 @@ function loadEnvs<T extends Network>(
 ): {
   executionClient: ExecutionClient<T>;
   consensusClient: ConsensusClient<T>;
+  defaultFeeRecipient?: string;
 } {
   const errors = [];
 
+  const defaultFeeRecipient =
+    process.env[
+      `_DAPPNODE_GLOBAL_DEFAULT_FEE_RECIPIENT_${network.toUpperCase()}`
+    ];
   const executionClient =
     process.env[`_DAPPNODE_GLOBAL_EXECUTION_CLIENT_${network.toUpperCase()}`];
   const consensusClient =
@@ -368,5 +379,6 @@ function loadEnvs<T extends Network>(
   return {
     executionClient: executionClient as ExecutionClient<T>,
     consensusClient: consensusClient as ConsensusClient<T>,
+    defaultFeeRecipient,
   };
 }
