@@ -54,25 +54,22 @@ export const validatorApi = new ValidatorApi({
 
 // Create DB instance
 export const brainDb = new BrainDataBase(params.brainDbName);
-await brainDb.initialize(
-  signerApi,
-  validatorApi,
-  defaultFeeRecipient,
-  signerUrl
-);
-logger.debug(brainDb.data);
 
 // Start server APIs
 const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName));
 const launchpadServer = startLaunchpadApi();
 
 // CRON
-export const cron = new Cron(60 * 1000,
+export const cron = new Cron(
+  60 * 1000,
   signerApi,
   signerUrl,
   validatorApi,
   brainDb
-  );
+);
+
+await brainDb.initialize(signerApi, validatorApi, defaultFeeRecipient);
+logger.debug(brainDb.data);
 cron.start();
 
 // Graceful shutdown
