@@ -1,5 +1,6 @@
 node_modules
 README.md
+LICENSE
 packages/*/node_modules
 packages/*/dist
 packages/*/build
