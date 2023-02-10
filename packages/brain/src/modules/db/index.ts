@@ -493,46 +493,61 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     validatorApi: ValidatorApi,
     defaultFeeRecipient?: string
   ): Promise<void> {
-    try {
-      // Create json file
-      this.createJsonFileAndPermissions();
-      // Fetch public keys from signer API
-      // TODO: implement a retry system
-      const pubkeys = (await signerApi.getKeystores()).data.map(
-        (keystore) => keystore.validating_pubkey
-      );
-      if (pubkeys.length === 0) {
-        logger.info(`No public keys found in the signer API`);
-        return;
-      }
+    let retries = 0;
+    while (retries < 10) {
+      try {
+        // Create json file
+        this.createJsonFileAndPermissions();
+        // Fetch public keys from signer API
+        const pubkeys = (await signerApi.getKeystores()).data.map(
+          (keystore) => keystore.validating_pubkey
+        );
+        if (pubkeys.length === 0) {
+          logger.info(`No public keys found in the signer API`);
+          return;
+        }
 
-      let feeRecipient = "";
-      await validatorApi
-        .getFeeRecipient(pubkeys[0])
-        .then((response) => {
-          feeRecipient = response.data.ethaddress;
-        })
-        .catch((e) => {
+        let feeRecipient = "";
+        await validatorApi
+          .getFeeRecipient(pubkeys[0])
+          .then((response) => {
+            feeRecipient = response.data.ethaddress;
+          })
+          .catch((e) => {
+            logger.error(
+              `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${defaultFeeRecipient}}`,
+              e
+            );
+            if (defaultFeeRecipient) {
+              feeRecipient = defaultFeeRecipient;
+            } else {
+              feeRecipient = params.burnAddress;
+            }
+          });
+
+        this.addValidators({
+          pubkeys,
+          tags: Array(pubkeys.length).fill(params.defaultTag),
+          feeRecipients: Array(pubkeys.length).fill(feeRecipient),
+          automaticImports: Array(pubkeys.length).fill(false),
+        });
+        logger.info(`Database migration completed`);
+        return;
+      } catch (e) {
+        if (retries < 10) {
+          retries++;
           logger.error(
-            `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${defaultFeeRecipient}}`,
+            `Unable to perform database migration. Retrying in 6 seconds...`,
             e
           );
-          if (defaultFeeRecipient) {
-            feeRecipient = defaultFeeRecipient;
-          } else {
-            feeRecipient = params.burnAddress;
-          }
-        });
-
-      this.addValidators({
-        pubkeys,
-        tags: Array(pubkeys.length).fill(params.defaultTag),
-        feeRecipients: Array(pubkeys.length).fill(feeRecipient),
-        automaticImports: Array(pubkeys.length).fill(false),
-      });
-    } catch (e) {
-      e.message += `Unable to perform database migration`;
-      throw e;
+          setTimeout(() => {
+            logger.info(`Retrying database migration for ${retries} time...`);
+          }, 6 * 1000);
+        } else {
+          e.message += `Unable to perform database migration`;
+          throw e;
+        }
+      }
     }
   }
 
