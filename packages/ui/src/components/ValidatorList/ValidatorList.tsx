@@ -38,20 +38,26 @@ export default function ValidatorList({
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
 
+  // Use effect on timer to refresh the list of validators
   useEffect(() => {
-    getKeystores();
+    getValidators();
     const interval = setInterval(() => {
-      getKeystores();
+      getValidators();
     }, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Use effect to reset the validator on delete
+  useEffect(() => {
+    if (!deleteOpen) getValidators();
+  }, [deleteOpen]);
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
     setValidatorSummaryURL("");
   }, [validatorsGet]);
 
-  async function getKeystores() {
+  async function getValidators() {
     try {
       setLoading(true);
       setValidatorsGet(await api.getValidators());

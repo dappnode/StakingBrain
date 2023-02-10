@@ -217,14 +217,14 @@ export async function deleteValidators(
     for (const pubkey of deleteRequest.pubkeys)
       await validatorApi
         .deleteFeeRecipient(pubkey)
-        .then(() => logger.debug(`Deleted fee recipient to validator API`))
+        .then(() => logger.debug(`Deleted fee recipient in validator API`))
         .catch((err) =>
           logger.error(`Error deleting validator feeRecipient`, err)
         );
     // Delete pubkeys on validator API
     await validatorApi
       .deleteRemoteKeys(deleteRequest)
-      .then(() => logger.debug(`Deleted pubkeys to validator API}`))
+      .then(() => logger.debug(`Deleted pubkeys in validator API`))
       .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
 
     // IMPORTANT: start the cron
