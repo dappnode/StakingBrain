@@ -10,7 +10,7 @@ import logger from "../logger/index.js";
 
 export class StandardApi {
   private useTls = false;
-  requestOptions: https.RequestOptions;
+  private requestOptions: https.RequestOptions;
 
   constructor(apiParams: ApiParams) {
     const urlOptions = new URL(apiParams.baseUrl + (apiParams.apiPath || ""));

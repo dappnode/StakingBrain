@@ -32,7 +32,7 @@ import { ApiError } from "../apiClients/error.js";
  * - The lowdb.write() method already takes into account if the pubkey exists or not
  */
 export class BrainDataBase extends LowSync<StakingBrainDb> {
-  dbName: string;
+  private dbName: string;
 
   constructor(dbName: string) {
     // JSONFileSync adapters will set db.data to null if file dbName doesn't exist.
