@@ -137,7 +137,7 @@ export default function ImportScreen(): JSX.Element {
                 creation of the keystore files."
           />
 
-          {acceptedFiles.length > 0 && (
+          {acceptedFiles.length > 1 && (
             <>
               <FormGroup sx={{ marginTop: "6px" }}>
                 <FormControlLabel
@@ -165,69 +165,68 @@ export default function ImportScreen(): JSX.Element {
                   label="Use same tag for every file"
                 />
               </FormGroup>
-              {acceptedFiles.length > 1 &&
-                (useSameTag || useSameFeerecipient || useSamePassword) && (
-                  <FormControl sx={{ marginTop: 2, width: "100%" }}>
-                    {useSamePassword && (
-                      <>
-                        <TextField
-                          id={`outlined-password-input`}
-                          label="Keystore Password"
-                          type="password"
-                          sx={{ marginTop: 2 }}
-                          onChange={(e) =>
-                            setPasswords(
-                              Array(acceptedFiles.length).fill(e.target.value)
-                            )
-                          }
-                        />
-                        <FormHelperText>
-                          Password to decrypt the keystore(s)
-                        </FormHelperText>
-                      </>
-                    )}
-                    {useSameFeerecipient && (
-                      <>
-                        <TextField
-                          id={`outlined-fee-recipient-input`}
-                          label="Fee Recipient"
-                          type="text"
-                          sx={{ marginTop: 2 }}
-                          onChange={(e) =>
-                            setFeeRecipients(
-                              Array(acceptedFiles.length).fill(e.target.value)
-                            )
-                          }
-                        />
-                        <FormHelperText>
-                          The address you wish to receive the transaction fees
-                        </FormHelperText>
-                      </>
-                    )}
-                    {useSameTag && (
-                      <>
-                        <Select
-                          id="outlined-tag-input"
-                          label="Tag"
-                          value={tags[0]}
-                          type="text"
-                          sx={{ marginTop: 2 }}
-                          onChange={(e) =>
-                            setTags(
-                              Array(acceptedFiles.length).fill(e.target.value)
-                            )
-                          }
-                        >
-                          <MenuItem value={"solo"}>Solo</MenuItem>
-                          <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
-                          <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
-                          <MenuItem value={"stakewise"}>Stakewise</MenuItem>
-                        </Select>
-                        <FormHelperText>Staking protocol</FormHelperText>
-                      </>
-                    )}
-                  </FormControl>
-                )}
+              {(useSameTag || useSameFeerecipient || useSamePassword) && (
+                <FormControl sx={{ marginTop: 2, width: "100%" }}>
+                  {useSamePassword && (
+                    <>
+                      <TextField
+                        id={`outlined-password-input`}
+                        label="Keystore Password"
+                        type="password"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setPasswords(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      />
+                      <FormHelperText>
+                        Password to decrypt the keystore(s)
+                      </FormHelperText>
+                    </>
+                  )}
+                  {useSameFeerecipient && (
+                    <>
+                      <TextField
+                        id={`outlined-fee-recipient-input`}
+                        label="Fee Recipient"
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setFeeRecipients(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      />
+                      <FormHelperText>
+                        The address you wish to receive the transaction fees
+                      </FormHelperText>
+                    </>
+                  )}
+                  {useSameTag && (
+                    <>
+                      <Select
+                        id="outlined-tag-input"
+                        label="Tag"
+                        value={tags[0]}
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) =>
+                          setTags(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          )
+                        }
+                      >
+                        <MenuItem value={"solo"}>Solo</MenuItem>
+                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+                      </Select>
+                      <FormHelperText>Staking protocol</FormHelperText>
+                    </>
+                  )}
+                </FormControl>
+              )}
             </>
           )}
 
