@@ -85,9 +85,6 @@ export default function ImportScreen(): JSX.Element {
     try {
       setImportStatus(ImportStatus.Importing);
       handleClickOpenDialog();
-      console.log(passwords);
-      console.log(tags);
-      console.log(feeRecipients);
       setKeystoresPostResponse(
         await api.importValidators({
           importFrom: "ui",

@@ -5,6 +5,7 @@ import {
   isValidTag,
   isValidBlsPubkey,
   prefix0xPubkey,
+  shortenPubkey,
 } from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
@@ -282,7 +283,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.data = { ...this.data, ...pubkeyDetails };
       this.write();
     } catch (e) {
-      e.message += `Unable to add pubkeys ${Object.keys(pubkeys).join(", ")}`;
+      e.message += `Unable to add pubkeys ${Object.keys(pubkeys).join(", ")}. `;
       throw Error(e);
     }
   }
@@ -377,8 +378,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.data = {};
       this.write();
     } catch (e) {
-      e.message += `Unable to prune database. Creating a new one...`;
-      logger.error(e);
+      logger.error(`Unable to prune database. Creating a new one...`, e);
       if (fs.existsSync(this.dbName)) fs.unlinkSync(this.dbName);
       this.createJsonFileAndPermissions();
     }
@@ -447,8 +447,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         this.createJsonFileAndPermissions();
       }
     } catch (e) {
-      e.message += `The database is corrupted. Cleaning database`;
-      logger.error(e);
+      logger.error(`The database is corrupted. Cleaning database`, e);
       this.pruneDatabase();
       this.read();
     }
@@ -472,7 +471,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     const pubkeysSize = Buffer.byteLength(JSON.stringify(pubkeys));
     if (dbSize + pubkeysSize > MAX_DB_SIZE) {
       throw Error(
-        `The database is too big. Max size is ${MAX_DB_SIZE} bytes. Current size is ${dbSize} bytes. Data to be added is ${pubkeysSize} bytes.`
+        `The database is too big. Max size is ${MAX_DB_SIZE} bytes. Current size is ${dbSize} bytes. Data to be added is ${pubkeysSize} bytes. `
       );
     }
   }
@@ -551,46 +550,51 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     Object.keys(pubkeys).forEach((pubkey) => {
       const pubkeyDetails = pubkeys[pubkey];
 
+      // create substring of pubkey to be used in error message
+      const pubkeySubstr = shortenPubkey(pubkey);
+
       // Validate Ethereum address
       if (!isValidBlsPubkey(pubkey))
-        errors.push(`\n  pubkey ${pubkey}: bls is invalid`);
+        errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
 
       if (!pubkeyDetails) {
-        errors.push(`\n  pubkey ${pubkey}: pubkey details are missing`);
+        errors.push(`\n  pubkey ${pubkeySubstr}: pubkey details are missing`);
         return;
       }
 
       // Tag
       if (!pubkeyDetails.tag) {
-        errors.push(`\n  pubkey ${pubkey}: tag is missing`);
+        errors.push(`\n  pubkey ${pubkeySubstr}: tag is missing`);
       } else {
         if (typeof pubkeyDetails.tag !== "string")
           errors.push(
-            `\n  pubkey ${pubkey}: tag is invalid, must be in string format`
+            `\n  pubkey ${pubkeySubstr}: tag is invalid, must be in string format`
           );
         if (!isValidTag(pubkeyDetails.tag))
-          errors.push(`\n  pubkey ${pubkey}: tag is invalid`);
+          errors.push(`\n  pubkey ${pubkeySubstr}: tag is invalid`);
       }
 
       // FeeRecipient
       if (!pubkeyDetails.feeRecipient) {
-        errors.push(`\n  pubkey ${pubkey}: feeRecipient address is missing`);
+        errors.push(
+          `\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`
+        );
       } else {
         if (typeof pubkeyDetails.feeRecipient !== "string")
           errors.push(
-            `\n  pubkey ${pubkey}: feeRecipient address is invalid, must be in string format`
+            `\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`
           );
         if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
-          errors.push(`\n  pubkey ${pubkey}: fee recipient is invalid`);
+          errors.push(`\n  pubkey ${pubkeySubstr}: fee recipient is invalid`);
       }
 
       // AutomaticImport
       if (typeof pubkeyDetails.automaticImport === "undefined") {
-        errors.push(`\n  pubkey ${pubkey}: automaticImport is missing`);
+        errors.push(`\n  pubkey ${pubkeySubstr}: automaticImport is missing`);
       } else {
         if (typeof pubkeys[pubkey].automaticImport !== "boolean")
           errors.push(
-            `\n  pubkey ${pubkey}: automaticImport is invalid, must be in boolean format`
+            `\n  pubkey ${pubkeySubstr}: automaticImport is invalid, must be in boolean format`
           );
       }
     });

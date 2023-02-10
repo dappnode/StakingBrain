@@ -10,9 +10,8 @@ import {
 } from "@mui/material";
 import { KeystoreInfo } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
-import { shortenPubkey } from "../../logic/Utils/dataUtils";
 import "./FileCardList.css";
-import { Tag } from "@stakingbrain/common";
+import { Tag, shortenPubkey } from "@stakingbrain/common";
 
 export default function FileCardList(
   fileInfos: KeystoreInfo[],

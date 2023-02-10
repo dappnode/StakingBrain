@@ -28,3 +28,18 @@ export function isValidTag(tag: Tag): boolean {
 export function prefix0xPubkey(pubkey: string): string {
   return pubkey.startsWith("0x") ? pubkey : "0x" + pubkey;
 }
+
+export const shortenPubkey = (key: string | undefined): string => {
+  if (!key) return "";
+  let prefix = "";
+  let end = 4;
+  if (!key.startsWith("0x")) {
+    prefix = `0x`;
+  } else {
+    end = 6;
+  }
+  return `${prefix}${key.substring(0, end)}...${key.substring(
+    key.length - 4,
+    key.length
+  )}`;
+};

@@ -11,13 +11,14 @@ import {
   Alert,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { shortenPubkey, getEmoji } from "../../logic/Utils/dataUtils";
+import { getEmoji } from "../../logic/Utils/dataUtils";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
 import {
   CustomValidatorGetResponse,
   Web3signerDeleteResponse,
+  shortenPubkey,
 } from "@stakingbrain/common";
 import { api } from "../../api";
 import { SlideTransition } from "./Transitions";
