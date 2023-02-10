@@ -38,7 +38,26 @@ export default function ValidatorList({
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
 
-  async function getKeystores() {
+  // Use effect on timer to refresh the list of validators
+  useEffect(() => {
+    getValidators();
+    const interval = setInterval(() => {
+      getValidators();
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Use effect to reset the validator on delete
+  useEffect(() => {
+    if (!deleteOpen) getValidators();
+  }, [deleteOpen]);
+
+  useEffect(() => {
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
+    setValidatorSummaryURL("");
+  }, [validatorsGet]);
+
+  async function getValidators() {
     try {
       setLoading(true);
       setValidatorsGet(await api.getValidators());
@@ -83,17 +102,6 @@ export default function ValidatorList({
       console.log(e);
     }
   }
-
-  useEffect(() => {
-    if (!deleteOpen) {
-      getKeystores();
-    }
-  }, [deleteOpen]);
-
-  useEffect(() => {
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-    setValidatorSummaryURL("");
-  }, [validatorsGet]);
 
   async function loadSummaryUrl() {
     if (validatorsGet && beaconchaApiParamsMap.has(network)) {

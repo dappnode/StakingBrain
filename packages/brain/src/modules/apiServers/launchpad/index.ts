@@ -59,29 +59,23 @@ function validateRequestBody(
 ): string[] {
   const errors: string[] = [];
 
-  // print everything
-  logger.info(`keystores: ${keystores}`);
-  logger.info(`passwords: ${passwords}`);
-  logger.info(`tags: ${tags}`);
-  logger.info(`feeRecipients: ${feeRecipients}`);
-
-  if (!keystores) errors.push("keystores parameter is required");
-  if (!passwords) errors.push("passwords parameter is required");
-  if (!tags) errors.push("tags parameter is required");
-  if (!feeRecipients) errors.push("feeRecipients parameter is required");
+  if (!keystores) errors.push("keystores parameter is required. ");
+  if (!passwords) errors.push("passwords parameter is required. ");
+  if (!tags) errors.push("tags parameter is required. ");
+  if (!feeRecipients) errors.push("feeRecipients parameter is required. ");
 
   if (keystores && !Array.isArray(keystores))
-    errors.push("keystores must be an array of strings");
+    errors.push("keystores must be an array of strings. ");
   if (passwords && !Array.isArray(passwords))
-    errors.push("passwords must be an array of strings");
+    errors.push("passwords must be an array of strings. ");
   if (tags && !Array.isArray(tags))
-    errors.push("tags must be an array of strings");
+    errors.push("tags must be an array of strings. ");
   if (tags && !(tags as Tag[]).some((tag) => availableTags.includes(tag)))
     errors.push(
       "tags must be one of the following: " + availableTags.join(", ")
     );
   if (feeRecipients && !Array.isArray(feeRecipients))
-    errors.push("feeRecipients must be an array of strings");
+    errors.push("feeRecipients must be an array of strings. ");
 
   if (
     (passwords && keystores.length !== passwords.length) ||
@@ -89,7 +83,7 @@ function validateRequestBody(
     (feeRecipients && keystores.length !== feeRecipients.length)
   )
     errors.push(
-      "keystores, passwords, tags and feeRecipients must have the same length"
+      "keystores, passwords, tags and feeRecipients must have the same length. "
     );
 
   return errors;

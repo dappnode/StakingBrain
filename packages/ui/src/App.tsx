@@ -35,7 +35,11 @@ function App(): JSX.Element {
 
   useEffect(() => {
     signerGetStatus();
-  }, [30 * 1000]);
+    const interval = setInterval(() => {
+      signerGetStatus();
+    }, 30 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   async function signerGetStatus(): Promise<void> {
     try {
@@ -49,7 +53,6 @@ function App(): JSX.Element {
 
   async function getStakerConfig(): Promise<void> {
     try {
-      console.log("clicked");
       const config = await api.getStakerConfig();
       console.log("config", config);
       setCurrentNetwork(config.network);
