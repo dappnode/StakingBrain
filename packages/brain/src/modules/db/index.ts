@@ -109,9 +109,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.read();
       if (!this.data) logger.warn(`Database is empty`);
       // 2. GET signer API pubkeys
-      const signerPubkeys = (await signerApi.getKeystores()).data.map(
-        (keystore) => keystore.validating_pubkey
-      );
+      const signerPubkeys = await this.getSignerPubkeys(signerApi);
       // 3. GET validator API pubkeys and fee recipients
       const validatorPubkeysFeeRecipients = new Map();
       const validatorPubkeys =
@@ -620,5 +618,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     });
 
     if (errors.length > 0) throw Error(errors.join("\n"));
+  }
+
+  private async getSignerPubkeys(signerApi: Web3SignerApi) {
+    const pubkeys = (await signerApi.getKeystores()).data.map(
+      (keystore) => keystore.validating_pubkey
+    );
+
+    return pubkeys;
   }
 }
