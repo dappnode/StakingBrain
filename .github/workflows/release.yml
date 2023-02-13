@@ -1,10 +1,11 @@
 name: Build and push docker image to GHCR
 
-workflow_dispatch:
-  inputs:
-    tag:
-      description: "Tag of the release (i.e. 0.1.0)"
-      required: true
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag of the release (i.e. 0.1.0)"
+        required: true
 
 jobs:
   push-to-ghcr:
