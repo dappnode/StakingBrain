@@ -137,7 +137,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.write();
     } catch (e) {
       e.message += `Unable to add pubkeys ${Object.keys(pubkeys).join(", ")}. `;
-      throw Error(e);
+      throw e;
     }
   }
 

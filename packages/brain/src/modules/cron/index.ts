@@ -64,37 +64,44 @@ export class Cron {
     try {
       logger.info(`Reloading data...`);
 
+      // 0. GET data
       const dbPubkeys = Object.keys(this.brainDb.getData());
       const signerPubkeys = (await this.signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
-
-      // 1. DELETE from signer API pubkeys that are not in DB
-      await this.deleteSignerPubkeysNotInDB(signerPubkeys, dbPubkeys);
-
-      // 2. DELETE from DB pubkeys that are not in signer API
-      await this.deleteDbPubkeysNotInSigner(dbPubkeys, signerPubkeys);
-
-      // 3. POST to validator API pubkeys that are in DB and not in validator API
       const validatorPubkeys = (
         await this.validatorApi.getRemoteKeys()
       ).data.map((keystore) => keystore.pubkey);
 
-      await this.postDbPubkeysNotInValidator(dbPubkeys, validatorPubkeys);
+      // 1. DELETE from signer API pubkeys that are not in DB
+      await this.deleteSignerPubkeysNotInDB({ signerPubkeys, dbPubkeys });
+
+      // 2. DELETE from DB pubkeys that are not in signer API
+      await this.deleteDbPubkeysNotInSigner({ dbPubkeys, signerPubkeys });
+
+      // 3. POST to validator API pubkeys that are in DB and not in validator API
+      await this.postValidatorPubkeysFromDb({
+        brainDbPubkeysToAdd: dbPubkeys.filter(
+          (pubkey) => !validatorPubkeys.includes(pubkey)
+        ),
+        validatorPubkeys,
+      });
 
       // 4. DELETE to validator API pubkeys that are in validator API and not in DB
-      await this.deleteValidatorPubkeysNotInDB(validatorPubkeys, dbPubkeys);
+      await this.deleteValidatorPubkeysNotInDB({
+        validatorPubkeys,
+        validatorPubkeysToRemove: validatorPubkeys.filter(
+          (pubkey) => !dbPubkeys.includes(pubkey)
+        ),
+      });
 
       // 5. POST to validator API fee recipients that are in DB and not in validator API
-      const validatorPubkeysFeeRecipients =
-        await this.getFeeRecipientsForPubkeysFromValidator(validatorPubkeys);
-
-      const dbData = this.brainDb.getData();
-
-      await this.postValidatorFeeRecipientsNotInValidator(
-        dbData,
-        validatorPubkeysFeeRecipients
-      );
+      await this.postValidatorsFeeRecipientsFromDb({
+        dbData: this.brainDb.getData(),
+        validatorPubkeysFeeRecipients: await this.getValidatorsFeeRecipients({
+          validatorPubkeys,
+        }),
+      });
 
       logger.info(`Finished reloading data`);
     } catch (e) {
@@ -122,9 +129,14 @@ export class Cron {
     }
   }
 
-  private async getFeeRecipientsForPubkeysFromValidator(
-    validatorPubkeys: string[]
-  ): Promise<{ pubkey: string; feeRecipient: string }[]> {
+  /**
+   *
+   */
+  private async getValidatorsFeeRecipients({
+    validatorPubkeys,
+  }: {
+    validatorPubkeys: string[];
+  }): Promise<{ pubkey: string; feeRecipient: string }[]> {
     const validatorData = [];
 
     for (const pubkey of validatorPubkeys) {
@@ -138,17 +150,21 @@ export class Cron {
     return validatorData;
   }
 
-  private async deleteSignerPubkeysNotInDB(
-    signerPubkeys: string[],
-    dbPubkeys: string[]
-  ): Promise<void> {
+  /**
+   *
+   */
+  private async deleteSignerPubkeysNotInDB({
+    signerPubkeys,
+    dbPubkeys,
+  }: {
+    signerPubkeys: string[];
+    dbPubkeys: string[];
+  }): Promise<void> {
     const signerPubkeysToRemove = signerPubkeys.filter(
       (pubkey) => !dbPubkeys.includes(pubkey)
     );
 
-    let pubkeysToRemoveNumber = signerPubkeysToRemove.length;
-
-    if (pubkeysToRemoveNumber > 0) {
+    if (signerPubkeysToRemove.length > 0) {
       logger.debug(
         `Found ${signerPubkeysToRemove.length} validators to remove from signer`
       );
@@ -159,29 +175,31 @@ export class Cron {
 
       for (const [index, pubkeyToRemove] of signerPubkeysToRemove.entries()) {
         const signerDeleteStatus = signerDeleteResponse.data[index].status;
-
         if (
           signerDeleteStatus === "deleted" ||
           signerDeleteStatus === "not_found"
-        ) {
-          //Remove that pubkey from signerPubkeys
+        )
           signerPubkeys.splice(signerPubkeys.indexOf(pubkeyToRemove), 1);
-        } else {
+        else
           logger.error(
             `Error deleting pubkey ${pubkeyToRemove} from signer API: ${signerDeleteResponse.data[index].message}`
           );
-          pubkeysToRemoveNumber--;
-        }
       }
-
-      logger.debug(`Deleted ${pubkeysToRemoveNumber} validators from signer`);
     }
   }
 
-  private async deleteDbPubkeysNotInSigner(
-    dbPubkeys: string[],
-    signerPubkeys: string[]
-  ): Promise<void> {
+  /**
+   *
+   * @param dbPubkeys
+   * @param signerPubkeys
+   */
+  private async deleteDbPubkeysNotInSigner({
+    dbPubkeys,
+    signerPubkeys,
+  }: {
+    dbPubkeys: string[];
+    signerPubkeys: string[];
+  }): Promise<void> {
     const dbPubkeysToRemove = dbPubkeys.filter(
       (pubkey) => !signerPubkeys.includes(pubkey)
     );
@@ -190,31 +208,25 @@ export class Cron {
       logger.debug(
         `Found ${dbPubkeysToRemove.length} validators to remove from DB`
       );
-
-      try {
-        this.brainDb.deleteValidators(dbPubkeysToRemove);
-        logger.debug(`Deleted ${dbPubkeysToRemove.length} validators from DB`);
-      } catch (e) {
-        logger.error(`Error deleting validators from DB`, e);
-      }
+      this.brainDb.deleteValidators(dbPubkeysToRemove);
+      dbPubkeys.splice(
+        0,
+        dbPubkeys.length,
+        ...dbPubkeys.filter((pubkey) => !dbPubkeysToRemove.includes(pubkey))
+      );
     }
-
-    // Remove deleted pubkeys from dbPubkeys
-    dbPubkeys.splice(
-      0,
-      dbPubkeys.length,
-      ...dbPubkeys.filter((pubkey) => !dbPubkeysToRemove.includes(pubkey))
-    );
   }
 
-  private async postDbPubkeysNotInValidator(
-    dbPubkeys: string[],
-    validatorPubkeys: string[]
-  ): Promise<void> {
-    const brainDbPubkeysToAdd = dbPubkeys.filter(
-      (pubkey) => !validatorPubkeys.includes(pubkey)
-    );
-
+  /**
+   * Post pubkeys that are in the DB and not in the validator API
+   */
+  private async postValidatorPubkeysFromDb({
+    brainDbPubkeysToAdd,
+    validatorPubkeys,
+  }: {
+    brainDbPubkeysToAdd: string[];
+    validatorPubkeys: string[];
+  }): Promise<void> {
     if (brainDbPubkeysToAdd.length > 0) {
       logger.debug(
         `Found ${brainDbPubkeysToAdd.length} validators to add to validator API`
@@ -228,30 +240,27 @@ export class Cron {
 
       for (const [index, pubkeyToAdd] of brainDbPubkeysToAdd.entries()) {
         const postKeyStatus = postKeysResponse.data[index].status;
-        if (postKeyStatus === "imported" || postKeyStatus === "duplicate") {
-          //Add that pubkey to validatorPubkeys
+        if (postKeyStatus === "imported" || postKeyStatus === "duplicate")
           validatorPubkeys.push(pubkeyToAdd);
-        } else {
+        else
           logger.error(
-            `Error adding pubkey ${pubkeyToAdd} to validator API: ${postKeysResponse.data[index].message}`
+            `Error adding pubkey ${pubkeyToAdd} to validator API: ${postKeyStatus} ${postKeysResponse.data[index].message}`
           );
-        }
       }
-
-      logger.debug(
-        `Added ${brainDbPubkeysToAdd.length} validators to validator API`
-      );
     }
   }
 
-  private async deleteValidatorPubkeysNotInDB(
-    validatorPubkeys: string[],
-    dbPubkeys: string[]
-  ): Promise<void> {
-    const validatorPubkeysToRemove = validatorPubkeys.filter(
-      (pubkey) => !dbPubkeys.includes(pubkey)
-    );
-
+  /**
+   *
+   * @param param0
+   */
+  private async deleteValidatorPubkeysNotInDB({
+    validatorPubkeys,
+    validatorPubkeysToRemove,
+  }: {
+    validatorPubkeys: string[];
+    validatorPubkeysToRemove: string[];
+  }): Promise<void> {
     if (validatorPubkeysToRemove.length > 0) {
       logger.debug(
         `Found ${validatorPubkeysToRemove.length} validators to remove from validator API`
@@ -272,31 +281,26 @@ export class Cron {
         if (
           deleteValidatorKeyStatus === "deleted" ||
           deleteValidatorKeyStatus === "not_found"
-        ) {
-          //Remove that pubkey from validatorPubkeys
+        )
           validatorPubkeys.splice(validatorPubkeys.indexOf(pubkeyToRemove), 1);
-        } else {
+        else
           logger.error(
-            `Error deleting pubkey ${pubkeyToRemove} from validator API: ${deleteValidatorKeysResponse.data[index].message}`
+            `Error deleting pubkey ${pubkeyToRemove} from validator API: ${deleteValidatorKeyStatus} ${deleteValidatorKeysResponse.data[index].message}`
           );
-        }
-
-        logger.debug(
-          `Removed ${validatorPubkeysToRemove.length} validators from validator API`
-        );
       }
     }
-
-    // Remove deleted pubkeys from validatorPubkeys
-    validatorPubkeys.filter(
-      (pubkey) => !validatorPubkeysToRemove.includes(pubkey)
-    );
   }
 
-  private async postValidatorFeeRecipientsNotInValidator(
-    dbData: StakingBrainDb,
-    validatorPubkeysFeeRecipients: { pubkey: string; feeRecipient: string }[]
-  ): Promise<void> {
+  /**
+   *
+   */
+  private async postValidatorsFeeRecipientsFromDb({
+    dbData,
+    validatorPubkeysFeeRecipients,
+  }: {
+    dbData: StakingBrainDb;
+    validatorPubkeysFeeRecipients: { pubkey: string; feeRecipient: string }[];
+  }): Promise<void> {
     const feeRecipientsToPost = validatorPubkeysFeeRecipients
       .filter(
         (validator) =>
