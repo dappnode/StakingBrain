@@ -9,7 +9,9 @@ export interface CustomValidatorsImportRequest {
   slashing_protection?: File | string;
 }
 export interface CustomValidatorGetResponse {
-  validating_pubkey: string;
-  tag?: Tag;
-  feeRecipient?: string;
+  pubkey: string;
+  tag: Tag;
+  feeRecipient: string;
+  validatorImported?: boolean;
+  validatorFeeRecipientCorrect?: boolean;
 }

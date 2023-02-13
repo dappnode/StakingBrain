@@ -14,7 +14,7 @@ import { params } from "./params.js";
 logger.info(`Starting brain...`);
 
 dotenv.config();
-const mode = process.env.NODE_ENV || "development";
+export const mode = process.env.NODE_ENV || "development";
 logger.debug(`Running app in mode: ${mode}`);
 
 export const __dirname = process.cwd();

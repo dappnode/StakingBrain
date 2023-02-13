@@ -238,18 +238,39 @@ export async function deleteValidators(
 
 /**
  * Get all validators from db
+ * If running in development mode (NODE_ENV === "development") it will returns booleans for
+ * validatorImported and validatorFeeRecipientCorrect checks from the validator API
  * @returns
  */
 export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
   const data = brainDb.data;
   if (!data) return [];
+
+  const validatorPubkeys = (
+    await validatorApi.getRemoteKeys().catch((e) => {
+      logger.error(e);
+      return { data: [] };
+    })
+  ).data.map((validator) => validator.pubkey);
+
+  const validatorsFeeRecipients = await Promise.all(
+    validatorPubkeys.map((pubkey) => validatorApi.getFeeRecipient(pubkey))
+  ).catch((e) => {
+    logger.error(e);
+    return [];
+  });
+
   const validators: CustomValidatorGetResponse[] = [];
-  for (const [pubkey, { tag, feeRecipient }] of Object.entries(data)) {
+  for (const [pubkey, { tag, feeRecipient }] of Object.entries(data))
     validators.push({
-      validating_pubkey: pubkey,
+      pubkey,
       tag,
       feeRecipient,
+      validatorImported: validatorPubkeys.includes(pubkey),
+      validatorFeeRecipientCorrect: validatorsFeeRecipients.some(
+        (feeRecipient) => feeRecipient === feeRecipient
+      ),
     });
-  }
+
   return validators;
 }

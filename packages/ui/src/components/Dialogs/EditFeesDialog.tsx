@@ -72,7 +72,7 @@ export default function FeeRecipientDialog({
     let error = false;
 
     const validatorPubkeys = selectedRows.map(
-      (row) => rows[parseInt(row.toString())].validating_pubkey
+      (row) => rows[parseInt(row.toString())].pubkey
     );
 
     const validatorTags = selectedRows.map(

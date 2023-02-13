@@ -49,7 +49,7 @@ export default function KeystoresDeleteDialog({
       setKeystoresDelete(
         await api.deleteValidators({
           pubkeys: selectedRows.map(
-            (row) => rows[parseInt(row.toString())].validating_pubkey
+            (row) => rows[parseInt(row.toString())].pubkey
           ),
         })
       );
@@ -89,7 +89,7 @@ export default function KeystoresDeleteDialog({
               {keystoresDelete.data.map((result, index) => (
                 <div style={{ marginBottom: "20px" }}>
                   <Typography variant="h5" color="GrayText">
-                    {shortenPubkey(rows[index]?.validating_pubkey)}
+                    {shortenPubkey(rows[index]?.pubkey)}
                   </Typography>
                   <Typography variant="h6">
                     <b>Status:</b> {result.status} {getEmoji(result.status)}

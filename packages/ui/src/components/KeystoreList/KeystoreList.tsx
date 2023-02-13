@@ -7,16 +7,22 @@ import {
 import { useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
 import KeystoreColumns from "./KeystoreColumns";
-import { CustomValidatorGetResponse } from "@stakingbrain/common";
+import {
+  CustomValidatorGetResponse,
+  shortenPubkey,
+} from "@stakingbrain/common";
+import { getEmoji } from "../../logic/Utils/dataUtils";
 
 export default function KeystoreList({
   rows,
   setSelectedRows,
   network,
+  mode,
 }: {
   rows: CustomValidatorGetResponse[];
   setSelectedRows: (arg0: GridSelectionModel) => void;
   network: string;
+  mode?: string;
 }): JSX.Element {
   const selection = (
     selectionModel: GridSelectionModel,
@@ -35,12 +41,20 @@ export default function KeystoreList({
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
 
   const customRows = rows.map((row, index) => ({
-    // only show first 12 chars from pubkey
-    validating_pubkey: row.validating_pubkey,
+    validating_pubkey: `${row.pubkey} ${
+      mode === "development" && row.validatorImported
+        ? getEmoji("imported")
+        : ""
+    }`,
     beaconcha_url: beaconchaBaseUrl
-      ? beaconchaBaseUrl + "/validator/" + row.validating_pubkey
+      ? beaconchaBaseUrl + "/validator/" + row.pubkey
       : "",
-    fee_recipient: row.feeRecipient || "No fee recipient",
+    fee_recipient: `${shortenPubkey(row.feeRecipient)} 
+      ${
+        mode === "development" && row.validatorFeeRecipientCorrect
+          ? getEmoji("imported")
+          : ""
+      }`,
     tag: row.tag || "No tag", //TODO: Add icon?? Then put the name of the tag when hovering over it
     id: index,
   }));
@@ -50,9 +64,11 @@ export default function KeystoreList({
       <DataGrid
         rows={customRows}
         onCellClick={(params) => {
-          if (params.field === "validating_pubkey") {
+          if (
+            params.field === "validating_pubkey" ||
+            params.field === "fee_recipient"
+          )
             navigator.clipboard.writeText(params.value);
-          }
         }}
         columns={KeystoreColumns()}
         pageSize={pageSize}

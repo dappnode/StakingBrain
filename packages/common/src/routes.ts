@@ -36,6 +36,7 @@ export interface Routes {
     deleteRequest: Web3signerDeleteRequest
   ) => Promise<Web3signerDeleteResponse>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
+  getNodeEnv: () => Promise<string>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   // Network
   getStakerConfig: () => Promise<StakerConfig<Network>>;
@@ -52,6 +53,7 @@ export const routesData: { [P in keyof Routes]: RouteData } = {
   updateValidators: { log: true },
   deleteValidators: { log: true },
   getValidators: { log: true },
+  getNodeEnv: { log: true },
   signerGetStatus: { log: true },
   getStakerConfig: { log: true },
 };

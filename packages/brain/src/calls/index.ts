@@ -10,3 +10,4 @@ export {
 } from "./validators.js";
 export { signerGetStatus } from "./signerGetStatus.js";
 export { getStakerConfig } from "./getStakerConfig.js";
+export { getNodeEnv } from "./getNodeEnv.js";
