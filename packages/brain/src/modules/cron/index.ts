@@ -64,38 +64,26 @@ export class Cron {
     try {
       logger.info(`Reloading data...`);
 
-      let dbPubkeys = Object.keys(this.brainDb.getData());
-      let signerPubkeys = (await this.signerApi.getKeystores()).data.map(
+      const dbPubkeys = Object.keys(this.brainDb.getData());
+      const signerPubkeys = (await this.signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
 
       // 1. DELETE from signer API pubkeys that are not in DB
-      signerPubkeys = await this.deleteSignerPubkeysNotInDB(
-        signerPubkeys,
-        dbPubkeys
-      );
+      await this.deleteSignerPubkeysNotInDB(signerPubkeys, dbPubkeys);
 
       // 2. DELETE from DB pubkeys that are not in signer API
-      dbPubkeys = await this.deleteDbPubkeysNotInSigner(
-        dbPubkeys,
-        signerPubkeys
-      );
-
-      let validatorPubkeys = (await this.validatorApi.getRemoteKeys()).data.map(
-        (keystore) => keystore.pubkey
-      );
+      await this.deleteDbPubkeysNotInSigner(dbPubkeys, signerPubkeys);
 
       // 3. POST to validator API pubkeys that are in DB and not in validator API
-      validatorPubkeys = await this.postDbPubkeysNotInValidator(
-        dbPubkeys,
-        validatorPubkeys
-      );
+      const validatorPubkeys = (
+        await this.validatorApi.getRemoteKeys()
+      ).data.map((keystore) => keystore.pubkey);
+
+      await this.postDbPubkeysNotInValidator(dbPubkeys, validatorPubkeys);
 
       // 4. DELETE to validator API pubkeys that are in validator API and not in DB
-      validatorPubkeys = await this.deleteValidatorPubkeysNotInDB(
-        validatorPubkeys,
-        dbPubkeys
-      );
+      await this.deleteValidatorPubkeysNotInDB(validatorPubkeys, dbPubkeys);
 
       // 5. POST to validator API fee recipients that are in DB and not in validator API
       const validatorPubkeysFeeRecipients =
@@ -153,7 +141,7 @@ export class Cron {
   private async deleteSignerPubkeysNotInDB(
     signerPubkeys: string[],
     dbPubkeys: string[]
-  ): Promise<string[]> {
+  ): Promise<void> {
     const signerPubkeysToRemove = signerPubkeys.filter(
       (pubkey) => !dbPubkeys.includes(pubkey)
     );
@@ -188,14 +176,12 @@ export class Cron {
 
       logger.debug(`Deleted ${pubkeysToRemoveNumber} validators from signer`);
     }
-
-    return signerPubkeys;
   }
 
   private async deleteDbPubkeysNotInSigner(
     dbPubkeys: string[],
     signerPubkeys: string[]
-  ) {
+  ): Promise<void> {
     const dbPubkeysToRemove = dbPubkeys.filter(
       (pubkey) => !signerPubkeys.includes(pubkey)
     );
@@ -213,14 +199,18 @@ export class Cron {
       }
     }
 
-    //Return dbPubkeys without the ones that were deleted
-    return dbPubkeys.filter((pubkey) => !dbPubkeysToRemove.includes(pubkey));
+    // Remove deleted pubkeys from dbPubkeys
+    dbPubkeys.splice(
+      0,
+      dbPubkeys.length,
+      ...dbPubkeys.filter((pubkey) => !dbPubkeysToRemove.includes(pubkey))
+    );
   }
 
   private async postDbPubkeysNotInValidator(
     dbPubkeys: string[],
     validatorPubkeys: string[]
-  ): Promise<string[]> {
+  ): Promise<void> {
     const brainDbPubkeysToAdd = dbPubkeys.filter(
       (pubkey) => !validatorPubkeys.includes(pubkey)
     );
@@ -252,14 +242,12 @@ export class Cron {
         `Added ${brainDbPubkeysToAdd.length} validators to validator API`
       );
     }
-
-    return validatorPubkeys;
   }
 
   private async deleteValidatorPubkeysNotInDB(
     validatorPubkeys: string[],
     dbPubkeys: string[]
-  ): Promise<string[]> {
+  ): Promise<void> {
     const validatorPubkeysToRemove = validatorPubkeys.filter(
       (pubkey) => !dbPubkeys.includes(pubkey)
     );
@@ -299,7 +287,8 @@ export class Cron {
       }
     }
 
-    return validatorPubkeys.filter(
+    // Remove deleted pubkeys from validatorPubkeys
+    validatorPubkeys.filter(
       (pubkey) => !validatorPubkeysToRemove.includes(pubkey)
     );
   }
@@ -307,7 +296,7 @@ export class Cron {
   private async postValidatorFeeRecipientsNotInValidator(
     dbData: StakingBrainDb,
     validatorPubkeysFeeRecipients: { pubkey: string; feeRecipient: string }[]
-  ) {
+  ): Promise<void> {
     const feeRecipientsToPost = validatorPubkeysFeeRecipients
       .filter(
         (validator) =>
