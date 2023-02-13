@@ -1,0 +1,52 @@
+name: Build and push docker image to GHCR
+
+workflow_dispatch:
+  inputs:
+    tag:
+      description: "Tag of the release (i.e. 0.1.0)"
+      required: true
+
+jobs:
+  push-to-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Staking brain docker monorepo
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/staking-brain:${{ github.event.inputs.tag }}
+
+      - name: Build and push Staking brain docker webpack
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfile.webpack
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/staking-brain-webpack:${{ github.event.inputs.tag }}
+  gh-release:
+    runs-on: ubuntu-latest
+    needs: push-to-ghcr
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          release_name: Release v${{ github.event.inputs.tag }}
+          draft: true
+          prerelease: true
