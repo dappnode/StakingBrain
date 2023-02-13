@@ -1,17 +1,10 @@
-//External components
-import { ThemeProvider } from "@mui/material/styles";
 import { Container, Alert } from "@mui/material";
-
-//Internal components
 import TopBar from "./components/TopBar/TopBar";
 import ImportScreen from "./ImportScreen";
 import ValidatorList from "./components/ValidatorList/ValidatorList";
 import ClientsBox from "./components/ClientsBox/ClientsBox";
-
-//Themes
-import { darkTheme } from "./Themes/globalThemes";
-
-//Other libraries
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
 import { startApi, api } from "./api";
@@ -64,56 +57,52 @@ function App(): JSX.Element {
   }
 
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider
+      theme={createTheme({
+        palette: {
+          mode: "dark",
+        },
+      })}
+    >
+      <CssBaseline />
+
       <TopBar network={currentNetwork} signerStatus={signerStatus} />
-      <Container component="main" maxWidth="xl">
-        {signerStatus === "UP" && currentNetwork ? (
-          <BrowserRouter>
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <>
-                    <ValidatorList network={currentNetwork} />
-                    {consensusClient && executionClient && (
-                      <ClientsBox
-                        consensusClient={consensusClient
-                          .split(".")[0]
-                          ?.toUpperCase()}
-                        executionClient={executionClient
-                          .split(".")[0]
-                          ?.toUpperCase()}
-                      />
-                    )}
-                  </>
-                }
-              />
-              <Route path="import" element={<ImportScreen />} />
-            </Routes>
-          </BrowserRouter>
-        ) : (
-          <>
-            {signerStatus === "ERROR" ? (
-              <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-                Web3Signer API is not available. Check URL or global variables.
-                Is the Web3Signer API running?
-              </Alert>
-            ) : (
-              signerStatus === "DOWN" && (
-                <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-                  Web3Signer is down.
-                </Alert>
-              )
-            )}
-            {!currentNetwork && (
-              <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-                Network has not been properly set. Check URL or global
-                variables.
-              </Alert>
-            )}
-          </>
-        )}
-      </Container>
+
+      {currentNetwork && (
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="/"
+              element={<ValidatorList network={currentNetwork} />}
+            />
+            <Route path="import" element={<ImportScreen />} />
+          </Routes>
+        </BrowserRouter>
+      )}
+
+      {consensusClient && executionClient && (
+        <ClientsBox
+          consensusClient={consensusClient.split(".")[0]?.toUpperCase()}
+          executionClient={executionClient.split(".")[0]?.toUpperCase()}
+        />
+      )}
+      {signerStatus === "ERROR" ? (
+        <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+          Web3Signer API is not available. Check URL or global variables. Is the
+          Web3Signer API running?
+        </Alert>
+      ) : (
+        signerStatus === "DOWN" && (
+          <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+            Web3Signer is down.
+          </Alert>
+        )
+      )}
+      {!currentNetwork && (
+        <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+          Network has not been properly set. Check URL or global variables.
+        </Alert>
+      )}
     </ThemeProvider>
   );
 }
