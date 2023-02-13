@@ -40,6 +40,18 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
+   * Returns the database content.
+   * - If the database is empty, it will return an empty object
+   * - If the database is corrupted, it will erase it and create a new empty database with the correct permissions
+   *
+   * @returns an object in format StakingBrainDb (it could be an empty object {})
+   */
+  public getData(): StakingBrainDb {
+    this.validateDb();
+    return this.data as StakingBrainDb;
+  }
+
+  /**
    * Initializes the database: IMPORTANT! this method must not throw an error since it will be called from index.ts
    * - If the database file doesn't exist, it will attempt to perform a migration
    * - If the migration fails, it will create a new empty database
@@ -461,15 +473,5 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     });
 
     if (errors.length > 0) throw Error(errors.join("\n"));
-  }
-
-  /**
-   *
-   *
-   * @returns an object in format StakingBrainDb (it could be {})
-   */
-  public getData(): StakingBrainDb {
-    this.validateDb();
-    return this.data as StakingBrainDb;
   }
 }

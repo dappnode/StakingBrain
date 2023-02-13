@@ -64,13 +64,12 @@ export class Cron {
     try {
       logger.info(`Reloading data...`);
 
-      // 1. DELETE from signer API pubkeys that are not in DB
       let dbPubkeys = Object.keys(this.brainDb.getData());
-
       let signerPubkeys = (await this.signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
 
+      // 1. DELETE from signer API pubkeys that are not in DB
       signerPubkeys = await this.deleteSignerPubkeysNotInDB(
         signerPubkeys,
         dbPubkeys
@@ -82,12 +81,11 @@ export class Cron {
         signerPubkeys
       );
 
-      // 3. POST to validator API pubkeys that are in DB and not in validator API
-      let validatorPubkeys =
-        (await this.validatorApi.getRemoteKeys()).data.map(
-          (keystore) => keystore.pubkey
-        ) || [];
+      let validatorPubkeys = (await this.validatorApi.getRemoteKeys()).data.map(
+        (keystore) => keystore.pubkey
+      );
 
+      // 3. POST to validator API pubkeys that are in DB and not in validator API
       validatorPubkeys = await this.postDbPubkeysNotInValidator(
         dbPubkeys,
         validatorPubkeys

@@ -63,7 +63,13 @@ await brainDb.initialize(signerApi, validatorApi, defaultFeeRecipient);
 logger.debug(brainDb.data);
 
 // CRON
-const cron = new Cron(60 * 1000, signerApi, signerUrl, validatorApi, brainDb);
+export const cron = new Cron(
+  60 * 1000,
+  signerApi,
+  signerUrl,
+  validatorApi,
+  brainDb
+);
 cron.start();
 
 // Graceful shutdown
