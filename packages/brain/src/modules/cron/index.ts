@@ -61,7 +61,6 @@ export class Cron {
    * TODO: this function is critical, it must have strict tests
    */
   public async reloadValidators(): Promise<void> {
-    logger.debug(`Reloading validators...`);
     //TODO perform reload from this class instead of brainDb
     try {
       //1. GET data from sources (DB, signer and validator)
@@ -247,7 +246,7 @@ export class Cron {
       )
       .map((validator) => ({
         pubkey: validator.pubkey,
-        feeRecipient: dbData[validator.pubkey].feeRecipient || "", //TODO: Is this cast safe?
+        feeRecipient: dbData[validator.pubkey].feeRecipient,
       }));
 
     if (feeRecipientsToPost.length > 0) {
@@ -257,13 +256,6 @@ export class Cron {
       for (const { pubkey, feeRecipient } of feeRecipientsToPost)
         await this.validatorApi
           .setFeeRecipient(feeRecipient, pubkey)
-          .then(() => {
-            dbData[pubkey].feeRecipient = feeRecipient; //TODO: Is the object returned by brainDb.getData() mutable?
-            this.brainDb.write();
-            logger.debug(
-              `Added fee recipient ${feeRecipient} to validator API for pubkey ${pubkey}`
-            );
-          })
           .catch((e) =>
             logger.error(
               `Error adding fee recipient ${feeRecipient} to validator API for pubkey ${pubkey}`,
