@@ -49,5 +49,5 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag }}
           release_name: Release v${{ github.event.inputs.tag }}
-          draft: true
+          draft: false
           prerelease: true
