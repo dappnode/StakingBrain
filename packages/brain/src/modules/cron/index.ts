@@ -93,13 +93,13 @@ export class Cron {
         validatorPubkeys
       );
 
-      // 5. DELETE to validator API pubkeys that are in validator API and not in DB
+      // 4. DELETE to validator API pubkeys that are in validator API and not in DB
       validatorPubkeys = await this.deleteValidatorPubkeysNotInDB(
         validatorPubkeys,
         dbPubkeys
       );
 
-      // 6. POST to validator API fee recipients that are in DB and not in validator API
+      // 5. POST to validator API fee recipients that are in DB and not in validator API
       const validatorPubkeysFeeRecipients =
         await this.getFeeRecipientsForPubkeysFromValidator(validatorPubkeys);
 
@@ -160,9 +160,9 @@ export class Cron {
       (pubkey) => !dbPubkeys.includes(pubkey)
     );
 
-    let removedPubkeys = 0;
+    let pubkeysToRemoveNumber = signerPubkeysToRemove.length;
 
-    if (signerPubkeysToRemove.length > 0) {
+    if (pubkeysToRemoveNumber > 0) {
       logger.debug(
         `Found ${signerPubkeysToRemove.length} validators to remove from signer`
       );
@@ -184,11 +184,11 @@ export class Cron {
           logger.error(
             `Error deleting pubkey ${pubkeyToRemove} from signer API: ${signerDeleteResponse.data[index].message}`
           );
-          removedPubkeys--;
+          pubkeysToRemoveNumber--;
         }
       }
 
-      logger.debug(`Deleted ${removedPubkeys} validators from signer`);
+      logger.debug(`Deleted ${pubkeysToRemoveNumber} validators from signer`);
     }
 
     return signerPubkeys;
