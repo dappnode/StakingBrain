@@ -28,6 +28,7 @@ import {
   slashingProtectionBoxStyle,
 } from "./Styles/dialogStyles";
 import { Web3signerPostResponse, Tag } from "@stakingbrain/common";
+import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
 
 export default function ImportScreen(): JSX.Element {
@@ -261,7 +262,6 @@ export default function ImportScreen(): JSX.Element {
                 sx={{ marginBottom: 4 }}
                 text="Only for previously-used keystores"
               />
-              <FileDrop callback={slashingFilesCallback} />
               {slashingFile ? (
                 <Card
                   key={slashingFile.name}
@@ -269,16 +269,30 @@ export default function ImportScreen(): JSX.Element {
                   sx={{
                     padding: 2,
                     marginTop: 4,
-                    width: "80%",
                     borderRadius: 3,
                   }}
                 >
-                  <Typography variant="h6">
-                    <b>✅ {slashingFile.name}</b>
-                    <br />
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "left",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Typography variant="h6">
+                      <b>✅ {slashingFile.name}</b>
+                      <br />
+                    </Typography>
+
+                    <button onClick={() => setSlashingFile(undefined)}>
+                      <CloseIcon color="action" />
+                    </button>
+                  </Box>
                 </Card>
-              ) : null}
+              ) : (
+                <FileDrop callback={slashingFilesCallback} />
+              )}
             </div>
           ) : null}
         </Card>
