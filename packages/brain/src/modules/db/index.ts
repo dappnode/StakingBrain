@@ -219,7 +219,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     }
   }
 
-  // PRVATE METHODS //
+  // PRIVATE METHODS //
 
   /**
    * Cleans the database:
