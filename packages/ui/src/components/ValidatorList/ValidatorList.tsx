@@ -37,6 +37,7 @@ export default function ValidatorList({
   const [validatorsGet, setValidatorsGet] =
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
+  const [mode, setMode] = useState<string>();
 
   // Use effect on timer to refresh the list of validators
   useEffect(() => {
@@ -45,6 +46,10 @@ export default function ValidatorList({
       getValidators();
     }, 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    api.getNodeEnv().then((env) => setMode(env));
   }, []);
 
   // Use effect to reset the validator on delete
@@ -80,7 +85,7 @@ export default function ValidatorList({
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
     const allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
-      validatorsGet.map((keystore) => keystore.validating_pubkey)
+      validatorsGet.map((keystore) => keystore.pubkey)
     );
 
     try {
@@ -135,6 +140,7 @@ export default function ValidatorList({
                 rows={validatorsGet}
                 setSelectedRows={setSelectedRows}
                 network={network}
+                mode={mode}
               />
               <ButtonsBox
                 areRowsSelected={selectedRows.length !== 0}

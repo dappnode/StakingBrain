@@ -17,7 +17,7 @@ export default function DeletionWarning({
       <ul>
         {selectedRows.map((row, i) => (
           <li key={i}>
-            {shortenPubkey(rows[parseInt(row.toString())].validating_pubkey)}
+            {shortenPubkey(rows[parseInt(row.toString())].pubkey)}
           </li>
         ))}
       </ul>
