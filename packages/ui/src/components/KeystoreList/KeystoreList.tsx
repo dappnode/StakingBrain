@@ -64,9 +64,11 @@ export default function KeystoreList({
       <DataGrid
         rows={customRows}
         onCellClick={(params) => {
-          if (params.field === "validating_pubkey") {
+          if (
+            params.field === "validating_pubkey" ||
+            params.field === "fee_recipient"
+          )
             navigator.clipboard.writeText(params.value);
-          }
         }}
         columns={KeystoreColumns()}
         pageSize={pageSize}
