@@ -41,7 +41,7 @@ export default function KeystoreList({
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
 
   const customRows = rows.map((row, index) => ({
-    validating_pubkey: `${shortenPubkey(row.pubkey)} ${
+    validating_pubkey: `${row.pubkey} ${
       mode === "development" && row.validatorImported
         ? getEmoji("imported")
         : ""
