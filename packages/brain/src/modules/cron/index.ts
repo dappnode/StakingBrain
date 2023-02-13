@@ -130,7 +130,7 @@ export class Cron {
   }
 
   /**
-   *
+   * Get the validators fee recipients from the validator API for the given pubkeys
    */
   private async getValidatorsFeeRecipients({
     validatorPubkeys,
@@ -151,7 +151,7 @@ export class Cron {
   }
 
   /**
-   *
+   * Delete from the validator API the pubkeys that are in the validator API and not in the DB
    */
   private async deleteSignerPubkeysNotInDB({
     signerPubkeys,
@@ -189,9 +189,7 @@ export class Cron {
   }
 
   /**
-   *
-   * @param dbPubkeys
-   * @param signerPubkeys
+   * Delete from the signer API the pubkeys that are in the DB and not in the signer API
    */
   private async deleteDbPubkeysNotInSigner({
     dbPubkeys,
@@ -251,8 +249,7 @@ export class Cron {
   }
 
   /**
-   *
-   * @param param0
+   * Delete from the validator API the pubkeys that are in the validator API and not in the DB
    */
   private async deleteValidatorPubkeysNotInDB({
     validatorPubkeys,
@@ -292,7 +289,7 @@ export class Cron {
   }
 
   /**
-   *
+   * Post in the validator API fee recipients that are in the DB and not in the validator API
    */
   private async postValidatorsFeeRecipientsFromDb({
     dbData,
@@ -313,7 +310,7 @@ export class Cron {
 
     if (feeRecipientsToPost.length > 0) {
       logger.debug(
-        `Found ${feeRecipientsToPost.length} fee recipients to add to validator API`
+        `Found ${feeRecipientsToPost.length} fee recipients to add/update to validator API`
       );
       for (const { pubkey, feeRecipient } of feeRecipientsToPost)
         await this.validatorApi
