@@ -8,16 +8,9 @@ import {
   Tag,
   shortenPubkey,
 } from "@stakingbrain/common";
-import {
-  brainDb,
-  restartCron,
-  signerApi,
-  signerUrl,
-  startCron,
-  stopCron,
-  validatorApi,
-} from "../index.js";
+import { brainDb, signerApi, signerUrl, validatorApi } from "../index.js";
 import logger from "../modules/logger/index.js";
+import { cron } from "../index.js";
 
 /**
  * Import keystores:
@@ -34,7 +27,7 @@ export async function importValidators(
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    stopCron();
+    cron.stop();
 
     // 0. Check if already exists?
     function readFile(files: File[]): string[] {
@@ -137,10 +130,10 @@ export async function importValidators(
     logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
 
     // IMPORTANT: start the cron
-    startCron();
+    cron.start();
     return web3signerPostResponse;
   } catch (e) {
-    restartCron();
+    cron.restart();
     throw e;
   }
 }
@@ -163,7 +156,7 @@ export async function updateValidators({
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    stopCron();
+    cron.stop();
 
     brainDb.updateValidators({
       pubkeys,
@@ -183,9 +176,9 @@ export async function updateValidators({
         );
 
     // IMPORTANT: start the cron
-    startCron();
+    cron.start();
   } catch (e) {
-    restartCron();
+    cron.restart();
     throw e;
   }
 }
@@ -205,7 +198,7 @@ export async function deleteValidators(
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are deleting validators
-    stopCron();
+    cron.stop();
 
     // Write on db
     brainDb.deleteValidators(deleteRequest.pubkeys);
@@ -228,10 +221,10 @@ export async function deleteValidators(
       .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
 
     // IMPORTANT: start the cron
-    startCron();
+    cron.start();
     return web3signerDeleteResponse;
   } catch (e) {
-    restartCron();
+    cron.restart();
     throw e;
   }
 }

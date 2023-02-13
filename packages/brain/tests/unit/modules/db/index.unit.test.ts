@@ -101,8 +101,7 @@ describe("DataBase", () => {
       await db.initialize(
         signerApi,
         validatorApi,
-        "0x0000000000000000000000000000000000000000",
-        "http://web3signer.web3signer-prater.dappnode:9000"
+        "0x0000000000000000000000000000000000000000"
       );
       // print contents of database
       console.log(db.data);
@@ -124,8 +123,7 @@ describe("DataBase", () => {
       await db.initialize(
         signerApi,
         validatorApi,
-        "0x0000000000000000000000000000000000000000",
-        "http://web3signer.web3signer-prater.dappnode:9000"
+        "0x0000000000000000000000000000000000000000"
       );
 
       expect(fs.existsSync(testDbName)).to.be.true;
@@ -144,8 +142,7 @@ describe("DataBase", () => {
       db.initialize(
         signerApi,
         validatorApi,
-        "0x0000000000000000000000000000000000000000",
-        "http://web3signer.web3signer-prater.dappnode:9000"
+        "0x0000000000000000000000000000000000000000"
       );
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();

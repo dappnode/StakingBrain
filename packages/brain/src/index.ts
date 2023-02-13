@@ -10,6 +10,7 @@ import { ValidatorApi } from "./modules/apiClients/validator/index.js";
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
+import { Cron } from "./modules/cron/index.js";
 
 logger.info(`Starting brain...`);
 
@@ -53,41 +54,28 @@ export const validatorApi = new ValidatorApi({
 
 // Create DB instance
 export const brainDb = new BrainDataBase(params.brainDbName);
-await brainDb.initialize(
-  signerApi,
-  validatorApi,
-  defaultFeeRecipient,
-  signerUrl
-);
-logger.debug(brainDb.data);
 
 // Start server APIs
 const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName));
 const launchpadServer = startLaunchpadApi();
 
+await brainDb.initialize(signerApi, validatorApi, defaultFeeRecipient);
+logger.debug(brainDb.data);
+
 // CRON
-let cron: NodeJS.Timer;
-export function startCron(): void {
-  logger.debug(`Starting cron...`);
-  cron = setInterval(async () => {
-    await brainDb.reloadValidators(signerApi, validatorApi, signerUrl);
-  }, 60 * 1000);
-}
-export function stopCron(): void {
-  logger.debug(`Stopping cron...`);
-  clearInterval(cron);
-}
-export function restartCron(): void {
-  stopCron();
-  startCron();
-}
-// Start cron
-startCron();
+export const cron = new Cron(
+  60 * 1000,
+  signerApi,
+  signerUrl,
+  validatorApi,
+  brainDb
+);
+cron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
-  stopCron();
+  cron.stop();
   brainDb.close();
   uiServer.close();
   launchpadServer.close();
