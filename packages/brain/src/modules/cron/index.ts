@@ -1,4 +1,4 @@
-import { StakingBrainDb, ValidatorData } from "@stakingbrain/common";
+import { StakingBrainDb } from "@stakingbrain/common";
 import { ApiError } from "../apiClients/error.js";
 import { ValidatorApi } from "../apiClients/validator/index.js";
 import { Web3SignerApi } from "../apiClients/web3signer/index.js";
@@ -138,7 +138,7 @@ export class Cron {
         (keystore) => keystore.pubkey
       ) || [];
 
-    const validatorData: ValidatorData[] = [];
+    const validatorData = [];
 
     for (const pubkey of validatorPubkeys) {
       validatorData.push({
