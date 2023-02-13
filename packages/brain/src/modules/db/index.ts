@@ -468,8 +468,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     if (errors.length > 0) throw Error(errors.join("\n"));
   }
 
+  /**
+   *
+   *
+   * @returns an object in format StakingBrainDb (it could be {})
+   */
   public getData(): StakingBrainDb {
-    this.read();
-    return this.data || {};
+    this.validateDb();
+    return this.data as StakingBrainDb;
   }
 }
