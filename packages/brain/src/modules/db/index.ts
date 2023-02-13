@@ -14,7 +14,6 @@ import logger from "../logger/index.js";
 import { Web3SignerApi } from "../apiClients/web3signer/index.js";
 import { ValidatorApi } from "../apiClients/validator/index.js";
 import { params } from "../../params.js";
-import { cron } from "../../index.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -64,11 +63,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           validatorApi,
           defaultFeeRecipient
         );
-      } else {
-        this.setOwnerWriteRead();
-        // Reload validators from truth sources on startup
-        await cron.reloadValidators();
-      }
+      } else this.setOwnerWriteRead();
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
       this.validateDb();
