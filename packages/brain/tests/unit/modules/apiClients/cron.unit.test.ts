@@ -5,9 +5,12 @@ import { execSync } from "node:child_process";
 import { Web3SignerApi } from "../../../../src/modules/apiClients/web3signer/index.js";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
+import path from "path";
 
 describe.only("Cron: Prater", () => {
   const defaultFeeRecipient = "0x0000000000000000000000000000000000000000";
+
+  //The order of this array is important for the tests
   const pubkeys = [
     "0xa2cc280ce811bb680cba309103e23dc3c9902f2a08541c6737e8adfe8198e796023b959fc8aadfad39499b56ec3dd184",
     "0x86d25af52627204ab822a20ac70da6767952841edbcb0b83c84a395205313661de5f7f76efa475a46f45fa89d95c1dd7",
@@ -15,6 +18,11 @@ describe.only("Cron: Prater", () => {
     "0x8f2b698583d69c7a78b4482871282602adb7fb47a1aab66c63feb48e7b9245dad77b82346e0201328d66a8b4d483b716",
     "0xa1735a0dd72205dae313c36d7d17f5b06685944c8886ddac530e5aedbe1fca0c8003e7e274ec1b4ddd08b884f5b9a830",
   ];
+
+  const keystoresPath = path.resolve(process.cwd(), "keystores");
+
+  const keystorePass = "stakingbrain";
+
   const stakerSpecs = {
     network: "prater",
     consensusClients: [
@@ -85,9 +93,68 @@ describe.only("Cron: Prater", () => {
         brainDb = new BrainDataBase(testDbName);
       });
 
-      beforeEach(() => {
+      beforeEach(async () => {
+        //Clean DB
         fs.writeFileSync(testDbName, JSON.stringify({}));
+
+        //Clean validator
+        await validatorApi.deleteRemoteKeys({ pubkeys });
+
+        //Clean signer
+        await signerApi.deleteKeystores({ pubkeys });
       });
+
+      it("Should post fee recipient in DB to validator", async () => {
+        //TODO
+        await addValidatorsToAllSources(1);
+      }).timeout(10000);
+
+      //Auxiliary function (not a test)
+      async function addValidatorsToAllSources(nValidators = 5) {
+        if (nValidators > pubkeys.length) nValidators = pubkeys.length;
+
+        if (nValidators < 1) nValidators = 1;
+
+        //Add keystores to signer
+        const keystoresPaths = fs
+          .readdirSync(keystoresPath)
+          .filter((file) => file.endsWith(".json"));
+
+        //Reduce keystoresPaths to nValidators
+        keystoresPaths.splice(nValidators);
+
+        const keystores = keystoresPaths.map((file) =>
+          fs.readFileSync(path.join(keystoresPath, file)).toString()
+        );
+
+        const passwords = Array(keystores.length).fill("stakingbrain");
+
+        await signerApi.importKeystores({
+          keystores,
+          passwords,
+        });
+
+        //Add validator to DB
+        const pubkeysToTest = pubkeys.slice(0, nValidators);
+
+        brainDb.addValidators({
+          pubkeys: pubkeysToTest,
+          tags: Array(pubkeysToTest.length).fill("solo"),
+          feeRecipients: Array(pubkeysToTest.length).fill(defaultFeeRecipient),
+          automaticImports: Array(pubkeysToTest.length).fill(true),
+        });
+
+        //Add pubkeys to validator
+        const signerUrl = signerApi.getBaseUrl();
+
+        await validatorApi.postRemoteKeys({
+          remote_keys: pubkeysToTest.map((pubkey) => ({
+            pubkey,
+            url: signerUrl,
+          })),
+        });
+
+      }
     });
   }
 });
