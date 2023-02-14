@@ -20,7 +20,8 @@
     "clean:modules": "rimraf ./node_modules",
     "clean:dist": "rimraf ./dist",
     "clean:webpack": "rimraf ./dist",
-    "clean:ln": "rimraf ./uiBuild"
+    "clean:ln": "rimraf ./uiBuild",
+    "coverage": "nyc mocha -r ts-node/register -r dotenv/config -r source-map-support/register --recursive 'tests/unit/modules/apiClients/*.unit.test.ts'"
   },
   "dependencies": {
     "@stakingbrain/common": "^0.1.0",
@@ -32,6 +33,7 @@
     "socket.io": "^4.5.4"
   },
   "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@types/chai": "^4.3.4",
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.15",
@@ -45,9 +47,11 @@
     "eslint": "^8.33.0",
     "mocha": "^10.2.0",
     "nodemon": "^2.0.20",
+    "nyc": "^15.1.0",
     "prettier": "^2.8.3",
     "rimraf": "^4.1.1",
     "sinon": "^15.0.1",
+    "source-map-support": "^0.5.21",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.4",
