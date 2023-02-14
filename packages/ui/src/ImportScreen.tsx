@@ -18,18 +18,14 @@ import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
 import { useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
-import { extractPubkey } from "./logic/Utils/dataUtils";
 import { ImportStatus, KeystoreInfo } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
 import ImportDialog from "./components/Dialogs/ImportDialog";
-import {
-  importButtonBoxStyle,
-  mainImportBoxStyle,
-  slashingProtectionBoxStyle,
-} from "./Styles/dialogStyles";
 import { Web3signerPostResponse, Tag } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
+import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
+import { extractPubkey } from "./utils/dataUtils";
 
 export default function ImportScreen(): JSX.Element {
   const [keystoresPostResponse, setKeystoresPostResponse] =
@@ -107,11 +103,18 @@ export default function ImportScreen(): JSX.Element {
 
   return (
     <div>
-      <Box sx={mainImportBoxStyle}>
+      <Box
+        sx={{
+          margin: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "left",
+        }}
+      >
         <Card
           sx={{
             padding: 4,
-            borderRadius: 3,
+            borderRadius: 2,
           }}
         >
           <Typography
@@ -245,7 +248,15 @@ export default function ImportScreen(): JSX.Element {
             useSameFeerecipient
           )}
 
-          <Box sx={slashingProtectionBoxStyle}>
+          <Box
+            sx={{
+              marginTop: 8,
+              marginBottom: 2,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "left",
+            }}
+          >
             <Typography variant="h5" sx={{ marginRight: 2 }}>
               <b>Import slashing protection data? (recommended)</b>
             </Typography>
@@ -269,7 +280,7 @@ export default function ImportScreen(): JSX.Element {
                   sx={{
                     padding: 2,
                     marginTop: 4,
-                    borderRadius: 3,
+                    borderRadius: 2,
                   }}
                 >
                   <Box
@@ -297,7 +308,26 @@ export default function ImportScreen(): JSX.Element {
           ) : null}
         </Card>
 
-        <Box sx={importButtonBoxStyle}>
+        <Box
+          sx={{
+            marginTop: 4,
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <Link
+            to={{ pathname: "/", search: window.location.search }}
+            style={{ textDecoration: "none" }}
+          >
+            <Button
+              variant="outlined"
+              size="large"
+              sx={{ marginRight: 4, borderRadius: 2 }}
+              startIcon={<ArrowCircleLeftOutlinedIcon />}
+            >
+              Back to Accounts
+            </Button>
+          </Link>
           <Button
             variant="contained"
             size="large"
@@ -311,16 +341,6 @@ export default function ImportScreen(): JSX.Element {
           >
             Submit Keystores
           </Button>
-          <Link to={{ pathname: "/", search: window.location.search }}>
-            <Button
-              variant="outlined"
-              size="large"
-              color="warning"
-              sx={{ marginRight: 4, borderRadius: 3 }}
-            >
-              Back to Accounts
-            </Button>
-          </Link>
         </Box>
       </Box>
       <ImportDialog

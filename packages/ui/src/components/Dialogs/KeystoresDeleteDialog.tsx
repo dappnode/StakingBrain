@@ -11,7 +11,6 @@ import {
   Alert,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { getEmoji } from "../../logic/Utils/dataUtils";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
@@ -22,6 +21,7 @@ import {
 } from "@stakingbrain/common";
 import { api } from "../../api";
 import { SlideTransition } from "./Transitions";
+import { getEmoji } from "../../utils/dataUtils";
 
 export default function KeystoresDeleteDialog({
   rows,
@@ -119,7 +119,7 @@ export default function KeystoresDeleteDialog({
                       keystoresDelete.slashing_protection
                     )}`}
                     download="slashing_protection.json"
-                    sx={{ borderRadius: 3 }}
+                    sx={{ borderRadius: 2 }}
                   >
                     Download Slashing Protection Data
                   </Button>
@@ -147,7 +147,7 @@ export default function KeystoresDeleteDialog({
           <Button
             onClick={() => deleteSelectedKeystores()}
             variant="contained"
-            sx={{ marginRight: 1, borderRadius: 3 }}
+            sx={{ marginRight: 1, borderRadius: 2 }}
           >
             Confirm
           </Button>
@@ -155,7 +155,7 @@ export default function KeystoresDeleteDialog({
         <Button
           onClick={handleClose}
           variant="outlined"
-          sx={{ borderRadius: 3 }}
+          sx={{ borderRadius: 2 }}
         >
           Close
         </Button>

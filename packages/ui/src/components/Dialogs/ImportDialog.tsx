@@ -8,12 +8,12 @@ import {
   DialogActions,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { getEmoji } from "../../logic/Utils/dataUtils";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import { KeystoreInfo } from "../../types";
 import WaitBox from "../WaitBox/WaitBox";
 import { Web3signerPostResponse, shortenPubkey } from "@stakingbrain/common";
 import { SlideTransition } from "./Transitions";
+import { getEmoji } from "../../utils/dataUtils";
 
 export default function ImportDialog({
   open,
@@ -84,7 +84,7 @@ export default function ImportDialog({
           <Button
             onClick={handleClose}
             variant="contained"
-            sx={{ borderRadius: 3 }}
+            sx={{ borderRadius: 2 }}
           >
             Close
           </Button>

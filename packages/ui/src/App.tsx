@@ -65,20 +65,21 @@ function App(): JSX.Element {
     >
       <CssBaseline />
       <TopBar
+        network={stakerConfig?.network}
         mode={mode}
         setMode={setMode}
         userMode={userMode}
         setUserMode={setUserMode}
       />
 
-      {stakerConfig?.network && (
+      {stakerConfig && (
         <BrowserRouter>
           <Routes>
             <Route
               path="/"
               element={
                 <ValidatorList
-                  network={stakerConfig.network}
+                  stakerConfig={stakerConfig}
                   userMode={userMode}
                 />
               }

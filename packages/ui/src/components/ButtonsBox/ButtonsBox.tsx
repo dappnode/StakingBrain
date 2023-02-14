@@ -23,7 +23,7 @@ export default function ButtonsBox({
         <Button
           variant="contained"
           size="large"
-          sx={{ borderRadius: 3 }}
+          sx={{ borderRadius: 2 }}
           endIcon={<BackupIcon />}
         >
           Import
@@ -35,7 +35,7 @@ export default function ButtonsBox({
           <Button
             variant="contained"
             size="large"
-            sx={{ marginRight: 4, borderRadius: 3 }}
+            sx={{ marginRight: 4, borderRadius: 2 }}
             onClick={loadSummaryUrl}
           >
             Load dashboard
@@ -47,7 +47,7 @@ export default function ButtonsBox({
         <Button
           variant="contained"
           size="large"
-          sx={{ marginRight: 4, borderRadius: 3 }}
+          sx={{ marginRight: 4, borderRadius: 2 }}
           target="_blank"
           href={validatorSummaryURL}
         >
@@ -58,7 +58,7 @@ export default function ButtonsBox({
           <Button
             variant="contained"
             size="large"
-            sx={{ marginRight: 4, borderRadius: 3 }}
+            sx={{ marginRight: 4, borderRadius: 2 }}
             disabled={true}
           >
             Loading summary dashboard...
