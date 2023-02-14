@@ -1,22 +1,26 @@
-import KeystoreList from "../KeystoreList/KeystoreList";
+import KeystoresDataGrid from "./KeystoresDataGrid";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
-import { Alert, Box, CircularProgress } from "@mui/material";
+import { Alert, Box, CircularProgress, Card } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { Network, CustomValidatorGetResponse } from "@stakingbrain/common";
+import {
+  Network,
+  CustomValidatorGetResponse,
+  StakerConfig as StakerConfigType,
+} from "@stakingbrain/common";
 import { useEffect, useState } from "react";
-import buildValidatorSummaryURL from "../../logic/Utils/buildValidatorSummaryURL";
 import { beaconchaApiParamsMap } from "../../params";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
-import { boxStyle } from "../../Styles/listStyles";
-import { hasIndexes } from "../../logic/Utils/beaconchaUtils";
+import { hasIndexes } from "../../utils/beaconchaUtils";
+import StakerConfig from "../StakerConfig/StakerConfig";
+import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 
 export default function ValidatorList({
-  network,
+  stakerConfig,
   userMode,
 }: {
-  network: Network;
+  stakerConfig: StakerConfigType<Network>;
   userMode: "basic" | "advanced";
 }): JSX.Element {
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
@@ -79,7 +83,7 @@ export default function ValidatorList({
     try {
       const validatorSummaryURL = buildValidatorSummaryURL({
         allValidatorsInfo,
-        network,
+        network: stakerConfig.network,
       });
 
       if (hasIndexes(validatorSummaryURL)) {
@@ -97,83 +101,110 @@ export default function ValidatorList({
   }
 
   async function loadSummaryUrl() {
-    if (validatorsGet && beaconchaApiParamsMap.has(network)) {
-      const beaconchaParams = beaconchaApiParamsMap.get(network);
+    if (validatorsGet && beaconchaApiParamsMap.has(stakerConfig.network)) {
+      const beaconchaParams = beaconchaApiParamsMap.get(stakerConfig.network);
       if (beaconchaParams) getValidatorSummaryURL();
     }
   }
 
   return (
     <div>
-      <Box className="box" sx={boxStyle}>
-        {validatorsGetError ? (
-          <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-            {validatorsGetError}
-          </Alert>
-        ) : loading ? (
-          <CircularProgress
-            sx={{
-              marginBottom: 4,
-            }}
-          />
-        ) : validatorsGet ? (
-          <>
-            <KeystoreList
-              rows={validatorsGet}
-              areRowsSelected={selectedRows.length !== 0}
-              setSelectedRows={setSelectedRows}
-              network={network}
-              userMode={userMode}
-              setDeleteOpen={setDeleteOpen}
-              setEditFeesOpen={setEditFeesOpen}
-              isTableEmpty={validatorsGet.length === 0}
-              validatorSummaryURL={validatorSummaryURL}
-              summaryUrlBuildingStatus={summaryUrlBuildingStatus}
-              loadSummaryUrl={loadSummaryUrl}
+      <Box
+        sx={{
+          margin: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "left",
+        }}
+      >
+        <Card
+          sx={{
+            padding: 4,
+            borderRadius: 2,
+          }}
+        >
+          {userMode === "advanced" && (
+            <StakerConfig stakerConfig={stakerConfig} />
+          )}
+
+          {validatorsGetError ? (
+            <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+              {validatorsGetError}
+            </Alert>
+          ) : loading ? (
+            <CircularProgress
+              sx={{
+                marginBottom: 4,
+              }}
             />
-
-            {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Error && (
-              <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-                There was an error loading the dashboard. The number of API
-                calls allowed by the explorer might have been exceeded or the
-                network might be invalid. Please wait for a minute and refresh
-                the page.
-              </Alert>
-            )}
-
-            {summaryUrlBuildingStatus ===
-              BeaconchaUrlBuildingStatus.NoIndexes && (
-              <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-                There was an error loading the dashboard. The explorer may not
-                be able to show a dashboard for all your validators or some of
-                them might not have been indexed yet. Have you done a deposit?
-              </Alert>
-            )}
-
-            {deleteOpen && (
-              <KeystoresDeleteDialog
+          ) : validatorsGet ? (
+            <>
+              <KeystoresDataGrid
                 rows={validatorsGet}
-                selectedRows={selectedRows}
+                areRowsSelected={selectedRows.length !== 0}
                 setSelectedRows={setSelectedRows}
-                open={deleteOpen}
-                setOpen={setDeleteOpen}
+                network={stakerConfig.network}
+                userMode={userMode}
+                setDeleteOpen={setDeleteOpen}
+                setEditFeesOpen={setEditFeesOpen}
+                isTableEmpty={validatorsGet.length === 0}
+                validatorSummaryURL={validatorSummaryURL}
+                summaryUrlBuildingStatus={summaryUrlBuildingStatus}
+                loadSummaryUrl={loadSummaryUrl}
               />
-            )}
 
-            {editFeesOpen && (
-              <EditFeesDialog
-                rows={validatorsGet}
-                selectedRows={selectedRows}
-                open={editFeesOpen}
-                setOpen={setEditFeesOpen}
-              />
-            )}
-          </>
-        ) : (
-          <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-            There are no keystores to display.
-          </Alert>
-        )}
+              {summaryUrlBuildingStatus ===
+                BeaconchaUrlBuildingStatus.Error && (
+                <Alert
+                  severity="warning"
+                  sx={{ marginTop: 2 }}
+                  variant="filled"
+                >
+                  There was an error loading the dashboard. The number of API
+                  calls allowed by the explorer might have been exceeded or the
+                  network might be invalid. Please wait for a minute and refresh
+                  the page.
+                </Alert>
+              )}
+
+              {summaryUrlBuildingStatus ===
+                BeaconchaUrlBuildingStatus.NoIndexes && (
+                <Alert
+                  severity="warning"
+                  sx={{ marginTop: 2 }}
+                  variant="filled"
+                >
+                  There was an error loading the dashboard. The explorer may not
+                  be able to show a dashboard for all your validators or some of
+                  them might not have been indexed yet. Have you done a deposit?
+                </Alert>
+              )}
+
+              {deleteOpen && (
+                <KeystoresDeleteDialog
+                  rows={validatorsGet}
+                  selectedRows={selectedRows}
+                  setSelectedRows={setSelectedRows}
+                  open={deleteOpen}
+                  setOpen={setDeleteOpen}
+                />
+              )}
+
+              {editFeesOpen && (
+                <EditFeesDialog
+                  rows={validatorsGet}
+                  selectedRows={selectedRows}
+                  open={editFeesOpen}
+                  setOpen={setEditFeesOpen}
+                />
+              )}
+            </>
+          ) : (
+            <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+              There are no keystores to display.
+            </Alert>
+          )}
+        </Card>
       </Box>
     </div>
   );

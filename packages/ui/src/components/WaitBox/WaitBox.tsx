@@ -1,9 +1,15 @@
 import { Box, CircularProgress, DialogContentText } from "@mui/material";
-import { waitDialogBoxStyle } from "../../Styles/dialogStyles";
 
 export default function WaitBox(): JSX.Element {
   return (
-    <Box sx={waitDialogBoxStyle}>
+    <Box
+      sx={{
+        margin: 8,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <CircularProgress
         sx={{
           marginBottom: 4,

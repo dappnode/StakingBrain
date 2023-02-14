@@ -166,7 +166,7 @@ export default function FeeRecipientDialog({
               <Button
                 onClick={() => updateFeeRecipients(newFeeRecipient)}
                 variant="contained"
-                sx={{ margin: 2, borderRadius: 3 }}
+                sx={{ margin: 2, borderRadius: 2 }}
                 disabled={
                   !isValidEcdsaPubkey(newFeeRecipient) ||
                   newFeeRecipient === burnAddress
@@ -178,7 +178,7 @@ export default function FeeRecipientDialog({
             <Button
               onClick={handleClose}
               variant="outlined"
-              sx={{ margin: 2, borderRadius: 3 }}
+              sx={{ margin: 2, borderRadius: 2 }}
             >
               Close
             </Button>
