@@ -9,13 +9,13 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
-import { Box, Container } from "@mui/system";
+import { Box } from "@mui/system";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 
-export default function KeystoreList({
+export default function KeystoresDataGrid({
   rows,
   areRowsSelected,
   setSelectedRows,
@@ -184,7 +184,7 @@ export default function KeystoreList({
   }
 
   return (
-    <Container>
+    <>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <HeaderTypography text={"Validators"} />
         <div>
@@ -240,7 +240,7 @@ export default function KeystoreList({
       </div>
       <Box
         style={{
-          marginTop: 4,
+          marginTop: 16,
           display: "flex",
           flexDirection: "row-reverse",
         }}
@@ -258,6 +258,6 @@ export default function KeystoreList({
           </Button>
         </Link>
       </Box>
-    </Container>
+    </>
   );
 }

@@ -16,3 +16,12 @@ export function getEmoji(status: string): string {
       return "⚠️";
   }
 }
+
+export function prettyDnpName(dnpName: string): string {
+  const clientName =
+    dnpName.split(".")[0].charAt(0).toUpperCase() +
+    dnpName.split(".")[0].slice(1);
+  if (clientName.includes("-")) return clientName.split("-").join(" ");
+
+  return clientName;
+}
