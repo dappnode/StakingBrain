@@ -1,30 +1,23 @@
-//Internal components
 import KeystoreList from "../KeystoreList/KeystoreList";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
-import ButtonsBox from "../ButtonsBox/ButtonsBox";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
-
-//External components
-import { Alert, Box, Card, CircularProgress } from "@mui/material";
+import { Alert, Box, CircularProgress } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-
-//Logic
 import { Network, CustomValidatorGetResponse } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import buildValidatorSummaryURL from "../../logic/Utils/buildValidatorSummaryURL";
 import { beaconchaApiParamsMap } from "../../params";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
-
-//Styles
 import { boxStyle } from "../../Styles/listStyles";
-import { HeaderTypography } from "../../Styles/Typographies";
 import { hasIndexes } from "../../logic/Utils/beaconchaUtils";
 
 export default function ValidatorList({
   network,
+  userMode,
 }: {
   network: Network;
+  userMode: "basic" | "advanced";
 }): JSX.Element {
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -37,19 +30,14 @@ export default function ValidatorList({
   const [validatorsGet, setValidatorsGet] =
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
-  const [mode, setMode] = useState<string>();
 
   // Use effect on timer to refresh the list of validators
   useEffect(() => {
     getValidators();
     const interval = setInterval(() => {
       getValidators();
-    }, 60 * 1000);
+    }, 60 * 3 * 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    api.getNodeEnv().then((env) => setMode(env));
   }, []);
 
   // Use effect to reset the validator on delete
@@ -118,91 +106,74 @@ export default function ValidatorList({
   return (
     <div>
       <Box className="box" sx={boxStyle}>
-        <Card sx={{ padding: 4, borderRadius: 5 }}>
-          <HeaderTypography
-            sx={{ flexGrow: 1, fontWeight: "bold", marginBottom: 2 }}
-            text="Your validator accounts"
+        {validatorsGetError ? (
+          <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+            {validatorsGetError}
+          </Alert>
+        ) : loading ? (
+          <CircularProgress
+            sx={{
+              marginBottom: 4,
+            }}
           />
-
-          {validatorsGetError ? (
-            <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-              {validatorsGetError}
-            </Alert>
-          ) : loading ? (
-            <CircularProgress
-              sx={{
-                marginBottom: 4,
-              }}
+        ) : validatorsGet ? (
+          <>
+            <KeystoreList
+              rows={validatorsGet}
+              areRowsSelected={selectedRows.length !== 0}
+              setSelectedRows={setSelectedRows}
+              network={network}
+              userMode={userMode}
+              setDeleteOpen={setDeleteOpen}
+              setEditFeesOpen={setEditFeesOpen}
+              isTableEmpty={validatorsGet.length === 0}
+              validatorSummaryURL={validatorSummaryURL}
+              summaryUrlBuildingStatus={summaryUrlBuildingStatus}
+              loadSummaryUrl={loadSummaryUrl}
             />
-          ) : validatorsGet ? (
-            <>
-              <KeystoreList
+
+            {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Error && (
+              <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+                There was an error loading the dashboard. The number of API
+                calls allowed by the explorer might have been exceeded or the
+                network might be invalid. Please wait for a minute and refresh
+                the page.
+              </Alert>
+            )}
+
+            {summaryUrlBuildingStatus ===
+              BeaconchaUrlBuildingStatus.NoIndexes && (
+              <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+                There was an error loading the dashboard. The explorer may not
+                be able to show a dashboard for all your validators or some of
+                them might not have been indexed yet. Have you done a deposit?
+              </Alert>
+            )}
+
+            {deleteOpen && (
+              <KeystoresDeleteDialog
                 rows={validatorsGet}
+                selectedRows={selectedRows}
                 setSelectedRows={setSelectedRows}
-                network={network}
-                mode={mode}
+                open={deleteOpen}
+                setOpen={setDeleteOpen}
               />
-              <ButtonsBox
-                areRowsSelected={selectedRows.length !== 0}
-                isTableEmpty={validatorsGet.length === 0}
-                setDeleteOpen={setDeleteOpen}
-                setEditFeesOpen={setEditFeesOpen}
-                validatorSummaryURL={validatorSummaryURL}
-                summaryUrlBuildingStatus={summaryUrlBuildingStatus}
-                loadSummaryUrl={loadSummaryUrl}
+            )}
+
+            {editFeesOpen && (
+              <EditFeesDialog
+                rows={validatorsGet}
+                selectedRows={selectedRows}
+                open={editFeesOpen}
+                setOpen={setEditFeesOpen}
               />
-              {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.Error && (
-                <Alert
-                  severity="warning"
-                  sx={{ marginTop: 2 }}
-                  variant="filled"
-                >
-                  There was an error loading the dashboard. The number of API
-                  calls allowed by the explorer might have been exceeded or the
-                  network might be invalid. Please wait for a minute and refresh
-                  the page.
-                </Alert>
-              )}
-
-              {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.NoIndexes && (
-                <Alert
-                  severity="warning"
-                  sx={{ marginTop: 2 }}
-                  variant="filled"
-                >
-                  There was an error loading the dashboard. The explorer may not
-                  be able to show a dashboard for all your validators or some of
-                  them might not have been indexed yet. Have you done a deposit?
-                </Alert>
-              )}
-
-              {deleteOpen && (
-                <KeystoresDeleteDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  open={deleteOpen}
-                  setOpen={setDeleteOpen}
-                />
-              )}
-
-              {editFeesOpen && (
-                <EditFeesDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  open={editFeesOpen}
-                  setOpen={setEditFeesOpen}
-                />
-              )}
-            </>
-          ) : (
-            <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-              There are no keystores to display.
-            </Alert>
-          )}
-        </Card>
+            )}
+          </>
+        ) : (
+          <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+            There are no keystores to display.
+          </Alert>
+        )}
       </Box>
     </div>
   );

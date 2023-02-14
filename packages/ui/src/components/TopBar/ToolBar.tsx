@@ -1,14 +1,22 @@
 import Toolbar from "@mui/material/Toolbar";
 import { HeaderTypography } from "../../Styles/Typographies";
-import { CheckCircle, Cancel, QuestionMark } from "@mui/icons-material";
-import { Box, Card, CircularProgress, Tooltip } from "@mui/material";
+import { Box } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import BuildIcon from "@mui/icons-material/Build";
+import PersonIcon from "@mui/icons-material/Person";
 
 export default function ToolBar({
-  network,
-  signerStatus,
+  mode,
+  setMode,
+  userMode,
+  setUserMode,
 }: {
-  network?: string;
-  signerStatus: string;
+  mode: "light" | "dark";
+  setMode: React.Dispatch<React.SetStateAction<"light" | "dark">>;
+  userMode: "basic" | "advanced";
+  setUserMode: React.Dispatch<React.SetStateAction<"basic" | "advanced">>;
 }): JSX.Element {
   return (
     <Toolbar>
@@ -23,23 +31,8 @@ export default function ToolBar({
         <img src="/assets/dappnode_logo.png" alt="logo" height={50} />
         <HeaderTypography
           sx={{ flexGrow: 1, fontWeight: "bold" }}
-          text={"ETH2 Key Manager"}
+          text={"Staking Brain"}
         />
-        <Box className="box">
-          <Card
-            sx={{
-              padding: 1,
-              borderRadius: 5,
-              marginLeft: 2,
-              fontWeight: 700,
-              fontSize: 18,
-              lineHeight: "30px",
-              backgroundColor: "#000000",
-            }}
-          >
-            {network}
-          </Card>
-        </Box>
       </div>
       <div style={{ marginLeft: "auto" }}>
         <Box
@@ -50,32 +43,22 @@ export default function ToolBar({
             alignItems: "center",
           }}
         >
-          <HeaderTypography
-            sx={{
-              fontWeight: "bold",
-              display: "center",
-              marginRight: 1,
-              marginTop: 0.5,
-            }}
-            text="Signer"
-          />
-          {signerStatus === "UP" ? (
-            <Tooltip title="Signer is UP">
-              <CheckCircle color="success" />
-            </Tooltip>
-          ) : signerStatus === "DOWN" ? (
-            <Tooltip title="Signer is DOWN">
-              <Cancel color="error" />
-            </Tooltip>
-          ) : signerStatus === "LOADING" ? (
-            <Tooltip title="Web3Signer status is loading">
-              <CircularProgress size={"20px"} />
-            </Tooltip>
-          ) : (
-            <Tooltip title="Web3Signer is not properly connected. Its URL might be wrong">
-              <QuestionMark color="warning" />
-            </Tooltip>
-          )}
+          <IconButton
+            sx={{ ml: 1 }}
+            onClick={() => setMode(mode === "dark" ? "light" : "dark")}
+            color="inherit"
+          >
+            {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
+          <IconButton
+            sx={{ ml: 1 }}
+            onClick={() =>
+              setUserMode(userMode === "basic" ? "advanced" : "basic")
+            }
+            color="inherit"
+          >
+            {userMode === "basic" ? <BuildIcon /> : <PersonIcon />}
+          </IconButton>
         </Box>
       </div>
     </Toolbar>

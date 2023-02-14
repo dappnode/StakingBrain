@@ -4,6 +4,10 @@ import {
   executionClient,
   consensusClient,
   defaultFeeRecipient,
+  executionClientUrl,
+  validatorUrl,
+  beaconchainUrl,
+  signerUrl,
 } from "../index.js";
 
 export async function getStakerConfig(): Promise<StakerConfig<Network>> {
@@ -11,6 +15,10 @@ export async function getStakerConfig(): Promise<StakerConfig<Network>> {
     network,
     executionClient,
     consensusClient,
+    executionClientUrl,
+    validatorUrl,
+    beaconchainUrl,
+    signerUrl,
     defaultFeeRecipient,
   };
 }
