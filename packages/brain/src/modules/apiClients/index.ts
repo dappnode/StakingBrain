@@ -36,6 +36,14 @@ export class StandardApi {
     }
   }
 
+  /*
+   * Returns base URL in format http(s)://host:port
+   */
+  public getBaseUrl(): string {
+    const { protocol, hostname, port } = this.requestOptions;
+    return `${protocol}//${hostname}:${port || 80}`;
+  }
+
   protected async request(
     method: AllowedMethods,
     endpoint: string,
