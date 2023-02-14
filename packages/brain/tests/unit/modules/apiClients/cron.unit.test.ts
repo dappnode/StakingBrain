@@ -6,6 +6,7 @@ import { Web3SignerApi } from "../../../../src/modules/apiClients/web3signer/ind
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import path from "path";
+import { Cron } from "../../../../src/modules/cron/index.js";
 
 describe.only("Cron: Prater", () => {
   const defaultFeeRecipient = "0x0000000000000000000000000000000000000000";
@@ -60,6 +61,7 @@ describe.only("Cron: Prater", () => {
       let validatorApi: ValidatorApi;
       let signerApi: Web3SignerApi;
       let brainDb: BrainDataBase;
+      let cron: Cron;
 
       const testDbName = "testDb.json";
 
@@ -91,6 +93,8 @@ describe.only("Cron: Prater", () => {
 
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);
+
+        cron = new Cron(60 * 1000, signerApi, signerIp, validatorApi, brainDb);
       });
 
       beforeEach(async () => {
@@ -105,9 +109,30 @@ describe.only("Cron: Prater", () => {
       });
 
       it("Should post fee recipient in DB to validator", async () => {
-        //TODO
         await addValidatorsToAllSources(1);
-      }).timeout(10000);
+
+        const pubkeyToTest = pubkeys[0];
+
+        const feeRecipient = "0x1111111111111111111111111111111111111111";
+
+        //Change fee recipient in DB
+        brainDb.updateValidators({
+          pubkeys: [pubkeyToTest],
+          feeRecipients: [feeRecipient],
+          tags: ["solo"],
+          automaticImports: [true],
+        });
+
+        //Check that fee recipient has changed in validator
+        await cron.reloadValidators();
+
+        const validatorFeeRecipient = await validatorApi.getFeeRecipient(
+          pubkeyToTest
+        );
+
+        expect(validatorFeeRecipient.data.ethaddress).to.be.equal(feeRecipient);
+        expect(validatorFeeRecipient.data.ethaddress).to.be.equal(feeRecipient);
+      }).timeout(15000);
 
       //Auxiliary function (not a test)
       async function addValidatorsToAllSources(nValidators = 5) {
@@ -127,7 +152,7 @@ describe.only("Cron: Prater", () => {
           fs.readFileSync(path.join(keystoresPath, file)).toString()
         );
 
-        const passwords = Array(keystores.length).fill("stakingbrain");
+        const passwords = Array(keystores.length).fill(keystorePass);
 
         await signerApi.importKeystores({
           keystores,
@@ -153,7 +178,6 @@ describe.only("Cron: Prater", () => {
             url: signerUrl,
           })),
         });
-
       }
     });
   }
