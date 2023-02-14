@@ -23,9 +23,13 @@ export default function KeystoreList({
   userMode,
   setDeleteOpen,
   setEditFeesOpen,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isTableEmpty,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   validatorSummaryURL,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   summaryUrlBuildingStatus,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loadSummaryUrl,
 }: {
   rows: CustomValidatorGetResponse[];
