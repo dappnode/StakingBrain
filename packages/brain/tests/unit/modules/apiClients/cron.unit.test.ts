@@ -95,7 +95,7 @@ describe.only("Cron: Prater", () => {
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);
 
-        cron = new Cron(60 * 1000, signerApi, signerIp, validatorApi, brainDb);
+        cron = new Cron(60 * 1000, signerApi, `http://${signerIp}:9000`, validatorApi, brainDb);
       });
 
       beforeEach(async function () {
@@ -221,6 +221,23 @@ describe.only("Cron: Prater", () => {
 
         expect(validatorPubkeys.data.length).to.be.equal(0);
       }).timeout(50000);
+
+      it.only("Should add the pubkeys in the DB to the validator", async () => {
+        addSampleValidatorsToDB(2);
+        await addSampleKeystoresToSigner(2);
+
+        const pubkeysToTest = pubkeys.slice(0, 2);
+
+        await cron.reloadValidators();
+
+        const validatorPubkeys = await validatorApi.getRemoteKeys();
+
+        expect(validatorPubkeys.data.length).to.be.equal(2);
+
+        //Expect the same pubkeys in both sources (could not be in the same order)
+        expect(validatorPubkeys.data[0].pubkey).to.be.oneOf(pubkeysToTest);
+        expect(validatorPubkeys.data[1].pubkey).to.be.oneOf(pubkeysToTest);
+      }).timeout(15000);
 
       // AUXILIARY FUNCTIONS //
 
