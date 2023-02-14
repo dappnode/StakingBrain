@@ -6,6 +6,10 @@ export interface StakerConfig<T extends Network> {
   network: T;
   executionClient: ExecutionClient<T>;
   consensusClient: ConsensusClient<T>;
+  executionClientUrl: string;
+  validatorUrl: string;
+  beaconchainUrl: string;
+  signerUrl: string;
   defaultFeeRecipient?: string;
 }
 

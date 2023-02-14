@@ -1,21 +1,22 @@
-import { Container, Alert } from "@mui/material";
+import { Alert } from "@mui/material";
 import TopBar from "./components/TopBar/TopBar";
 import ImportScreen from "./ImportScreen";
 import ValidatorList from "./components/ValidatorList/ValidatorList";
-import ClientsBox from "./components/ClientsBox/ClientsBox";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
 import { startApi, api } from "./api";
-import { Network, Web3SignerStatus } from "@stakingbrain/common";
+import { Network, StakerConfig, Web3SignerStatus } from "@stakingbrain/common";
 
 function App(): JSX.Element {
+  const [mode, setMode] = React.useState<"dark" | "light">("light");
+  const [userMode, setUserMode] = React.useState<"basic" | "advanced">("basic");
+
   const [signerStatus, setSignerStatus] =
     React.useState<Web3SignerStatus>("LOADING");
-  const [currentNetwork, setCurrentNetwork] = React.useState<Network>();
-  const [consensusClient, setConsensusClient] = React.useState<string>();
-  const [executionClient, setExecutionClient] = React.useState<string>();
+  const [stakerConfig, setStakerConfig] =
+    React.useState<StakerConfig<Network>>();
 
   useEffect(() => {
     // Start API and Socket.io once user has logged in
@@ -48,9 +49,7 @@ function App(): JSX.Element {
     try {
       const config = await api.getStakerConfig();
       console.log("config", config);
-      setCurrentNetwork(config.network);
-      setConsensusClient(config.consensusClient);
-      setExecutionClient(config.executionClient);
+      setStakerConfig(config);
     } catch (e) {
       console.error("Error on getStakerConfig", e);
     }
@@ -60,32 +59,36 @@ function App(): JSX.Element {
     <ThemeProvider
       theme={createTheme({
         palette: {
-          mode: "dark",
+          mode,
         },
       })}
     >
       <CssBaseline />
+      <TopBar
+        mode={mode}
+        setMode={setMode}
+        userMode={userMode}
+        setUserMode={setUserMode}
+      />
 
-      <TopBar network={currentNetwork} signerStatus={signerStatus} />
-
-      {currentNetwork && (
+      {stakerConfig?.network && (
         <BrowserRouter>
           <Routes>
             <Route
               path="/"
-              element={<ValidatorList network={currentNetwork} />}
+              element={
+                <ValidatorList
+                  network={stakerConfig.network}
+                  userMode={userMode}
+                />
+              }
             />
             <Route path="import" element={<ImportScreen />} />
           </Routes>
         </BrowserRouter>
       )}
 
-      {consensusClient && executionClient && (
-        <ClientsBox
-          consensusClient={consensusClient.split(".")[0]?.toUpperCase()}
-          executionClient={executionClient.split(".")[0]?.toUpperCase()}
-        />
-      )}
+      {/** TODO: Add warnings components right below */}
       {signerStatus === "ERROR" ? (
         <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
           Web3Signer API is not available. Check URL or global variables. Is the
@@ -98,7 +101,7 @@ function App(): JSX.Element {
           </Alert>
         )
       )}
-      {!currentNetwork && (
+      {!stakerConfig?.network && (
         <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
           Network has not been properly set. Check URL or global variables.
         </Alert>

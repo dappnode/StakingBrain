@@ -1,20 +1,25 @@
-//External components
 import { AppBar } from "@mui/material";
-
-//Internal components
 import ToolBar from "./ToolBar";
-import { Network } from "@stakingbrain/common";
 
 export default function TopBar({
-  network,
-  signerStatus,
+  mode,
+  setMode,
+  userMode,
+  setUserMode,
 }: {
-  network?: Network;
-  signerStatus: string;
+  mode: "light" | "dark";
+  setMode: React.Dispatch<React.SetStateAction<"light" | "dark">>;
+  userMode: "basic" | "advanced";
+  setUserMode: React.Dispatch<React.SetStateAction<"basic" | "advanced">>;
 }): JSX.Element {
   return (
     <AppBar position="static">
-      <ToolBar network={network} signerStatus={signerStatus} />
+      <ToolBar
+        mode={mode}
+        setMode={setMode}
+        userMode={userMode}
+        setUserMode={setUserMode}
+      />
     </AppBar>
   );
 }

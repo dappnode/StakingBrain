@@ -2,25 +2,17 @@ import { Box, Button, CircularProgress } from "@mui/material";
 import { Link } from "react-router-dom";
 import { buttonsBoxStyle } from "../../Styles/buttonsBoxStyles";
 import { BeaconchaUrlBuildingStatus } from "../../types";
-
-//Icons
 import BackupIcon from "@mui/icons-material/Backup";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import EditIcon from "@mui/icons-material/Edit";
 
 export default function ButtonsBox({
-  areRowsSelected,
   isTableEmpty,
-  setDeleteOpen,
-  setEditFeesOpen,
+
   validatorSummaryURL,
   summaryUrlBuildingStatus,
   loadSummaryUrl,
 }: {
-  areRowsSelected: boolean;
   isTableEmpty: boolean;
-  setDeleteOpen(open: boolean): void;
-  setEditFeesOpen(open: boolean): void;
+
   validatorSummaryURL: string;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   loadSummaryUrl(): void;
@@ -37,29 +29,6 @@ export default function ButtonsBox({
           Import
         </Button>
       </Link>
-      <Button
-        variant="contained"
-        size="large"
-        color="error"
-        disabled={!areRowsSelected}
-        sx={{ marginRight: 4, borderRadius: 3 }}
-        endIcon={<DeleteForeverIcon />}
-        onClick={() => setDeleteOpen(true)}
-      >
-        Delete
-      </Button>
-
-      <Button
-        variant="contained"
-        size="large"
-        color="success"
-        disabled={!areRowsSelected}
-        sx={{ marginRight: 4, borderRadius: 3 }}
-        endIcon={<EditIcon />}
-        onClick={() => setEditFeesOpen(true)}
-      >
-        Edit
-      </Button>
 
       {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NotStarted ? (
         !isTableEmpty && (
