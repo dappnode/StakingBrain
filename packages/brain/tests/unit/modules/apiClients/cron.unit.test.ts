@@ -97,7 +97,11 @@ describe.only("Cron: Prater", () => {
         cron = new Cron(60 * 1000, signerApi, signerIp, validatorApi, brainDb);
       });
 
-      beforeEach(async () => {
+      beforeEach(async function () {
+        this.timeout(40000);
+
+        console.log("Cleaning DB, validator and signer");
+
         //Clean DB
         fs.writeFileSync(testDbName, JSON.stringify({}));
 
@@ -146,10 +150,60 @@ describe.only("Cron: Prater", () => {
         expect(signerPubkeys.data.length).to.be.equal(1);
         expect(dbPubkeys.length).to.be.equal(1);
 
-        expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(dbPubkeys[0]);
+        expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(
+          dbPubkeys[0]
+        );
       }).timeout(15000);
 
+      it("Should remove 1 keystore from DB to match keystores in signer", async () => {
+        addValidatorsToDB(2);
+        await addKeystoresToSigner(1);
 
+        await cron.reloadValidators();
+
+        const signerPubkeys = await signerApi.getKeystores();
+        const dbPubkeys = Object.keys(brainDb.getData());
+
+        expect(signerPubkeys.data.length).to.be.equal(1);
+        expect(dbPubkeys.length).to.be.equal(1);
+
+        expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(
+          dbPubkeys[0]
+        );
+      }).timeout(15000);
+
+      it("Should remove all the pubkeys in DB and keystores in signer to match each other", async () => {
+        addValidatorsToDB(2);
+        await addKeystoresToSigner(2);
+
+        brainDb.deleteValidators([pubkeys[0]]);
+        await signerApi.deleteKeystores({ pubkeys: [pubkeys[1]] });
+
+        await cron.reloadValidators();
+
+        const signerPubkeys = await signerApi.getKeystores();
+        const dbPubkeys = Object.keys(brainDb.getData());
+
+        expect(signerPubkeys.data.length).to.be.equal(0);
+        expect(dbPubkeys.length).to.be.equal(0);
+      }).timeout(15000);
+
+      it("Should keep all the keystores in the signer and the pubkeys in the DB", async () => {
+        addValidatorsToDB(2);
+        await addKeystoresToSigner(2);
+
+        await cron.reloadValidators();
+
+        const signerPubkeys = await signerApi.getKeystores();
+        const dbPubkeys = Object.keys(brainDb.getData());
+
+        expect(signerPubkeys.data.length).to.be.equal(2);
+        expect(dbPubkeys.length).to.be.equal(2);
+
+        //Expect the same pubkeys in both sources (could not be in the same order)
+        expect(signerPubkeys.data[0].validating_pubkey).to.be.oneOf(dbPubkeys);
+        expect(signerPubkeys.data[1].validating_pubkey).to.be.oneOf(dbPubkeys);
+      }).timeout(15000);
 
       // AUXILIARY FUNCTIONS //
 
@@ -160,7 +214,7 @@ describe.only("Cron: Prater", () => {
 
         await addKeystoresToSigner(nValidators);
 
-        await addValidatorsToDB(nValidators);
+        addValidatorsToDB(nValidators);
 
         await addPubkeysToValidator(nValidators);
       }
