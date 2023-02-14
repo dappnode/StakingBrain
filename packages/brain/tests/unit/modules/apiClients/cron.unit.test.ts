@@ -134,19 +134,48 @@ describe.only("Cron: Prater", () => {
         expect(validatorFeeRecipient.data.ethaddress).to.be.equal(feeRecipient);
       }).timeout(15000);
 
-      //Auxiliary function (not a test)
+      it("Should remove 1 keystore from signer to match pubkeys in DB", async () => {
+        addValidatorsToDB(1);
+        await addKeystoresToSigner(2);
+
+        await cron.reloadValidators();
+
+        const signerPubkeys = await signerApi.getKeystores();
+        const dbPubkeys = Object.keys(brainDb.getData());
+
+        expect(signerPubkeys.data.length).to.be.equal(1);
+        expect(dbPubkeys.length).to.be.equal(1);
+
+        expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(dbPubkeys[0]);
+      }).timeout(15000);
+
+
+
+      // AUXILIARY FUNCTIONS //
+
       async function addValidatorsToAllSources(nValidators = 5) {
         if (nValidators > pubkeys.length) nValidators = pubkeys.length;
 
         if (nValidators < 1) nValidators = 1;
 
-        //Add keystores to signer
+        await addKeystoresToSigner(nValidators);
+
+        await addValidatorsToDB(nValidators);
+
+        await addPubkeysToValidator(nValidators);
+      }
+
+      async function addKeystoresToSigner(nKeystores = 5) {
+        if (nKeystores > pubkeys.length) nKeystores = pubkeys.length;
+
+        if (nKeystores < 1) nKeystores = 1;
+
         const keystoresPaths = fs
           .readdirSync(keystoresPath)
           .filter((file) => file.endsWith(".json"));
 
         //Reduce keystoresPaths to nValidators
-        keystoresPaths.splice(nValidators);
+        keystoresPaths.splice(nKeystores);
 
         const keystores = keystoresPaths.map((file) =>
           fs.readFileSync(path.join(keystoresPath, file)).toString()
@@ -158,8 +187,13 @@ describe.only("Cron: Prater", () => {
           keystores,
           passwords,
         });
+      }
 
-        //Add validator to DB
+      function addValidatorsToDB(nValidators = 5) {
+        if (nValidators > pubkeys.length) nValidators = pubkeys.length;
+
+        if (nValidators < 1) nValidators = 1;
+
         const pubkeysToTest = pubkeys.slice(0, nValidators);
 
         brainDb.addValidators({
@@ -168,6 +202,14 @@ describe.only("Cron: Prater", () => {
           feeRecipients: Array(pubkeysToTest.length).fill(defaultFeeRecipient),
           automaticImports: Array(pubkeysToTest.length).fill(true),
         });
+      }
+
+      async function addPubkeysToValidator(nPubkeys = 5) {
+        if (nPubkeys > pubkeys.length) nPubkeys = pubkeys.length;
+
+        if (nPubkeys < 1) nPubkeys = 1;
+
+        const pubkeysToTest = pubkeys.slice(0, nPubkeys);
 
         //Add pubkeys to validator
         const signerUrl = signerApi.getBaseUrl();
