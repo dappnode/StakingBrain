@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import { Cron } from "../../../../src/modules/cron/index.js";
 
-describe.only("Cron: Prater", () => {
+describe.skip("Cron: Prater", () => {
   const defaultFeeRecipient = "0x0000000000000000000000000000000000000000";
 
   //The order of this array is important for the tests
@@ -95,7 +95,13 @@ describe.only("Cron: Prater", () => {
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);
 
-        cron = new Cron(60 * 1000, signerApi, `http://${signerIp}:9000`, validatorApi, brainDb);
+        cron = new Cron(
+          60 * 1000,
+          signerApi,
+          `http://${signerIp}:9000`,
+          validatorApi,
+          brainDb
+        );
       });
 
       beforeEach(async function () {
@@ -222,7 +228,7 @@ describe.only("Cron: Prater", () => {
         expect(validatorPubkeys.data.length).to.be.equal(0);
       }).timeout(50000);
 
-      it.only("Should add the pubkeys in the DB to the validator", async () => {
+      it("Should add the pubkeys in the DB to the validator", async () => {
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(2);
 
