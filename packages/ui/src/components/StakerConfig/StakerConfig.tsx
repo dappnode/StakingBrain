@@ -13,7 +13,7 @@ export default function StakerConfig({
   stakerConfig,
 }: {
   stakerConfig: StakerConfigType<Network>;
-}) {
+}): JSX.Element {
   return (
     <Container>
       <Box
