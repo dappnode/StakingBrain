@@ -27,21 +27,21 @@ describe.only("Cron: Prater", () => {
   const stakerSpecs = {
     network: "prater",
     consensusClients: [
-      {
+      /*{
         name: "Prysm",
         containerName:
           "DAppNodePackage-validator.prysm-prater.dnp.dappnode.eth",
         token:
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg",
-      },
-      /**{
+      },*/
+      {
         name: "Lighthouse",
         containerName:
           "DAppNodePackage-validator.lighthouse-prater.dnp.dappnode.eth",
         token:
           "api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d",
       },
-      {
+      /*{
         name: "Nimbus",
         containerName:
           "DAppNodePackage-beacon-validator.nimbus-prater.dnp.dappnode.eth",
@@ -52,6 +52,7 @@ describe.only("Cron: Prater", () => {
         name: "Teku",
         containerName: "DAppNodePackage-validator.teku-prater.dnp.dappnode.eth",
         token: "cd4892ca35d2f5d3e2301a65fc7aa660",
+        
       },*/
     ],
   };
@@ -113,7 +114,7 @@ describe.only("Cron: Prater", () => {
       });
 
       it("Should post fee recipient in DB to validator", async () => {
-        await addValidatorsToAllSources(1);
+        await addSampleValidatorsToAllSources(1);
 
         const pubkeyToTest = pubkeys[0];
 
@@ -139,8 +140,8 @@ describe.only("Cron: Prater", () => {
       }).timeout(15000);
 
       it("Should remove 1 keystore from signer to match pubkeys in DB", async () => {
-        addValidatorsToDB(1);
-        await addKeystoresToSigner(2);
+        addSampleValidatorsToDB(1);
+        await addSampleKeystoresToSigner(2);
 
         await cron.reloadValidators();
 
@@ -156,8 +157,8 @@ describe.only("Cron: Prater", () => {
       }).timeout(15000);
 
       it("Should remove 1 keystore from DB to match keystores in signer", async () => {
-        addValidatorsToDB(2);
-        await addKeystoresToSigner(1);
+        addSampleValidatorsToDB(2);
+        await addSampleKeystoresToSigner(1);
 
         await cron.reloadValidators();
 
@@ -173,8 +174,8 @@ describe.only("Cron: Prater", () => {
       }).timeout(15000);
 
       it("Should remove all the pubkeys in DB and keystores in signer to match each other", async () => {
-        addValidatorsToDB(2);
-        await addKeystoresToSigner(2);
+        addSampleValidatorsToDB(2);
+        await addSampleKeystoresToSigner(2);
 
         brainDb.deleteValidators([pubkeys[0]]);
         await signerApi.deleteKeystores({ pubkeys: [pubkeys[1]] });
@@ -189,8 +190,8 @@ describe.only("Cron: Prater", () => {
       }).timeout(15000);
 
       it("Should keep all the keystores in the signer and the pubkeys in the DB", async () => {
-        addValidatorsToDB(2);
-        await addKeystoresToSigner(2);
+        addSampleValidatorsToDB(2);
+        await addSampleKeystoresToSigner(2);
 
         await cron.reloadValidators();
 
@@ -205,21 +206,37 @@ describe.only("Cron: Prater", () => {
         expect(signerPubkeys.data[1].validating_pubkey).to.be.oneOf(dbPubkeys);
       }).timeout(15000);
 
+      it("Should delete all pubkeys from validator with empty DB", async () => {
+        await addSamplePubkeysToValidator(1);
+
+        console.log("Added pubkeys to validator");
+
+        await cron.reloadValidators();
+
+        console.log("Validators reloaded");
+
+        const validatorPubkeys = await validatorApi.getRemoteKeys();
+
+        console.log("Got validator pubkeys");
+
+        expect(validatorPubkeys.data.length).to.be.equal(0);
+      }).timeout(50000);
+
       // AUXILIARY FUNCTIONS //
 
-      async function addValidatorsToAllSources(nValidators = 5) {
+      async function addSampleValidatorsToAllSources(nValidators = 5) {
         if (nValidators > pubkeys.length) nValidators = pubkeys.length;
 
         if (nValidators < 1) nValidators = 1;
 
-        await addKeystoresToSigner(nValidators);
+        await addSampleKeystoresToSigner(nValidators);
 
-        addValidatorsToDB(nValidators);
+        addSampleValidatorsToDB(nValidators);
 
-        await addPubkeysToValidator(nValidators);
+        await addSamplePubkeysToValidator(nValidators);
       }
 
-      async function addKeystoresToSigner(nKeystores = 5) {
+      async function addSampleKeystoresToSigner(nKeystores = 5) {
         if (nKeystores > pubkeys.length) nKeystores = pubkeys.length;
 
         if (nKeystores < 1) nKeystores = 1;
@@ -243,7 +260,7 @@ describe.only("Cron: Prater", () => {
         });
       }
 
-      function addValidatorsToDB(nValidators = 5) {
+      function addSampleValidatorsToDB(nValidators = 5) {
         if (nValidators > pubkeys.length) nValidators = pubkeys.length;
 
         if (nValidators < 1) nValidators = 1;
@@ -258,7 +275,7 @@ describe.only("Cron: Prater", () => {
         });
       }
 
-      async function addPubkeysToValidator(nPubkeys = 5) {
+      async function addSamplePubkeysToValidator(nPubkeys = 5) {
         if (nPubkeys > pubkeys.length) nPubkeys = pubkeys.length;
 
         if (nPubkeys < 1) nPubkeys = 1;
