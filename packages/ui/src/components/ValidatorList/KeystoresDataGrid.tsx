@@ -1,7 +1,11 @@
 import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
-import { CustomValidatorGetResponse, Tag } from "@stakingbrain/common";
+import {
+  BeaconchaGetResponse,
+  CustomValidatorGetResponse,
+  Tag,
+} from "@stakingbrain/common";
 import Chip from "@mui/material/Chip";
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
@@ -190,32 +194,27 @@ export default function KeystoresDataGrid({
       return;
     }
 
+    let allValidatorsInfo: BeaconchaGetResponse[];
+
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
-    const allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
-      selectedRows.map((row) => rows[row as number].pubkey)
-    );
-
     try {
-      const summaryUrlBuilt = buildValidatorSummaryURL({
-        allValidatorsInfo,
-        network,
-      });
-
-      if (!hasIndexes(summaryUrlBuilt)) {
-        setValidatorSummaryURL("");
-        setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
-        console.log("Status set to: ", BeaconchaUrlBuildingStatus.NoIndexes);
-      } else {
-        setValidatorSummaryURL(summaryUrlBuilt);
-        setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
-        console.log("Status set to: ", BeaconchaUrlBuildingStatus.Success);
-      }
+      allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
+        selectedRows.map((row) => rows[row as number].pubkey)
+      );
     } catch (e) {
-      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
+      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
       setValidatorSummaryURL("");
-      console.log(e);
+      return;
     }
+
+    const summaryUrlBuilt = buildValidatorSummaryURL({
+      allValidatorsInfo,
+      network,
+    });
+
+    setValidatorSummaryURL(summaryUrlBuilt);
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
   }
 
   async function openDashboardTab() {
@@ -229,7 +228,8 @@ export default function KeystoresDataGrid({
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <HeaderTypography text={"Validators"} />
         <div>
-          {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Success ? (
+          {summaryUrlBuildingStatus ===
+          BeaconchaUrlBuildingStatus.InProgress ? (
             <Tooltip title="Loading dashboard">
               <CircularProgress size={18} style={{ color: "#808080" }} />
             </Tooltip>

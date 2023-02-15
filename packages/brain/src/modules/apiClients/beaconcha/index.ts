@@ -46,14 +46,8 @@ export class BeaconchaApi extends StandardApi {
     try {
       return (await this.request("GET", endpoint)) as BeaconchaGetResponse;
     } catch (e) {
-      // TODO: this error must be thrown on the backend and handle on the frontend: https://github.com/dappnode/StakingBrain/issues/50
-      return {
-        status: "error",
-        data: [],
-        error: {
-          message: e.message,
-        },
-      };
+      e.message += "Error on getting indexes for validator public keys";
+      throw e;
     }
   }
 }
