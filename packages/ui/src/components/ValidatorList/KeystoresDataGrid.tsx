@@ -229,9 +229,10 @@ export default function KeystoresDataGrid({
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <HeaderTypography text={"Validators"} />
         <div>
-          {summaryUrlBuildingStatus ===
-          BeaconchaUrlBuildingStatus.InProgress ? (
-            <CircularProgress size={24} style={{ color: "#808080" }} />
+          {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Success ? (
+            <Tooltip title="Loading dashboard">
+              <CircularProgress size={18} style={{ color: "#808080" }} />
+            </Tooltip>
           ) : (
             <Tooltip title="Go to Beaconcha.in dashboard for selected validators">
               <IconButton
