@@ -58,26 +58,26 @@ export class Cron {
    * - DELETE to validator API pubkeys that are in validator API and not in DB
    * - POST to validator API fee recipients that are in DB and not in validator API
    *
-   * TODO: this function is critical, it must have strict tests
    */
   public async reloadValidators(): Promise<void> {
     try {
-      logger.info(`Reloading data...`);
+      logger.debug(`Reloading data...`);
 
       // 0. GET data
       const dbPubkeys = Object.keys(this.brainDb.getData());
       const signerPubkeys = (await this.signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
-      const validatorPubkeys = (
-        await this.validatorApi.getRemoteKeys()
-      ).data.map((keystore) => keystore.pubkey);
 
       // 1. DELETE from signer API pubkeys that are not in DB
       await this.deleteSignerPubkeysNotInDB({ signerPubkeys, dbPubkeys });
 
       // 2. DELETE from DB pubkeys that are not in signer API
       await this.deleteDbPubkeysNotInSigner({ dbPubkeys, signerPubkeys });
+
+      const validatorPubkeys = (
+        await this.validatorApi.getRemoteKeys()
+      ).data.map((keystore) => keystore.pubkey);
 
       // 3. POST to validator API pubkeys that are in DB and not in validator API
       await this.postValidatorPubkeysFromDb({
@@ -103,7 +103,7 @@ export class Cron {
         }),
       });
 
-      logger.info(`Finished reloading data`);
+      logger.debug(`Finished reloading data`);
     } catch (e) {
       if (e instanceof ApiError && e.code) {
         switch (e.code) {
