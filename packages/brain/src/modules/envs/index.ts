@@ -290,9 +290,7 @@ function loadEnvs<T extends Network>(
   const errors = [];
 
   const defaultFeeRecipient =
-    process.env[
-      `_DAPPNODE_GLOBAL_DEFAULT_FEE_RECIPIENT_${network.toUpperCase()}`
-    ];
+    process.env[`_DAPPNODE_GLOBAL_FEE_RECIPIENT_${network.toUpperCase()}`];
   const executionClient =
     process.env[`_DAPPNODE_GLOBAL_EXECUTION_CLIENT_${network.toUpperCase()}`];
   const consensusClient =
