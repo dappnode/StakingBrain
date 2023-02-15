@@ -66,16 +66,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
       this.read();
       // If db.json doesn't exist, db.data will be null
-      if (this.data === null) {
-        logger.info(
-          `Database file ${this.dbName} not found. Attemping to perform migration...`
-        );
+      if (this.data === null)
         await this.databaseMigration(
           signerApi,
           validatorApi,
           defaultFeeRecipient
         );
-      } else this.setOwnerWriteRead();
+      else this.setOwnerWriteRead();
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
       this.validateDb();
@@ -349,6 +346,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     let retries = 0;
     while (retries < 10) {
       try {
+        logger.info(
+          `Database file ${this.dbName} not found. Attemping to perform migration...`
+        );
         // Create json file
         this.createJsonFileAndPermissions();
         // Fetch public keys from signer API
@@ -358,7 +358,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         if (pubkeys.length === 0) {
           logger.info(`No public keys found in the signer API`);
           return;
-        }
+        } else logger.info(`Found ${pubkeys.length} public keys to migrate`);
 
         let feeRecipient = "";
         await validatorApi
@@ -371,12 +371,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
               `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${defaultFeeRecipient}}`,
               e
             );
-            if (defaultFeeRecipient) {
-              feeRecipient = defaultFeeRecipient;
-            } else {
-              feeRecipient = params.burnAddress;
-            }
+            if (defaultFeeRecipient) feeRecipient = defaultFeeRecipient;
+            else feeRecipient = params.burnAddress;
           });
+
+        logger.info(
+          `The fee recipient to be used in the migration is ${feeRecipient}`
+        );
 
         this.addValidators({
           pubkeys,
@@ -387,7 +388,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         logger.info(`Database migration completed`);
         return;
       } catch (e) {
-        if (retries < 10) {
+        if (retries < 30) {
           retries++;
           logger.error(
             `Unable to perform database migration. Retrying in 6 seconds...`,
