@@ -20,7 +20,6 @@ import { Link } from "react-router-dom";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
-import { hasIndexes } from "../../utils/beaconchaUtils";
 
 export default function KeystoresDataGrid({
   rows,
