@@ -17,11 +17,20 @@ export function getEmoji(status: string): string {
   }
 }
 
-export function prettyDnpName(dnpName: string): string {
-  const clientName =
-    dnpName.split(".")[0].charAt(0).toUpperCase() +
-    dnpName.split(".")[0].slice(1);
-  if (clientName.includes("-")) return clientName.split("-").join(" ");
+export function prettyClientDnpName(dnpName: string): string {
+  const clientName = dnpName
+    .split(".")[0]
+    .split("-")
+    .find(
+      (name) =>
+        !name.includes("goerli") &&
+        !name.includes("prater") &&
+        !name.includes("gnosis")
+    );
+  if (!clientName) return dnpName;
 
-  return clientName;
+  return (
+    clientName.split(".")[0].charAt(0).toUpperCase() +
+    clientName.split(".")[0].slice(1)
+  );
 }
