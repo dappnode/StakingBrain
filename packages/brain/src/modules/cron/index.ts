@@ -113,7 +113,7 @@ export class Cron {
           case "ECONNRESET":
             e.message += `Connection reset by the server ${e.hostname}, check server logs`;
             break;
-          case "ENNOTFOUND":
+          case "ENOTFOUND":
             e.message += `Host ${e.hostname} not found. Make sure the server is running and the hostname is correct`;
             break;
           case "ERR_HTTP":

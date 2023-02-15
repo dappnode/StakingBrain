@@ -25,7 +25,7 @@ export interface ErrnoException extends Error {
 }
 
 export type ErrorCode =
-  | "ENNOTFOUND"
+  | "ENOTFOUND"
   | "ECONNREFUSED"
   | "ECONNRESET"
   | "ERR_HTTP"
