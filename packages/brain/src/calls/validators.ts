@@ -112,10 +112,9 @@ export async function importValidators(
       await validatorApi
         .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
         .then(() => logger.debug(`Added feeRecipient to validator API`))
-        .catch((err) => {
-          logger.error(`Error setting validator feeRecipient`, err);
-          postRequest.feeRecipients[index] = "";
-        });
+        .catch((err) =>
+          logger.error(`Error setting validator feeRecipient`, err)
+        );
 
     // 4. Write on db
     brainDb.addValidators({
