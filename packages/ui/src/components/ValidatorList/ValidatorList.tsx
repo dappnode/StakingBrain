@@ -9,12 +9,9 @@ import {
   StakerConfig as StakerConfigType,
 } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
-import { beaconchaApiParamsMap } from "../../params";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
-import { hasIndexes } from "../../utils/beaconchaUtils";
 import StakerConfig from "../StakerConfig/StakerConfig";
-import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 
 export default function ValidatorList({
   stakerConfig,
@@ -27,13 +24,12 @@ export default function ValidatorList({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFeesOpen, setEditFeesOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
-  const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
-    BeaconchaUrlBuildingStatus.NotStarted
-  );
   const [validatorsGet, setValidatorsGet] =
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
+  const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
+    BeaconchaUrlBuildingStatus.NotStarted
+  );
 
   // Use effect on timer to refresh the list of validators
   useEffect(() => {
@@ -49,11 +45,6 @@ export default function ValidatorList({
     if (!deleteOpen) getValidators();
   }, [deleteOpen]);
 
-  useEffect(() => {
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-    setValidatorSummaryURL("");
-  }, [validatorsGet]);
-
   async function getValidators() {
     try {
       setLoading(true);
@@ -64,46 +55,6 @@ export default function ValidatorList({
       console.error(e);
       setValidatorsGetError(e.message);
       setLoading(false);
-    }
-  }
-
-  async function getValidatorSummaryURL() {
-    if (!validatorsGet) {
-      setValidatorSummaryURL("");
-      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
-      return;
-    }
-
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
-
-    const allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
-      validatorsGet.map((keystore) => keystore.pubkey)
-    );
-
-    try {
-      const validatorSummaryURL = buildValidatorSummaryURL({
-        allValidatorsInfo,
-        network: stakerConfig.network,
-      });
-
-      if (hasIndexes(validatorSummaryURL)) {
-        setValidatorSummaryURL("");
-        setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
-      } else {
-        setValidatorSummaryURL(validatorSummaryURL);
-        setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
-      }
-    } catch (e) {
-      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
-      setValidatorSummaryURL("");
-      console.log(e);
-    }
-  }
-
-  async function loadSummaryUrl() {
-    if (validatorsGet && beaconchaApiParamsMap.has(stakerConfig.network)) {
-      const beaconchaParams = beaconchaApiParamsMap.get(stakerConfig.network);
-      if (beaconchaParams) getValidatorSummaryURL();
     }
   }
 
@@ -142,15 +93,14 @@ export default function ValidatorList({
               <KeystoresDataGrid
                 rows={validatorsGet}
                 areRowsSelected={selectedRows.length !== 0}
+                selectedRows={selectedRows}
                 setSelectedRows={setSelectedRows}
                 network={stakerConfig.network}
                 userMode={userMode}
                 setDeleteOpen={setDeleteOpen}
                 setEditFeesOpen={setEditFeesOpen}
-                isTableEmpty={validatorsGet.length === 0}
-                validatorSummaryURL={validatorSummaryURL}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
-                loadSummaryUrl={loadSummaryUrl}
+                setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
               />
 
               {summaryUrlBuildingStatus ===

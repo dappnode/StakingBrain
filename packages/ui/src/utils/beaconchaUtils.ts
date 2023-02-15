@@ -1,3 +1,3 @@
 export function hasIndexes(beaconchaUrl: string): boolean {
-  return !beaconchaUrl.split("=")[1];
+  return beaconchaUrl.split("=").length > 1;
 }
