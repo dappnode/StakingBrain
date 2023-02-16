@@ -3,6 +3,7 @@ import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
 import { Web3SignerApi } from "./modules/apiClients/web3signer/index.js";
+import { Beaconchain } from "./modules/apiClients/beaconchain/index.js";
 import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
 import { startUiServer } from "./modules/apiServers/ui/index.js";
 import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
@@ -51,6 +52,7 @@ export const validatorApi = new ValidatorApi({
   authToken: token,
   tlsCert,
 });
+export const beaconchainApi = new Beaconchain({ baseUrl: beaconchainUrl });
 
 // Create DB instance
 export const brainDb = new BrainDataBase(params.brainDbName);

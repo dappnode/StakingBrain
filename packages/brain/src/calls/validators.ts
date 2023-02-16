@@ -8,7 +8,13 @@ import {
   Tag,
   shortenPubkey,
 } from "@stakingbrain/common";
-import { brainDb, signerApi, signerUrl, validatorApi } from "../index.js";
+import {
+  beaconchainApi,
+  brainDb,
+  signerApi,
+  signerUrl,
+  validatorApi,
+} from "../index.js";
 import logger from "../modules/logger/index.js";
 import { cron } from "../index.js";
 
@@ -272,16 +278,87 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
  * @param pubkeys The public keys of the validators to exit
  */
 export async function exitValidators({ pubkeys }: { pubkeys: string[] }) {
-  /**
-   * To perform the voluntary exit first is needed
-   * 1. Get the validator index from the validator API
-   * 2. Get the validator exit epoch from the beacon node API
-   * 3. Create the voluntary exit object
-   * 4. Sign the voluntary exit object
-   * 5. Submit the voluntary exit object
-   * 6. Delete the validator from the validator API
-   * 7. Delete the validator from the brain db
-   * 8. Delete the validator from the web3signer API
-   *
-   */
+  try {
+    // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
+    // and prevents the cron from running while we are deleting validators
+    cron.stop();
+
+    // 1. Get the validator index from the validator API
+    const validatorIndexes = await Promise.all(
+      pubkeys.map((pubkey) =>
+        beaconchainApi.getValidatorFromState({ state: "head", pubkey })
+      )
+    ).catch((e) => {
+      logger.error(e);
+      return [];
+    });
+
+    // 2. Get the validator exit epoch from the beacon node API
+    const currentEpoch = await beaconchainApi.getCurrentEpoch();
+
+    // 3. Create the voluntary exit object
+    const voluntaryExits = validatorIndexes.map((validatorIndex) => ({
+      epoch: currentEpoch,
+      validatorIndex,
+    }));
+
+    const fork = await beaconchainApi.getForkFromState({ state_id: "head" });
+
+    // 4. Sign the voluntary exit object
+    const signedVoluntaryExits = await Promise.all(
+      voluntaryExits.map((voluntaryExit) =>
+        signerApi.signVoluntaryExit({
+          signerVoluntaryExitRequest: {
+            type: "VOLUNTARY_EXIT",
+            fork_info: {
+              fork: {
+                previous_version: fork.data.previous_version,
+                current_version: fork.data.current_version,
+                epoch: fork.data.epoch,
+              },
+              genesis_validators_root: "",
+            },
+            voluntary_exit: {
+              epoch: currentEpoch.toString(),
+              validator_index: voluntaryExit.validatorIndex.toString(),
+            },
+          },
+        })
+      )
+    ).catch((e) => {
+      logger.error(e);
+      return [];
+    });
+
+    // 5. Submit the voluntary exit object
+    await Promise.all(
+      signedVoluntaryExits.map((signedVoluntaryExit) =>
+        beaconchainApi.postVoluntaryExits(signedVoluntaryExit)
+      )
+    ).catch((e) => {
+      logger.error(e);
+      return [];
+    });
+
+    // 6. Delete the validator from the validator API
+    await validatorApi
+      .deleteRemoteKeys({ pubkeys })
+      .then(() => logger.debug(`Deleted pubkeys in validator API`))
+      .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+
+    // 7. Delete the validator from the brain db
+    brainDb.deleteValidators(pubkeys);
+
+    // 8. Delete the validator from the web3signer API
+    await signerApi
+      .deleteKeystores({ pubkeys })
+      .then(() => logger.debug(`Deleted pubkeys in web3signer API`))
+      .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+
+    // IMPORTANT: start the cron
+    cron.start();
+  } catch (e) {
+    cron.restart();
+    throw e;
+  }
 }

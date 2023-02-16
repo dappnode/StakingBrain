@@ -6,6 +6,8 @@ import {
   Web3signerGetResponse,
   Web3signerHealthcheckResponse,
   prefix0xPubkey,
+  Web3SignerPostSignvoluntaryexitRequest,
+  Web3SignerPostSignvoluntaryexitResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 
@@ -14,6 +16,12 @@ import { StandardApi } from "../index.js";
  * https://ethereum.github.io/keymanager-APIs/
  */
 export class Web3SignerApi extends StandardApi {
+  /**
+   * Signs data for the ETH2 BLS public key specified as part of the URL and returns the signature
+   * @see https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Signing
+   */
+  private signEndpoint = "/api/v1/eth2/sign";
+
   /**
    * Local Key Manager endpoint
    * @see https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/
@@ -25,6 +33,26 @@ export class Web3SignerApi extends StandardApi {
    * @see https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Health-Status
    */
   private serverStatusEndpoint = "/healthcheck";
+
+  /**
+   *
+   */
+  public async signVoluntaryExit({
+    signerVoluntaryExitRequest,
+  }: {
+    signerVoluntaryExitRequest: Web3SignerPostSignvoluntaryexitRequest;
+  }): Promise<Web3SignerPostSignvoluntaryexitResponse> {
+    try {
+      return (await this.request(
+        "POST",
+        this.localKeymanagerEndpoint,
+        JSON.stringify(signerVoluntaryExitRequest)
+      )) as Web3SignerPostSignvoluntaryexitResponse;
+    } catch (e) {
+      e.message += `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. `;
+      throw e;
+    }
+  }
 
   /**
    * Import remote keys for the validator client to request duties for.
