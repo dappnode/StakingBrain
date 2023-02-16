@@ -24,7 +24,9 @@ export default function FileCardList(
   useSameTag: boolean,
   feeRecipients: string[],
   setFeeRecipients: (feeRecipients: string[]) => void,
-  useSameFeeRecipient: boolean
+  useSameFeeRecipient: boolean,
+  getFeeRecipientFieldHelperText: (index: number) => string,
+  isFeeRecipientFieldWrong: (index: number) => boolean
 ): JSX.Element[] {
   const removeFileFromList = (
     fileInfo: KeystoreInfo,
@@ -80,36 +82,33 @@ export default function FileCardList(
       {(!useSameTag || !useSameFeeRecipient || !useSamePassword) && (
         <FormControl sx={{ marginTop: 2, width: "100%" }}>
           {!useSamePassword && (
-            <>
-              <TextField
-                id={`outlined-password-input-${index}`}
-                label="Keystore Password"
-                type="password"
-                sx={{ marginTop: 2 }}
-                onChange={(event) => {
-                  passwords[index] = event.target.value;
-                }}
-              />
-              <FormHelperText>
-                Password to decrypt the keystore(s)
-              </FormHelperText>
-            </>
+            <TextField
+              id={`outlined-password-input-${index}`}
+              label="Keystore Password"
+              type="password"
+              sx={{ marginTop: 2 }}
+              onChange={(event) => {
+                const newPasswords = [...passwords];
+                newPasswords[index] = event.target.value;
+                setPasswords(newPasswords);
+              }}
+              helperText={"Password to decrypt the keystore(s)"}
+            />
           )}
           {!useSameFeeRecipient && (
-            <>
-              <TextField
-                id={`outlined-fee-recipient-input-${index}`}
-                label="Fee Recipient"
-                type="text"
-                sx={{ marginTop: 2 }}
-                onChange={(event) => {
-                  feeRecipients[index] = event.target.value;
-                }}
-              />
-              <FormHelperText>
-                The address you wish to receive the transaction fees
-              </FormHelperText>
-            </>
+            <TextField
+              id={`outlined-fee-recipient-input-${index}`}
+              label="Fee Recipient"
+              type="text"
+              sx={{ marginTop: 2 }}
+              onChange={(event) => {
+                const newFeeRecipients = [...feeRecipients];
+                newFeeRecipients[index] = event.target.value;
+                setFeeRecipients(newFeeRecipients);
+              }}
+              error={isFeeRecipientFieldWrong(index)}
+              helperText={getFeeRecipientFieldHelperText(index)}
+            />
           )}
           {!useSameTag && (
             <>
@@ -120,7 +119,9 @@ export default function FileCardList(
                 type="text"
                 sx={{ marginTop: 2 }}
                 onChange={(event) => {
-                  tags[index] = event.target.value as Tag;
+                  const newTags = [...tags];
+                  newTags[index] = event.target.value as Tag;
+                  setTags(newTags);
                 }}
               >
                 <MenuItem value={"solo"}>Solo</MenuItem>
