@@ -106,7 +106,7 @@ export default function ImportScreen(): JSX.Element {
     }
   }
 
-  function getSingleFeeRecipientHelperText(index: number): string {
+  function getFeeRecipientFieldHelperText(index: number): string {
     const feeRecipient = feeRecipients[index];
 
     if (feeRecipient === "" || feeRecipient === undefined) {
@@ -121,7 +121,7 @@ export default function ImportScreen(): JSX.Element {
     return "Address is valid";
   }
 
-  function getFeeRecipientError(index: number): boolean {
+  function isFeeRecipientFieldWrong(index: number): boolean {
     const feeRecipient = feeRecipients[index];
 
     if (feeRecipient === "" || feeRecipient === undefined) {
@@ -232,8 +232,8 @@ export default function ImportScreen(): JSX.Element {
                             Array(acceptedFiles.length).fill(e.target.value)
                           );
                         }}
-                        error={getFeeRecipientError(0)}
-                        helperText={getSingleFeeRecipientHelperText(0)}
+                        error={isFeeRecipientFieldWrong(0)}
+                        helperText={getFeeRecipientFieldHelperText(0)}
                         value={feeRecipients[0]}
                       />
                     </>
@@ -276,7 +276,9 @@ export default function ImportScreen(): JSX.Element {
             useSameTag,
             feeRecipients,
             setFeeRecipients,
-            useSameFeerecipient
+            useSameFeerecipient,
+            getFeeRecipientFieldHelperText,
+            isFeeRecipientFieldWrong
           )}
 
           <Box
