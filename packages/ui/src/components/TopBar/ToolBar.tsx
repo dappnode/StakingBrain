@@ -2,10 +2,10 @@ import Toolbar from "@mui/material/Toolbar";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { Box, Chip } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
-import Brightness4Icon from "@mui/icons-material/Brightness4";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
-import BuildIcon from "@mui/icons-material/Build";
-import PersonIcon from "@mui/icons-material/Person";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import { Network } from "@stakingbrain/common";
 
 export default function ToolBar({
@@ -57,7 +57,11 @@ export default function ToolBar({
             onClick={() => setMode(mode === "dark" ? "light" : "dark")}
             color="inherit"
           >
-            {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
+            {mode === "dark" ? (
+              <LightModeIcon titleAccess="Set Light Mode" />
+            ) : (
+              <DarkModeIcon titleAccess="Set Dark Mode" />
+            )}
           </IconButton>
           <IconButton
             sx={{ ml: 1 }}
@@ -66,7 +70,11 @@ export default function ToolBar({
             }
             color="inherit"
           >
-            {userMode === "basic" ? <BuildIcon /> : <PersonIcon />}
+            {userMode === "basic" ? (
+              <UnfoldMoreIcon titleAccess="Expand Andanced Info" />
+            ) : (
+              <UnfoldLessIcon titleAccess="Collapse Advanced Info" />
+            )}
           </IconButton>
         </Box>
       </div>
