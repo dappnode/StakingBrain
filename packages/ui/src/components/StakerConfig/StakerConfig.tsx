@@ -52,9 +52,21 @@ export default function StakerConfig({
         alignItems: "center",
         justifyContent: "center",
         gap: 2,
+        backgroundColor: "transparent",
       }}
     >
-      <Card sx={{ py: 1, px: 3, mt: 2, mb: -5, borderRadius: 2 }}>
+      <Card
+        sx={{
+          py: 1,
+          px: 3,
+          mt: 2,
+          mb: -5,
+          border: "none",
+          boxShadow: "none",
+          backgroundColor: "transparent",
+          backgroundImage: "none",
+        }}
+      >
         <Box
           sx={{
             display: "flex",
