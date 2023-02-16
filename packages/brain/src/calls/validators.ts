@@ -266,3 +266,22 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
 
   return validators;
 }
+
+/**
+ *  Performs a voluntary exit for a given set of validators as identified via `pubkeys`
+ * @param pubkeys The public keys of the validators to exit
+ */
+export async function exitValidators({ pubkeys }: { pubkeys: string[] }) {
+  /**
+   * To perform the voluntary exit first is needed
+   * 1. Get the validator index from the validator API
+   * 2. Get the validator exit epoch from the beacon node API
+   * 3. Create the voluntary exit object
+   * 4. Sign the voluntary exit object
+   * 5. Submit the voluntary exit object
+   * 6. Delete the validator from the validator API
+   * 7. Delete the validator from the brain db
+   * 8. Delete the validator from the web3signer API
+   *
+   */
+}
