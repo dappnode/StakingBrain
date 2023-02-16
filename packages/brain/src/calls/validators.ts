@@ -102,10 +102,10 @@ export async function importValidators(
           url: signerUrl,
         })),
       })
+      .then(() => logger.debug(`Added pubkeys to validator API`))
       .catch((err) => {
         logger.error(`Error setting validator pubkeys`, err);
       });
-    logger.debug(`Added pubkeys to validator API`);
 
     // 3. Import feeRecipient on Validator API
     for (const [index, pubkey] of pubkeys.entries())
