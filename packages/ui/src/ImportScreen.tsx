@@ -21,7 +21,12 @@ import BackupIcon from "@mui/icons-material/Backup";
 import { ImportStatus, KeystoreInfo } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
 import ImportDialog from "./components/Dialogs/ImportDialog";
-import { Web3signerPostResponse, Tag } from "@stakingbrain/common";
+import {
+  Web3signerPostResponse,
+  Tag,
+  isValidEcdsaPubkey,
+  burnAddress,
+} from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
@@ -99,6 +104,34 @@ export default function ImportScreen(): JSX.Element {
       setKeystoresPostError(e.message);
       setImportStatus(ImportStatus.NotImported);
     }
+  }
+
+  function getSingleFeeRecipientHelperText(index: number): string {
+    const feeRecipient = feeRecipients[index];
+
+    if (feeRecipient === "" || feeRecipient === undefined) {
+      return "The address you wish to receive the transaction fees";
+    }
+    if (!isValidEcdsaPubkey(feeRecipient)) {
+      return "Invalid address";
+    }
+    if (feeRecipient === burnAddress) {
+      return "It is not possible to set the fee recipient to the burn address";
+    }
+    return "Address is valid";
+  }
+
+  function getFeeRecipientError(index: number): boolean {
+    const feeRecipient = feeRecipients[index];
+
+    if (feeRecipient === "" || feeRecipient === undefined) {
+      return false;
+    }
+    if (!isValidEcdsaPubkey(feeRecipient) || feeRecipient === burnAddress) {
+      return true;
+    }
+
+    return false;
   }
 
   return (
@@ -183,10 +216,8 @@ export default function ImportScreen(): JSX.Element {
                             Array(acceptedFiles.length).fill(e.target.value)
                           )
                         }
+                        helperText={"Password to decrypt the keystore(s)"}
                       />
-                      <FormHelperText>
-                        Password to decrypt the keystore(s)
-                      </FormHelperText>
                     </>
                   )}
                   {useSameFeerecipient && (
@@ -196,15 +227,15 @@ export default function ImportScreen(): JSX.Element {
                         label="Fee Recipient"
                         type="text"
                         sx={{ marginTop: 2 }}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFeeRecipients(
                             Array(acceptedFiles.length).fill(e.target.value)
-                          )
-                        }
+                          );
+                        }}
+                        error={getFeeRecipientError(0)}
+                        helperText={getSingleFeeRecipientHelperText(0)}
+                        value={feeRecipients[0]}
                       />
-                      <FormHelperText>
-                        The address you wish to receive the transaction fees
-                      </FormHelperText>
                     </>
                   )}
                   {useSameTag && (
