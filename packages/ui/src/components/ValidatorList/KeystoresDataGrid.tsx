@@ -1,51 +1,61 @@
 import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
-import { CustomValidatorGetResponse, Tag } from "@stakingbrain/common";
+import {
+  BeaconchaGetResponse,
+  CustomValidatorGetResponse,
+  Tag,
+} from "@stakingbrain/common";
 import Chip from "@mui/material/Chip";
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { IconButton, Tooltip } from "@mui/material";
+import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { Box } from "@mui/system";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import { BeaconchaUrlBuildingStatus } from "../../types";
+import { api } from "../../api";
+import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 
 export default function KeystoresDataGrid({
   rows,
   areRowsSelected,
+  selectedRows,
   setSelectedRows,
   network,
   userMode,
   setDeleteOpen,
   setEditFeesOpen,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isTableEmpty,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  validatorSummaryURL,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   summaryUrlBuildingStatus,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  loadSummaryUrl,
+  setSummaryUrlBuildingStatus,
 }: {
   rows: CustomValidatorGetResponse[];
   areRowsSelected: boolean;
-  setSelectedRows: (arg0: GridSelectionModel) => void;
+  selectedRows: GridSelectionModel;
+  setSelectedRows: (selectedRows: GridSelectionModel) => void;
   network: string;
   userMode: "basic" | "advanced";
   setDeleteOpen(open: boolean): void;
   setEditFeesOpen(open: boolean): void;
-  isTableEmpty: boolean;
-  validatorSummaryURL: string;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
-  loadSummaryUrl(): void;
+  setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
 }): JSX.Element {
   const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
+  const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
+
+  useEffect(() => {
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
+    setValidatorSummaryURL("");
+  }, [selectedRows]);
+
+  useEffect(() => {
+    openDashboardTab();
+  }, [validatorSummaryURL]);
 
   const columns: GridColDef[] = [
     {
@@ -163,23 +173,52 @@ export default function KeystoresDataGrid({
     );
 
   function getTagColor(tag: Tag): string {
-    switch (tag) {
-      case "obol":
-        return "green";
-      case "diva":
-        return "blue";
-      case "solo":
-        return "pink";
-      case "stakehouse":
-        return "dark";
-      case "stakewise":
-        return "yellow";
-      case "rocketpool":
-        return "#ea894d";
-      case "ssv":
-        return "grey";
-      default:
-        return "primary";
+    const tagColors = {
+      obol: "green",
+      diva: "blue",
+      solo: "pink",
+      stakehouse: "dark",
+      stakewise: "yellow",
+      rocketpool: "#ea894d",
+      ssv: "grey",
+    };
+
+    return tagColors[tag] || "primary";
+  }
+
+  async function getValidatorSummaryURL() {
+    if (!beaconchaApiParamsMap?.get(network)) {
+      setValidatorSummaryURL("");
+      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
+      return;
+    }
+
+    let allValidatorsInfo: BeaconchaGetResponse[];
+
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
+
+    try {
+      allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
+        selectedRows.map((row) => rows[row as number].pubkey)
+      );
+    } catch (e) {
+      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
+      setValidatorSummaryURL("");
+      return;
+    }
+
+    const summaryUrlBuilt = buildValidatorSummaryURL({
+      allValidatorsInfo,
+      network,
+    });
+
+    setValidatorSummaryURL(summaryUrlBuilt);
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
+  }
+
+  async function openDashboardTab() {
+    if (validatorSummaryURL) {
+      window.open(validatorSummaryURL, "_blank", "noopener, noreferrer");
     }
   }
 
@@ -188,17 +227,25 @@ export default function KeystoresDataGrid({
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <HeaderTypography text={"Validators"} />
         <div>
-          <Tooltip title="Load validators in beaconcha">
-            <IconButton
-              disabled={!areRowsSelected}
-              onClick={() => {
-                // TODO:!
-                console.log("nothing");
-              }}
-            >
-              <LinkIcon />
-            </IconButton>
-          </Tooltip>
+          {summaryUrlBuildingStatus ===
+          BeaconchaUrlBuildingStatus.InProgress ? (
+            <Tooltip title="Loading dashboard">
+              <CircularProgress size={18} style={{ color: "#808080" }} />
+            </Tooltip>
+          ) : (
+            <Tooltip title="Go to Beaconcha.in dashboard for selected validators">
+              <IconButton
+                disabled={!areRowsSelected}
+                onClick={async () => {
+                  await getValidatorSummaryURL();
+                  await openDashboardTab();
+                }}
+              >
+                <LinkIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+
           <Tooltip title="Delete validators">
             <IconButton
               disabled={!areRowsSelected}

@@ -34,6 +34,8 @@ export class StandardApi {
       this.requestOptions.passphrase = "dappnode";
       this.useTls = true;
     }
+
+    if (this.requestOptions.protocol?.includes("https")) this.useTls = true;
   }
 
   /*
