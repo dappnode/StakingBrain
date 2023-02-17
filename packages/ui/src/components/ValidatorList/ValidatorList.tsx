@@ -60,6 +60,7 @@ export default function ValidatorList({
 
   return (
     <div>
+      {userMode === "advanced" && <StakerConfig stakerConfig={stakerConfig} />}
       <Box
         sx={{
           margin: 8,
@@ -74,10 +75,6 @@ export default function ValidatorList({
             borderRadius: 2,
           }}
         >
-          {userMode === "advanced" && (
-            <StakerConfig stakerConfig={stakerConfig} />
-          )}
-
           {validatorsGetError ? (
             <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
               {validatorsGetError}
