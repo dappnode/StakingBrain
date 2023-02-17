@@ -72,38 +72,50 @@ function App(): JSX.Element {
         setUserMode={setUserMode}
       />
 
-      {stakerConfig && (
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ValidatorList
-                  stakerConfig={stakerConfig}
-                  userMode={userMode}
-                />
-              }
-            />
-            <Route path="import" element={<ImportScreen />} />
-          </Routes>
-        </BrowserRouter>
-      )}
-
-      {/** TODO: Add warnings components right below */}
-      {signerStatus === "ERROR" ? (
-        <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-          Web3Signer API is not available. Check URL or global variables. Is the
-          Web3Signer API running?
-        </Alert>
-      ) : (
-        signerStatus === "DOWN" && (
-          <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-            Web3Signer is down.
+      {signerStatus !== "UP" ? (
+        <>
+          <Alert severity="error" sx={{ m: 2 }} variant="filled">
+            Web3Signer is not available.
+            {signerStatus === "DOWN" ? (
+              <> Its API is responsive, but signer is down. </>
+            ) : (
+              <>
+                {" "}
+                Its API is not responsive. Check if the Web3Signer package is
+                running.{" "}
+              </>
+            )}
+            To avoid slashing, <b>do not upload </b>
+            your validator <b>keystores to another machine</b>.
           </Alert>
+          <Alert severity="info" sx={{ m: 2 }} variant="filled">
+            To safely migrate your keystores, remove the Web3Signer package (or
+            its volumes) after you make sure you have a backup of your
+            keystores. Then, wait for at least 2 epochs before you upload your
+            keystores to another machine.
+          </Alert>
+        </>
+      ) : (
+        stakerConfig && (
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ValidatorList
+                    stakerConfig={stakerConfig}
+                    userMode={userMode}
+                  />
+                }
+              />
+              <Route path="import" element={<ImportScreen />} />
+            </Routes>
+          </BrowserRouter>
         )
       )}
+
       {!stakerConfig?.network && (
-        <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+        <Alert severity="error" sx={{ m: 2 }} variant="filled">
           Network has not been properly set. Check URL or global variables.
         </Alert>
       )}
