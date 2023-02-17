@@ -7,6 +7,8 @@ import {
   CustomValidatorGetResponse,
   shortenPubkey,
   PubkeyDetails,
+  Tag,
+  prefix0xPubkey,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -47,76 +49,102 @@ export async function importValidators(
       };
     });
 
+    const validatorsToPost: {
+      keystore: string;
+      password: string;
+      tag: Tag;
+      feeRecipient: string;
+      pubkey: string;
+    }[] = [];
+
     // Import keystores and passwords on web3signer API
-    const web3signerPostResponse = await signerApi
-      .importKeystores({
-        keystores: validators.map((validator) => validator.keystore),
-        passwords: validators.map((validator) => validator.password),
-        slashing_protection: postRequest.slashing_protection
-          ? postRequest.slashing_protection.toString()
-          : undefined,
-      })
-      .then((response) => {
-        logger.debug(
-          `Imported keystores into web3signer API: ${JSON.stringify(
-            response.data
-          )}`
+    const web3signerPostResponse = await signerApi.importKeystores({
+      keystores: validators.map((validator) => validator.keystore),
+      passwords: validators.map((validator) => validator.password),
+      slashing_protection: postRequest.slashing_protection
+        ? postRequest.slashing_protection.toString()
+        : undefined,
+    });
+
+    logger.debug(
+      `Imported keystores into web3signer API: ${JSON.stringify(
+        web3signerPostResponse.data
+      )}`
+    );
+
+    // Signer API import keystore may fail for some keystores, but not all
+    // @see https://github.com/ConsenSys/web3signer/issues/713
+    // Remove the pubkeys to avoid adding them to the db
+    const pubkeysToPostIterator = validators
+      .map((validator) => validator.pubkey)
+      .entries();
+
+    //Iterate over pubkeysToPost with index and pubkey
+    for (const [index, pubkey] of pubkeysToPostIterator) {
+      if (web3signerPostResponse.data[index].status === "error") {
+        web3signerPostResponse.data[index].message +=
+          ". Check that the keystore file format is valid and the password is correct.";
+        logger.error(
+          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
+            web3signerPostResponse.data[index].message
+          }`
         );
+      } else if (web3signerPostResponse.data[index].status === "duplicate") {
+        logger.warn(`Duplicate keystore for pubkey ${shortenPubkey(pubkey)}`);
+      } else if (web3signerPostResponse.data[index].status === "imported") {
+        validatorsToPost.push(validators[index]);
+      }
+    }
 
-        // Signer API import keystore may fail for some keystores, but not all
-        // @see https://github.com/ConsenSys/web3signer/issues/713
-        // Remove the pubkeys to avoid adding them to the db
-        for (const [index, pubkey] of validators
-          .map((validator) => validator.pubkey)
-          .entries())
-          if (response.data[index].status === "error") {
-            web3signerPostResponse.data[index].message +=
-              ". Check that the keystore file format is valid and the password is correct.";
-            logger.error(
-              `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
-                response.data[index].message
-              }`
-            );
-            validators.splice(index, 1);
-          }
-
-        return response;
-      });
+    if (validatorsToPost.length === 0) {
+      cron.start();
+      return web3signerPostResponse;
+    }
 
     // Import pubkeys on validator API
     await validatorApi
       .postRemoteKeys({
-        remote_keys: validators.map((validator) => ({
+        remote_keys: validatorsToPost.map((validator) => ({
           pubkey: validator.pubkey,
           url: signerUrl,
         })),
       })
-      .then(() => logger.debug(`Added pubkeys to validator API`))
       .catch((err) => logger.error(`Error setting validator pubkeys`, err));
 
+    logger.debug(`Added pubkeys to validator API`);
+
     // Import feeRecipient on Validator API
-    for (const validator of validators)
+    for (const validator of validatorsToPost) {
+      console.log("pubkey to set feeRecipient", validator.pubkey);
+
       await validatorApi
         .setFeeRecipient(validator.feeRecipient, validator.pubkey)
-        .then(() => logger.debug(`Added feeRecipient to validator API`))
         .catch((err) =>
-          logger.error(`Error setting validator feeRecipient`, err)
+          logger.error(
+            `Error setting validator feeRecipient for pubkey ${validator.pubkey} :`,
+            err
+          )
         );
+    }
 
-    // Write on db
-    brainDb.addValidators({
-      validators: validators.reduce((acc, validator) => {
-        acc[validator.pubkey] = {
+    logger.debug(`Added fee recipients to validator API`);
+
+    const validatorsToDb = {
+      validators: validatorsToPost.reduce((acc, validator) => {
+        acc[prefix0xPubkey(validator.pubkey)] = {
           tag: validator.tag,
           feeRecipient: validator.feeRecipient,
           automaticImport: postRequest.importFrom !== "ui",
         };
         return acc;
       }, {} as { [pubkey: string]: PubkeyDetails }),
-    });
+    };
+
+    // Write on db
+    brainDb.addValidators(validatorsToDb);
 
     logger.debug(
-      `Written on db: ${validators.map((v) => v.pubkey).join(", ")}`
+      `Written on db: ${validatorsToPost.map((v) => v.pubkey).join(", ")}`
     );
 
     // IMPORTANT: start the cron

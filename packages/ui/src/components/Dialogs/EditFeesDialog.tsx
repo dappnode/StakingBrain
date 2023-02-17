@@ -14,6 +14,7 @@ import {
   CustomValidatorGetResponse,
   burnAddress,
   isValidEcdsaPubkey,
+  CustomValidatorUpdateRequest,
 } from "@stakingbrain/common";
 import React from "react";
 
@@ -70,27 +71,23 @@ export default function FeeRecipientDialog({
 
   const updateFeeRecipients = async (newFeeRecipient: string) => {
     let error = false;
+    const validatorsData: CustomValidatorUpdateRequest[] = [];
 
-    const validatorPubkeys = selectedRows.map(
-      (row) => rows[parseInt(row.toString())].pubkey
-    );
+    selectedRows.forEach((rowId) => {
+      const row = rows[parseInt(rowId.toString())];
 
-    const validatorTags = selectedRows.map(
-      (row) => rows[parseInt(row.toString())].tag || "solo" //TODO: Check how to make this cleaner
-    );
-
-    const feeRecipients = new Array<string>(validatorPubkeys.length).fill(
-      newFeeRecipient
-    );
+      if (row) {
+        validatorsData.push({
+          pubkey: row.pubkey,
+          feeRecipient: newFeeRecipient,
+        });
+      }
+    });
 
     setLoading(true);
 
     try {
-      api.updateValidators({
-        pubkeys: validatorPubkeys,
-        feeRecipients: feeRecipients,
-        tags: validatorTags,
-      });
+      api.updateValidators(validatorsData);
     } catch (err) {
       setErrorMessage(
         "There was an error updating some fee recipients: " + err
