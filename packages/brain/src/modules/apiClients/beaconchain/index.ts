@@ -3,6 +3,7 @@ import {
   BeaconchainValidatorFromStateGetResponse,
   BeaconchainPoolVoluntaryExitsPostRequest,
   BeaconchainForkFromStateGetResponse,
+  BeaconchainGenesisGetResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 import path from "path";
@@ -29,6 +30,22 @@ export class Beaconchain extends StandardApi {
       );
     } catch (e) {
       e.message += `Error posting (POST) voluntary exits to beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Retrieve details of the chain's genesis which can be used to identify chain.
+   * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getGenesis
+   */
+  public async getGenesis(): Promise<BeaconchainGenesisGetResponse> {
+    try {
+      return (await this.request(
+        "GET",
+        path.join(this.beaconchainEndpoint, "genesis")
+      )) as BeaconchainGenesisGetResponse;
+    } catch (e) {
+      e.message += `Error getting (GET) genesis from beaconchain. `;
       throw e;
     }
   }

@@ -51,3 +51,11 @@ export interface BeaconchainForkFromStateGetResponse {
     epoch: string;
   };
 }
+
+export interface BeaconchainGenesisGetResponse {
+  data: {
+    genesis_time: string;
+    genesis_validators_root: string;
+    genesis_fork_version: string;
+  };
+}
