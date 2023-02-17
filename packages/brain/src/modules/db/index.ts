@@ -110,7 +110,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         pubkeys.length !== feeRecipients.length
       )
         throw Error(
-          `Pubkeys, tags and fee recipients must have the same length`
+          `Pubkeys, tags and fee recipients must have the same length. `
         );
 
       const pubkeyDetails = this.buildValidatorsDetails(
@@ -162,7 +162,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         pubkeys.length !== feeRecipients.length
       )
         throw Error(
-          `Pubkeys, tags and fee recipients must have the same length`
+          `Pubkeys, tags and fee recipients must have the same length. `
         );
 
       const pubkeyDetails = this.buildValidatorsDetails(

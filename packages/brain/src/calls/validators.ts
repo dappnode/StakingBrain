@@ -66,6 +66,12 @@ export async function importValidators(
       (keystore) => JSON.parse(keystore).pubkey
     );
 
+    const signerImportedData: {
+      pubkey: string;
+      tag: Tag;
+      feeRecipient: string;
+    }[] = [];
+
     // 1. Import keystores and passwords on web3signer API
     const web3signerPostResponse: Web3signerPostResponse =
       await signerApi.importKeystores(importSignerData);
@@ -79,13 +85,12 @@ export async function importValidators(
             web3signerPostResponse.data[index].message
           }`
         );
-        pubkeys.splice(index, 1);
-        // Set same legnth to all arrays
-        postRequest.feeRecipients = postRequest.feeRecipients.slice(
-          0,
-          pubkeys.length
-        );
-        postRequest.tags = postRequest.tags.slice(0, pubkeys.length);
+      } else {
+        signerImportedData.push({
+          pubkey,
+          tag: postRequest.tags[index],
+          feeRecipient: postRequest.feeRecipients[index],
+        });
       }
 
     logger.debug(
@@ -94,10 +99,17 @@ export async function importValidators(
       )}`
     );
 
+    const signerImportedPubkeys = signerImportedData.map((data) => data.pubkey);
+    
+    postRequest.feeRecipients = signerImportedData.map(
+      (data) => data.feeRecipient
+    );
+    postRequest.tags = signerImportedData.map((data) => data.tag);
+
     // 2. Import pubkeys on validator API
     await validatorApi
       .postRemoteKeys({
-        remote_keys: pubkeys.map((pubkey) => ({
+        remote_keys: signerImportedPubkeys.map((pubkey) => ({
           pubkey,
           url: signerUrl,
         })),
@@ -108,7 +120,7 @@ export async function importValidators(
       });
 
     // 3. Import feeRecipient on Validator API
-    for (const [index, pubkey] of pubkeys.entries())
+    for (const [index, pubkey] of signerImportedPubkeys.entries())
       await validatorApi
         .setFeeRecipient(postRequest.feeRecipients[index], pubkey)
         .then(() => logger.debug(`Added feeRecipient to validator API`))
@@ -118,15 +130,15 @@ export async function importValidators(
 
     // 4. Write on db
     brainDb.addValidators({
-      pubkeys,
+      pubkeys: signerImportedPubkeys,
       tags: postRequest.tags,
       feeRecipients: postRequest.feeRecipients,
       automaticImports:
         postRequest.importFrom === "ui"
-          ? Array(pubkeys.length).fill(false)
-          : Array(pubkeys.length).fill(true),
+          ? Array(signerImportedPubkeys.length).fill(false)
+          : Array(signerImportedPubkeys.length).fill(true),
     });
-    logger.debug(`Added pubkeys to db: ${pubkeys.join(", ")}`);
+    logger.debug(`Added pubkeys to db: ${signerImportedPubkeys.join(", ")}`);
 
     // IMPORTANT: start the cron
     cron.start();
