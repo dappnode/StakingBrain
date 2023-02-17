@@ -134,11 +134,9 @@ export async function importValidators(
  * 2. Import feeRecipient on Validator API
  * @param param0
  */
-export async function updateValidators({
-  customValidatorUpdateRequest,
-}: {
-  customValidatorUpdateRequest: CustomValidatorUpdateRequest[];
-}): Promise<void> {
+export async function updateValidators(
+  customValidatorUpdateRequest: CustomValidatorUpdateRequest[]
+): Promise<void> {
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
