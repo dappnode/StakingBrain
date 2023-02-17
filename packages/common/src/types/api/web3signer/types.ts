@@ -36,3 +36,24 @@ export interface Web3signerHealthcheckResponse {
   }[];
   outcome: string;
 }
+
+export interface Web3SignerPostSignvoluntaryexitRequest {
+  type: "VOLUNTARY_EXIT";
+  fork_info: {
+    fork: {
+      previous_version: string;
+      current_version: string;
+      epoch: string;
+    };
+    genesis_validators_root: string;
+  };
+  signingRoot?: string;
+  voluntary_exit: {
+    epoch: string;
+    validator_index: string;
+  };
+}
+
+export interface Web3SignerPostSignvoluntaryexitResponse {
+  signature: string;
+}
