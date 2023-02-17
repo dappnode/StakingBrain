@@ -74,13 +74,16 @@ export async function importValidators(
     // Remove the pubkeys to avoid adding them to the db
     for (const [index, pubkey] of pubkeys.entries())
       if (web3signerPostResponse.data[index].status === "error") {
+        web3signerPostResponse.data[index].message +=
+          ". Check that the keystore file format is valid and the password is correct.";
+
         logger.error(
           `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
             web3signerPostResponse.data[index].message
           }`
         );
         pubkeys.splice(index, 1);
-        // Set same legnth to all arrays
+        // Set same length to all arrays
         postRequest.feeRecipients = postRequest.feeRecipients.slice(
           0,
           pubkeys.length
