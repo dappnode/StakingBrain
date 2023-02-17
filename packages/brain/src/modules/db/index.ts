@@ -5,6 +5,7 @@ import {
   isValidBlsPubkey,
   shortenPubkey,
   StakingBrainDbUpdate,
+  PubkeyDetails,
 } from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
@@ -289,18 +290,16 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           `The fee recipient to be used in the migration is ${feeRecipient}`
         );
 
-        for (const pubkey of pubkeys) {
-          logger.info(`Migrating ${pubkey}...`);
-          this.addValidators({
-            validators: {
-              [pubkey]: {
-                tag: params.defaultTag,
-                feeRecipient,
-                automaticImport: true,
-              },
-            },
-          });
-        }
+        this.addValidators({
+          validators: pubkeys.reduce((acc, pubkey) => {
+            acc[pubkey] = {
+              tag: params.defaultTag,
+              feeRecipient,
+              automaticImport: false,
+            };
+            return acc;
+          }, {} as { [pubkey: string]: PubkeyDetails }),
+        });
 
         logger.info(`Database migration completed`);
         return;

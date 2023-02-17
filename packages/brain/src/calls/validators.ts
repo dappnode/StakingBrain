@@ -6,6 +6,7 @@ import {
   Web3signerPostResponse,
   CustomValidatorGetResponse,
   shortenPubkey,
+  PubkeyDetails,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -103,17 +104,16 @@ export async function importValidators(
         );
 
     // Write on db
-    // TODO: there should be only 1 write operation on db
-    for (const validator of validators)
-      brainDb.addValidators({
-        validators: {
-          [validator.pubkey]: {
-            tag: validator.tag,
-            feeRecipient: validator.feeRecipient,
-            automaticImport: postRequest.importFrom !== "ui",
-          },
-        },
-      });
+    brainDb.addValidators({
+      validators: validators.reduce((acc, validator) => {
+        acc[validator.pubkey] = {
+          tag: validator.tag,
+          feeRecipient: validator.feeRecipient,
+          automaticImport: postRequest.importFrom !== "ui",
+        };
+        return acc;
+      }, {} as { [pubkey: string]: PubkeyDetails }),
+    });
 
     logger.debug(
       `Written on db: ${validators.map((v) => v.pubkey).join(", ")}`
@@ -144,15 +144,14 @@ export async function updateValidators({
     // and prevents the cron from running while we are importing validators
     cron.stop();
 
-    // TODO: there should be only 1 write operation on db
-    for (const validator of customValidatorUpdateRequest)
-      brainDb.updateValidators({
-        validators: {
-          [validator.pubkey]: {
-            feeRecipient: validator.feeRecipient,
-          },
-        },
-      });
+    brainDb.updateValidators({
+      validators: customValidatorUpdateRequest.reduce((acc, validator) => {
+        acc[validator.pubkey] = {
+          feeRecipient: validator.feeRecipient,
+        };
+        return acc;
+      }, {} as { [pubkey: string]: Omit<PubkeyDetails, "automaticImport" | "tag"> }),
+    });
 
     // Import feeRecipient on Validator API
     for (const validator of customValidatorUpdateRequest)
