@@ -10,6 +10,10 @@ export interface StakingBrainDb {
   [pubkey: string]: PubkeyDetails;
 }
 
+export interface StakingBrainDbUpdate {
+  [pubkey: string]: Omit<PubkeyDetails, "automaticImport" | "tag">;
+}
+
 export interface CustomValidators extends PubkeyDetails {
   pubkey: string;
 }

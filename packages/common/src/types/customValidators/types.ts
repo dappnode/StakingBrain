@@ -1,12 +1,20 @@
 import { Tag } from "../index.js";
 
-export interface CustomValidatorsImportRequest {
+export interface CustomImportRequest {
+  validatorsImportRequest: CustomValidatorImportRequest[];
   importFrom: "ui" | "api";
-  tags: Tag[];
-  feeRecipients: string[];
-  keystores: File[] | string[];
-  passwords: string[];
   slashing_protection?: File | string;
+}
+export interface CustomValidatorImportRequest {
+  tag: Tag;
+  feeRecipient: string;
+  keystore: File | string;
+  password: string;
+}
+
+export interface CustomValidatorUpdateRequest {
+  pubkey: string;
+  feeRecipient: string;
 }
 export interface CustomValidatorGetResponse {
   pubkey: string;

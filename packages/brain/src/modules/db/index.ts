@@ -4,6 +4,7 @@ import {
   isValidTag,
   isValidBlsPubkey,
   shortenPubkey,
+  StakingBrainDbUpdate,
 } from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
@@ -86,10 +87,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
   /**
    * Adds 1 or more public keys and their details to the database
-   *
-   * @param pubkeys Array of public keys
-   * @param tags Array of tags
-   * @param feeRecipients Array of fee recipients
    */
   public addValidators({ validators }: { validators: StakingBrainDb }): void {
     try {
@@ -103,7 +100,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           }
 
       this.ensureDbMaxSize(validators);
-      this.validateValidators(validators);
+      this.validateAddValidators(validators);
       this.data = { ...this.data, ...validators };
       this.write();
     } catch (e) {
@@ -116,29 +113,23 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
   /**
    * Updates 1 or more public keys details from the database
-   *
-   * @param pubkeys Array of public keys
-   * @param tags Array of tags
-   * @param feeRecipients Array of fee recipients
    */
   public updateValidators({
     validators,
   }: {
-    validators: StakingBrainDb;
+    validators: StakingBrainDbUpdate;
   }): void {
     try {
       this.validateDb();
-      this.validateValidators(validators);
+      this.validateUpdateValidators(validators);
       if (this.data)
         for (const pubkey of Object.keys(validators)) {
           if (!this.data[pubkey]) {
             // Remove pubkeys that don't exist
             logger.warn(`Pubkey ${pubkey} not found in the database`);
             delete validators[pubkey];
-          } else {
-            this.data[pubkey].tag = validators[pubkey].tag;
+          } else
             this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
-          }
         }
 
       this.write();
@@ -345,7 +336,40 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     this.read();
   }
 
-  private validateValidators(validators: StakingBrainDb): void {
+  private validateUpdateValidators(validators: StakingBrainDbUpdate): void {
+    const errors: string[] = [];
+    Object.keys(validators).forEach((pubkey) => {
+      const pubkeyDetails = validators[pubkey];
+
+      // create substring of pubkey to be used in error message
+      const pubkeySubstr = shortenPubkey(pubkey);
+
+      // Validate Ethereum address
+      if (!isValidBlsPubkey(pubkey))
+        errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
+
+      if (!pubkeyDetails) {
+        errors.push(`\n  pubkey ${pubkeySubstr}: pubkey details are missing`);
+        return;
+      }
+
+      // FeeRecipient
+      if (!pubkeyDetails.feeRecipient) {
+        errors.push(
+          `\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`
+        );
+      } else {
+        if (typeof pubkeyDetails.feeRecipient !== "string")
+          errors.push(
+            `\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`
+          );
+        if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
+          errors.push(`\n  pubkey ${pubkeySubstr}: fee recipient is invalid`);
+      }
+    });
+  }
+
+  private validateAddValidators(validators: StakingBrainDb): void {
     const errors: string[] = [];
     Object.keys(validators).forEach((pubkey) => {
       const pubkeyDetails = validators[pubkey];
