@@ -70,6 +70,8 @@ export async function importValidators(
           .map((validator) => validator.pubkey)
           .entries())
           if (response.data[index].status === "error") {
+            web3signerPostResponse.data[index].message +=
+              ". Check that the keystore file format is valid and the password is correct.";
             logger.error(
               `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
                 response.data[index].message
@@ -90,9 +92,7 @@ export async function importValidators(
         })),
       })
       .then(() => logger.debug(`Added pubkeys to validator API`))
-      .catch((err) => {
-        logger.error(`Error setting validator pubkeys`, err);
-      });
+      .catch((err) => logger.error(`Error setting validator pubkeys`, err));
 
     // Import feeRecipient on Validator API
     for (const validator of validators)
