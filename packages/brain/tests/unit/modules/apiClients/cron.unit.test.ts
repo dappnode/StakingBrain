@@ -7,6 +7,7 @@ import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import path from "path";
 import { Cron } from "../../../../src/modules/cron/index.js";
+import { PubkeyDetails } from "@stakingbrain/common";
 
 describe.skip("Cron: Prater", () => {
   const defaultFeeRecipient = "0x0000000000000000000000000000000000000000";
@@ -126,12 +127,12 @@ describe.skip("Cron: Prater", () => {
 
         const feeRecipient = "0x1111111111111111111111111111111111111111";
 
-        //Change fee recipient in DB
         brainDb.updateValidators({
-          pubkeys: [pubkeyToTest],
-          feeRecipients: [feeRecipient],
-          tags: ["solo"],
-          automaticImports: [true],
+          validators: {
+            [pubkeyToTest]: {
+              feeRecipient,
+            },
+          },
         });
 
         //Check that fee recipient has changed in validator
@@ -291,10 +292,14 @@ describe.skip("Cron: Prater", () => {
         const pubkeysToTest = pubkeys.slice(0, nValidators);
 
         brainDb.addValidators({
-          pubkeys: pubkeysToTest,
-          tags: Array(pubkeysToTest.length).fill("solo"),
-          feeRecipients: Array(pubkeysToTest.length).fill(defaultFeeRecipient),
-          automaticImports: Array(pubkeysToTest.length).fill(true),
+          validators: pubkeysToTest.reduce((acc, pubkey) => {
+            acc[pubkey] = {
+              tag: "solo",
+              feeRecipient: defaultFeeRecipient,
+              automaticImport: true,
+            };
+            return acc;
+          }, {} as { [pubkey: string]: PubkeyDetails }),
         });
       }
 
