@@ -3,10 +3,9 @@ import {
   Network,
   StakerConfig as StakerConfigType,
 } from "@stakingbrain/common";
-import { Card, Box, CardHeader, Tooltip } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { Container } from "@mui/system";
+import { Card, Box, Container, Typography } from "@mui/material";
+import TrendingFlatRoundedIcon from "@mui/icons-material/TrendingFlatRounded";
+import SyncAltRoundedIcon from "@mui/icons-material/SyncAltRounded";
 import { prettyClientDnpName } from "../../utils/dataUtils";
 
 export default function StakerConfig({
@@ -37,7 +36,7 @@ export default function StakerConfig({
     "nimbus-gnosis.dnp.dappnode.eth": "/assets/nimbus-gnosis.png",
 
     // Default logo until we have a package for them
-    default: "/assets/dappnode_logo.png",
+    default: "/assets/dappnode_logo_clean.png",
     "goerli-nethermind.dnp.dappnode.eth": "/assets/dappnode_logo.png",
     "lodestar.dnp.dappnode.eth": "/assets/dappnode_logo.png",
     "lodestar-prater.dnp.dappnode.eth": "/assets/dappnode_logo.png",
@@ -45,74 +44,127 @@ export default function StakerConfig({
   };
 
   return (
-    <Container>
-      <Box
+    //The container should fill all horizontal space
+    <Container
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 2,
+        backgroundColor: "transparent",
+      }}
+    >
+      <Card
         sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-evenly",
-          borderRadius: 2,
+          py: 1,
+          px: 3,
+          mt: 2,
+          mb: -5,
+          border: "none",
+          boxShadow: "none",
+          backgroundColor: "transparent",
+          backgroundImage: "none",
         }}
       >
-        <Tooltip title={`Url: ${stakerConfig.executionClientUrl}`}>
-          <Card>
-            <CardHeader
-              title={prettyClientDnpName(stakerConfig.executionClient)}
-            />
-            <Box
-              component="img"
-              sx={{
-                height: 100,
-                width: 100,
-              }}
-              alt="erigon-goerli"
-              src={images[stakerConfig.executionClient]}
-            />
-          </Card>
-        </Tooltip>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-evenly",
+            gap: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Card sx={{ borderRadius: 2 }}>
+              <Box
+                component="img"
+                sx={{
+                  height: 80,
+                  width: 80,
+                  padding: 1,
+                }}
+                alt="erigon-goerli"
+                src={images[stakerConfig.executionClient]}
+              />
+            </Card>
+            <Typography sx={{ fontWeight: "bold", mt: 2 }}>
+              {prettyClientDnpName(stakerConfig.executionClient)}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <SyncAltRoundedIcon sx={{ mb: 4, fontSize: 48 }} />
+          </Box>
 
-        <Box sx={{ display: "flex", flexDirection: "column" }}>
-          <ArrowBackIcon />
-          <ArrowForwardIcon />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Card sx={{ borderRadius: 2 }}>
+              <Box
+                component="img"
+                sx={{
+                  height: 80,
+                  width: 80,
+                  padding: 1,
+                }}
+                alt="erigon-goerli"
+                src={images[stakerConfig.consensusClient]}
+              />
+            </Card>
+            <Typography sx={{ fontWeight: "bold", mt: 2 }}>
+              {prettyClientDnpName(stakerConfig.consensusClient)}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <TrendingFlatRoundedIcon sx={{ mb: 4, fontSize: 48 }} />
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Card sx={{ borderRadius: 2 }}>
+              <Box
+                component="img"
+                sx={{
+                  height: 80,
+                  width: 80,
+                  padding: 1,
+                }}
+                alt="signer"
+                src={images["default"]}
+              />
+            </Card>
+            <Typography sx={{ fontWeight: "bold", mt: 2 }}>Signer</Typography>
+          </Box>
         </Box>
-
-        <Tooltip title={`Url: ${stakerConfig.validatorUrl}`}>
-          <Card>
-            <CardHeader
-              title={prettyClientDnpName(stakerConfig.consensusClient)}
-            />
-            <Box
-              component="img"
-              sx={{
-                height: 100,
-                width: 100,
-              }}
-              alt="erigon-goerli"
-              src={images[stakerConfig.consensusClient]}
-            />
-          </Card>
-        </Tooltip>
-
-        <ArrowForwardIcon />
-
-        <Tooltip title={`Url: ${stakerConfig.signerUrl}`}>
-          <Card>
-            <CardHeader title="Signer" />
-            <Box
-              component="img"
-              sx={{
-                height: 100,
-                width: 100,
-              }}
-              alt="signer"
-              src={images["default"]}
-            />
-          </Card>
-        </Tooltip>
-      </Box>
-      <br />
-      <br />
+      </Card>
     </Container>
   );
 }
