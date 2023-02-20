@@ -12,6 +12,7 @@ export interface CustomValidatorGetResponse {
   pubkey: string;
   tag: Tag;
   feeRecipient: string;
+  signerImported?: boolean;
   validatorImported?: boolean;
   validatorFeeRecipientCorrect?: boolean;
 }

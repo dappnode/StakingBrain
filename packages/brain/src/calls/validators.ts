@@ -106,7 +106,7 @@ export async function importValidators(
     );
 
     const signerImportedPubkeys = signerImportedData.map((data) => data.pubkey);
-    
+
     postRequest.feeRecipients = signerImportedData.map(
       (data) => data.feeRecipient
     );
@@ -263,6 +263,13 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
     })
   ).data.map((validator) => validator.pubkey);
 
+  const signerPubkeys = (
+    await signerApi.getKeystores().catch((e) => {
+      logger.error(e);
+      return { data: [] };
+    })
+  ).data.map((key) => key.validating_pubkey);
+
   const validatorsFeeRecipients = await Promise.all(
     validatorPubkeys.map((pubkey) => validatorApi.getFeeRecipient(pubkey))
   ).catch((e) => {
@@ -277,6 +284,7 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
       tag,
       feeRecipient,
       validatorImported: validatorPubkeys.includes(pubkey),
+      signerImported: signerPubkeys.includes(pubkey),
       validatorFeeRecipientCorrect: validatorsFeeRecipients.some(
         (feeRecipient) => feeRecipient === feeRecipient
       ),
