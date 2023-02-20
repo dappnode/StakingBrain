@@ -106,7 +106,7 @@ export async function importValidators(
     );
 
     const signerImportedPubkeys = signerImportedData.map((data) => data.pubkey);
-    
+
     postRequest.feeRecipients = signerImportedData.map(
       (data) => data.feeRecipient
     );
@@ -217,12 +217,6 @@ export async function deleteValidators(
     // and prevents the cron from running while we are deleting validators
     cron.stop();
 
-    // Write on db
-    brainDb.deleteValidators(deleteRequest.pubkeys);
-    // Delete keystores on web3signer API
-    const web3signerDeleteResponse = await signerApi.deleteKeystores(
-      deleteRequest
-    );
     // Delete feeRecipient on Validator API
     for (const pubkey of deleteRequest.pubkeys)
       await validatorApi
@@ -236,6 +230,14 @@ export async function deleteValidators(
       .deleteRemoteKeys(deleteRequest)
       .then(() => logger.debug(`Deleted pubkeys in validator API`))
       .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+
+    // Delete keystores on web3signer API
+    const web3signerDeleteResponse = await signerApi.deleteKeystores(
+      deleteRequest
+    );
+
+    // Write on db
+    brainDb.deleteValidators(deleteRequest.pubkeys);
 
     // IMPORTANT: start the cron
     cron.start();
