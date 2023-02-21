@@ -106,7 +106,7 @@ export async function importValidators(
     );
 
     const signerImportedPubkeys = signerImportedData.map((data) => data.pubkey);
-    
+
     postRequest.feeRecipients = signerImportedData.map(
       (data) => data.feeRecipient
     );
@@ -301,17 +301,25 @@ export async function exitValidators({ pubkeys }: { pubkeys: string[] }) {
     // Get the fork from the beaconchain API to sign the voluntary exit
     const fork = await beaconchainApi.getForkFromState({ state_id: "head" });
 
+    // Get the genesis from the beaconchain API to sign the voluntary exit
+    const genesis = await beaconchainApi.getGenesis();
+
     // Get the validators indexes from the validator API
-    const validatorIndexes = (
+    const validatorPubkeysIndexes = (
       await Promise.all(
         pubkeys.map((pubkey) =>
           beaconchainApi.getValidatorFromState({ state: "head", pubkey })
         )
       )
-    ).map((validator) => validator.data.index);
+    ).map((validator) => {
+      return {
+        pubkey: validator.data.validator.pubkey,
+        index: validator.data.index,
+      };
+    });
 
     await Promise.all(
-      validatorIndexes.map((validatorIndex) =>
+      validatorPubkeysIndexes.map((validator) =>
         // Get the voluntary exit signatures from the web3signer API
         signerApi
           .signVoluntaryExit({
@@ -323,13 +331,14 @@ export async function exitValidators({ pubkeys }: { pubkeys: string[] }) {
                   current_version: fork.data.current_version,
                   epoch: fork.data.epoch,
                 },
-                genesis_validators_root: "", // TODO: get genesis_validators_root from beaconchain API
+                genesis_validators_root: genesis.data.genesis_validators_root, // TODO: Is this genesis_validators_root the same for all validators?
               },
               voluntary_exit: {
                 epoch: currentEpoch.toString(),
-                validator_index: validatorIndex,
+                validator_index: validator.index,
               },
             },
+            pubkey: validator.pubkey,
           })
           .then((signatureResponse) =>
             // Post the voluntary exit to the beaconchain API
@@ -337,7 +346,7 @@ export async function exitValidators({ pubkeys }: { pubkeys: string[] }) {
               postVoluntaryExitsRequest: {
                 message: {
                   epoch: currentEpoch.toString(),
-                  validator_index: validatorIndex,
+                  validator_index: validator.index,
                 },
                 signature: signatureResponse.signature,
               },

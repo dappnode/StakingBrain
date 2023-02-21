@@ -48,7 +48,7 @@ export class Web3SignerApi extends StandardApi {
     try {
       return (await this.request(
         "POST",
-        path.join(pubkey),
+        path.join(this.signEndpoint,pubkey),
         JSON.stringify(signerVoluntaryExitRequest)
       )) as Web3SignerPostSignvoluntaryexitResponse;
     } catch (e) {
