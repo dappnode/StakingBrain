@@ -355,6 +355,8 @@ export async function exitValidators({ pubkeys }: { pubkeys: string[] }) {
       )
     );
 
+    //TODO: Replace the following code by this.deleteValidators({ pubkeys }) if Reorganize Delete PR is merged
+
     // Delete the validator from the validator API
     await validatorApi
       .deleteRemoteKeys({ pubkeys })
