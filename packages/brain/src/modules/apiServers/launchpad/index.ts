@@ -26,11 +26,15 @@ export function startLaunchpadApi(): http.Server {
     try {
       const importResponse = await importValidators({
         importFrom: "api",
-        keystores,
-        passwords,
+        validatorsImportRequest: keystores.map(
+          (keystore: string, index: number) => ({
+            keystore,
+            password: passwords[index],
+            tag: tags[index],
+            feeRecipient: feeRecipients[index],
+          })
+        ),
         slashing_protection: slashingProtection,
-        tags,
-        feeRecipients,
       });
 
       res.status(200).send(importResponse);

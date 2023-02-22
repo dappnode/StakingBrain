@@ -26,6 +26,7 @@ import {
   Tag,
   isValidEcdsaPubkey,
   burnAddress,
+  CustomImportRequest,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
@@ -87,16 +88,23 @@ export default function ImportScreen(): JSX.Element {
     try {
       setImportStatus(ImportStatus.Importing);
       handleClickOpenDialog();
-      setKeystoresPostResponse(
-        await api.importValidators({
-          importFrom: "ui",
-          keystores: acceptedFiles.map((f) => f.file),
-          passwords,
-          slashing_protection: slashingFile,
-          tags,
-          feeRecipients,
-        })
-      );
+
+      const importRequest: CustomImportRequest = {
+        importFrom: "ui",
+        slashing_protection: slashingFile,
+        validatorsImportRequest: acceptedFiles.map((f, i) => {
+          return {
+            keystore: f.file,
+            password: passwords[i],
+            tag: tags[i],
+            feeRecipient: feeRecipients[i],
+          };
+        }),
+      };
+
+      const response = await api.importValidators(importRequest);
+
+      setKeystoresPostResponse(response);
       setKeystoresPostError(undefined);
       setImportStatus(ImportStatus.Imported);
     } catch (e) {

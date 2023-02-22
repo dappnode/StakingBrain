@@ -2,13 +2,13 @@ import {
   Web3signerDeleteResponse,
   Web3signerDeleteRequest,
   Web3signerHealthcheckResponse,
-  CustomValidatorsImportRequest,
+  CustomImportRequest,
   BeaconchaGetResponse,
   StakerConfig,
   Network,
   CustomValidatorGetResponse,
   Web3signerPostResponse,
-  Tag,
+  CustomValidatorUpdateRequest,
 } from "./index.js";
 
 export interface Routes {
@@ -21,17 +21,11 @@ export interface Routes {
   ) => Promise<BeaconchaGetResponse>;
   // SignerApi
   importValidators: (
-    postRequest: CustomValidatorsImportRequest
+    postRequest: CustomImportRequest
   ) => Promise<Web3signerPostResponse>;
-  updateValidators: ({
-    pubkeys,
-    feeRecipients,
-    tags,
-  }: {
-    pubkeys: string[];
-    feeRecipients: string[];
-    tags: Tag[];
-  }) => Promise<void>;
+  updateValidators: (
+    updateRequest: CustomValidatorUpdateRequest[]
+  ) => Promise<void>;
   deleteValidators: (
     deleteRequest: Web3signerDeleteRequest
   ) => Promise<Web3signerDeleteResponse>;

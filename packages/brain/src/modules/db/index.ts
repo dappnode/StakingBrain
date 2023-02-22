@@ -1,11 +1,11 @@
 import {
   StakingBrainDb,
-  Tag,
   isValidEcdsaPubkey,
   isValidTag,
   isValidBlsPubkey,
-  prefix0xPubkey,
   shortenPubkey,
+  StakingBrainDbUpdate,
+  PubkeyDetails,
 } from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
@@ -88,106 +88,54 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
   /**
    * Adds 1 or more public keys and their details to the database
-   *
-   * @param pubkeys Array of public keys
-   * @param tags Array of tags
-   * @param feeRecipients Array of fee recipients
    */
-  public addValidators({
-    pubkeys,
-    tags,
-    feeRecipients,
-    automaticImports,
-  }: {
-    pubkeys: string[];
-    tags: Tag[];
-    feeRecipients: string[];
-    automaticImports: boolean[];
-  }): void {
+  public addValidators({ validators }: { validators: StakingBrainDb }): void {
     try {
-      if (
-        pubkeys.length !== tags.length ||
-        pubkeys.length !== feeRecipients.length
-      )
-        throw Error(
-          `Pubkeys, tags and fee recipients must have the same length. `
-        );
-
-      const pubkeyDetails = this.buildValidatorsDetails(
-        pubkeys,
-        tags,
-        feeRecipients,
-        automaticImports
-      );
       this.validateDb();
       // Remove pubkeys that already exist
       if (this.data)
-        for (const pubkey of Object.keys(pubkeyDetails))
+        for (const pubkey of Object.keys(validators))
           if (this.data[pubkey]) {
             logger.warn(`Pubkey ${pubkey} already in the database`);
-            delete pubkeyDetails[pubkey];
+            delete validators[pubkey];
           }
 
-      this.ensureDbMaxSize(pubkeyDetails);
-      this.validateValidators(pubkeyDetails);
-      this.data = { ...this.data, ...pubkeyDetails };
+      this.ensureDbMaxSize(validators);
+      this.validateAddValidators(validators);
+      this.data = { ...this.data, ...validators };
       this.write();
     } catch (e) {
-      e.message += `Unable to add pubkeys ${Object.keys(pubkeys).join(", ")}. `;
+      e.message += `Unable to add pubkeys ${Object.keys(validators).join(
+        ", "
+      )}. `;
       throw e;
     }
   }
 
   /**
    * Updates 1 or more public keys details from the database
-   *
-   * @param pubkeys Array of public keys
-   * @param tags Array of tags
-   * @param feeRecipients Array of fee recipients
    */
   public updateValidators({
-    pubkeys,
-    tags,
-    feeRecipients,
-    automaticImports,
+    validators,
   }: {
-    pubkeys: string[];
-    tags: Tag[];
-    feeRecipients: string[];
-    automaticImports: boolean[];
+    validators: StakingBrainDbUpdate;
   }): void {
     try {
-      if (
-        pubkeys.length !== tags.length ||
-        pubkeys.length !== feeRecipients.length
-      )
-        throw Error(
-          `Pubkeys, tags and fee recipients must have the same length. `
-        );
-
-      const pubkeyDetails = this.buildValidatorsDetails(
-        pubkeys,
-        tags,
-        feeRecipients,
-        automaticImports
-      );
       this.validateDb();
-      this.validateValidators(pubkeyDetails);
+      this.validateUpdateValidators(validators);
       if (this.data)
-        for (const pubkey of Object.keys(pubkeyDetails)) {
+        for (const pubkey of Object.keys(validators)) {
           if (!this.data[pubkey]) {
             // Remove pubkeys that don't exist
             logger.warn(`Pubkey ${pubkey} not found in the database`);
-            delete pubkeyDetails[pubkey];
-          } else {
-            this.data[pubkey].tag = pubkeyDetails[pubkey].tag;
-            this.data[pubkey].feeRecipient = pubkeyDetails[pubkey].feeRecipient;
-          }
+            delete validators[pubkey];
+          } else
+            this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
         }
 
       this.write();
     } catch (e) {
-      e.message += `Unable to update pubkeys ${Object.keys(pubkeys).join(
+      e.message += `Unable to update pubkeys ${Object.keys(validators).join(
         ", "
       )}`;
       throw e;
@@ -249,42 +197,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Builds the object to be added to the braindb and adds the prefix 0x to the public keys if needed
-   *
-   * @param pubkeys - The public keys to add
-   * @param tags - The tags to add
-   * @param feeRecipients - The fee recipients to add
-   * @param automaticImport - Whether the validator was automatically imported
-   *
-   * @returns The object to be added to the braindb
-   * @example
-   * { "pubkey1": {
-   *   "tag": "obol",
-   *   "feeRecipient": "0x1234567890",
-   *   "feeRecipientValidator": "0x123456"
-   *   "automaticImport": true
-   *   },
-   * }
-   */
-  private buildValidatorsDetails(
-    pubkeys: string[],
-    tags: Tag[],
-    feeRecipients: string[],
-    automaticImports: boolean[]
-  ): StakingBrainDb {
-    pubkeys = pubkeys.map((pubkey) => prefix0xPubkey(pubkey));
-    const pubkeysDetails: StakingBrainDb = {};
-    for (let i = 0; i < pubkeys.length; i++) {
-      pubkeysDetails[pubkeys[i]] = {
-        tag: tags[i],
-        feeRecipient: feeRecipients[i],
-        automaticImport: automaticImports[i],
-      };
-    }
-    return pubkeysDetails;
-  }
-
-  /**
    * Validates the database it is in the correct format:
    * - Creates JSON file if it doesn't exist
    * - Deletes the database if it is corrupted and creates a new one
@@ -315,15 +227,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * - 1 pubkey: 4KB
    * Average pubkey size to be added: 213 bytes
    */
-  private ensureDbMaxSize(pubkeys: StakingBrainDb): void {
+  private ensureDbMaxSize(validators: StakingBrainDb): void {
     const MAX_DB_SIZE = 6 * 1024 * 1024;
     const dbSize = fs.statSync(this.dbName).size;
-    const pubkeysSize = Buffer.byteLength(JSON.stringify(pubkeys));
-    if (dbSize + pubkeysSize > MAX_DB_SIZE) {
+    const pubkeysSize = Buffer.byteLength(JSON.stringify(validators));
+    if (dbSize + pubkeysSize > MAX_DB_SIZE)
       throw Error(
         `The database is too big. Max size is ${MAX_DB_SIZE} bytes. Current size is ${dbSize} bytes. Data to be added is ${pubkeysSize} bytes. `
       );
-    }
   }
 
   /**
@@ -380,11 +291,16 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         );
 
         this.addValidators({
-          pubkeys,
-          tags: Array(pubkeys.length).fill(params.defaultTag),
-          feeRecipients: Array(pubkeys.length).fill(feeRecipient),
-          automaticImports: Array(pubkeys.length).fill(false),
+          validators: pubkeys.reduce((acc, pubkey) => {
+            acc[pubkey] = {
+              tag: params.defaultTag,
+              feeRecipient,
+              automaticImport: false,
+            };
+            return acc;
+          }, {} as { [pubkey: string]: PubkeyDetails }),
         });
+
         logger.info(`Database migration completed`);
         return;
       } catch (e) {
@@ -419,10 +335,43 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     this.read();
   }
 
-  private validateValidators(pubkeys: StakingBrainDb): void {
+  private validateUpdateValidators(validators: StakingBrainDbUpdate): void {
     const errors: string[] = [];
-    Object.keys(pubkeys).forEach((pubkey) => {
-      const pubkeyDetails = pubkeys[pubkey];
+    Object.keys(validators).forEach((pubkey) => {
+      const pubkeyDetails = validators[pubkey];
+
+      // create substring of pubkey to be used in error message
+      const pubkeySubstr = shortenPubkey(pubkey);
+
+      // Validate Ethereum address
+      if (!isValidBlsPubkey(pubkey))
+        errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
+
+      if (!pubkeyDetails) {
+        errors.push(`\n  pubkey ${pubkeySubstr}: pubkey details are missing`);
+        return;
+      }
+
+      // FeeRecipient
+      if (!pubkeyDetails.feeRecipient) {
+        errors.push(
+          `\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`
+        );
+      } else {
+        if (typeof pubkeyDetails.feeRecipient !== "string")
+          errors.push(
+            `\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`
+          );
+        if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
+          errors.push(`\n  pubkey ${pubkeySubstr}: fee recipient is invalid`);
+      }
+    });
+  }
+
+  private validateAddValidators(validators: StakingBrainDb): void {
+    const errors: string[] = [];
+    Object.keys(validators).forEach((pubkey) => {
+      const pubkeyDetails = validators[pubkey];
 
       // create substring of pubkey to be used in error message
       const pubkeySubstr = shortenPubkey(pubkey);
@@ -466,7 +415,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       if (typeof pubkeyDetails.automaticImport === "undefined") {
         errors.push(`\n  pubkey ${pubkeySubstr}: automaticImport is missing`);
       } else {
-        if (typeof pubkeys[pubkey].automaticImport !== "boolean")
+        if (typeof validators[pubkey].automaticImport !== "boolean")
           errors.push(
             `\n  pubkey ${pubkeySubstr}: automaticImport is invalid, must be in boolean format`
           );
