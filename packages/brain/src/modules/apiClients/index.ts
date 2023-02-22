@@ -125,11 +125,27 @@ export class StandardApi {
                 resolve();
               }
             } else {
+              let errorMessage = "";
+              if (
+                res.headers["content-type"] &&
+                res.headers["content-type"].includes("application/json")
+              ) {
+                try {
+                  errorMessage = JSON.parse(
+                    Buffer.concat(data).toString()
+                  )?.message;
+                } catch (e) {
+                  logger.error(
+                    `Error parsing response from ${this.requestOptions.hostname} ${endpoint} ${e.message}`,
+                    e
+                  );
+                }
+              } else errorMessage = Buffer.concat(data).toString();
+
               reject(
                 new ApiError({
                   name: "Standard ApiError",
-                  message:
-                    JSON.parse(Buffer.concat(data).toString())?.message || "",
+                  message: errorMessage,
                   errno: res.statusCode,
                   code: "ERR_HTTP",
                   path: endpoint,
