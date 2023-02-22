@@ -1,4 +1,4 @@
-import { Alert } from "@mui/material";
+import { Alert, CircularProgress } from "@mui/material";
 import TopBar from "./components/TopBar/TopBar";
 import ImportScreen from "./ImportScreen";
 import ValidatorList from "./components/ValidatorList/ValidatorList";
@@ -73,28 +73,41 @@ function App(): JSX.Element {
       />
 
       {signerStatus !== "UP" ? (
-        <>
-          <Alert severity="error" sx={{ m: 2 }} variant="filled">
-            Web3Signer is not available.
-            {signerStatus === "DOWN" ? (
-              <> Its API is responsive, but signer is down. </>
-            ) : (
-              <>
-                {" "}
-                Its API is not responsive. Check if the Web3Signer package is
-                running.{" "}
-              </>
-            )}
-            To avoid slashing, <b>do not upload </b>
-            your validator <b>keystores to another machine</b>.
-          </Alert>
-          <Alert severity="info" sx={{ m: 2 }} variant="filled">
-            To safely migrate your keystores, remove the Web3Signer package (or
-            its volumes) after you make sure you have a backup of your
-            keystores. Then, wait for at least 2 epochs before you upload your
-            keystores to another machine.
-          </Alert>
-        </>
+        signerStatus === "LOADING" ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        ) : (
+          <>
+            <Alert severity="error" sx={{ m: 2 }} variant="filled">
+              Web3Signer is not available.
+              {signerStatus === "DOWN" ? (
+                <> Its API is responsive, but signer is down. </>
+              ) : (
+                <>
+                  {" "}
+                  Its API is not responsive. Check if the Web3Signer package is
+                  running.{" "}
+                </>
+              )}
+              To avoid slashing, <b>do not upload </b>
+              your validator <b>keystores to another machine</b>.
+            </Alert>
+            <Alert severity="info" sx={{ m: 2 }} variant="filled">
+              To safely migrate your keystores, remove the Web3Signer package
+              (or its volumes) after you make sure you have a backup of your
+              keystores. Then, wait for at least 2 epochs before you upload your
+              keystores to another machine.
+            </Alert>
+          </>
+        )
       ) : (
         stakerConfig && (
           <BrowserRouter>
@@ -112,12 +125,6 @@ function App(): JSX.Element {
             </Routes>
           </BrowserRouter>
         )
-      )}
-
-      {!stakerConfig?.network && (
-        <Alert severity="error" sx={{ m: 2 }} variant="filled">
-          Network has not been properly set. Check URL or global variables.
-        </Alert>
       )}
     </ThemeProvider>
   );
