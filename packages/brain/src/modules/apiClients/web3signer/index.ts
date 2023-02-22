@@ -10,6 +10,7 @@ import {
   Web3SignerPostSignvoluntaryexitResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
+import path from "node:path";
 
 /**
  * Key Manager API standard
@@ -39,13 +40,15 @@ export class Web3SignerApi extends StandardApi {
    */
   public async signVoluntaryExit({
     signerVoluntaryExitRequest,
+    pubkey,
   }: {
     signerVoluntaryExitRequest: Web3SignerPostSignvoluntaryexitRequest;
+    pubkey: string;
   }): Promise<Web3SignerPostSignvoluntaryexitResponse> {
     try {
       return (await this.request(
         "POST",
-        this.localKeymanagerEndpoint,
+        path.join(this.signEndpoint,pubkey),
         JSON.stringify(signerVoluntaryExitRequest)
       )) as Web3SignerPostSignvoluntaryexitResponse;
     } catch (e) {
