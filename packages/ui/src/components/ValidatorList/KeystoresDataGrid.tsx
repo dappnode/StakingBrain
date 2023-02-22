@@ -111,7 +111,8 @@ export default function KeystoresDataGrid({
       : "",
     feeRecipient: row.feeRecipient,
     tag: row.tag,
-    pubkeyImported: row.validatorImported,
+    pubkeyInValidator: row.validatorImported,
+    pubkeyInSigner: row.signerImported,
     feeRecipientImported: row.validatorFeeRecipientCorrect,
     id: index,
   }));
@@ -143,10 +144,9 @@ export default function KeystoresDataGrid({
         width: 60,
       },
       {
-        field: "pubkeyImported",
-        headerName: "Pubkey Imported",
-        description:
-          "Weather this pubkey is imported in the validator client or not",
+        field: "pubkeyInSigner",
+        headerName: "Pubkey In Signer",
+        description: "Whether this pubkey is imported in the signer or not",
         disableReorder: true,
         disableColumnMenu: true,
         disableExport: true,
@@ -154,13 +154,27 @@ export default function KeystoresDataGrid({
         align: "center",
         headerAlign: "center",
         headerClassName: "tableHeader",
-        width: 200,
+        width: 150,
+      },
+      {
+        field: "pubkeyInValidator",
+        headerName: "Pubkey In Validator",
+        description:
+          "Whether this pubkey is imported in the validator client or not",
+        disableReorder: true,
+        disableColumnMenu: true,
+        disableExport: true,
+        sortable: false,
+        align: "center",
+        headerAlign: "center",
+        headerClassName: "tableHeader",
+        width: 150,
       },
       {
         field: "feeRecipientImported",
         headerName: "Fee Recipient Imported",
         description:
-          "Weather this fee recipient is imported in the validator client or not",
+          "Whether this fee recipient is imported in the validator client or not",
         disableReorder: true,
         disableColumnMenu: true,
         disableExport: true,
@@ -168,7 +182,7 @@ export default function KeystoresDataGrid({
         align: "center",
         headerAlign: "center",
         headerClassName: "tableHeader",
-        width: 200,
+        width: 180,
       }
     );
 
