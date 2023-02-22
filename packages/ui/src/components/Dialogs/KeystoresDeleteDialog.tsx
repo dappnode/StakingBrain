@@ -45,7 +45,6 @@ export default function KeystoresDeleteDialog({
     try {
       setKeystoresDelete(undefined);
       setRequestInFlight(true);
-      setRequestInFlight(false);
       setKeystoresDelete(
         await api.deleteValidators({
           pubkeys: selectedRows.map(
@@ -53,6 +52,7 @@ export default function KeystoresDeleteDialog({
           ),
         })
       );
+      setRequestInFlight(false);
       setKeystoresDeleteError(undefined);
       setSelectedRows([]);
     } catch (e) {
