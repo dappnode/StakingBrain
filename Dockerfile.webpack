@@ -54,7 +54,7 @@ RUN yarn build:webpack
 FROM node:${NODE_VERSION}-alpine 
 WORKDIR /app
 
-COPY ./packages/brain/tls .
+COPY ./packages/brain/tls ./tls
 
 COPY --from=build-stage /app/packages/brain/dist .
 COPY --from=build-stage /app/packages/brain/package.json .
