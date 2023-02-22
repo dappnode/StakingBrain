@@ -11,6 +11,9 @@ import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import HelpIcon from "@mui/icons-material/Help";
 import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { Box } from "@mui/system";
@@ -155,6 +158,17 @@ export default function KeystoresDataGrid({
         headerAlign: "center",
         headerClassName: "tableHeader",
         width: 150,
+        renderCell: (rowData) => (
+          <div>
+            {rowData.row.pubkeyInSigner === true ? (
+              <CheckCircleIcon style={{ color: "green" }} />
+            ) : rowData.row.pubkeyInSigner ? (
+              <CancelIcon style={{ color: "red" }} />
+            ) : (
+              <HelpIcon style={{ color: "grey" }} />
+            )}
+          </div>
+        ),
       },
       {
         field: "pubkeyInValidator",
@@ -169,6 +183,17 @@ export default function KeystoresDataGrid({
         headerAlign: "center",
         headerClassName: "tableHeader",
         width: 150,
+        renderCell: (rowData) => (
+          <div>
+            {rowData.row.pubkeyInValidator === true ? (
+              <CheckCircleIcon style={{ color: "green" }} />
+            ) : rowData.row.pubkeyInValidator ? (
+              <CancelIcon style={{ color: "red" }} />
+            ) : (
+              <HelpIcon style={{ color: "grey" }} />
+            )}
+          </div>
+        ),
       },
       {
         field: "feeRecipientImported",
@@ -183,6 +208,17 @@ export default function KeystoresDataGrid({
         headerAlign: "center",
         headerClassName: "tableHeader",
         width: 180,
+        renderCell: (rowData) => (
+          <div>
+            {rowData.row.feeRecipientImported === true ? (
+              <CheckCircleIcon style={{ color: "green" }} />
+            ) : rowData.row.feeRecipientImported ? (
+              <CancelIcon style={{ color: "red" }} />
+            ) : (
+              <HelpIcon style={{ color: "grey" }} />
+            )}
+          </div>
+        ),
       }
     );
 
