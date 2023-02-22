@@ -40,10 +40,13 @@ export default function ValidatorList({
     return () => clearInterval(interval);
   }, []);
 
-  // Use effect to reset the validator on delete
+  // Re-render table after delete/update validators
   useEffect(() => {
-    if (!deleteOpen) getValidators();
-  }, [deleteOpen]);
+    if (!deleteOpen && !editFeesOpen) {
+      getValidators();
+      setSelectedRows([]);
+    }
+  }, [deleteOpen, editFeesOpen]);
 
   async function getValidators() {
     try {
