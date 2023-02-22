@@ -55,7 +55,11 @@ export const validatorApi = new ValidatorApi({
 export const beaconchainApi = new Beaconchain({ baseUrl: beaconchainUrl });
 
 // Create DB instance
-export const brainDb = new BrainDataBase(params.brainDbName);
+export const brainDb = new BrainDataBase(
+  mode === "production"
+    ? path.resolve("data", params.brainDbName)
+    : params.brainDbName
+);
 
 // Start server APIs
 const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName));
