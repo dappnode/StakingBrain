@@ -51,7 +51,8 @@ RUN yarn build
 # FINAL stage #
 ###############
 
-FROM node:${NODE_VERSION}-alpine 
+FROM node:${NODE_VERSION}-alpine
+ENV NODE_ENV=production
 WORKDIR /app
 
 COPY ./packages/brain/tls ./tls
