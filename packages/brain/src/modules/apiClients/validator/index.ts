@@ -78,7 +78,9 @@ export class ValidatorApi extends StandardApi {
       await this.request(
         "DELETE",
         path.join(
-          this.feeRecipientEndpoint + prefix0xPubkey(publicKey) + "feerecipient"
+          this.feeRecipientEndpoint,
+          prefix0xPubkey(publicKey),
+          "feerecipient"
         )
       );
     } catch (e) {
