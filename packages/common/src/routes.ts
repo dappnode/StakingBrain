@@ -32,8 +32,12 @@ export interface Routes {
   ) => Promise<Web3signerDeleteResponse>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
-  getExitValidators: () => Promise<Buffer[]>;
-  exitValidators: () => Promise<ValidatorExitExecute[]>;
+  getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<Buffer[]>;
+  exitValidators: ({
+    pubkeys,
+  }: {
+    pubkeys: string[];
+  }) => Promise<ValidatorExitExecute[]>;
   // Network
   getStakerConfig: () => Promise<StakerConfig<Network>>;
 }
