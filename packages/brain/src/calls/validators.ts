@@ -12,6 +12,7 @@ import {
   ValidatorExitExecute,
   ValidatorExitGet,
   BeaconchainPoolVoluntaryExitsPostRequest,
+  editableFeeRecipientTags,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -173,8 +174,26 @@ export async function updateValidators(
     // and prevents the cron from running while we are importing validators
     cron.stop();
 
+    const dbData = brainDb.getData();
+
+    // Only update validators with editable fee recipient
+    const editableValidators: CustomValidatorUpdateRequest[] =
+      customValidatorUpdateRequest.filter(
+        (validator) =>
+          dbData[prefix0xPubkey(validator.pubkey)] &&
+          editableFeeRecipientTags.some(
+            (tag) => tag === dbData[prefix0xPubkey(validator.pubkey)].tag
+          )
+      );
+
+    if (editableValidators.length === 0) {
+      throw new Error(
+        "The fee recipient can't be updated for these validators"
+      );
+    }
+
     brainDb.updateValidators({
-      validators: customValidatorUpdateRequest.reduce((acc, validator) => {
+      validators: editableValidators.reduce((acc, validator) => {
         acc[validator.pubkey] = {
           feeRecipient: validator.feeRecipient,
         };
@@ -183,7 +202,7 @@ export async function updateValidators(
     });
 
     // Import feeRecipient on Validator API
-    for (const validator of customValidatorUpdateRequest)
+    for (const validator of editableValidators)
       await validatorApi
         .setFeeRecipient(validator.feeRecipient, validator.pubkey)
         .then(() => logger.debug(`Added feeRecipient to validator API`))
