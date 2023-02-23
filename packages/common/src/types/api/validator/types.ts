@@ -1,3 +1,5 @@
+import { BeaconchainPoolVoluntaryExitsPostRequest } from "../beaconchain/types.js";
+
 export interface ValidatorGetFeeResponse {
   data: {
     pubkey: string;
@@ -37,4 +39,17 @@ export interface ValidatorDeleteRemoteKeysResponse {
     status: string;
     message: string;
   }[];
+}
+
+export interface ValidatorExitGet
+  extends BeaconchainPoolVoluntaryExitsPostRequest {
+  pubkey: string;
+}
+
+export interface ValidatorExitExecute {
+  pubkey: string;
+  status: {
+    exited: boolean;
+    message?: string;
+  };
 }

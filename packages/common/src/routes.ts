@@ -9,6 +9,7 @@ import {
   CustomValidatorGetResponse,
   Web3signerPostResponse,
   CustomValidatorUpdateRequest,
+  ValidatorExitExecute,
 } from "./index.js";
 
 export interface Routes {
@@ -19,7 +20,7 @@ export interface Routes {
   beaconchaFetchValidatorsInfo: (
     pubkeys: string[]
   ) => Promise<BeaconchaGetResponse>;
-  // SignerApi
+  // Validators
   importValidators: (
     postRequest: CustomImportRequest
   ) => Promise<Web3signerPostResponse>;
@@ -31,6 +32,12 @@ export interface Routes {
   ) => Promise<Web3signerDeleteResponse>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
+  getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<Buffer[]>;
+  exitValidators: ({
+    pubkeys,
+  }: {
+    pubkeys: string[];
+  }) => Promise<ValidatorExitExecute[]>;
   // Network
   getStakerConfig: () => Promise<StakerConfig<Network>>;
 }
@@ -46,6 +53,8 @@ export const routesData: { [P in keyof Routes]: RouteData } = {
   updateValidators: { log: true },
   deleteValidators: { log: true },
   getValidators: { log: true },
+  exitValidators: { log: true },
+  getExitValidators: { log: true },
   signerGetStatus: { log: true },
   getStakerConfig: { log: true },
 };
