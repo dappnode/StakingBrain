@@ -15,6 +15,7 @@ import {
   burnAddress,
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
+  editableFeeRecipientTags,
 } from "@stakingbrain/common";
 import React from "react";
 
@@ -102,6 +103,16 @@ export default function FeeRecipientDialog({
     }
   };
 
+  function areAllFeeRecipientsEditable() {
+    const selectedTags = selectedRows
+      .map((rowId) => rows[parseInt(rowId.toString())].tag)
+      .flat();
+
+    return selectedTags.every((t) =>
+      editableFeeRecipientTags.some((e) => e === t)
+    );
+  }
+
   return (
     <Dialog
       disableEscapeKeyDown={true}
@@ -145,6 +156,11 @@ export default function FeeRecipientDialog({
               }
               value={newFeeRecipient}
             />
+            {!areAllFeeRecipientsEditable() && (
+              <Alert severity="info">
+                This will only apply to the editable fee recipients
+              </Alert>
+            )}
             {successMessage && (
               <Alert severity="success" variant="filled" sx={{ marginTop: 2 }}>
                 {successMessage}

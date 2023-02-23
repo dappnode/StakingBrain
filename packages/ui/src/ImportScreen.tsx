@@ -296,7 +296,7 @@ export default function ImportScreen(): JSX.Element {
                       />
                       {!areAllFeeRecipientsEditable() && (
                         <Alert severity="info">
-                          This fee recipient will only apply to the editable fee
+                          This field will only apply to the editable fee
                           recipients
                         </Alert>
                       )}
