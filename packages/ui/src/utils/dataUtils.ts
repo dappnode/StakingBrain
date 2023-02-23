@@ -4,13 +4,14 @@ export const extractPubkey = async (file: File): Promise<string> => {
   return json.pubkey;
 };
 
-export function getEmoji(status: string): string {
+export function getEmoji(status: string | boolean): string {
   switch (status) {
     case "error":
+    case false:
       return "❌";
     case "imported":
-      return "✅";
     case "deleted":
+    case true:
       return "✅";
     default:
       return "⚠️";

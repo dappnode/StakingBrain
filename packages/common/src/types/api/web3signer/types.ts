@@ -53,7 +53,3 @@ export interface Web3SignerPostSignvoluntaryexitRequest {
     validator_index: string;
   };
 }
-
-export interface Web3SignerPostSignvoluntaryexitResponse {
-  signature: string;
-}

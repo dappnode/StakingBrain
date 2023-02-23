@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import StakerConfig from "../StakerConfig/StakerConfig";
+import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
 
 export default function ValidatorList({
   stakerConfig,
@@ -23,6 +24,7 @@ export default function ValidatorList({
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFeesOpen, setEditFeesOpen] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validatorsGet, setValidatorsGet] =
     useState<CustomValidatorGetResponse[]>();
@@ -42,11 +44,11 @@ export default function ValidatorList({
 
   // Re-render table after delete/update validators
   useEffect(() => {
-    if (!deleteOpen && !editFeesOpen) {
+    if (!deleteOpen && !editFeesOpen && !exitOpen) {
       getValidators();
       setSelectedRows([]);
     }
-  }, [deleteOpen, editFeesOpen]);
+  }, [deleteOpen, editFeesOpen, exitOpen]);
 
   async function getValidators() {
     try {
@@ -99,6 +101,7 @@ export default function ValidatorList({
                 userMode={userMode}
                 setDeleteOpen={setDeleteOpen}
                 setEditFeesOpen={setEditFeesOpen}
+                setExitOpen={setExitOpen}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
               />
@@ -146,6 +149,16 @@ export default function ValidatorList({
                   selectedRows={selectedRows}
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
+                />
+              )}
+
+              {exitOpen && (
+                <KeystoresExitDialog
+                  rows={validatorsGet}
+                  selectedRows={selectedRows}
+                  setSelectedRows={setSelectedRows}
+                  open={exitOpen}
+                  setOpen={setExitOpen}
                 />
               )}
             </>

@@ -8,22 +8,21 @@ import {
   Button,
   DialogContentText,
   DialogActions,
-  Alert,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
-import DeletionWarning from "./DeletionWarning";
+import ExitWarning from "./ExitWarning";
 import {
   CustomValidatorGetResponse,
-  Web3signerDeleteResponse,
+  ValidatorExitExecute,
   shortenPubkey,
 } from "@stakingbrain/common";
 import { api } from "../../api";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
 
-export default function KeystoresDeleteDialog({
+export default function KeystoresExitDialog({
   rows,
   selectedRows,
   setSelectedRows,
@@ -36,23 +35,46 @@ export default function KeystoresDeleteDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
 }): JSX.Element {
-  const [keystoresDelete, setKeystoresDelete] =
-    useState<Web3signerDeleteResponse>();
+  const [validatorsExitResponse, setValidatorsExitResponse] =
+    useState<ValidatorExitExecute[]>();
   const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
-  const [requestInFlight, setRequestInFlight] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  async function deleteSelectedKeystores() {
+  async function getExitSelectedKeystores() {
     try {
-      setKeystoresDelete(undefined);
-      setRequestInFlight(true);
-      setKeystoresDelete(
-        await api.deleteValidators({
+      const exitKeysores = await api.getExitValidators({
+        pubkeys: selectedRows.map(
+          (row) => rows[parseInt(row.toString())].pubkey
+        ),
+      });
+
+      exitKeysores.forEach((validator) => {
+        const element = document.createElement("a");
+        const file = new Blob([JSON.stringify(validator)], {
+          type: "application/json",
+        });
+        element.href = URL.createObjectURL(file);
+        element.download = `${validator.message.validator_index}.json`;
+        document.body.appendChild(element); // Required for this to work in FireFox
+        element.click();
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function exitSelectedKeystores() {
+    try {
+      setValidatorsExitResponse(undefined);
+      setLoading(true);
+      setValidatorsExitResponse(
+        await api.exitValidators({
           pubkeys: selectedRows.map(
             (row) => rows[parseInt(row.toString())].pubkey
           ),
         })
       );
-      setRequestInFlight(false);
+      setLoading(false);
       setKeystoresDeleteError(undefined);
       setSelectedRows([]);
     } catch (e) {
@@ -78,64 +100,42 @@ export default function KeystoresDeleteDialog({
       TransitionComponent={SlideTransition}
     >
       <DialogTitle id="alert-dialog-title">
-        {keystoresDelete ? "Done" : "Delete Keystores?"}
+        {validatorsExitResponse ? "Done" : "Exit Validators?"}
       </DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {keystoresDeleteError ? (
             `Error: ${keystoresDeleteError}`
-          ) : keystoresDelete?.data ? (
+          ) : validatorsExitResponse ? (
             <div>
-              {keystoresDelete.data.map((result, index) => (
+              {validatorsExitResponse.map((result, index) => (
                 <div style={{ marginBottom: "20px" }}>
                   <Typography variant="h5" color="GrayText">
                     {shortenPubkey(rows[index]?.pubkey)}
                   </Typography>
                   <Typography variant="h6">
-                    <b>Status:</b> {result.status} {getEmoji(result.status)}
+                    <b>Status:</b>{" "}
+                    {result.status.exited ? <>Exited</> : <>Not exited</>}{" "}
+                    {getEmoji(result.status.exited)}
                   </Typography>
-                  {result.message ? (
+                  {result.status.message ? (
                     <Typography variant="h6">
-                      <b>Message:</b> {result.message}
+                      <b>Message:</b> {result.status.message}
                     </Typography>
                   ) : null}
                 </div>
               ))}
-              {keystoresDelete.slashing_protection ? (
-                <div>
-                  <Alert
-                    severity="warning"
-                    sx={{ marginTop: 2, marginBottom: 2 }}
-                    variant="filled"
-                  >
-                    It is strongly recommended to stop the validator and watch
-                    at least 3 missed attestations in the explorer before
-                    uploading the keys to another machine.
-                  </Alert>
-
-                  <Button
-                    variant="contained"
-                    href={`data:text/json;charset=utf-8,${encodeURIComponent(
-                      keystoresDelete.slashing_protection
-                    )}`}
-                    download="slashing_protection.json"
-                    sx={{ borderRadius: 2 }}
-                  >
-                    Download Slashing Protection Data
-                  </Button>
-                </div>
-              ) : null}
             </div>
           ) : (
             <div>
-              {requestInFlight ? (
+              {loading ? (
                 <WaitBox />
               ) : (
                 <DialogContentText
                   id="alert-dialog-description"
                   component={"span"}
                 >
-                  <DeletionWarning rows={rows} selectedRows={selectedRows} />
+                  <ExitWarning rows={rows} selectedRows={selectedRows} />
                 </DialogContentText>
               )}
             </div>
@@ -143,15 +143,24 @@ export default function KeystoresDeleteDialog({
         </Box>
       </DialogContent>
       <DialogActions>
-        {!keystoresDelete && !requestInFlight ? (
-          <Button
-            onClick={() => deleteSelectedKeystores()}
-            variant="contained"
-            color="error"
-            sx={{ marginRight: 1, borderRadius: 2 }}
-          >
-            Delete
-          </Button>
+        {!validatorsExitResponse && !loading ? (
+          <>
+            <Button
+              onClick={() => exitSelectedKeystores()}
+              variant="contained"
+              color="error"
+              sx={{ marginRight: 1, borderRadius: 2 }}
+            >
+              Exit
+            </Button>
+            <Button
+              onClick={() => getExitSelectedKeystores()}
+              variant="contained"
+              sx={{ marginRight: 1, borderRadius: 2 }}
+            >
+              Download
+            </Button>
+          </>
         ) : null}
         <Button
           onClick={handleClose}

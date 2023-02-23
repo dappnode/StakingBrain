@@ -11,6 +11,7 @@ import {
   prefix0xPubkey,
   ValidatorExitExecute,
   ValidatorExitGet,
+  BeaconchainPoolVoluntaryExitsPostRequest,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -302,11 +303,10 @@ export async function getExitValidators({
   pubkeys,
 }: {
   pubkeys: string[];
-}): Promise<Buffer[]> {
-  const validatorsToExit = await _getExitValidators(pubkeys);
-  return validatorsToExit.map((validator) =>
-    Buffer.from(JSON.stringify(validator))
-  );
+}): Promise<BeaconchainPoolVoluntaryExitsPostRequest[]> {
+  const validatorsExit = await _getExitValidators(pubkeys);
+  logger.debug(validatorsExit);
+  return validatorsExit;
 }
 
 /**
@@ -319,44 +319,38 @@ export async function exitValidators({
 }: {
   pubkeys: string[];
 }): Promise<ValidatorExitExecute[]> {
-  const exitValidatorResponse: ValidatorExitExecute[] = [];
   const validatorsToExit = await _getExitValidators(pubkeys);
-  await Promise.all(
-    validatorsToExit.map((validator) =>
-      beaconchainApi
-        .postVoluntaryExits({
-          postVoluntaryExitsRequest: {
-            message: {
-              epoch: validator.message.epoch,
-              validator_index: validator.message.validator_index,
-            },
-            signature: validator.signature,
+  const exitValidatorsResponses: ValidatorExitExecute[] = [];
+  for (const validatorToExit of validatorsToExit) {
+    try {
+      await beaconchainApi.postVoluntaryExits({
+        postVoluntaryExitsRequest: {
+          message: {
+            epoch: validatorToExit.message.epoch,
+            validator_index: validatorToExit.message.validator_index,
           },
-        })
-        .then(() => {
-          exitValidatorResponse.push({
-            pubkey: validator.pubkey,
-            status: {
-              exited: true,
-              message: "Successfully exited validator",
-            },
-          });
-          logger.debug(`Exited validator ${validator}`);
-        })
-        .catch((err) => {
-          exitValidatorResponse.push({
-            pubkey: validator.pubkey,
-            status: {
-              exited: false,
-              message: `Error exiting validator ${err.message}`,
-            },
-          });
-          logger.error(`Error exiting validator ${validator}`, err);
-        })
-    )
-  );
+          signature: validatorToExit.signature,
+        },
+      });
+      exitValidatorsResponses.push({
+        pubkey: validatorToExit.pubkey,
+        status: {
+          exited: true,
+          message: "Successfully exited validator",
+        },
+      });
+    } catch (e) {
+      exitValidatorsResponses.push({
+        pubkey: validatorToExit.pubkey,
+        status: {
+          exited: false,
+          message: `Error exiting validator ${e.message}`,
+        },
+      });
+    }
+  }
 
-  const exitedValidatorsPubkeys = exitValidatorResponse
+  const exitedValidatorsPubkeys = exitValidatorsResponses
     .filter((validator) => validator.status.exited === true)
     .map((validator) => validator.pubkey);
 
@@ -374,7 +368,7 @@ export async function exitValidators({
   // Delete the validator from the brain db
   brainDb.deleteValidators(exitedValidatorsPubkeys);
 
-  return exitValidatorResponse;
+  return exitValidatorsResponses;
 }
 
 /**
@@ -408,38 +402,35 @@ async function _getExitValidators(
     };
   });
 
-  return await Promise.all(
-    validatorPubkeysIndexes.map((validator) =>
-      // Get the voluntary exit signatures from the web3signer API
-      signerApi
-        .signVoluntaryExit({
-          signerVoluntaryExitRequest: {
-            type: "VOLUNTARY_EXIT",
-            fork_info: {
-              fork: {
-                previous_version: fork.data.previous_version,
-                current_version: fork.data.current_version,
-                epoch: fork.data.epoch,
-              },
-              genesis_validators_root: genesis.data.genesis_validators_root,
-            },
-            voluntary_exit: {
-              epoch: currentEpoch.toString(),
-              validator_index: validator.index,
-            },
+  const validatorsExit: ValidatorExitGet[] = [];
+  for (const validatorIndex of validatorPubkeysIndexes) {
+    const validatorSignature = await signerApi.signVoluntaryExit({
+      signerVoluntaryExitRequest: {
+        type: "VOLUNTARY_EXIT",
+        fork_info: {
+          fork: {
+            previous_version: fork.data.previous_version,
+            current_version: fork.data.current_version,
+            epoch: fork.data.epoch,
           },
-          pubkey: validator.pubkey,
-        })
-        .then((signatureResponse) => {
-          return {
-            message: {
-              epoch: currentEpoch.toString(),
-              validator_index: validator.index,
-            },
-            signature: signatureResponse.signature,
-            pubkey: validator.pubkey,
-          };
-        })
-    )
-  );
+          genesis_validators_root: genesis.data.genesis_validators_root,
+        },
+        voluntary_exit: {
+          epoch: currentEpoch.toString(),
+          validator_index: validatorIndex.index,
+        },
+      },
+      pubkey: validatorIndex.pubkey,
+    });
+    validatorsExit.push({
+      pubkey: validatorIndex.pubkey,
+      message: {
+        epoch: currentEpoch.toString(),
+        validator_index: validatorIndex.index,
+      },
+      signature: validatorSignature,
+    });
+  }
+
+  return validatorsExit;
 }
