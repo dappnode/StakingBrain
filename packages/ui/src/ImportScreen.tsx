@@ -27,7 +27,6 @@ import {
   isValidEcdsaPubkey,
   burnAddress,
   CustomImportRequest,
-  tags as availableTags,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
@@ -381,7 +380,7 @@ export default function ImportScreen(): JSX.Element {
               !feeRecipients.some((feeRecipient) =>
                 isValidEcdsaPubkey(feeRecipient)
               ) ||
-              availableTags.some((tag) => !tags.includes(tag))
+              tags.some((tag) => tag.length === 0)
             }
             onClick={importKeystores}
             sx={{ borderRadius: 3 }}
