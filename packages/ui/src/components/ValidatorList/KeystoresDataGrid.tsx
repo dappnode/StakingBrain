@@ -4,9 +4,7 @@ import { beaconchaApiParamsMap } from "../../params";
 import {
   BeaconchaGetResponse,
   CustomValidatorGetResponse,
-  Tag,
 } from "@stakingbrain/common";
-import Chip from "@mui/material/Chip";
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
 import DeleteIcon from "@mui/icons-material/Delete";
