@@ -96,13 +96,18 @@ export default function KeystoresDataGrid({
       headerClassName: "tableHeader",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (rowData: any) => (
-        <Chip
-          label={rowData.row.tag}
-          variant="outlined"
-          style={{
-            backgroundColor: getTagColor(rowData.row.tag),
-          }}
-        />
+        <Tooltip title={rowData.row.tag} placement="top" arrow>
+          <Box
+            component="img"
+            sx={{
+              height: 40,
+              width: 40,
+              padding: 0,
+            }}
+            alt={rowData.row.tag}
+            src={"/assets/tagIcons/" + rowData.row.tag + ".png"}
+          />
+        </Tooltip>
       ),
     },
   ];
@@ -222,19 +227,6 @@ export default function KeystoresDataGrid({
       }
     );
 
-  function getTagColor(tag: Tag): string {
-    const tagColors = {
-      obol: "green",
-      diva: "blue",
-      solo: "pink",
-      stakehouse: "dark",
-      stakewise: "yellow",
-      rocketpool: "#ea894d",
-      ssv: "grey",
-    };
-
-    return tagColors[tag] || "primary";
-  }
 
   async function getValidatorSummaryURL() {
     if (!beaconchaApiParamsMap?.get(network)) {
