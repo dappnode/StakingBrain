@@ -13,6 +13,7 @@ import {
   MenuItem,
   FormControl,
   FormHelperText,
+  Alert,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
@@ -141,6 +142,10 @@ export default function ImportScreen(): JSX.Element {
     }
 
     return false;
+  }
+
+  function areAllFeeRecipientsEditable() {
+    return tags.every((t) => editableFeeRecipientTags.some((e) => e === t));
   }
 
   return (
@@ -289,6 +294,12 @@ export default function ImportScreen(): JSX.Element {
                           )
                         }
                       />
+                      {!areAllFeeRecipientsEditable() && (
+                        <Alert severity="info">
+                          This fee recipient will only apply to the editable fee
+                          recipients
+                        </Alert>
+                      )}
                     </>
                   )}
                 </FormControl>
