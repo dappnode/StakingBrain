@@ -39,12 +39,12 @@ export default function KeystoresDeleteDialog({
   const [keystoresDelete, setKeystoresDelete] =
     useState<Web3signerDeleteResponse>();
   const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
-  const [requestInFlight, setRequestInFlight] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   async function deleteSelectedKeystores() {
     try {
       setKeystoresDelete(undefined);
-      setRequestInFlight(true);
+      setLoading(true);
       setKeystoresDelete(
         await api.deleteValidators({
           pubkeys: selectedRows.map(
@@ -52,11 +52,12 @@ export default function KeystoresDeleteDialog({
           ),
         })
       );
-      setRequestInFlight(false);
+      setLoading(false);
       setKeystoresDeleteError(undefined);
       setSelectedRows([]);
     } catch (e) {
       console.error(e);
+      setLoading(false);
       setKeystoresDeleteError(e.message);
     }
   }
@@ -128,7 +129,7 @@ export default function KeystoresDeleteDialog({
             </div>
           ) : (
             <div>
-              {requestInFlight ? (
+              {loading ? (
                 <WaitBox />
               ) : (
                 <DialogContentText
@@ -143,7 +144,7 @@ export default function KeystoresDeleteDialog({
         </Box>
       </DialogContent>
       <DialogActions>
-        {!keystoresDelete && !requestInFlight ? (
+        {!keystoresDelete && !loading ? (
           <Button
             onClick={() => deleteSelectedKeystores()}
             variant="contained"

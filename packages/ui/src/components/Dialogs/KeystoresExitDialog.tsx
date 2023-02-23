@@ -37,11 +37,12 @@ export default function KeystoresExitDialog({
 }): JSX.Element {
   const [validatorsExitResponse, setValidatorsExitResponse] =
     useState<ValidatorExitExecute[]>();
-  const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
+  const [validatorsExitError, setValidatorsExitError] = useState<string>();
   const [loading, setLoading] = useState(false);
 
   async function getExitSelectedKeystores() {
     try {
+      setLoading(true);
       const exitKeysores = await api.getExitValidators({
         pubkeys: selectedRows.map(
           (row) => rows[parseInt(row.toString())].pubkey
@@ -58,7 +59,9 @@ export default function KeystoresExitDialog({
         document.body.appendChild(element); // Required for this to work in FireFox
         element.click();
       });
+      setLoading(false);
     } catch (e) {
+      setLoading(false);
       console.error(e);
     }
   }
@@ -75,11 +78,12 @@ export default function KeystoresExitDialog({
         })
       );
       setLoading(false);
-      setKeystoresDeleteError(undefined);
+      setValidatorsExitError(undefined);
       setSelectedRows([]);
     } catch (e) {
       console.error(e);
-      setKeystoresDeleteError(e.message);
+      setLoading(false);
+      setValidatorsExitError(e.message);
     }
   }
   const handleClose = () => {
@@ -104,8 +108,8 @@ export default function KeystoresExitDialog({
       </DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {keystoresDeleteError ? (
-            `Error: ${keystoresDeleteError}`
+          {validatorsExitError ? (
+            `Error: ${validatorsExitError}`
           ) : validatorsExitResponse ? (
             <div>
               {validatorsExitResponse.map((result, index) => (
