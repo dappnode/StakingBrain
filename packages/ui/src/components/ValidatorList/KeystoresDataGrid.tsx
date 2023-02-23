@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 export default function KeystoresDataGrid({
   rows,
@@ -31,6 +32,7 @@ export default function KeystoresDataGrid({
   userMode,
   setDeleteOpen,
   setEditFeesOpen,
+  setExitOpen,
   summaryUrlBuildingStatus,
   setSummaryUrlBuildingStatus,
 }: {
@@ -42,6 +44,7 @@ export default function KeystoresDataGrid({
   userMode: "basic" | "advanced";
   setDeleteOpen(open: boolean): void;
   setEditFeesOpen(open: boolean): void;
+  setExitOpen(open: boolean): void;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
 }): JSX.Element {
@@ -286,6 +289,15 @@ export default function KeystoresDataGrid({
             </Tooltip>
           )}
 
+          <Tooltip title="Edit validators fee recipient">
+            <IconButton
+              disabled={!areRowsSelected}
+              onClick={() => setEditFeesOpen(true)}
+            >
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
+
           <Tooltip title="Delete validators">
             <IconButton
               disabled={!areRowsSelected}
@@ -294,12 +306,13 @@ export default function KeystoresDataGrid({
               <DeleteIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Edit validators fee recipient">
+
+          <Tooltip title="Exit validators">
             <IconButton
               disabled={!areRowsSelected}
-              onClick={() => setEditFeesOpen(true)}
+              onClick={() => setExitOpen(true)}
             >
-              <EditIcon />
+              <LogoutIcon />
             </IconButton>
           </Tooltip>
         </div>

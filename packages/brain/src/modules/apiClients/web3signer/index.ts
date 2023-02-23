@@ -7,7 +7,6 @@ import {
   Web3signerHealthcheckResponse,
   prefix0xPubkey,
   Web3SignerPostSignvoluntaryexitRequest,
-  Web3SignerPostSignvoluntaryexitResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 import path from "node:path";
@@ -44,13 +43,13 @@ export class Web3SignerApi extends StandardApi {
   }: {
     signerVoluntaryExitRequest: Web3SignerPostSignvoluntaryexitRequest;
     pubkey: string;
-  }): Promise<Web3SignerPostSignvoluntaryexitResponse> {
+  }): Promise<string> {
     try {
-      return (await this.request(
+      return await this.request(
         "POST",
-        path.join(this.signEndpoint,pubkey),
+        path.join(this.signEndpoint, pubkey),
         JSON.stringify(signerVoluntaryExitRequest)
-      )) as Web3SignerPostSignvoluntaryexitResponse;
+      );
     } catch (e) {
       e.message += `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. `;
       throw e;

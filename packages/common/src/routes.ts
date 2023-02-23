@@ -10,6 +10,7 @@ import {
   Web3signerPostResponse,
   CustomValidatorUpdateRequest,
   ValidatorExitExecute,
+  BeaconchainPoolVoluntaryExitsPostRequest,
 } from "./index.js";
 
 export interface Routes {
@@ -32,7 +33,11 @@ export interface Routes {
   ) => Promise<Web3signerDeleteResponse>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
-  getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<Buffer[]>;
+  getExitValidators: ({
+    pubkeys,
+  }: {
+    pubkeys: string[];
+  }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
   exitValidators: ({
     pubkeys,
   }: {
