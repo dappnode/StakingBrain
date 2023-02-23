@@ -34,6 +34,14 @@ export const tags = [
   "solo",
 ] as const;
 
+export const editableFeeRecipientTags = [
+  "obol",
+  "diva",
+  "ssv",
+  "stakewise",
+  "solo",
+] as const;
+
 /**
  * Tag describes the protocol of the public key imported
  */

@@ -27,6 +27,7 @@ import {
   isValidEcdsaPubkey,
   burnAddress,
   CustomImportRequest,
+  editableFeeRecipientTags,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
@@ -228,11 +229,50 @@ export default function ImportScreen(): JSX.Element {
                       />
                     </>
                   )}
+                  {useSameTag && (
+                    <>
+                      <Select
+                        id="outlined-tag-input"
+                        label="Tag"
+                        value={tags[0]}
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) => {
+                          setTags(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          );
+
+                          if (
+                            !editableFeeRecipientTags.some(
+                              (tag) => tag === tags[0]
+                            )
+                          ) {
+                            setFeeRecipients(
+                              Array(acceptedFiles.length).fill("")
+                            );
+                          }
+                        }}
+                      >
+                        <MenuItem value={"solo"}>Solo</MenuItem>
+                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+                      </Select>
+                      <FormHelperText>Staking protocol</FormHelperText>
+                    </>
+                  )}
                   {useSameFeerecipient && (
                     <>
                       <TextField
                         id={`outlined-fee-recipient-input`}
-                        label="Fee Recipient"
+                        label={
+                          tags[0] === undefined ||
+                          editableFeeRecipientTags.some(
+                            (tag) => tag === tags[0]
+                          )
+                            ? "Fee Recipient"
+                            : "For this protocol, fee recipient will be set automatically"
+                        }
                         type="text"
                         sx={{ marginTop: 2 }}
                         onChange={(e) => {
@@ -243,29 +283,12 @@ export default function ImportScreen(): JSX.Element {
                         error={isFeeRecipientFieldWrong(0)}
                         helperText={getFeeRecipientFieldHelperText(0)}
                         value={feeRecipients[0]}
-                      />
-                    </>
-                  )}
-                  {useSameTag && (
-                    <>
-                      <Select
-                        id="outlined-tag-input"
-                        label="Tag"
-                        value={tags[0]}
-                        type="text"
-                        sx={{ marginTop: 2 }}
-                        onChange={(e) =>
-                          setTags(
-                            Array(acceptedFiles.length).fill(e.target.value)
+                        disabled={
+                          !editableFeeRecipientTags.some(
+                            (tag) => tag === tags[0]
                           )
                         }
-                      >
-                        <MenuItem value={"solo"}>Solo</MenuItem>
-                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
-                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
-                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
-                      </Select>
-                      <FormHelperText>Staking protocol</FormHelperText>
+                      />
                     </>
                   )}
                 </FormControl>
