@@ -375,7 +375,12 @@ export default function ImportScreen(): JSX.Element {
             endIcon={<BackupIcon />}
             disabled={
               acceptedFiles.length === 0 ||
-              (!slashingFile && slashingProtectionIncluded)
+              (!slashingFile && slashingProtectionIncluded) ||
+              passwords.some((password) => password.length === 0) ||
+              !feeRecipients.some((feeRecipient) =>
+                isValidEcdsaPubkey(feeRecipient)
+              ) ||
+              !tags.some((tag) => tag.length > 0)
             }
             onClick={importKeystores}
             sx={{ borderRadius: 3 }}
