@@ -16,6 +16,7 @@ import {
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
   editableFeeRecipientTags,
+  Tag,
 } from "@stakingbrain/common";
 import React from "react";
 
@@ -109,7 +110,7 @@ export default function FeeRecipientDialog({
       .flat();
 
     return selectedTags.every((t) =>
-      editableFeeRecipientTags.some((e) => e === t)
+      editableFeeRecipientTags.some((tag: Tag) => tag === t)
     );
   }
 

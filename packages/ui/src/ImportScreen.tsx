@@ -145,7 +145,9 @@ export default function ImportScreen(): JSX.Element {
   }
 
   function areAllFeeRecipientsEditable() {
-    return tags.every((t) => editableFeeRecipientTags.some((e) => e === t));
+    return tags.every((t) =>
+      editableFeeRecipientTags.some((tag: Tag) => tag === t)
+    );
   }
 
   return (
@@ -249,7 +251,7 @@ export default function ImportScreen(): JSX.Element {
 
                           if (
                             !editableFeeRecipientTags.some(
-                              (tag) => tag === tags[0]
+                              (tag: Tag) => tag === tags[0]
                             )
                           ) {
                             setFeeRecipients(
@@ -273,7 +275,7 @@ export default function ImportScreen(): JSX.Element {
                         label={
                           tags[0] === undefined ||
                           editableFeeRecipientTags.some(
-                            (tag) => tag === tags[0]
+                            (tag: Tag) => tag === tags[0]
                           )
                             ? "Fee Recipient"
                             : "For this protocol, fee recipient will be set automatically"
@@ -290,7 +292,7 @@ export default function ImportScreen(): JSX.Element {
                         value={feeRecipients[0]}
                         disabled={
                           !editableFeeRecipientTags.some(
-                            (tag) => tag === tags[0]
+                            (tag: Tag) => tag === tags[0]
                           )
                         }
                       />

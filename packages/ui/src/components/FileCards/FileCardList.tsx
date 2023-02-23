@@ -114,7 +114,7 @@ export default function FileCardList(
 
                   if (
                     !editableFeeRecipientTags.some(
-                      (tag) => tag === event.target.value
+                      (tag: Tag) => tag === event.target.value
                     )
                   ) {
                     const newFeeRecipients = [...feeRecipients];
@@ -136,7 +136,7 @@ export default function FileCardList(
               id={`outlined-fee-recipient-input-${index}`}
               label={
                 tags[index] === undefined ||
-                editableFeeRecipientTags.some((tag) => tag === tags[index])
+                editableFeeRecipientTags.some((tag: Tag) => tag === tags[index])
                   ? "Fee Recipient"
                   : "For this protocol, fee recipient will be set automatically"
               }
@@ -150,7 +150,9 @@ export default function FileCardList(
               error={isFeeRecipientFieldWrong(index)}
               helperText={getFeeRecipientFieldHelperText(index)}
               disabled={
-                !editableFeeRecipientTags.some((tag) => tag === tags[index])
+                !editableFeeRecipientTags.some(
+                  (tag: Tag) => tag === tags[index]
+                )
               }
             />
           )}

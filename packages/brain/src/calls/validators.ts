@@ -13,6 +13,7 @@ import {
   ValidatorExitGet,
   BeaconchainPoolVoluntaryExitsPostRequest,
   editableFeeRecipientTags,
+  rocketPoolFeeRecipient,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -23,6 +24,7 @@ import {
 } from "../index.js";
 import logger from "../modules/logger/index.js";
 import { cron } from "../index.js";
+import { StakeHouseSDK } from "../modules/stakingProtocols/stakehouse/index.js";
 
 /**
  * Import keystores:
@@ -41,17 +43,27 @@ export async function importValidators(
     // and prevents the cron from running while we are importing validators
     cron.stop();
 
-    const validators = postRequest.validatorsImportRequest.map((validator) => {
+    const validators = [];
+    for (const validator of postRequest.validatorsImportRequest) {
       const keystore = validator.keystore.toString();
-      const pubkey: string = JSON.parse(keystore).pubkey;
-      return {
+      const pubkey = JSON.parse(keystore).pubkey;
+      const feeRecipient = editableFeeRecipientTags.some(
+        (tag: Tag) => tag === validator.tag
+      )
+        ? validator.feeRecipient
+        : await getFeeRecipientByProtocol(
+            pubkey,
+            validator.tag,
+            validator.feeRecipient
+          );
+      validators.push({
         keystore,
         password: validator.password,
         tag: validator.tag,
-        feeRecipient: validator.feeRecipient,
+        feeRecipient,
         pubkey,
-      };
-    });
+      });
+    }
 
     const validatorsToPost: {
       keystore: string;
@@ -182,7 +194,7 @@ export async function updateValidators(
         (validator) =>
           dbData[prefix0xPubkey(validator.pubkey)] &&
           editableFeeRecipientTags.some(
-            (tag) => tag === dbData[prefix0xPubkey(validator.pubkey)].tag
+            (tag: Tag) => tag === dbData[prefix0xPubkey(validator.pubkey)].tag
           )
       );
 
@@ -452,4 +464,21 @@ async function _getExitValidators(
   }
 
   return validatorsExit;
+}
+async function getFeeRecipientByProtocol(
+  pubkey: string,
+  tag: Tag,
+  userFeeRecipient: string
+): Promise<string> {
+  if (!editableFeeRecipientTags.some((tag: Tag) => tag === tag))
+    return userFeeRecipient;
+
+  if (tag === "rocketpool") return rocketPoolFeeRecipient;
+
+  if (tag === "stakehouse") {
+    const stakeHouseSdk = new StakeHouseSDK();
+    return await stakeHouseSdk.getLsdFeeRecipient(pubkey);
+  }
+
+  throw new Error("Fee recipient not found for tag: " + tag);
 }
