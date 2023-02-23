@@ -1,3 +1,4 @@
+import { Alert } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import {
   CustomValidatorGetResponse,
@@ -21,8 +22,13 @@ export default function ExitWarning({
           </li>
         ))}
       </ul>
-      A voluntary exit is when a validator chooses to stop performing its
-      duties, and exits the beacon chain permanently.
+      <Alert severity="warning">
+        By exiting a validator, you are voluntarily leaving the network and
+        ending your participation in the validation process. You will no longer
+        earn rewards for validating transactions. You will be able to withdraw
+        the validator(s) staked funds after a period of time known as the
+        withdrawal period.
+      </Alert>
     </>
   );
 }

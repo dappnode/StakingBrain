@@ -8,6 +8,7 @@ import {
   Button,
   DialogContentText,
   DialogActions,
+  TextField,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
@@ -39,6 +40,9 @@ export default function KeystoresExitDialog({
     useState<ValidatorExitExecute[]>();
   const [validatorsExitError, setValidatorsExitError] = useState<string>();
   const [loading, setLoading] = useState(false);
+  const [userConfirmText, setUserConfirmText] = useState("");
+
+  const exitConfirmationMessage = "I want to exit";
 
   async function getExitSelectedKeystores() {
     try {
@@ -135,12 +139,25 @@ export default function KeystoresExitDialog({
               {loading ? (
                 <WaitBox />
               ) : (
-                <DialogContentText
-                  id="alert-dialog-description"
-                  component={"span"}
-                >
-                  <ExitWarning rows={rows} selectedRows={selectedRows} />
-                </DialogContentText>
+                <>
+                  <DialogContentText
+                    id="alert-dialog-description"
+                    component={"span"}
+                  >
+                    <ExitWarning rows={rows} selectedRows={selectedRows} />
+                  </DialogContentText>
+
+                  <br />
+
+                  <TextField
+                    id="outlined-basic"
+                    label='Type "I want to exit" to confirm'
+                    variant="outlined"
+                    value={userConfirmText}
+                    onChange={(e) => setUserConfirmText(e.target.value)}
+                    sx={{ width: "100%" }}
+                  />
+                </>
               )}
             </div>
           )}
@@ -154,6 +171,7 @@ export default function KeystoresExitDialog({
               variant="contained"
               color="error"
               sx={{ marginRight: 1, borderRadius: 2 }}
+              disabled={userConfirmText !== exitConfirmationMessage}
             >
               Exit
             </Button>
