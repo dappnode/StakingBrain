@@ -7,3 +7,4 @@ packages/*/build
 packages/*/tests
 packages/*/keystores
 packages/brain/brain-db.json
+docs
