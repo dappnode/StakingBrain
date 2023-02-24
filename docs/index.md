@@ -22,10 +22,10 @@
 
 The Staking Brain allows the selection of different tags at the import process. These tags are related to the different DVT or LSD protocols that are (or will be) compatible.
 
-- `solo`: Solo staking refers to the process of staking without joining a staking pool. The Staking Brain supports solo staking.
-- `rocketpool`: RocketPool is a decentralized Ethereum staking pool that allows users to earn rewards by staking their ETH. The Staking Brain supports RocketPool staking. Learn more about RocketPool at [rocketpool.net](https://rocketpool.net/).
-- `stakewise`: StakeWise is a decentralized staking platform that allows users to earn rewards by staking their ETH. The Staking Brain supports StakeWise staking. Learn more about StakeWise at [stakewise.io](https://stakewise.io/).
-- `stakehouse`: StakeHouse is a decentralized staking pool that allows users to earn rewards by staking their ETH. The Staking Brain supports StakeHouse staking. Learn more about StakeHouse at [stake.house](https://joinstakehouse.com/).
+- `solo`: Solo staking refers to the process of staking without joining a staking pool. Just generate your validator keystores and upload them as you have been doing it until now. This is the default option.
+- `rocketpool`: RocketPool is a decentralized Ethereum staking pool that allows users to earn rewards by staking their ETH. Learn more about RocketPool at [rocketpool.net](https://rocketpool.net/).
+- `stakewise`: StakeWise V3 allows anyone who is capable of running Ethereum validators to participate in liquid staking and receive staking delegations from others. Learn more about StakeWise at [stakewise.io](https://stakewise.io/).
+- `stakehouse`: Liquid Staking Derivatives (LSD) Networks bring node operators and liquidity providers together trustlessly and permissionlessly. Anybody can create an LSD Network in 60 seconds, stake a validator with 4 ETH, or provide liquidity. Learn more about StakeHouse at [stake.house](https://joinstakehouse.com/).
 <!-- - `obol`: OBOL is a decentralized staking protocol built on Ethereum. The Staking Brain supports OBOL staking. Learn more about OBOL at [obol.tech](https://obol.tech/).
 - `diva`: DIVA is a decentralized platform that allows users to stake their digital assets to earn rewards. The Staking Brain supports DIVA staking. Learn more about DIVA at [divalabs.org](https://divalabs.org/).
 - `ssv`: SSV (Simple Staking Validation) is a framework for building validator nodes. The Staking Brain supports SSV staking. Learn more about SSV at [ssv.network](https://ssv.network/).-->
