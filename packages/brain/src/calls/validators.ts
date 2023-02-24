@@ -18,6 +18,7 @@ import {
 import {
   beaconchainApi,
   brainDb,
+  network,
   signerApi,
   signerUrl,
   validatorApi,
@@ -470,14 +471,19 @@ async function getFeeRecipientByProtocol(
   tag: Tag,
   userFeeRecipient: string
 ): Promise<string> {
-  if (!editableFeeRecipientTags.some((tag: Tag) => tag === tag))
+  if (
+    network === "gnosis" ||
+    !editableFeeRecipientTags.some((tag: Tag) => tag === tag)
+  )
     return userFeeRecipient;
 
-  if (tag === "rocketpool") return rocketPoolFeeRecipient;
+  if (tag === "rocketpool") return rocketPoolFeeRecipient[network];
 
   if (tag === "stakehouse") {
-    const stakeHouseSdk = new StakeHouseSDK();
-    return await stakeHouseSdk.getLsdFeeRecipient(pubkey);
+    // TODO
+    //const stakeHouseSdk = new StakeHouseSDK();
+    //return await stakeHouseSdk.getLsdFeeRecipient(pubkey);
+    return userFeeRecipient;
   }
 
   throw new Error("Fee recipient not found for tag: " + tag);
