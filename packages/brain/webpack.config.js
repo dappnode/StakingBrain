@@ -28,7 +28,7 @@ export default {
   // externals: [/node_modules/, "bufferutil", "utf-8-validate"],
   externalsPresets: { node: true },
   target: "node18.13",
-  externals: [nodeExternals()],
+  //externals: [nodeExternals()],
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     extensionAlias: {
