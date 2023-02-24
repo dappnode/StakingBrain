@@ -29,3 +29,13 @@ The Staking Brain allows the selection of different tags at the import process. 
 <!-- - `obol`: OBOL is a decentralized staking protocol built on Ethereum. The Staking Brain supports OBOL staking. Learn more about OBOL at [obol.tech](https://obol.tech/).
 - `diva`: DIVA is a decentralized platform that allows users to stake their digital assets to earn rewards. The Staking Brain supports DIVA staking. Learn more about DIVA at [divalabs.org](https://divalabs.org/).
 - `ssv`: SSV (Simple Staking Validation) is a framework for building validator nodes. The Staking Brain supports SSV staking. Learn more about SSV at [ssv.network](https://ssv.network/).-->
+
+## Adanced mode
+
+In the advanced mode, the user will be shown relevant info like:
+
+| Column Name          | Description                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| keystoresInSigner    | The keystores that have been successfully imported to the signer.                    |
+| pubkeysInValidator   | The public keys that have been successfully imported to the validator.               |
+| feeRecipientImported | Indicates whether the fee recipient has been successfully imported to the validator. |
