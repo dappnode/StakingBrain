@@ -296,7 +296,7 @@ export default function ImportScreen(): JSX.Element {
                           )
                         }
                       />
-                      {!areAllFeeRecipientsEditable() && (
+                      {!areAllFeeRecipientsEditable() && !useSameTag && (
                         <Alert severity="info">
                           This field will only apply to the editable fee
                           recipients
