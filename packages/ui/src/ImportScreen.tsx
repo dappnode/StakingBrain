@@ -413,10 +413,15 @@ export default function ImportScreen(): JSX.Element {
               acceptedFiles.length === 0 ||
               (!slashingFile && slashingProtectionIncluded) ||
               passwords.some((password) => password.length === 0) ||
-              !feeRecipients.some((feeRecipient) =>
-                isValidEcdsaPubkey(feeRecipient)
-              ) ||
-              tags.some((tag) => tag.length === 0)
+              tags.some((tag, index) => {
+                if (tag.length === 0) return true;
+
+                //If tag is editable, check if fee recipient is valid
+                if (editableFeeRecipientTags.some((t) => t === tag)) {
+                  return !isValidEcdsaPubkey(feeRecipients[index]);
+                }
+                return false;
+              })
             }
             onClick={importKeystores}
             sx={{ borderRadius: 3 }}
