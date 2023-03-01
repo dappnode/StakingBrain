@@ -39,6 +39,7 @@ export const editableFeeRecipientTags = [
   "diva",
   "ssv",
   "stakewise",
+  "stakehouse",
   "solo",
 ] as const;
 

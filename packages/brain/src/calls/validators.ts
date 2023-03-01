@@ -25,7 +25,6 @@ import {
 } from "../index.js";
 import logger from "../modules/logger/index.js";
 import { cron } from "../index.js";
-import { StakeHouseSDK } from "../modules/stakingProtocols/stakehouse/index.js";
 
 /**
  * Import keystores:
@@ -478,13 +477,6 @@ async function getFeeRecipientByProtocol(
     return userFeeRecipient;
 
   if (tag === "rocketpool") return rocketPoolFeeRecipient[network];
-
-  if (tag === "stakehouse") {
-    // TODO
-    //const stakeHouseSdk = new StakeHouseSDK();
-    //return await stakeHouseSdk.getLsdFeeRecipient(pubkey);
-    return userFeeRecipient;
-  }
 
   throw new Error("Fee recipient not found for tag: " + tag);
 }
