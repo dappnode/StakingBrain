@@ -111,7 +111,7 @@ export function loadStakerConfig(): {
         );
         break;
       case "lodestar.dnp.dappnode.eth":
-        token = ``;
+        token = `api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d`;
         validatorUrl = `http://validator.lodestar.dappnode:3500`;
         beaconchainUrl = `http://beacon-chain.lodestar.dappnode:3500`;
         break;
@@ -174,7 +174,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://validator.lighthouse-gnosis.dappnode:3500`;
         break;
       case "lodestar-gnosis.dnp.dappnode.eth":
-        token = ``;
+        token = `api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d`;
         beaconchainUrl = `http://beacon-chain.lodestar-gnosis.dappnode:3500`;
         validatorUrl = `http://validator.lodestar-gnosis.dappnode:3500`;
         break;
@@ -240,7 +240,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://validator.lighthouse-prater.dappnode:3500`;
         break;
       case "lodestar-prater.dnp.dappnode.eth":
-        token = ``;
+        token = `api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d`;
         beaconchainUrl = `http://beacon-chain.lodestar-prater.dappnode:3500`;
         validatorUrl = `http://validator.lodestar-prater.dappnode:3500`;
         break;
