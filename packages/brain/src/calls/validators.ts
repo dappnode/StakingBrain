@@ -14,6 +14,7 @@ import {
   BeaconchainPoolVoluntaryExitsPostRequest,
   nonEditableFeeRecipientTags,
   rocketPoolFeeRecipient,
+  Network,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -47,15 +48,21 @@ export async function importValidators(
     for (const validator of postRequest.validatorsImportRequest) {
       const keystore = validator.keystore.toString();
       const pubkey = JSON.parse(keystore).pubkey;
-      const feeRecipient = nonEditableFeeRecipientTags.some(
-        (tag: Tag) => tag === validator.tag
-      )
-        ? await getFeeRecipientByProtocol(
-            pubkey,
-            validator.tag,
-            validator.feeRecipient
-          )
-        : validator.feeRecipient;
+      let feeRecipient;
+
+      if (
+        network !== "gnosis" &&
+        nonEditableFeeRecipientTags.some((tag: Tag) => tag === validator.tag)
+      ) {
+        feeRecipient = await getNonEditableFeeRecipient(
+          pubkey,
+          validator.tag,
+          network
+        );
+      } else {
+        feeRecipient = validator.feeRecipient;
+      }
+
       validators.push({
         keystore,
         password: validator.password,
@@ -465,18 +472,15 @@ async function _getExitValidators(
 
   return validatorsExit;
 }
-async function getFeeRecipientByProtocol(
+async function getNonEditableFeeRecipient<T extends Omit<Network, "gnosis">>(
   pubkey: string,
   tag: Tag,
-  userFeeRecipient: string
+  network: T
 ): Promise<string> {
-  if (
-    network === "gnosis" ||
-    !nonEditableFeeRecipientTags.some((tag: Tag) => tag === tag)
-  )
-    return userFeeRecipient;
-
-  if (tag === "rocketpool") return rocketPoolFeeRecipient[network];
-
-  throw new Error("Fee recipient not found for tag: " + tag);
+  switch (tag) {
+    case "rocketpool":
+      return rocketPoolFeeRecipient;
+    default:
+      throw new Error("Fee recipient not found for tag: " + tag);
+  }
 }
