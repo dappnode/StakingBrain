@@ -15,7 +15,7 @@ import {
   burnAddress,
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
-  editableFeeRecipientTags,
+  nonEditableFeeRecipientTags,
   Tag,
 } from "@stakingbrain/common";
 import React from "react";
@@ -109,8 +109,8 @@ export default function FeeRecipientDialog({
       .map((rowId) => rows[parseInt(rowId.toString())].tag)
       .flat();
 
-    return selectedTags.every((t) =>
-      editableFeeRecipientTags.some((tag: Tag) => tag === t)
+    return selectedTags.every(
+      (t) => !nonEditableFeeRecipientTags.some((tag: Tag) => tag === t)
     );
   }
 
