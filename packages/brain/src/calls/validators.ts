@@ -12,7 +12,7 @@ import {
   ValidatorExitExecute,
   ValidatorExitGet,
   BeaconchainPoolVoluntaryExitsPostRequest,
-  editableFeeRecipientTags,
+  nonEditableFeeRecipientTags,
   rocketPoolFeeRecipient,
 } from "@stakingbrain/common";
 import {
@@ -47,15 +47,15 @@ export async function importValidators(
     for (const validator of postRequest.validatorsImportRequest) {
       const keystore = validator.keystore.toString();
       const pubkey = JSON.parse(keystore).pubkey;
-      const feeRecipient = editableFeeRecipientTags.some(
+      const feeRecipient = nonEditableFeeRecipientTags.some(
         (tag: Tag) => tag === validator.tag
       )
-        ? validator.feeRecipient
-        : await getFeeRecipientByProtocol(
+        ? await getFeeRecipientByProtocol(
             pubkey,
             validator.tag,
             validator.feeRecipient
-          );
+          )
+        : validator.feeRecipient;
       validators.push({
         keystore,
         password: validator.password,
@@ -193,7 +193,7 @@ export async function updateValidators(
       customValidatorUpdateRequest.filter(
         (validator) =>
           dbData[prefix0xPubkey(validator.pubkey)] &&
-          editableFeeRecipientTags.some(
+          !nonEditableFeeRecipientTags.some(
             (tag: Tag) => tag === dbData[prefix0xPubkey(validator.pubkey)].tag
           )
       );
@@ -472,7 +472,7 @@ async function getFeeRecipientByProtocol(
 ): Promise<string> {
   if (
     network === "gnosis" ||
-    !editableFeeRecipientTags.some((tag: Tag) => tag === tag)
+    !nonEditableFeeRecipientTags.some((tag: Tag) => tag === tag)
   )
     return userFeeRecipient;
 

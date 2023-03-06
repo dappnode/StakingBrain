@@ -34,14 +34,10 @@ export const tags = [
   "solo",
 ] as const;
 
-export const editableFeeRecipientTags = [
-  "obol",
-  "diva",
-  "ssv",
-  "stakewise",
-  "stakehouse",
-  "solo",
-] as const;
+export const nonEditableFeeRecipientTags = ["rocketpool"] as const;
+
+export type NonEditableFeeRecipientTags =
+  (typeof nonEditableFeeRecipientTags)[number];
 
 /**
  * Tag describes the protocol of the public key imported

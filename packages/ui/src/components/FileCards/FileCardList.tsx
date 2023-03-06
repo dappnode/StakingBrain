@@ -14,7 +14,7 @@ import "./FileCardList.css";
 import {
   Tag,
   shortenPubkey,
-  editableFeeRecipientTags,
+  nonEditableFeeRecipientTags,
 } from "@stakingbrain/common";
 
 export default function FileCardList(
@@ -113,7 +113,7 @@ export default function FileCardList(
                   setTags(newTags);
 
                   if (
-                    !editableFeeRecipientTags.some(
+                    nonEditableFeeRecipientTags.some(
                       (tag: Tag) => tag === event.target.value
                     )
                   ) {
@@ -136,9 +136,11 @@ export default function FileCardList(
               id={`outlined-fee-recipient-input-${index}`}
               label={
                 tags[index] === undefined ||
-                editableFeeRecipientTags.some((tag: Tag) => tag === tags[index])
-                  ? "Fee Recipient"
-                  : "For this protocol, fee recipient will be set automatically"
+                nonEditableFeeRecipientTags.some(
+                  (tag: Tag) => tag === tags[index]
+                )
+                  ? "For this protocol, fee recipient will be set automatically"
+                  : "Fee Recipient"
               }
               type="text"
               sx={{ marginTop: 2 }}
@@ -150,7 +152,7 @@ export default function FileCardList(
               error={isFeeRecipientFieldWrong(index)}
               helperText={getFeeRecipientFieldHelperText(index)}
               disabled={
-                !editableFeeRecipientTags.some(
+                nonEditableFeeRecipientTags.some(
                   (tag: Tag) => tag === tags[index]
                 )
               }
