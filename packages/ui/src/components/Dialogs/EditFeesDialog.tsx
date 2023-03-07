@@ -15,7 +15,6 @@ import {
   burnAddress,
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
-  Tag,
   areAllFeeRecipientsEditable,
 } from "@stakingbrain/common";
 import React from "react";
