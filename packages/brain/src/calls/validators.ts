@@ -49,17 +49,19 @@ export async function importValidators(
     for (const validator of postRequest.validatorsImportRequest) {
       const keystore = validator.keystore.toString();
       const pubkey = JSON.parse(keystore).pubkey;
-      let feeRecipient;
 
-      if (network !== "gnosis" && !isFeeRecipientEditable(validator.tag)) {
-        feeRecipient = await getNonEditableFeeRecipient(
-          pubkey,
-          validator.tag,
-          network
-        );
-      } else {
-        feeRecipient = validator.feeRecipient;
-      }
+      const feeRecipient =
+        network !== "gnosis" && !isFeeRecipientEditable(validator.tag)
+          ? await getNonEditableFeeRecipient(pubkey, validator.tag, network)
+          : validator.feeRecipient;
+
+      validators.push({
+        keystore,
+        password: validator.password,
+        tag: validator.tag,
+        feeRecipient,
+        pubkey,
+      });
 
       validators.push({
         keystore,
