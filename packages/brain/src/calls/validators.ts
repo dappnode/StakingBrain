@@ -12,9 +12,9 @@ import {
   ValidatorExitExecute,
   ValidatorExitGet,
   BeaconchainPoolVoluntaryExitsPostRequest,
-  nonEditableFeeRecipientTags,
   rocketPoolFeeRecipient,
   Network,
+  isFeeRecipientEditable,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -50,10 +50,7 @@ export async function importValidators(
       const pubkey = JSON.parse(keystore).pubkey;
       let feeRecipient;
 
-      if (
-        network !== "gnosis" &&
-        nonEditableFeeRecipientTags.some((tag: Tag) => tag === validator.tag)
-      ) {
+      if (network !== "gnosis" && !isFeeRecipientEditable(validator.tag)) {
         feeRecipient = await getNonEditableFeeRecipient(
           pubkey,
           validator.tag,
@@ -200,9 +197,7 @@ export async function updateValidators(
       customValidatorUpdateRequest.filter(
         (validator) =>
           dbData[prefix0xPubkey(validator.pubkey)] &&
-          !nonEditableFeeRecipientTags.some(
-            (tag: Tag) => tag === dbData[prefix0xPubkey(validator.pubkey)].tag
-          )
+          isFeeRecipientEditable(dbData[prefix0xPubkey(validator.pubkey)].tag)
       );
 
     if (editableValidators.length === 0) {

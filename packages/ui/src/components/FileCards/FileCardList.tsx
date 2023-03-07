@@ -14,7 +14,7 @@ import "./FileCardList.css";
 import {
   Tag,
   shortenPubkey,
-  nonEditableFeeRecipientTags,
+  isFeeRecipientEditable,
 } from "@stakingbrain/common";
 
 export default function FileCardList(
@@ -112,11 +112,7 @@ export default function FileCardList(
                   newTags[index] = event.target.value as Tag;
                   setTags(newTags);
 
-                  if (
-                    nonEditableFeeRecipientTags.some(
-                      (tag: Tag) => tag === event.target.value
-                    )
-                  ) {
+                  if (!isFeeRecipientEditable(event.target.value as Tag)) {
                     const newFeeRecipients = [...feeRecipients];
                     newFeeRecipients[index] = "";
                     setFeeRecipients(newFeeRecipients);
@@ -135,12 +131,9 @@ export default function FileCardList(
             <TextField
               id={`outlined-fee-recipient-input-${index}`}
               label={
-                tags[index] === undefined ||
-                nonEditableFeeRecipientTags.some(
-                  (tag: Tag) => tag === tags[index]
-                )
-                  ? "For this protocol, fee recipient will be set automatically"
-                  : "Fee Recipient"
+                tags[index] === undefined || isFeeRecipientEditable(tags[index])
+                  ? "Fee Recipient"
+                  : "For this protocol, fee recipient will be set automatically"
               }
               type="text"
               sx={{ marginTop: 2 }}
@@ -151,11 +144,7 @@ export default function FileCardList(
               }}
               error={isFeeRecipientFieldWrong(index)}
               helperText={getFeeRecipientFieldHelperText(index)}
-              disabled={
-                nonEditableFeeRecipientTags.some(
-                  (tag: Tag) => tag === tags[index]
-                )
-              }
+              disabled={!isFeeRecipientEditable(tags[index])}
             />
           )}
         </FormControl>

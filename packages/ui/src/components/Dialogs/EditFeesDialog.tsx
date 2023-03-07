@@ -15,8 +15,8 @@ import {
   burnAddress,
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
-  nonEditableFeeRecipientTags,
   Tag,
+  areAllFeeRecipientsEditable,
 } from "@stakingbrain/common";
 import React from "react";
 
@@ -104,14 +104,12 @@ export default function FeeRecipientDialog({
     }
   };
 
-  function areAllFeeRecipientsEditable() {
+  function areAllSelectedFeeRecipientsEditable() {
     const selectedTags = selectedRows
       .map((rowId) => rows[parseInt(rowId.toString())].tag)
       .flat();
 
-    return selectedTags.every(
-      (t) => !nonEditableFeeRecipientTags.some((tag: Tag) => tag === t)
-    );
+    return areAllFeeRecipientsEditable(selectedTags);
   }
 
   return (
@@ -157,7 +155,7 @@ export default function FeeRecipientDialog({
               }
               value={newFeeRecipient}
             />
-            {!areAllFeeRecipientsEditable() && (
+            {!areAllSelectedFeeRecipientsEditable() && (
               <Alert severity="info">
                 This will only apply to the editable fee recipients
               </Alert>

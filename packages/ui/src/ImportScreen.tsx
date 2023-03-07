@@ -28,7 +28,8 @@ import {
   isValidEcdsaPubkey,
   burnAddress,
   CustomImportRequest,
-  nonEditableFeeRecipientTags,
+  isFeeRecipientEditable,
+  areAllFeeRecipientsEditable,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
@@ -144,12 +145,6 @@ export default function ImportScreen(): JSX.Element {
     return false;
   }
 
-  function areAllFeeRecipientsEditable() {
-    return !tags.some((t) =>
-      nonEditableFeeRecipientTags.some((tag: Tag) => tag === t)
-    );
-  }
-
   return (
     <div>
       <Box
@@ -249,11 +244,7 @@ export default function ImportScreen(): JSX.Element {
                             Array(acceptedFiles.length).fill(e.target.value)
                           );
 
-                          if (
-                            nonEditableFeeRecipientTags.some(
-                              (tag: Tag) => tag === tags[0]
-                            )
-                          ) {
+                          if (!isFeeRecipientEditable(tags[0])) {
                             setFeeRecipients(
                               Array(acceptedFiles.length).fill("")
                             );
@@ -274,11 +265,9 @@ export default function ImportScreen(): JSX.Element {
                         id={`outlined-fee-recipient-input`}
                         label={
                           tags[0] === undefined ||
-                          nonEditableFeeRecipientTags.some(
-                            (tag: Tag) => tag === tags[0]
-                          )
-                            ? "For this protocol, fee recipient will be set automatically"
-                            : "Fee Recipient"
+                          isFeeRecipientEditable(tags[0])
+                            ? "Fee Recipient"
+                            : "For this protocol, fee recipient will be set automatically"
                         }
                         type="text"
                         sx={{ marginTop: 2 }}
@@ -290,9 +279,7 @@ export default function ImportScreen(): JSX.Element {
                         error={isFeeRecipientFieldWrong(0)}
                         helperText={getFeeRecipientFieldHelperText(0)}
                         value={feeRecipients[0]}
-                        disabled={nonEditableFeeRecipientTags.some(
-                          (tag: Tag) => tag === tags[0]
-                        )}
+                        disabled={!isFeeRecipientEditable(tags[0])}
                       />
                       {!areAllFeeRecipientsEditable() && !useSameTag && (
                         <Alert severity="info">
@@ -415,7 +402,7 @@ export default function ImportScreen(): JSX.Element {
                 if (tag.length === 0) return true;
 
                 //If tag is editable, check if fee recipient is valid
-                if (!nonEditableFeeRecipientTags.some((t) => t === tag)) {
+                if (isFeeRecipientEditable(tag)) {
                   return !isValidEcdsaPubkey(feeRecipients[index]);
                 }
                 return false;
