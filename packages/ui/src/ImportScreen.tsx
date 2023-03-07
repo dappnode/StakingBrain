@@ -281,7 +281,7 @@ export default function ImportScreen(): JSX.Element {
                         value={feeRecipients[0]}
                         disabled={!isFeeRecipientEditable(tags[0])}
                       />
-                      {!areAllFeeRecipientsEditable() && !useSameTag && (
+                      {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
                         <Alert severity="info">
                           This field will only apply to the editable fee
                           recipients
