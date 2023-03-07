@@ -15,6 +15,7 @@ import {
   rocketPoolFeeRecipient,
   Network,
   isFeeRecipientEditable,
+  NonEditableFeeRecipientTag,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -469,7 +470,7 @@ async function _getExitValidators(
 }
 async function getNonEditableFeeRecipient<T extends Omit<Network, "gnosis">>(
   pubkey: string,
-  tag: Tag,
+  tag: NonEditableFeeRecipientTag,
   network: T
 ): Promise<string> {
   switch (tag) {
