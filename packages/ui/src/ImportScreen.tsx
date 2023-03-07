@@ -13,6 +13,7 @@ import {
   MenuItem,
   FormControl,
   FormHelperText,
+  Alert,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
@@ -27,6 +28,8 @@ import {
   isValidEcdsaPubkey,
   burnAddress,
   CustomImportRequest,
+  isFeeRecipientEditable,
+  areAllFeeRecipientsEditable,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
@@ -228,11 +231,44 @@ export default function ImportScreen(): JSX.Element {
                       />
                     </>
                   )}
+                  {useSameTag && (
+                    <>
+                      <Select
+                        id="outlined-tag-input"
+                        label="Tag"
+                        value={tags[0]}
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) => {
+                          setTags(
+                            Array(acceptedFiles.length).fill(e.target.value)
+                          );
+
+                          if (!isFeeRecipientEditable(tags[0])) {
+                            setFeeRecipients(
+                              Array(acceptedFiles.length).fill("")
+                            );
+                          }
+                        }}
+                      >
+                        <MenuItem value={"solo"}>Solo</MenuItem>
+                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
+                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
+                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+                      </Select>
+                      <FormHelperText>Staking protocol</FormHelperText>
+                    </>
+                  )}
                   {useSameFeerecipient && (
                     <>
                       <TextField
                         id={`outlined-fee-recipient-input`}
-                        label="Fee Recipient"
+                        label={
+                          tags[0] === undefined ||
+                          isFeeRecipientEditable(tags[0])
+                            ? "Fee Recipient"
+                            : "For this protocol, fee recipient will be set automatically"
+                        }
                         type="text"
                         sx={{ marginTop: 2 }}
                         onChange={(e) => {
@@ -243,29 +279,14 @@ export default function ImportScreen(): JSX.Element {
                         error={isFeeRecipientFieldWrong(0)}
                         helperText={getFeeRecipientFieldHelperText(0)}
                         value={feeRecipients[0]}
+                        disabled={!isFeeRecipientEditable(tags[0])}
                       />
-                    </>
-                  )}
-                  {useSameTag && (
-                    <>
-                      <Select
-                        id="outlined-tag-input"
-                        label="Tag"
-                        value={tags[0]}
-                        type="text"
-                        sx={{ marginTop: 2 }}
-                        onChange={(e) =>
-                          setTags(
-                            Array(acceptedFiles.length).fill(e.target.value)
-                          )
-                        }
-                      >
-                        <MenuItem value={"solo"}>Solo</MenuItem>
-                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
-                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
-                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
-                      </Select>
-                      <FormHelperText>Staking protocol</FormHelperText>
+                      {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
+                        <Alert severity="info">
+                          This field will only apply to the editable fee
+                          recipients
+                        </Alert>
+                      )}
                     </>
                   )}
                 </FormControl>
@@ -377,10 +398,15 @@ export default function ImportScreen(): JSX.Element {
               acceptedFiles.length === 0 ||
               (!slashingFile && slashingProtectionIncluded) ||
               passwords.some((password) => password.length === 0) ||
-              !feeRecipients.some((feeRecipient) =>
-                isValidEcdsaPubkey(feeRecipient)
-              ) ||
-              tags.some((tag) => tag.length === 0)
+              tags.some((tag, index) => {
+                if (tag.length === 0) return true;
+
+                //If tag is editable, check if fee recipient is valid
+                if (isFeeRecipientEditable(tag)) {
+                  return !isValidEcdsaPubkey(feeRecipients[index]);
+                }
+                return false;
+              })
             }
             onClick={importKeystores}
             sx={{ borderRadius: 3 }}

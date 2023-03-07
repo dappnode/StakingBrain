@@ -1,4 +1,4 @@
-import { Tag, tags } from "../types/db/types.js";
+import { nonEditableFeeRecipientTags, Tag, tags } from "../types/db/types.js";
 
 export function isValidEcdsaPubkey(address: string): boolean {
   if (!address.match(/^0x[a-fA-F0-9]{40}$/)) return false;
@@ -13,6 +13,14 @@ export function isValidBlsPubkey(pubkey: string): boolean {
 export function isValidTag(tag: Tag): boolean {
   if (!tags.includes(tag)) return false;
   return true;
+}
+
+export function isFeeRecipientEditable(tag: Tag): boolean {
+  return !nonEditableFeeRecipientTags.some((t) => t === tag);
+}
+
+export function areAllFeeRecipientsEditable(tags: Tag[]): boolean {
+  return tags.every((tag) => isFeeRecipientEditable(tag));
 }
 
 /**

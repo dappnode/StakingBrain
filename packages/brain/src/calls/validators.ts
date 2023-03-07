@@ -12,10 +12,15 @@ import {
   ValidatorExitExecute,
   ValidatorExitGet,
   BeaconchainPoolVoluntaryExitsPostRequest,
+  rocketPoolFeeRecipient,
+  Network,
+  isFeeRecipientEditable,
+  NonEditableFeeRecipientTag,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
   brainDb,
+  network,
   signerApi,
   signerUrl,
   validatorApi,
@@ -40,17 +45,36 @@ export async function importValidators(
     // and prevents the cron from running while we are importing validators
     cron.stop();
 
-    const validators = postRequest.validatorsImportRequest.map((validator) => {
+    const validators = [];
+    for (const validator of postRequest.validatorsImportRequest) {
       const keystore = validator.keystore.toString();
-      const pubkey: string = JSON.parse(keystore).pubkey;
-      return {
+      const pubkey = JSON.parse(keystore).pubkey;
+
+      const feeRecipient =
+        network !== "gnosis" && !isFeeRecipientEditable(validator.tag)
+          ? await getNonEditableFeeRecipient(
+              pubkey,
+              validator.tag as NonEditableFeeRecipientTag,
+              network
+            )
+          : validator.feeRecipient;
+
+      validators.push({
         keystore,
         password: validator.password,
         tag: validator.tag,
-        feeRecipient: validator.feeRecipient,
+        feeRecipient,
         pubkey,
-      };
-    });
+      });
+
+      validators.push({
+        keystore,
+        password: validator.password,
+        tag: validator.tag,
+        feeRecipient,
+        pubkey,
+      });
+    }
 
     const validatorsToPost: {
       keystore: string;
@@ -173,8 +197,24 @@ export async function updateValidators(
     // and prevents the cron from running while we are importing validators
     cron.stop();
 
+    const dbData = brainDb.getData();
+
+    // Only update validators with editable fee recipient
+    const editableValidators: CustomValidatorUpdateRequest[] =
+      customValidatorUpdateRequest.filter(
+        (validator) =>
+          dbData[prefix0xPubkey(validator.pubkey)] &&
+          isFeeRecipientEditable(dbData[prefix0xPubkey(validator.pubkey)].tag)
+      );
+
+    if (editableValidators.length === 0) {
+      throw new Error(
+        "The fee recipient can't be updated for these validators"
+      );
+    }
+
     brainDb.updateValidators({
-      validators: customValidatorUpdateRequest.reduce((acc, validator) => {
+      validators: editableValidators.reduce((acc, validator) => {
         acc[validator.pubkey] = {
           feeRecipient: validator.feeRecipient,
         };
@@ -183,7 +223,7 @@ export async function updateValidators(
     });
 
     // Import feeRecipient on Validator API
-    for (const validator of customValidatorUpdateRequest)
+    for (const validator of editableValidators)
       await validatorApi
         .setFeeRecipient(validator.feeRecipient, validator.pubkey)
         .then(() => logger.debug(`Added feeRecipient to validator API`))
@@ -433,4 +473,16 @@ async function _getExitValidators(
   }
 
   return validatorsExit;
+}
+async function getNonEditableFeeRecipient<T extends Omit<Network, "gnosis">>(
+  pubkey: string,
+  tag: NonEditableFeeRecipientTag,
+  network: T
+): Promise<string> {
+  switch (tag) {
+    case "rocketpool":
+      return rocketPoolFeeRecipient;
+    default:
+      throw new Error("Fee recipient not found for tag: " + tag);
+  }
 }

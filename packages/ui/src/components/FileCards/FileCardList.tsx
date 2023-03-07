@@ -11,7 +11,11 @@ import {
 import { KeystoreInfo } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
 import "./FileCardList.css";
-import { Tag, shortenPubkey } from "@stakingbrain/common";
+import {
+  Tag,
+  shortenPubkey,
+  isFeeRecipientEditable,
+} from "@stakingbrain/common";
 
 export default function FileCardList(
   fileInfos: KeystoreInfo[],
@@ -95,21 +99,6 @@ export default function FileCardList(
               helperText={"Password to decrypt the keystore(s)"}
             />
           )}
-          {!useSameFeeRecipient && (
-            <TextField
-              id={`outlined-fee-recipient-input-${index}`}
-              label="Fee Recipient"
-              type="text"
-              sx={{ marginTop: 2 }}
-              onChange={(event) => {
-                const newFeeRecipients = [...feeRecipients];
-                newFeeRecipients[index] = event.target.value;
-                setFeeRecipients(newFeeRecipients);
-              }}
-              error={isFeeRecipientFieldWrong(index)}
-              helperText={getFeeRecipientFieldHelperText(index)}
-            />
-          )}
           {!useSameTag && (
             <>
               <Select
@@ -122,6 +111,12 @@ export default function FileCardList(
                   const newTags = [...tags];
                   newTags[index] = event.target.value as Tag;
                   setTags(newTags);
+
+                  if (!isFeeRecipientEditable(event.target.value as Tag)) {
+                    const newFeeRecipients = [...feeRecipients];
+                    newFeeRecipients[index] = "";
+                    setFeeRecipients(newFeeRecipients);
+                  }
                 }}
               >
                 <MenuItem value={"solo"}>Solo</MenuItem>
@@ -131,6 +126,26 @@ export default function FileCardList(
               </Select>
               <FormHelperText>Staking protocol</FormHelperText>
             </>
+          )}
+          {!useSameFeeRecipient && (
+            <TextField
+              id={`outlined-fee-recipient-input-${index}`}
+              label={
+                tags[index] === undefined || isFeeRecipientEditable(tags[index])
+                  ? "Fee Recipient"
+                  : "For this protocol, fee recipient will be set automatically"
+              }
+              type="text"
+              sx={{ marginTop: 2 }}
+              onChange={(event) => {
+                const newFeeRecipients = [...feeRecipients];
+                newFeeRecipients[index] = event.target.value;
+                setFeeRecipients(newFeeRecipients);
+              }}
+              error={isFeeRecipientFieldWrong(index)}
+              helperText={getFeeRecipientFieldHelperText(index)}
+              disabled={!isFeeRecipientEditable(tags[index])}
+            />
           )}
         </FormControl>
       )}
