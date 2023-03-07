@@ -52,7 +52,11 @@ export async function importValidators(
 
       const feeRecipient =
         network !== "gnosis" && !isFeeRecipientEditable(validator.tag)
-          ? await getNonEditableFeeRecipient(pubkey, validator.tag, network)
+          ? await getNonEditableFeeRecipient(
+              pubkey,
+              validator.tag as NonEditableFeeRecipientTag,
+              network
+            )
           : validator.feeRecipient;
 
       validators.push({
