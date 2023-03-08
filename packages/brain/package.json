@@ -23,6 +23,7 @@
     "clean:ln": "rimraf ./uiBuild"
   },
   "dependencies": {
+    "@blockswaplab/lsd-wizard": "^1.7.0",
     "@stakingbrain/common": "^0.1.0",
     "ajv": "^8.12.0",
     "cors": "^2.8.5",
