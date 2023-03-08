@@ -16,3 +16,8 @@ export type KeystoreInfo = {
   file: File;
   pubkey: string;
 };
+
+export interface TagSelectOption {
+  value: Tag;
+  label: string;
+}
