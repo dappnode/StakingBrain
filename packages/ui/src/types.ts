@@ -1,3 +1,5 @@
+import { Tag } from "@stakingbrain/common";
+
 export enum ImportStatus {
   Imported = "Imported",
   NotImported = "Not imported",
