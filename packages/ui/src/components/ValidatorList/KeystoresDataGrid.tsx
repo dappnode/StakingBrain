@@ -307,14 +307,16 @@ export default function KeystoresDataGrid({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Exit validators">
-            <IconButton
-              disabled={!areRowsSelected}
-              onClick={() => setExitOpen(true)}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
+          {network === "prater" && (
+            <Tooltip title="Exit validators">
+              <IconButton
+                disabled={!areRowsSelected}
+                onClick={() => setExitOpen(true)}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          )}
         </div>
       </div>
       <div style={{ height: 400, width: "100%" }}>
