@@ -16,6 +16,9 @@ import {
   Network,
   isFeeRecipientEditable,
   NonEditableFeeRecipientTag,
+  WithdrawalCredentialsFormat,
+  isValidEcdsaPubkey,
+  isValidBlsPubkey,
 } from "@stakingbrain/common";
 import {
   beaconchainApi,
@@ -319,17 +322,41 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
   });
 
   const validators: CustomValidatorGetResponse[] = [];
-  for (const [pubkey, { tag, feeRecipient }] of Object.entries(data))
+  for (const [pubkey, { tag, feeRecipient }] of Object.entries(data)) {
+    let format: WithdrawalCredentialsFormat,
+      withdrawalAddress = "";
+    try {
+      withdrawalAddress = (
+        await beaconchainApi.getValidatorFromState({
+          state: "head",
+          pubkey,
+        })
+      ).data.validator.withdrawal_credentials;
+      format = isValidEcdsaPubkey(withdrawalAddress)
+        ? "ecdsa"
+        : isValidBlsPubkey(pubkey)
+        ? "bls"
+        : "unknown";
+    } catch (e) {
+      logger.error(e);
+      format = "error";
+    }
+
     validators.push({
       pubkey,
       tag,
       feeRecipient,
+      withdrawalCredentials: {
+        address: withdrawalAddress,
+        format,
+      },
       validatorImported: validatorPubkeys.includes(pubkey),
       signerImported: signerPubkeys.includes(pubkey),
       validatorFeeRecipientCorrect: validatorsFeeRecipients.some(
         (feeRecipient) => feeRecipient === feeRecipient
       ),
     });
+  }
 
   return validators;
 }

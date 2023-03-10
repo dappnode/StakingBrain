@@ -120,6 +120,7 @@ export default function KeystoresDataGrid({
       : "",
     feeRecipient: row.feeRecipient,
     tag: row.tag,
+    withdrawalCredentials: row.withdrawalCredentials,
     pubkeyInValidator: row.validatorImported,
     pubkeyInSigner: row.signerImported,
     feeRecipientImported: row.validatorFeeRecipientCorrect,
@@ -138,8 +139,7 @@ export default function KeystoresDataGrid({
         sortable: false,
         align: "center",
         headerAlign: "center",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        renderCell: (rowData: any) => (
+        renderCell: (rowData) => (
           <a
             style={{ color: "grey" }}
             href={rowData.row.beaconcha_url}
@@ -151,6 +151,30 @@ export default function KeystoresDataGrid({
         ),
         headerClassName: "tableHeader",
         width: 60,
+      },
+      {
+        field: "isWithdrawalEcdsa",
+        headerName: "WD is ECDSA",
+        description: "Weather the withdrawal address is ECDSA or not",
+        disableReorder: true,
+        disableColumnMenu: true,
+        disableExport: true,
+        sortable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (rowData) => (
+          <div>
+            {rowData.row.withdrawalCredentials.format === "ecdsa" ? (
+              <CheckCircleIcon style={{ color: "green" }} />
+            ) : rowData.row.withdrawalCredentials.format === "bls" ? (
+              <CancelIcon style={{ color: "red" }} />
+            ) : (
+              <HelpIcon style={{ color: "grey" }} />
+            )}
+          </div>
+        ),
+        headerClassName: "tableHeader",
+        width: 120,
       },
       {
         field: "pubkeyInSigner",
@@ -227,7 +251,6 @@ export default function KeystoresDataGrid({
         ),
       }
     );
-
 
   async function getValidatorSummaryURL() {
     if (!beaconchaApiParamsMap?.get(network)) {
