@@ -12,7 +12,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HelpIcon from "@mui/icons-material/Help";
-import { CircularProgress, IconButton, Tooltip } from "@mui/material";
+import { Chip, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { Box } from "@mui/system";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -120,6 +120,7 @@ export default function KeystoresDataGrid({
       : "",
     feeRecipient: row.feeRecipient,
     tag: row.tag,
+    withdrawalCredentials: row.withdrawalCredentials,
     pubkeyInValidator: row.validatorImported,
     pubkeyInSigner: row.signerImported,
     feeRecipientImported: row.validatorFeeRecipientCorrect,
@@ -138,8 +139,7 @@ export default function KeystoresDataGrid({
         sortable: false,
         align: "center",
         headerAlign: "center",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        renderCell: (rowData: any) => (
+        renderCell: (rowData) => (
           <a
             style={{ color: "grey" }}
             href={rowData.row.beaconcha_url}
@@ -148,6 +148,22 @@ export default function KeystoresDataGrid({
           >
             <LinkIcon />
           </a>
+        ),
+        headerClassName: "tableHeader",
+        width: 60,
+      },
+      {
+        field: "withdrawalFormat",
+        headerName: "Withdrawal Format",
+        description: "Withdrawal Address format of the validator",
+        disableReorder: true,
+        disableColumnMenu: true,
+        disableExport: true,
+        sortable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (rowData) => (
+          <Chip label={rowData.row.withdrawalCredentials.format} />
         ),
         headerClassName: "tableHeader",
         width: 60,
@@ -227,7 +243,6 @@ export default function KeystoresDataGrid({
         ),
       }
     );
-
 
   async function getValidatorSummaryURL() {
     if (!beaconchaApiParamsMap?.get(network)) {

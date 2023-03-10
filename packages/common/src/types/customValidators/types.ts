@@ -22,7 +22,7 @@ export interface CustomValidatorGetResponse {
   pubkey: string;
   tag: Tag;
   feeRecipient: string;
-  withdrawalCredentials?: {
+  withdrawalCredentials: {
     format: WithdrawalCredentialsFormat;
     address: string;
   };
