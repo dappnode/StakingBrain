@@ -16,10 +16,16 @@ export interface CustomValidatorUpdateRequest {
   pubkey: string;
   feeRecipient: string;
 }
+
+export type WithdrawalCredentialsFormat = "ecdsa" | "bls" | "unknown" | "error";
 export interface CustomValidatorGetResponse {
   pubkey: string;
   tag: Tag;
   feeRecipient: string;
+  withdrawalCredentials?: {
+    format: WithdrawalCredentialsFormat;
+    address: string;
+  };
   signerImported?: boolean;
   validatorImported?: boolean;
   validatorFeeRecipientCorrect?: boolean;
