@@ -12,7 +12,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HelpIcon from "@mui/icons-material/Help";
-import { Chip, CircularProgress, IconButton, Tooltip } from "@mui/material";
+import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { Box } from "@mui/system";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -153,9 +153,9 @@ export default function KeystoresDataGrid({
         width: 60,
       },
       {
-        field: "withdrawalFormat",
-        headerName: "Withdrawal Format",
-        description: "Withdrawal Address format of the validator",
+        field: "isWithdrawalEcdsa",
+        headerName: "WD is ECDSA",
+        description: "Weather the withdrawal address is ECDSA or not",
         disableReorder: true,
         disableColumnMenu: true,
         disableExport: true,
@@ -163,10 +163,18 @@ export default function KeystoresDataGrid({
         align: "center",
         headerAlign: "center",
         renderCell: (rowData) => (
-          <Chip label={rowData.row.withdrawalCredentials.format} />
+          <div>
+            {rowData.row.withdrawalCredentials.format === "ecdsa" ? (
+              <CheckCircleIcon style={{ color: "green" }} />
+            ) : rowData.row.withdrawalCredentials.format === "bls" ? (
+              <CancelIcon style={{ color: "red" }} />
+            ) : (
+              <HelpIcon style={{ color: "grey" }} />
+            )}
+          </div>
         ),
         headerClassName: "tableHeader",
-        width: 60,
+        width: 120,
       },
       {
         field: "pubkeyInSigner",
