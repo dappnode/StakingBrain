@@ -150,20 +150,14 @@ export default function ImportScreen({
     return false;
   }
 
-  function getTagSelectOptions(network: Network): TagSelectOption[] {
-    if (network === "gnosis") {
-      return [{ value: "solo", label: "Solo" }];
-    } else {
-      return [
-        { value: "solo", label: "Solo" },
-        { value: "rocketpool", label: "Rocketpool" },
-        { value: "stakehouse", label: "StakeHouse" },
-        { value: "stakewise", label: "Stakewise" },
-      ];
-    }
-  }
-
-  const tagSelectOptions = getTagSelectOptions(network);
+  const tagSelectOptions: TagSelectOption[] = network === "gnosis"
+  ? [{ value: "solo", label: "Solo" }]
+  : [
+      { value: "solo", label: "Solo" },
+      { value: "rocketpool", label: "Rocketpool" },
+      { value: "stakehouse", label: "StakeHouse" },
+      { value: "stakewise", label: "Stakewise" },
+    ];
 
   return (
     <div>
