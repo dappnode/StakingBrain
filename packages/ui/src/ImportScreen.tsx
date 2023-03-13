@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
 import { useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
-import { ImportStatus, KeystoreInfo } from "./types";
+import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
 import ImportDialog from "./components/Dialogs/ImportDialog";
 import {
@@ -30,13 +30,18 @@ import {
   CustomImportRequest,
   isFeeRecipientEditable,
   areAllFeeRecipientsEditable,
+  Network,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
 import { extractPubkey } from "./utils/dataUtils";
 
-export default function ImportScreen(): JSX.Element {
+export default function ImportScreen({
+  network,
+}: {
+  network: Network;
+}): JSX.Element {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
@@ -145,6 +150,15 @@ export default function ImportScreen(): JSX.Element {
     return false;
   }
 
+  const tagSelectOptions: TagSelectOption[] = network === "gnosis"
+  ? [{ value: "solo", label: "Solo" }]
+  : [
+      { value: "solo", label: "Solo" },
+      { value: "rocketpool", label: "Rocketpool" },
+      { value: "stakehouse", label: "StakeHouse" },
+      { value: "stakewise", label: "Stakewise" },
+    ];
+
   return (
     <div>
       <Box
@@ -251,10 +265,11 @@ export default function ImportScreen(): JSX.Element {
                           }
                         }}
                       >
-                        <MenuItem value={"solo"}>Solo</MenuItem>
-                        <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
-                        <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
-                        <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+                        {tagSelectOptions.map((option) => (
+                          <MenuItem value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
                     </>
@@ -307,7 +322,8 @@ export default function ImportScreen(): JSX.Element {
             setFeeRecipients,
             useSameFeerecipient,
             getFeeRecipientFieldHelperText,
-            isFeeRecipientFieldWrong
+            isFeeRecipientFieldWrong,
+            tagSelectOptions
           )}
 
           <Box

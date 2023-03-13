@@ -121,8 +121,11 @@ function App(): JSX.Element {
                   />
                 }
               />
-              <Route path="import" element={<ImportScreen />} />
-            </Routes>
+              <Route
+                path="import"
+                element={<ImportScreen network={stakerConfig.network} />}
+              />            
+              </Routes>
           </BrowserRouter>
         )
       )}

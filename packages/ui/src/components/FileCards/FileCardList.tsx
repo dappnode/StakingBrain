@@ -8,7 +8,7 @@ import {
   FormControl,
   FormHelperText,
 } from "@mui/material";
-import { KeystoreInfo } from "../../types";
+import { KeystoreInfo, TagSelectOption } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
 import "./FileCardList.css";
 import {
@@ -30,7 +30,8 @@ export default function FileCardList(
   setFeeRecipients: (feeRecipients: string[]) => void,
   useSameFeeRecipient: boolean,
   getFeeRecipientFieldHelperText: (index: number) => string,
-  isFeeRecipientFieldWrong: (index: number) => boolean
+  isFeeRecipientFieldWrong: (index: number) => boolean,
+  tagSelectOptions: TagSelectOption[]
 ): JSX.Element[] {
   const removeFileFromList = (
     fileInfo: KeystoreInfo,
@@ -119,10 +120,11 @@ export default function FileCardList(
                   }
                 }}
               >
-                <MenuItem value={"solo"}>Solo</MenuItem>
-                <MenuItem value={"rocketpool"}>Rocketpool</MenuItem>
-                <MenuItem value={"stakehouse"}>StakeHouse</MenuItem>
-                <MenuItem value={"stakewise"}>Stakewise</MenuItem>
+                {tagSelectOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
               <FormHelperText>Staking protocol</FormHelperText>
             </>

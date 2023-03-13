@@ -1,3 +1,5 @@
+import { Tag } from "@stakingbrain/common";
+
 export enum ImportStatus {
   Imported = "Imported",
   NotImported = "Not imported",
@@ -16,3 +18,8 @@ export type KeystoreInfo = {
   file: File;
   pubkey: string;
 };
+
+export interface TagSelectOption {
+  value: Tag;
+  label: string;
+}
