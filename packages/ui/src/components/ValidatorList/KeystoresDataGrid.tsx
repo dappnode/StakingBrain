@@ -154,8 +154,8 @@ export default function KeystoresDataGrid({
       },
       {
         field: "isWithdrawalEcdsa",
-        headerName: "WD is ECDSA",
-        description: "Weather the withdrawal address is ECDSA or not",
+        headerName: "WDA is ECDSA",
+        description: "Whether the withdrawal address is ECDSA or not",
         disableReorder: true,
         disableColumnMenu: true,
         disableExport: true,
