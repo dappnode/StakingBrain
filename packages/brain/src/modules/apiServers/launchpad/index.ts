@@ -2,8 +2,8 @@ import express from "express";
 import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
 import http from "node:http";
-import { importValidators } from "../../../calls/validators.js";
 import { params } from "../../../params.js";
+import { importValidators } from "../../../calls/importValidators.js";
 
 export function startLaunchpadApi(): http.Server {
   const app = express();
