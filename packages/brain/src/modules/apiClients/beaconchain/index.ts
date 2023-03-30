@@ -4,6 +4,7 @@ import {
   BeaconchainPoolVoluntaryExitsPostRequest,
   BeaconchainForkFromStateGetResponse,
   BeaconchainGenesisGetResponse,
+  BeaconchainBlsToExecutionChangesGetResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 import path from "path";
@@ -95,6 +96,22 @@ export class Beaconchain extends StandardApi {
           pubkey
         )
       )) as BeaconchainValidatorFromStateGetResponse;
+    } catch (e) {
+      e.message += `Error getting (GET) validator from beaconchain. `;
+      throw e;
+    }
+  }
+  /**
+   * Retrieves BLS to execution changes known by the node but not necessarily incorporated into any block
+   * @see https://consensys.github.io/teku/#tag/Beacon/operation/getBlsToExecutionChanges
+   * @see https://github.com/ethereum/beacon-APIs/blob/f087fbf2764e657578a6c29bdf0261b36ee8db1e/beacon-node-oapi.yaml#L128
+   */
+  public async getBlsToExectionChanges(): Promise<BeaconchainBlsToExecutionChangesGetResponse> {
+    try {
+      return await this.request(
+        "GET",
+        path.join(this.beaconchainEndpoint, "pool", "bls_to_execution_changes")
+      ) as BeaconchainBlsToExecutionChangesGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) validator from beaconchain. `;
       throw e;
