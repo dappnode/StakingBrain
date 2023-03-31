@@ -1,8 +1,8 @@
 import {
   CustomValidatorGetResponse,
   WithdrawalCredentialsFormat,
-  isValidEcdsaPubkey,
-  isValidBlsPubkey,
+  isValidWithdrawableBlsAddress,
+  isValidNonWithdrawableBlsAddress,
 } from "@stakingbrain/common";
 import { brainDb, validatorApi, signerApi, beaconchainApi } from "../index.js";
 import logger from "../modules/logger/index.js";
@@ -49,14 +49,15 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
           pubkey,
         })
       ).data.validator.withdrawal_credentials;
-      format = isValidEcdsaPubkey(withdrawalAddress)
+
+      format = isValidWithdrawableBlsAddress(withdrawalAddress)
         ? "ecdsa"
-        : isValidBlsPubkey(pubkey)
+        : isValidNonWithdrawableBlsAddress(withdrawalAddress)
         ? "bls"
         : "unknown";
     } catch (e) {
       logger.error(e);
-      format = "error";
+      format = "unknown";
     }
 
     validators.push({

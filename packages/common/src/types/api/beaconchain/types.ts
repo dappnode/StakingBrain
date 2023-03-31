@@ -35,17 +35,6 @@ export interface BeaconchainValidatorFromStateGetResponse {
   };
 }
 
-export interface BeaconchainBlsToExecutionChangesGetResponse {
-  data: {
-    message: {
-      validator_index: string;
-      from_bls_pubkey: string;
-      to_execution_address: string;
-    },
-    signature: string;
-  }[];
-}
-
 export interface BeaconchainPoolVoluntaryExitsPostRequest {
   message: {
     epoch: string;
