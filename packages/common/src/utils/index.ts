@@ -9,11 +9,11 @@ export function isValidBlsPubkey(pubkey: string): boolean {
 }
 
 export function isValidWithdrawableBlsAddress(address: string): boolean {
-  return /^0x01[a-fA-F0-9]{64}$/.test(address);
+  return /^0x01[0]{22}[a-fA-F0-9]{40}$/.test(address);
 }
 
 export function isValidNonWithdrawableBlsAddress(address: string): boolean {
-  return /^0x00[a-fA-F0-9]{64}$/.test(address);
+  return /^0x00[a-fA-F0-9]{62}$/.test(address);
 }
 
 export function isValidTag(tag: Tag): boolean {
