@@ -57,7 +57,7 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
         : "unknown";
     } catch (e) {
       logger.error(e);
-      format = "unknown";
+      format = "error";
     }
 
     validators.push({
