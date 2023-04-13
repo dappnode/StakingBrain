@@ -185,7 +185,7 @@ async function getNonEditableFeeRecipient<T extends Omit<Network, "gnosis">>(
     case "rocketpool":
       return rocketPoolFeeRecipient;
     case "stakehouse":
-      new StakeHouseSDK().getLsdFeeRecipient(pubkey);
+      return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
     default:
       throw new Error("Fee recipient not found for tag: " + tag);
   }
