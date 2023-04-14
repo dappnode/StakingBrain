@@ -3,7 +3,7 @@ import {
   ValidatorExitExecute,
   ValidatorExitGet,
 } from "@stakingbrain/common";
-import { beaconchainApi, validatorApi, signerApi, brainDb } from "../index.js";
+import { beaconchainApi, signerApi } from "../index.js";
 import logger from "../modules/logger/index.js";
 
 /**
@@ -61,24 +61,6 @@ export async function exitValidators({
       });
     }
   }
-
-  const exitedValidatorsPubkeys = exitValidatorsResponses
-    .filter((validator) => validator.status.exited === true)
-    .map((validator) => validator.pubkey);
-
-  // Delete the validator from the validator API
-  await validatorApi
-    .deleteRemoteKeys({ pubkeys: exitedValidatorsPubkeys })
-    .then(() => logger.debug(`Deleted pubkeys in validator API`))
-    .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
-
-  // Delete the validator from the web3signer API
-  await signerApi
-    .deleteKeystores({ pubkeys: exitedValidatorsPubkeys })
-    .then(() => logger.debug(`Deleted pubkeys in web3signer API`));
-
-  // Delete the validator from the brain db
-  brainDb.deleteValidators(exitedValidatorsPubkeys);
 
   return exitValidatorsResponses;
 }
