@@ -288,6 +288,10 @@ export default function KeystoresDataGrid({
     }
   }
 
+  function areAllSelectedRowsSolo() {
+    return selectedRows.every((row) => rows[row as number].tag === "solo");
+  }
+
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -332,7 +336,7 @@ export default function KeystoresDataGrid({
 
           <Tooltip title="Exit validators">
             <IconButton
-              disabled={!areRowsSelected}
+              disabled={!areRowsSelected || !areAllSelectedRowsSolo()}
               onClick={() => setExitOpen(true)}
             >
               <LogoutIcon />
