@@ -334,7 +334,7 @@ export default function KeystoresDataGrid({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Exit validators">
+          <Tooltip title="Exit validators (Only for solo stakers)">
             <IconButton
               disabled={!areRowsSelected || !areAllSelectedRowsSolo()}
               onClick={() => setExitOpen(true)}
