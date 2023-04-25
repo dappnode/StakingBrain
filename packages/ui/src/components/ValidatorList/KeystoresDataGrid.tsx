@@ -288,8 +288,10 @@ export default function KeystoresDataGrid({
     }
   }
 
-  function areAllSelectedRowsSolo() {
-    return selectedRows.every((row) => rows[row as number].tag === "solo");
+  function areAllSelectedRowsExitable() {
+    return selectedRows.every(
+      (row) => rows[row as number].tag !== "rocketpool"
+    );
   }
 
   return (
@@ -334,9 +336,9 @@ export default function KeystoresDataGrid({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Exit validators (Only for solo stakers)">
+          <Tooltip title="Exit validators (Not allowed for Rocket Pool)">
             <IconButton
-              disabled={!areRowsSelected || !areAllSelectedRowsSolo()}
+              disabled={!areRowsSelected || !areAllSelectedRowsExitable()}
               onClick={() => setExitOpen(true)}
             >
               <LogoutIcon />
