@@ -336,7 +336,7 @@ export default function KeystoresDataGrid({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Exit validators (Not allowed for Rocket Pool)">
+          <Tooltip title="Exit validators (In order to exit a Rocket Pool validator, please go to the Rocket Pool package UI)">
             <IconButton
               disabled={!areRowsSelected || !areAllSelectedRowsExitable()}
               onClick={() => setExitOpen(true)}
