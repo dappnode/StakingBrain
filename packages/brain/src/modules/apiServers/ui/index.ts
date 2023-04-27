@@ -25,7 +25,13 @@ export function startUiServer(uiBuildPath: string): http.Server {
       "rpc",
       async (rpcPayload: RpcPayload, callback: (res: RpcResponse) => void) => {
         logger.debug(`Received rpc call`);
-        logger.debug(rpcPayload);
+
+        // Silent logger for importValidators call (safety reasons and too much noise)
+        if (rpcPayload.method === "importValidators") {
+          logger.debug(`Call to ${rpcPayload.method} (silent logger)`);
+        } else {
+          logger.debug(rpcPayload);
+        }
 
         if (typeof callback !== "function")
           return logger.error("JSON RPC over WS req without cb");
