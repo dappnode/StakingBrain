@@ -3,14 +3,17 @@ import { GridSelectionModel } from "@mui/x-data-grid";
 import {
   CustomValidatorGetResponse,
   shortenPubkey,
+  Network,
 } from "@stakingbrain/common";
 
 export default function ExitWarning({
   selectedRows,
   rows,
+  network
 }: {
   selectedRows: GridSelectionModel;
   rows: CustomValidatorGetResponse[];
+  network: Network
 }): JSX.Element {
   return (
     <>
@@ -29,6 +32,12 @@ export default function ExitWarning({
         the validator(s) staked funds after a period of time known as the
         withdrawal period.
       </Alert>
+      { network === "gnosis" && (
+        <Alert severity="error">
+        Withdrawals are not enabled in Gnosis Chain yet. If you exit your validators
+        you will not be able to retrieve your funds until they are available.
+        </Alert>
+      )}
     </>
   );
 }
