@@ -288,6 +288,12 @@ export default function KeystoresDataGrid({
     }
   }
 
+  function areAllSelectedRowsExitable() {
+    return selectedRows.every(
+      (row) => rows[row as number].tag !== "rocketpool"
+    );
+  }
+
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -330,9 +336,9 @@ export default function KeystoresDataGrid({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Exit validators">
+          <Tooltip title="Exit validators (In order to exit a Rocket Pool validator, please go to the Rocket Pool package UI)">
             <IconButton
-              disabled={!areRowsSelected}
+              disabled={!areRowsSelected || !areAllSelectedRowsExitable()}
               onClick={() => setExitOpen(true)}
             >
               <LogoutIcon />
