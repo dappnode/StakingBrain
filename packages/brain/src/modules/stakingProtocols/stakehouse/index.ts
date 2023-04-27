@@ -17,7 +17,9 @@ export class StakeHouseSDK {
 
     if (!validatorDetails || !validatorDetails.feeRecipient)
       throw new Error(
-        `Cannot get StakeHouse fee recipient for pubkey ${pubkey}: Not found. Your execution client might be out of sync.`
+        `Cannot get StakeHouse fee recipient for pubkey ${pubkey}: Not found. 
+          Your execution or consensus clients might be out of sync. 
+          Also, check that the pubkey you entered corresponds to a validator registered in StakeHouse`
       );
 
     return validatorDetails.feeRecipient;
