@@ -19,6 +19,7 @@ import {
   brainDb,
 } from "../index.js";
 import logger from "../modules/logger/index.js";
+import { StakeHouseSDK } from "../modules/stakingProtocols/stakehouse/index.js";
 
 /**
  * Import keystores:
@@ -183,6 +184,8 @@ async function getNonEditableFeeRecipient<T extends Omit<Network, "gnosis">>(
   switch (tag) {
     case "rocketpool":
       return rocketPoolFeeRecipient;
+    case "stakehouse":
+      return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
     default:
       throw new Error("Fee recipient not found for tag: " + tag);
   }

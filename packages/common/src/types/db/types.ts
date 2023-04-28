@@ -34,7 +34,10 @@ export const tags = [
   "solo",
 ] as const;
 
-export const nonEditableFeeRecipientTags = ["rocketpool"] as const;
+export const nonEditableFeeRecipientTags = [
+  "rocketpool",
+  "stakehouse",
+] as const;
 
 export type NonEditableFeeRecipientTag =
   (typeof nonEditableFeeRecipientTags)[number];
