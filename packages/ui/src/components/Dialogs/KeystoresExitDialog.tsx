@@ -18,6 +18,7 @@ import {
   CustomValidatorGetResponse,
   ValidatorExitExecute,
   shortenPubkey,
+  Network
 } from "@stakingbrain/common";
 import { api } from "../../api";
 import { SlideTransition } from "./Transitions";
@@ -29,12 +30,14 @@ export default function KeystoresExitDialog({
   setSelectedRows,
   open,
   setOpen,
+  network,
 }: {
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
   setSelectedRows: (selectedRows: GridSelectionModel) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  network: Network
 }): JSX.Element {
   const [validatorsExitResponse, setValidatorsExitResponse] =
     useState<ValidatorExitExecute[]>();
@@ -144,7 +147,7 @@ export default function KeystoresExitDialog({
                     id="alert-dialog-description"
                     component={"span"}
                   >
-                    <ExitWarning rows={rows} selectedRows={selectedRows} />
+                    <ExitWarning rows={rows} selectedRows={selectedRows} network={network} />
                   </DialogContentText>
 
                   <br />
