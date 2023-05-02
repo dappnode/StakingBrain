@@ -33,7 +33,7 @@ export default function ExitWarning({
         withdrawal period.
       </Alert>
       { network === "gnosis" && (
-        <Alert severity="error">
+        <Alert severity="warning">
         Withdrawals are not enabled in Gnosis Chain yet. If you exit your validators
         you will not be able to retrieve your funds until they are available.
         </Alert>
