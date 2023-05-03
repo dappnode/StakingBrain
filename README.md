@@ -20,7 +20,7 @@ The new functionalities that the StakingBrain brings are:
 
 ## To develop
 
-1. Connect to your DAppNode (which needs to be running an instance of web3signer and validator in a network (e.g. Prater)
+1. Connect to your DAppNode (which needs to be running an instance of web3signer and validator in a network (e.g. Prater))
 
 2. Clone the repo
 ```
@@ -53,8 +53,8 @@ http://localhost/?network=prater&signerUrl=http://web3signer.web3signer-prater.d
 ```
 yarn
 yarn build
-docker-compose -f docker-compose build
-docker-compose -f docker-compose up -d
+docker-compose -f docker-compose-dev.yml build --no-cache
+docker-compose -f docker-compose-dev.yml up -d
 docker logs -f brain (To watch status)
 ```
 
@@ -67,3 +67,19 @@ docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' brai
 ```
 http://<obtainedIP>
 ```
+
+### Recomendations for developing
+
+1. Access your dappnode using SSH and stop the brain container of your prater web3signer:
+
+```   
+docker ps | grep brain
+docker stop <brainContainerName>
+```
+
+_Note: If you don't stop the brain container the cron will remove your keystores every minute._ 
+
+2. Download the SSH plugin in Visual Studio to develop in real time.
+
+_Note: You'll need to install your VS plugins in the dappnode to use them._ 
+
