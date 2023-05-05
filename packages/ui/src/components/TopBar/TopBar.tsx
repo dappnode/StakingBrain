@@ -16,7 +16,7 @@ export default function TopBar({
   network?: Network;
 }): JSX.Element {
   return (
-    <AppBar position="static">
+    <AppBar position="sticky">
       <ToolBar
         network={network}
         mode={mode}
