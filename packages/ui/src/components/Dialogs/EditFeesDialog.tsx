@@ -111,6 +111,16 @@ export default function FeeRecipientDialog({
     return areAllFeeRecipientsEditable(selectedTags);
   }
 
+  function isNewFrSameAsAllOldFrs(): boolean {
+    const oldFeeRecipients = selectedRows
+      .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
+      .flat();
+
+    console.log(oldFeeRecipients);
+
+    return oldFeeRecipients.every((fr) => fr === newFeeRecipient);
+  }
+
   return (
     <Dialog
       disableEscapeKeyDown={true}
@@ -159,6 +169,12 @@ export default function FeeRecipientDialog({
                 This will only apply to the editable fee recipients
               </Alert>
             )}
+            {isNewFrSameAsAllOldFrs() && (
+              <Alert severity="info">
+                This fee recipient has already been set to all selected
+                validators
+              </Alert>
+            )}
             {successMessage && (
               <Alert severity="success" variant="filled" sx={{ marginTop: 2 }}>
                 {successMessage}
@@ -180,7 +196,8 @@ export default function FeeRecipientDialog({
                 sx={{ margin: 2, borderRadius: 2 }}
                 disabled={
                   !isValidEcdsaPubkey(newFeeRecipient) ||
-                  newFeeRecipient === burnAddress
+                  newFeeRecipient === burnAddress ||
+                  isNewFrSameAsAllOldFrs()
                 }
               >
                 Apply changes
