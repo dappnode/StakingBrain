@@ -7,6 +7,7 @@ import {
   Network,
   CustomValidatorGetResponse,
   StakerConfig as StakerConfigType,
+  CustomValidatorUpdateRequest,
 } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
@@ -14,6 +15,7 @@ import { api } from "../../api";
 import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
 import { getSmoothingPoolAddress } from "../../utils/addresses";
+import SetSmoothingPoolDialog from "../Dialogs/SetSmoothingPoolDialog";
 
 export default function ValidatorList({
   stakerConfig,
@@ -25,6 +27,7 @@ export default function ValidatorList({
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFeesOpen, setEditFeesOpen] = useState(false);
+  const [mevSpOpen, setSetMevSpOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validatorsGet, setValidatorsGet] =
@@ -33,6 +36,8 @@ export default function ValidatorList({
   const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
     BeaconchaUrlBuildingStatus.NotStarted
   );
+  const [validatorToSubscribeConfig, setValidatorToSubscribeSpConfig] =
+    useState<CustomValidatorUpdateRequest>();
 
   const mevSpFeeRecipient = getSmoothingPoolAddress(stakerConfig.network);
 
@@ -136,36 +141,39 @@ export default function ValidatorList({
                 </Alert>
               )}
 
-              {deleteOpen && (
-                <KeystoresDeleteDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  open={deleteOpen}
-                  setOpen={setDeleteOpen}
+              <KeystoresDeleteDialog
+                rows={validatorsGet}
+                selectedRows={selectedRows}
+                setSelectedRows={setSelectedRows}
+                open={deleteOpen}
+                setOpen={setDeleteOpen}
+              />
+
+              <EditFeesDialog
+                rows={validatorsGet}
+                selectedRows={selectedRows}
+                open={editFeesOpen}
+                setOpen={setEditFeesOpen}
+                mevSpAddress={mevSpFeeRecipient}
+              />
+
+              {validatorToSubscribeConfig && (
+                <SetSmoothingPoolDialog
+                  open={mevSpOpen}
+                  setOpen={setSetMevSpOpen}
+                  validatorCurrentConfig={validatorToSubscribeConfig}
+                  mevSpFeeRecipient={mevSpFeeRecipient}
                 />
               )}
 
-              {editFeesOpen && (
-                <EditFeesDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  open={editFeesOpen}
-                  setOpen={setEditFeesOpen}
-                  mevSpAddress={mevSpFeeRecipient}
-                />
-              )}
-
-              {exitOpen && (
-                <KeystoresExitDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  open={exitOpen}
-                  setOpen={setExitOpen}
-                  network={stakerConfig.network}
-                />
-              )}
+              <KeystoresExitDialog
+                rows={validatorsGet}
+                selectedRows={selectedRows}
+                setSelectedRows={setSelectedRows}
+                open={exitOpen}
+                setOpen={setExitOpen}
+                network={stakerConfig.network}
+              />
             </>
           ) : (
             <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
