@@ -4,6 +4,10 @@ import { beaconchaApiParamsMap } from "../../params";
 import {
   BeaconchaGetResponse,
   CustomValidatorGetResponse,
+  CustomValidatorUpdateRequest,
+  isFeeRecipientEditable,
+  nonEditableFeeRecipientTags,
+  Tag,
 } from "@stakingbrain/common";
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
@@ -14,14 +18,19 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import HelpIcon from "@mui/icons-material/Help";
 import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
-import { Box } from "@mui/system";
+import { Box, darken } from "@mui/system";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
-import { BeaconchaUrlBuildingStatus } from "../../types";
+import {
+  BasicValidatorRow,
+  BeaconchaUrlBuildingStatus,
+  MevSpSubscriptionStatus,
+} from "../../types";
 import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 import LogoutIcon from "@mui/icons-material/Logout";
+import SetSmoothingPoolDialog from "../Dialogs/SetSmoothingPoolDialog";
 
 export default function KeystoresDataGrid({
   rows,
@@ -35,6 +44,7 @@ export default function KeystoresDataGrid({
   setExitOpen,
   summaryUrlBuildingStatus,
   setSummaryUrlBuildingStatus,
+  mevSpFeeRecipient,
 }: {
   rows: CustomValidatorGetResponse[];
   areRowsSelected: boolean;
@@ -47,13 +57,17 @@ export default function KeystoresDataGrid({
   setExitOpen(open: boolean): void;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
+  mevSpFeeRecipient: string;
 }): JSX.Element {
   const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
   const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
+  const [mevSpOpen, setSetMevSpOpen] = useState(false);
+  const [validatorToSubscribeConfig, setValidatorToSubscribeSpConfig] =
+    useState<CustomValidatorUpdateRequest>();
 
   useEffect(() => {
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NOT_STARTED);
     setValidatorSummaryURL("");
   }, [selectedRows]);
 
@@ -74,7 +88,7 @@ export default function KeystoresDataGrid({
       field: "feeRecipient",
       headerName: "Fee Recipient",
       description:
-        "Fee Recipient is a feature that lets you specify a priority fee recipient address on your validator client instance and beacon node",
+        "Address to which the rewards generated from proposing a block are sent",
       disableReorder: true,
       disableColumnMenu: true,
       disableExport: true,
@@ -83,6 +97,53 @@ export default function KeystoresDataGrid({
       headerAlign: "center",
       headerClassName: "tableHeader",
       width: 360,
+    },
+    {
+      field: "spSubscription",
+      headerName: "SP",
+      description: "Dappnode Smoothing Pool subscription status",
+      disableReorder: true,
+      disableColumnMenu: true,
+      disableExport: true,
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
+      headerClassName: "tableHeader",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      renderCell: (rowData: {
+        row: { pubkey: string; feeRecipient: string; tag: Tag };
+      }) => (
+        <Tooltip
+          title={getSubscriptionCellTooltipTitle(rowData.row)}
+          placement="top"
+          arrow
+        >
+          {getSuscriptionStatus(rowData.row) ===
+          MevSpSubscriptionStatus.UNAVAILABLE ? (
+            <Button variant="contained" sx={{ fontSize: 10 }} disabled={true}>
+              UNAVAILABLE
+            </Button>
+          ) : getSuscriptionStatus(rowData.row) ===
+            MevSpSubscriptionStatus.UNSUBSCRIBED ? (
+            <Button variant="contained" sx={{ fontSize: 10 }}>
+              SUBSCRIBE
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              sx={{
+                fontSize: 10,
+                backgroundColor: "gray",
+                "&:hover": {
+                  backgroundColor: "gray",
+                },
+              }}
+            >
+              UNSUBSCRIBE
+            </Button>
+          )}
+        </Tooltip>
+      ),
     },
     {
       field: "tag",
@@ -255,20 +316,20 @@ export default function KeystoresDataGrid({
   async function getValidatorSummaryURL() {
     if (!beaconchaApiParamsMap?.get(network)) {
       setValidatorSummaryURL("");
-      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
+      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.ERROR);
       return;
     }
 
     let allValidatorsInfo: BeaconchaGetResponse[];
 
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.IN_PROGRESS);
 
     try {
       allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
         selectedRows.map((row) => rows[row as number].pubkey)
       );
     } catch (e) {
-      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
+      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NO_INDEXES);
       setValidatorSummaryURL("");
       return;
     }
@@ -279,7 +340,40 @@ export default function KeystoresDataGrid({
     });
 
     setValidatorSummaryURL(summaryUrlBuilt);
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.SUCCESS);
+  }
+
+  const showSmoothingPoolSubscriptionDialog = (row: number) => {
+    setValidatorToSubscribeSpConfig({
+      pubkey: rows[row].pubkey,
+      feeRecipient: rows[row].feeRecipient,
+    });
+
+    setSetMevSpOpen(true);
+  };
+
+  function getSubscriptionCellTooltipTitle(row: BasicValidatorRow): string {
+    const subscriptionStatus = getSuscriptionStatus(row);
+
+    if (subscriptionStatus === MevSpSubscriptionStatus.UNAVAILABLE) {
+      return "The current network or the validator protocol (tag) do not support Dappnode MEV Smoothing Pool subscription";
+    } else if (subscriptionStatus === MevSpSubscriptionStatus.SUBSCRIBED) {
+      return "This validator is already subscribed to the Dappnode MEV Smoothing Pool. Click here to unsubscribe";
+    } else {
+      return "This validator is not subscribed to the Dappnode MEV Smoothing Pool. Click here to subscribe";
+    }
+  }
+
+  function getSuscriptionStatus(
+    row: BasicValidatorRow
+  ): MevSpSubscriptionStatus {
+    if (!isFeeRecipientEditable(row.tag)) {
+      return MevSpSubscriptionStatus.UNAVAILABLE;
+    } else if (row.feeRecipient === mevSpFeeRecipient) {
+      return MevSpSubscriptionStatus.SUBSCRIBED;
+    } else {
+      return MevSpSubscriptionStatus.UNSUBSCRIBED;
+    }
   }
 
   async function openDashboardTab() {
@@ -300,7 +394,7 @@ export default function KeystoresDataGrid({
         <HeaderTypography text={"Validators"} />
         <div>
           {summaryUrlBuildingStatus ===
-          BeaconchaUrlBuildingStatus.InProgress ? (
+          BeaconchaUrlBuildingStatus.IN_PROGRESS ? (
             <Tooltip title="Loading dashboard">
               <CircularProgress size={18} style={{ color: "#808080" }} />
             </Tooltip>
@@ -387,6 +481,15 @@ export default function KeystoresDataGrid({
           </Button>
         </Link>
       </Box>
+
+      {validatorToSubscribeConfig && (
+        <SetSmoothingPoolDialog
+          open={mevSpOpen}
+          setOpen={setSetMevSpOpen}
+          validatorCurrentConfig={validatorToSubscribeConfig}
+          mevSpFeeRecipient={mevSpFeeRecipient}
+        />
+      )}
     </>
   );
 }

@@ -24,8 +24,14 @@ export interface TagSelectOption {
   label: string;
 }
 
+export interface BasicValidatorRow {
+  pubkey: string;
+  feeRecipient: string;
+  tag: Tag;
+}
+
 export enum MevSpSubscriptionStatus {
   SUBSCRIBED = "Subscribed",
-  NOT_SUBSCRIBED = "Not subscribed",
-  NOT_AVAILABLE = "Not available", // Network or protocol not supported for MEV SP
+  UNSUBSCRIBED = "Unsubscribed",
+  UNAVAILABLE = "Unavailable", // Network or protocol not supported for MEV SP
 }

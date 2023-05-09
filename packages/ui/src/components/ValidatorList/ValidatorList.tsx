@@ -7,7 +7,6 @@ import {
   Network,
   CustomValidatorGetResponse,
   StakerConfig as StakerConfigType,
-  CustomValidatorUpdateRequest,
 } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
@@ -15,7 +14,6 @@ import { api } from "../../api";
 import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
 import { getSmoothingPoolAddress } from "../../utils/addresses";
-import SetSmoothingPoolDialog from "../Dialogs/SetSmoothingPoolDialog";
 
 export default function ValidatorList({
   stakerConfig,
@@ -27,17 +25,14 @@ export default function ValidatorList({
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFeesOpen, setEditFeesOpen] = useState(false);
-  const [mevSpOpen, setSetMevSpOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validatorsGet, setValidatorsGet] =
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
   const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
-    BeaconchaUrlBuildingStatus.NotStarted
+    BeaconchaUrlBuildingStatus.NOT_STARTED
   );
-  const [validatorToSubscribeConfig, setValidatorToSubscribeSpConfig] =
-    useState<CustomValidatorUpdateRequest>();
 
   const mevSpFeeRecipient = getSmoothingPoolAddress(stakerConfig.network);
 
@@ -112,10 +107,11 @@ export default function ValidatorList({
                 setExitOpen={setExitOpen}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
+                mevSpFeeRecipient={mevSpFeeRecipient}
               />
 
               {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.Error && (
+                BeaconchaUrlBuildingStatus.ERROR && (
                 <Alert
                   severity="warning"
                   sx={{ marginTop: 2 }}
@@ -129,7 +125,7 @@ export default function ValidatorList({
               )}
 
               {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.NoIndexes && (
+                BeaconchaUrlBuildingStatus.NO_INDEXES && (
                 <Alert
                   severity="warning"
                   sx={{ marginTop: 2 }}
@@ -156,15 +152,6 @@ export default function ValidatorList({
                 setOpen={setEditFeesOpen}
                 mevSpAddress={mevSpFeeRecipient}
               />
-
-              {validatorToSubscribeConfig && (
-                <SetSmoothingPoolDialog
-                  open={mevSpOpen}
-                  setOpen={setSetMevSpOpen}
-                  validatorCurrentConfig={validatorToSubscribeConfig}
-                  mevSpFeeRecipient={mevSpFeeRecipient}
-                />
-              )}
 
               <KeystoresExitDialog
                 rows={validatorsGet}
