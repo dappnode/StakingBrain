@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Link,
   TextField,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
@@ -33,11 +34,13 @@ export default function FeeRecipientDialog({
   setOpen,
   rows,
   selectedRows,
+  mevSpAddress,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
+  mevSpAddress: string;
 }): JSX.Element {
   const [newFeeRecipient, setNewFeeRecipient] = useState("");
   //const [wrongPostPubkeys, setWrongPostPubkeys] = useState(new Array<string>());
@@ -184,6 +187,42 @@ export default function FeeRecipientDialog({
               <Alert severity="error" variant="filled" sx={{ marginTop: 2 }}>
                 {errorMessage}
               </Alert>
+            )}
+            {newFeeRecipient === mevSpAddress && (
+              // TODO: Set proper link to the Dappnode Smoothing Pool
+
+              <>
+                <Alert severity="warning" sx={{ marginTop: 2 }}>
+                  You are setting the fee recipient to the MEV Smoothing Pool
+                  Address. Doing this will mean that you will be{" "}
+                  <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
+                  <b>after you propose your first block</b>. If you want to{" "}
+                  <b>start generating rewards now</b>,{" "}
+                  <b>subscribe your validators manually </b> to the Smoothing
+                  Pool here:
+                </Alert>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: 1,
+                  }}
+                >
+                  <Link
+                    href={`https://dappnode-mev-pool.vercel.app/`}
+                    target="_blank"
+                    rel="noopener"
+                    sx={{ marginLeft: 1 }}
+                  >
+                    <Button
+                      variant="outlined"
+                      sx={{ borderRadius: 2, padding: 1 }}
+                    >
+                      Subscribe
+                    </Button>
+                  </Link>
+                </Box>
+              </>
             )}
           </Box>
         </DialogContent>

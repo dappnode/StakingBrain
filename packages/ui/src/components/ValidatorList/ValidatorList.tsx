@@ -13,6 +13,7 @@ import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
+import { getSmoothingPoolAddress } from "../../utils/addresses";
 
 export default function ValidatorList({
   stakerConfig,
@@ -32,6 +33,8 @@ export default function ValidatorList({
   const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
     BeaconchaUrlBuildingStatus.NotStarted
   );
+
+  const mevSpFeeRecipient = getSmoothingPoolAddress(stakerConfig.network);
 
   // Use effect on timer to refresh the list of validators
   useEffect(() => {
@@ -149,6 +152,7 @@ export default function ValidatorList({
                   selectedRows={selectedRows}
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
+                  mevSpAddress={mevSpFeeRecipient}
                 />
               )}
 
