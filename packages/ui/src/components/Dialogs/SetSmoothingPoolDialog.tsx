@@ -7,17 +7,13 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import {
-  CustomValidatorUpdateRequest,
-  MEV_SP_ADDRESS_PRATER,
-  MEV_SP_ADDRESS_MAINNET,
-  Network,
-} from "@stakingbrain/common";
+import { CustomValidatorUpdateRequest, Network } from "@stakingbrain/common";
 import React, { useState } from "react";
 import { api } from "../../api";
 
 //Styles
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
+import { getSmoothingPoolAddress } from "../../utils/addresses";
 import WaitBox from "../WaitBox/WaitBox";
 import { SlideTransition } from "./Transitions";
 
@@ -25,12 +21,12 @@ export default function SetSmoothingPoolDialog({
   open,
   setOpen,
   validatorCurrentConfig,
-  network,
+  mevSpFeeRecipient,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   validatorCurrentConfig: CustomValidatorUpdateRequest;
-  network: Network;
+  mevSpFeeRecipient: string;
 }): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -45,7 +41,7 @@ export default function SetSmoothingPoolDialog({
     try {
       const validatorNewConfig: CustomValidatorUpdateRequest = {
         pubkey: validatorCurrentConfig.pubkey,
-        feeRecipient: getSmoothingPoolAddress(),
+        feeRecipient: mevSpFeeRecipient,
       };
 
       api.updateValidators([validatorNewConfig]);
@@ -58,20 +54,8 @@ export default function SetSmoothingPoolDialog({
     setLoading(false);
   };
 
-  const getSmoothingPoolAddress = () => {
-    if (network == "prater") {
-      return MEV_SP_ADDRESS_PRATER;
-    } else if (network == "mainnet") {
-      return MEV_SP_ADDRESS_MAINNET;
-    } else {
-      throw new Error(
-        "MEV Smoothing Pool Address can only be set in Prater or Mainnet"
-      );
-    }
-  };
-
   const isMevSpAddressAlreadySet = () => {
-    return validatorCurrentConfig.feeRecipient === getSmoothingPoolAddress();
+    return validatorCurrentConfig.feeRecipient === mevSpFeeRecipient;
   };
 
   return (
