@@ -12,7 +12,7 @@ import {
 import { GridSelectionModel } from "@mui/x-data-grid";
 import {
   CustomValidatorGetResponse,
-  burnAddress,
+  BURN_ADDRESS,
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
   areAllFeeRecipientsEditable,
@@ -151,14 +151,14 @@ export default function FeeRecipientDialog({
               error={
                 newFeeRecipient !== "" &&
                 (!isValidEcdsaPubkey(newFeeRecipient) ||
-                  newFeeRecipient === burnAddress)
+                  newFeeRecipient === BURN_ADDRESS)
               }
               helperText={
                 newFeeRecipient === ""
                   ? "The fee recipient is the address where the validator will send the fees"
                   : !isValidEcdsaPubkey(newFeeRecipient)
                   ? "Invalid address"
-                  : newFeeRecipient === burnAddress
+                  : newFeeRecipient === BURN_ADDRESS
                   ? "It is not possible to set the fee recipient to the burn address"
                   : "Address is valid"
               }
@@ -196,7 +196,7 @@ export default function FeeRecipientDialog({
                 sx={{ margin: 2, borderRadius: 2 }}
                 disabled={
                   !isValidEcdsaPubkey(newFeeRecipient) ||
-                  newFeeRecipient === burnAddress ||
+                  newFeeRecipient === BURN_ADDRESS ||
                   isNewFrSameAsAllOldFrs()
                 }
               >

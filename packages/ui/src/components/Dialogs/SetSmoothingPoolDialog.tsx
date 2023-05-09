@@ -9,7 +9,9 @@ import {
 } from "@mui/material";
 import {
   CustomValidatorUpdateRequest,
-  MEV_SP_ADDRESS,
+  MEV_SP_ADDRESS_PRATER,
+  MEV_SP_ADDRESS_MAINNET,
+  Network,
 } from "@stakingbrain/common";
 import React, { useState } from "react";
 import { api } from "../../api";
@@ -23,12 +25,15 @@ export default function SetSmoothingPoolDialog({
   open,
   setOpen,
   validatorCurrentConfig,
+  network,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   validatorCurrentConfig: CustomValidatorUpdateRequest;
+  network: Network;
 }): JSX.Element {
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleClose = () => {
     setOpen(false);
@@ -37,18 +42,36 @@ export default function SetSmoothingPoolDialog({
   const setSmoothingPoolFR = async () => {
     setLoading(true);
 
-    const validatorNewConfig: CustomValidatorUpdateRequest = {
-      pubkey: validatorCurrentConfig.pubkey,
-      feeRecipient: MEV_SP_ADDRESS,
-    };
-
     try {
+      const validatorNewConfig: CustomValidatorUpdateRequest = {
+        pubkey: validatorCurrentConfig.pubkey,
+        feeRecipient: getSmoothingPoolAddress(),
+      };
+
       api.updateValidators([validatorNewConfig]);
     } catch (err) {
-      // TODO Show error
+      setErrorMessage(
+        "Dappnode MEV Smoothing Pool could not be set:" + err.message
+      );
     }
 
     setLoading(false);
+  };
+
+  const getSmoothingPoolAddress = () => {
+    if (network == "prater") {
+      return MEV_SP_ADDRESS_PRATER;
+    } else if (network == "mainnet") {
+      return MEV_SP_ADDRESS_MAINNET;
+    } else {
+      throw new Error(
+        "MEV Smoothing Pool Address can only be set in Prater or Mainnet"
+      );
+    }
+  };
+
+  const isMevSpAddressAlreadySet = () => {
+    return validatorCurrentConfig.feeRecipient === getSmoothingPoolAddress();
   };
 
   return (
@@ -74,10 +97,15 @@ export default function SetSmoothingPoolDialog({
       <>
         <DialogContent>
           <Box sx={importDialogBoxStyle}>
-            {validatorCurrentConfig.feeRecipient === MEV_SP_ADDRESS && (
+            {isMevSpAddressAlreadySet() && (
               <Alert severity="info" variant="filled" sx={{ marginTop: 2 }}>
                 Dappnode Smoothing Pool Fee Recipient has already been set for
                 this validator
+              </Alert>
+            )}
+            {errorMessage && (
+              <Alert severity="error" variant="filled" sx={{ marginTop: 2 }}>
+                {errorMessage}
               </Alert>
             )}
           </Box>
@@ -88,7 +116,7 @@ export default function SetSmoothingPoolDialog({
               onClick={() => setSmoothingPoolFR()}
               variant="contained"
               sx={{ margin: 2, borderRadius: 2 }}
-              disabled={validatorCurrentConfig.feeRecipient === MEV_SP_ADDRESS}
+              disabled={isMevSpAddressAlreadySet()}
             >
               Set Fee Recipient
             </Button>
