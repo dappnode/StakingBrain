@@ -188,9 +188,8 @@ export default function FeeRecipientDialog({
                 {errorMessage}
               </Alert>
             )}
-            {newFeeRecipient === mevSpAddress && (
+            {newFeeRecipient === mevSpAddress && !isNewFrSameAsAllOldFrs() && (
               // TODO: Set proper link to the Dappnode Smoothing Pool
-
               <>
                 <Alert severity="warning" sx={{ marginTop: 2 }}>
                   You are setting the fee recipient to the MEV Smoothing Pool
