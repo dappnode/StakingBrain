@@ -53,7 +53,7 @@ export default function ImportScreen({
   const [useSameTag, setUseSameTag] = useState(false);
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
-  const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
+  const [importStatus, setImportStatus] = useState(ImportStatus.NOT_IMPORTED);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
@@ -94,7 +94,7 @@ export default function ImportScreen({
 
   async function importKeystores() {
     try {
-      setImportStatus(ImportStatus.Importing);
+      setImportStatus(ImportStatus.IMPORTING);
       handleClickOpenDialog();
 
       const importRequest: CustomImportRequest = {
@@ -114,11 +114,11 @@ export default function ImportScreen({
 
       setKeystoresPostResponse(response);
       setKeystoresPostError(undefined);
-      setImportStatus(ImportStatus.Imported);
+      setImportStatus(ImportStatus.IMPORTED);
     } catch (e) {
       console.error(e);
       setKeystoresPostError(e.message);
-      setImportStatus(ImportStatus.NotImported);
+      setImportStatus(ImportStatus.NOT_IMPORTED);
     }
   }
 
