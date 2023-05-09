@@ -8,7 +8,7 @@ import {
   prefix0xPubkey,
   PubkeyDetails,
   Network,
-  rocketPoolFeeRecipient,
+  ROCKET_POOL_FEE_RECIPIENT,
 } from "@stakingbrain/common";
 import {
   cron,
@@ -207,7 +207,7 @@ async function getNonEditableFeeRecipient(
 
   switch (tag) {
     case "rocketpool":
-      return rocketPoolFeeRecipient;
+      return ROCKET_POOL_FEE_RECIPIENT;
     case "stakehouse":
       return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
     default:
