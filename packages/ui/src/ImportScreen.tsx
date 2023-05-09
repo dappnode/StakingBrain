@@ -35,7 +35,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
-import { extractPubkey } from "./utils/dataUtils";
+import { extractPubkey } from "./utils/data";
 
 export default function ImportScreen({
   network,
