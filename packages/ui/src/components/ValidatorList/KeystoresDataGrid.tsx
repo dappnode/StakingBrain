@@ -100,7 +100,7 @@ export default function KeystoresDataGrid({
     },
     {
       field: "spSubscription",
-      headerName: "SP",
+      headerName: "Smoothing Pool",
       description: "Dappnode Smoothing Pool subscription status",
       disableReorder: true,
       disableColumnMenu: true,
@@ -109,10 +109,7 @@ export default function KeystoresDataGrid({
       align: "center",
       headerAlign: "center",
       headerClassName: "tableHeader",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (rowData: {
-        row: { pubkey: string; feeRecipient: string; tag: Tag };
-      }) => (
+      renderCell: (rowData: { row: BasicValidatorRow }) => (
         <Tooltip
           title={getSubscriptionCellTooltipTitle(rowData.row)}
           placement="top"
