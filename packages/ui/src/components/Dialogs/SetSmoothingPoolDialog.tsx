@@ -7,13 +7,12 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import { CustomValidatorUpdateRequest, Network } from "@stakingbrain/common";
+import { CustomValidatorUpdateRequest } from "@stakingbrain/common";
 import React, { useState } from "react";
 import { api } from "../../api";
 
 //Styles
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
-import { getSmoothingPoolAddress } from "../../utils/addresses";
 import WaitBox from "../WaitBox/WaitBox";
 import { SlideTransition } from "./Transitions";
 
