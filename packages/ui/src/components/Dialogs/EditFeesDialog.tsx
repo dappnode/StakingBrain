@@ -7,12 +7,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Link,
   TextField,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import {
   CustomValidatorGetResponse,
-  burnAddress,
+  BURN_ADDRESS,
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
   areAllFeeRecipientsEditable,
@@ -33,11 +34,13 @@ export default function FeeRecipientDialog({
   setOpen,
   rows,
   selectedRows,
+  mevSpAddress,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
+  mevSpAddress: string;
 }): JSX.Element {
   const [newFeeRecipient, setNewFeeRecipient] = useState("");
   //const [wrongPostPubkeys, setWrongPostPubkeys] = useState(new Array<string>());
@@ -111,6 +114,16 @@ export default function FeeRecipientDialog({
     return areAllFeeRecipientsEditable(selectedTags);
   }
 
+  function isNewFrSameAsAllOldFrs(): boolean {
+    const oldFeeRecipients = selectedRows
+      .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
+      .flat();
+
+    console.log(oldFeeRecipients);
+
+    return oldFeeRecipients.every((fr) => fr === newFeeRecipient);
+  }
+
   return (
     <Dialog
       disableEscapeKeyDown={true}
@@ -141,14 +154,14 @@ export default function FeeRecipientDialog({
               error={
                 newFeeRecipient !== "" &&
                 (!isValidEcdsaPubkey(newFeeRecipient) ||
-                  newFeeRecipient === burnAddress)
+                  newFeeRecipient === BURN_ADDRESS)
               }
               helperText={
                 newFeeRecipient === ""
                   ? "The fee recipient is the address where the validator will send the fees"
                   : !isValidEcdsaPubkey(newFeeRecipient)
                   ? "Invalid address"
-                  : newFeeRecipient === burnAddress
+                  : newFeeRecipient === BURN_ADDRESS
                   ? "It is not possible to set the fee recipient to the burn address"
                   : "Address is valid"
               }
@@ -157,6 +170,12 @@ export default function FeeRecipientDialog({
             {!areAllSelectedFeeRecipientsEditable() && (
               <Alert severity="info">
                 This will only apply to the editable fee recipients
+              </Alert>
+            )}
+            {isNewFrSameAsAllOldFrs() && (
+              <Alert severity="info">
+                This fee recipient has already been set to all selected
+                validators
               </Alert>
             )}
             {successMessage && (
@@ -169,6 +188,41 @@ export default function FeeRecipientDialog({
                 {errorMessage}
               </Alert>
             )}
+            {newFeeRecipient === mevSpAddress && !isNewFrSameAsAllOldFrs() && (
+              // TODO: Set proper link to the Dappnode Smoothing Pool
+              <>
+                <Alert severity="warning" sx={{ marginTop: 2 }}>
+                  You are setting the fee recipient to the MEV Smoothing Pool
+                  Address. Doing this will mean that you will be{" "}
+                  <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
+                  <b>after you propose your first block</b>. If you want to{" "}
+                  <b>start generating rewards now</b>,{" "}
+                  <b>subscribe your validators manually </b> to the Smoothing
+                  Pool here:
+                </Alert>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: 1,
+                  }}
+                >
+                  <Link
+                    href={`https://dappnode-mev-pool.vercel.app/`}
+                    target="_blank"
+                    rel="noopener"
+                    sx={{ marginLeft: 1 }}
+                  >
+                    <Button
+                      variant="outlined"
+                      sx={{ borderRadius: 2, padding: 1 }}
+                    >
+                      Subscribe
+                    </Button>
+                  </Link>
+                </Box>
+              </>
+            )}
           </Box>
         </DialogContent>
         {!loading ? (
@@ -180,7 +234,8 @@ export default function FeeRecipientDialog({
                 sx={{ margin: 2, borderRadius: 2 }}
                 disabled={
                   !isValidEcdsaPubkey(newFeeRecipient) ||
-                  newFeeRecipient === burnAddress
+                  newFeeRecipient === BURN_ADDRESS ||
+                  isNewFrSameAsAllOldFrs()
                 }
               >
                 Apply changes

@@ -21,7 +21,7 @@ import {
 } from "@stakingbrain/common";
 import { api } from "../../api";
 import { SlideTransition } from "./Transitions";
-import { getEmoji } from "../../utils/dataUtils";
+import { getEmoji } from "../../utils/data";
 
 export default function KeystoresDeleteDialog({
   rows,
