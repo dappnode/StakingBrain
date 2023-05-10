@@ -3,12 +3,16 @@ import {
   Alert,
   Box,
   Button,
+  Card,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Link,
+  FormControlLabel,
+  FormGroup,
+  Switch,
   TextField,
+  Typography,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import {
@@ -43,22 +47,52 @@ export default function FeeRecipientDialog({
   mevSpAddress: string;
 }): JSX.Element {
   const [newFeeRecipient, setNewFeeRecipient] = useState("");
-  //const [wrongPostPubkeys, setWrongPostPubkeys] = useState(new Array<string>());
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isMevSpAddressSelected, setIsMevSpAddressSelected] = useState(false);
 
   const handleClose = () => {
     setOpen(false);
     setErrorMessage("");
     setSuccessMessage("");
-    //setWrongPostPubkeys(new Array<string>());
+  };
+
+  const handleSubscriptionClick = async () => {
+    try {
+      await updateValidators();
+      window.open("https://dappnode-mev-pool.vercel.app/", "_blank");
+      setOpen(false);
+    } catch (err) {
+      setErrorMessage(
+        "There was an error setting the Dappnode MEV Smoothing Pool Fee Recipient to some validators: " +
+          err
+      );
+    }
+  };
+
+  const handleUnsubscriptionClick = async () => {
+    window.open("https://dappnode-mev-pool.vercel.app/", "_blank");
   };
 
   const handleNewFeeRecipientChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setNewFeeRecipient(event.target.value);
+    if (!isMevSpAddressSelected && event.target.value === mevSpAddress) {
+      switchSetMevSpAddress();
+    } else {
+      setNewFeeRecipient(event.target.value);
+    }
+  };
+
+  const switchSetMevSpAddress = () => {
+    if (isMevSpAddressSelected) {
+      setNewFeeRecipient("");
+      setIsMevSpAddressSelected(false);
+    } else {
+      setNewFeeRecipient(mevSpAddress);
+      setIsMevSpAddressSelected(true);
+    }
   };
 
   //To hide success message after 5 seconds
@@ -73,8 +107,7 @@ export default function FeeRecipientDialog({
     };
   }, [successMessage]);
 
-  const updateFeeRecipients = async (newFeeRecipient: string) => {
-    let error = false;
+  async function updateValidators() {
     const validatorsData: CustomValidatorUpdateRequest[] = [];
 
     selectedRows.forEach((rowId) => {
@@ -87,21 +120,23 @@ export default function FeeRecipientDialog({
         });
       }
     });
+    await api.updateValidators(validatorsData);
+  }
 
+  const handleApplyChanges = async () => {
     setLoading(true);
 
     try {
-      api.updateValidators(validatorsData);
+      await updateValidators();
     } catch (err) {
       setErrorMessage(
         "There was an error updating some fee recipients: " + err
       );
-      error = true;
     }
 
     setLoading(false);
 
-    if (!error) {
+    if (!errorMessage) {
       setSuccessMessage("Fee recipients updated successfully");
     }
   };
@@ -114,7 +149,7 @@ export default function FeeRecipientDialog({
     return areAllFeeRecipientsEditable(selectedTags);
   }
 
-  function isNewFrSameAsAllOldFrs(): boolean {
+  function isNewFrSameAsAllOldFrs() {
     const oldFeeRecipients = selectedRows
       .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
       .flat();
@@ -122,6 +157,79 @@ export default function FeeRecipientDialog({
     console.log(oldFeeRecipients);
 
     return oldFeeRecipients.every((fr) => fr === newFeeRecipient);
+  }
+
+  function isRemovingMevSpFr() {
+    const oldFeeRecipients = selectedRows
+      .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
+      .flat();
+
+    return oldFeeRecipients.includes(mevSpAddress) && isNewFeeRecipientValid() && newFeeRecipient !== mevSpAddress;
+  }
+
+  function isNewFeeRecipientValid() {
+    return (
+      isValidEcdsaPubkey(newFeeRecipient) && newFeeRecipient !== BURN_ADDRESS
+    );
+  }
+
+  function SubscriptionCard(): JSX.Element {
+    return (
+      // TODO: Set proper link to the Dappnode Smoothing Pool
+      <Card sx={{ boxShadow: 2, borderRadius: 2, padding: 2, marginTop: 1 }}>
+        <Alert severity="info">
+          You are setting the fee recipient to the MEV Smoothing Pool Address.
+          Doing this will mean that you will be <b>automatically subscribed</b>{" "}
+          to the Dappnode Smoothing Pool{" "}
+          <b>after you propose your first block</b>. If you want to{" "}
+          <b>start generating rewards now</b>,{" "}
+          <b>subscribe your validators manually </b> to the Smoothing Pool here:
+        </Alert>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: 1,
+          }}
+        >
+          <Button
+            variant="contained"
+            sx={{ borderRadius: 2, marginLeft: 1 }}
+            onClick={handleSubscriptionClick}
+          >
+            Subscribe Now
+          </Button>
+        </Box>
+      </Card>
+    );
+  }
+
+  function UnsubscribeCard(): JSX.Element {
+    return (
+      <Card sx={{ boxShadow: 2, borderRadius: 2, padding: 2, marginTop: 1 }}>
+        <Alert severity="warning">
+          You are removing the Dappnode MEV Smoothing Pool fee recipient from
+          some validators. If you want to{" "}
+          <b>avoid being banned from the pool</b> for the future, please
+          <b>unsubscribe</b> here:
+        </Alert>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: 1,
+          }}
+        >
+          <Button
+            variant="contained"
+            sx={{ borderRadius: 2, marginLeft: 1 }}
+            onClick={handleUnsubscriptionClick}
+          >
+            Unsubscribe Now
+          </Button>
+        </Box>
+      </Card>
+    );
   }
 
   return (
@@ -151,11 +259,7 @@ export default function FeeRecipientDialog({
               onChange={handleNewFeeRecipientChange}
               sx={{ marginTop: 2 }}
               label="New Fee Recipient"
-              error={
-                newFeeRecipient !== "" &&
-                (!isValidEcdsaPubkey(newFeeRecipient) ||
-                  newFeeRecipient === BURN_ADDRESS)
-              }
+              error={!isNewFeeRecipientValid() && newFeeRecipient !== ""}
               helperText={
                 newFeeRecipient === ""
                   ? "The fee recipient is the address where the validator will send the fees"
@@ -166,7 +270,21 @@ export default function FeeRecipientDialog({
                   : "Address is valid"
               }
               value={newFeeRecipient}
+              disabled={isMevSpAddressSelected}
             />
+            <FormGroup
+              sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
+            >
+              <FormControlLabel
+                control={<Switch onChange={() => switchSetMevSpAddress()} />}
+                label={
+                  <Typography component="div">
+                    Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
+                  </Typography>
+                }
+                checked={isMevSpAddressSelected}
+              />
+            </FormGroup>
             {!areAllSelectedFeeRecipientsEditable() && (
               <Alert severity="info">
                 This will only apply to the editable fee recipients
@@ -178,6 +296,7 @@ export default function FeeRecipientDialog({
                 validators
               </Alert>
             )}
+            {isRemovingMevSpFr() && <UnsubscribeCard />}
             {successMessage && (
               <Alert severity="success" variant="filled" sx={{ marginTop: 2 }}>
                 {successMessage}
@@ -189,39 +308,7 @@ export default function FeeRecipientDialog({
               </Alert>
             )}
             {newFeeRecipient === mevSpAddress && !isNewFrSameAsAllOldFrs() && (
-              // TODO: Set proper link to the Dappnode Smoothing Pool
-              <>
-                <Alert severity="warning" sx={{ marginTop: 2 }}>
-                  You are setting the fee recipient to the MEV Smoothing Pool
-                  Address. Doing this will mean that you will be{" "}
-                  <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
-                  <b>after you propose your first block</b>. If you want to{" "}
-                  <b>start generating rewards now</b>,{" "}
-                  <b>subscribe your validators manually </b> to the Smoothing
-                  Pool here:
-                </Alert>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    marginTop: 1,
-                  }}
-                >
-                  <Link
-                    href={`https://dappnode-mev-pool.vercel.app/`}
-                    target="_blank"
-                    rel="noopener"
-                    sx={{ marginLeft: 1 }}
-                  >
-                    <Button
-                      variant="outlined"
-                      sx={{ borderRadius: 2, padding: 1 }}
-                    >
-                      Subscribe
-                    </Button>
-                  </Link>
-                </Box>
-              </>
+              <SubscriptionCard />
             )}
           </Box>
         </DialogContent>
@@ -229,14 +316,10 @@ export default function FeeRecipientDialog({
           <DialogActions>
             {!errorMessage && (
               <Button
-                onClick={() => updateFeeRecipients(newFeeRecipient)}
+                onClick={() => handleApplyChanges()}
                 variant="contained"
-                sx={{ margin: 2, borderRadius: 2 }}
-                disabled={
-                  !isValidEcdsaPubkey(newFeeRecipient) ||
-                  newFeeRecipient === BURN_ADDRESS ||
-                  isNewFrSameAsAllOldFrs()
-                }
+                sx={{ borderRadius: 2 }}
+                disabled={!isNewFeeRecipientValid() || isNewFrSameAsAllOldFrs()}
               >
                 Apply changes
               </Button>
@@ -244,7 +327,7 @@ export default function FeeRecipientDialog({
             <Button
               onClick={handleClose}
               variant="outlined"
-              sx={{ margin: 2, borderRadius: 2 }}
+              sx={{ borderRadius: 2 }}
             >
               Close
             </Button>
