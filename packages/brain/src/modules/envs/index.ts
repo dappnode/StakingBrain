@@ -246,7 +246,7 @@ export function loadStakerConfig(): {
         break;
       case "nimbus-prater.dnp.dappnode.eth":
         token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
-        beaconchainUrl = `http://beacon-validator.nimbus-prater.dappnode:3500`;
+        beaconchainUrl = `http://beacon-validator.nimbus-prater.dappnode:4500`;
         validatorUrl = `http://beacon-validator.nimbus-prater.dappnode:3500`;
         break;
       default:
