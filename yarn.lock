@@ -1094,10 +1094,10 @@
   resolved "https://registry.yarnpkg.com/@blockswaplab/lsd-protocol-abis/-/lsd-protocol-abis-1.3.0.tgz#da5f0d7a858f06832b724af63cf6f7601c139ed6"
   integrity sha512-GDTzOpEunOFdkTo3+5Vo59jTAUNCPwKvCaffBHtdddsSb2cG/QyVw5AGgDs6sH8UP6M5jrKutYllgeonx9poyw==
 
-"@blockswaplab/lsd-wizard@3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@blockswaplab/lsd-wizard/-/lsd-wizard-3.3.0.tgz#3573f4cb3d7031dc78f92ffcb8052105b19d3289"
-  integrity sha512-oqzWNr63lGRb4/t0JgfGRU2Cu2w8lWbvWcOaSgaJ8VAwe5yevfcP9OGTTv3izmUx9uXADoFUHOfHmWxilXvJGQ==
+"@blockswaplab/lsd-wizard@3.4.1":
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/@blockswaplab/lsd-wizard/-/lsd-wizard-3.4.1.tgz#332d670cf818a11b51fce8ee33cdc9b50cffab45"
+  integrity sha512-vG9WHXMUPnMQLIpCbXj7bOcd+0BQuKCPWqGAKHkSb7//YoOi1eSw+HA95lD9sqjJnmR02ahZ6kbJXzClOjSR9g==
   dependencies:
     "@blockswaplab/lsd-protocol-abis" "1.3.0"
     "@blockswaplab/stakehouse-protocol-abis" "2.1.9"
