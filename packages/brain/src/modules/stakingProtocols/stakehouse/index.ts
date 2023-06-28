@@ -2,6 +2,7 @@ import { Wizard } from "@blockswaplab/lsd-wizard";
 import { executionClientUrl, network } from "../../../index.js";
 import { providers } from "ethers";
 import { ValidatorDetails } from "./types.js";
+import { shortenPubkey } from "@stakingbrain/common";
 
 export class StakeHouseSDK {
   wizard: Wizard;
@@ -35,9 +36,9 @@ export class StakeHouseSDK {
 
     if (!validatorDetails || !validatorDetails.feeRecipient)
       throw new Error(
-        `Cannot get StakeHouse fee recipient for pubkey ${pubkey}: Not found. 
-          Your execution or consensus clients might be out of sync. 
-          Also, check that the pubkey you entered corresponds to a validator registered in StakeHouse`
+        `Cannot get StakeHouse fee recipient for pubkey ${shortenPubkey(
+          pubkey
+        )}. Your execution or consensus clients might be out of sync or the pubkey you entered does not correspond to a validator registered in StakeHouse.`
       );
 
     return validatorDetails.feeRecipient;

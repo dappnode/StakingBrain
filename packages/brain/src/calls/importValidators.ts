@@ -48,7 +48,10 @@ export async function importValidators(
 
     const validators: ValidatorImportRequest[] = [];
     const validatorsToPost: ValidatorImportRequest[] = [];
-    const errorFrPubkeys: string[] = []; // Pubkeys for which we could not obtain fee recipient automatically
+    const wrongFeeRecipientResponse: {
+      status: "error";
+      message: string;
+    }[] = [];
 
     for (const validator of postRequest.validatorsImportRequest) {
       const keystore = validator.keystore.toString();
@@ -72,7 +75,13 @@ export async function importValidators(
           pubkey,
         });
       } catch (e) {
-        errorFrPubkeys.push(pubkey);
+        wrongFeeRecipientResponse.push({
+          status: "error",
+          message: `Could not obtain fee recipient for pubkey ${shortenPubkey(
+            pubkey
+          )}. ${e} You can force a specific fee recipient by selecting tag "solo", but for some protocols this might cause you to lose rewards if you set a wrong address.`,
+        });
+
         logger.error(
           `Error obtaining fee recipient for pubkey ${shortenPubkey(
             pubkey
@@ -95,15 +104,6 @@ export async function importValidators(
         web3signerPostResponse.data
       )}`
     );
-
-    errorFrPubkeys.forEach((pubkey) => {
-      web3signerPostResponse.data.push({
-        status: "error",
-        message: `Could not obtain fee recipient for pubkey ${shortenPubkey(
-          pubkey
-        )}. Check the pubkey is registered in the protocol you selected. Also, your execution and consensus client might need to be synced. You can force a specific fee recipient by selecting tag "solo", but for some protocols this might cause you to lose rewards if you set a wrong address.`,
-      });
-    });
 
     // Signer API import keystore may fail for some keystores, but not all
     // @see https://github.com/ConsenSys/web3signer/issues/713
@@ -128,6 +128,13 @@ export async function importValidators(
         validatorsToPost.push(validators[index]);
       }
     }
+
+    console.log("wrongFeeRecipientResponse", wrongFeeRecipientResponse);
+
+    // Add info about the wrong fee recipients to the response
+    web3signerPostResponse.data.push(...wrongFeeRecipientResponse);
+
+    console.log("web3signerPostResponse", web3signerPostResponse);
 
     if (validatorsToPost.length === 0) {
       cron.start();
