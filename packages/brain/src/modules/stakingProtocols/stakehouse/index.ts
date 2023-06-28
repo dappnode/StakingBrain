@@ -1,13 +1,31 @@
 import { Wizard } from "@blockswaplab/lsd-wizard";
-import { executionClientUrl } from "../../../index.js";
-import { getDefaultProvider } from "ethers";
+import { executionClientUrl, network } from "../../../index.js";
+import { providers } from "ethers";
 import { ValidatorDetails } from "./types.js";
 
 export class StakeHouseSDK {
   wizard: Wizard;
 
   constructor() {
-    const provider = getDefaultProvider(executionClientUrl);
+    if (network == "gnosis") {
+      throw new Error("StakeHouse is not supported on Gnosis chain");
+    }
+
+    const rpcNetwork: providers.Network =
+      network == "mainnet"
+        ? {
+            name: "mainnet",
+            chainId: 1,
+          }
+        : {
+            name: "goerli",
+            chainId: 5,
+          };
+
+    const provider = new providers.JsonRpcProvider(
+      executionClientUrl,
+      rpcNetwork
+    );
     this.wizard = new Wizard({ signerOrProvider: provider });
   }
 
