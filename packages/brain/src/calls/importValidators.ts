@@ -21,6 +21,14 @@ import {
 import logger from "../modules/logger/index.js";
 import { StakeHouseSDK } from "../modules/stakingProtocols/stakehouse/index.js";
 
+type ValidatorImportRequest = {
+  keystore: string;
+  password: string;
+  tag: Tag;
+  feeRecipient: string;
+  pubkey: string;
+};
+
 /**
  * Import keystores:
  * 1. Import keystores + passwords on web3signer API
@@ -38,44 +46,49 @@ export async function importValidators(
     // and prevents the cron from running while we are importing validators
     cron.stop();
 
-    const validators = [];
+    const validators: ValidatorImportRequest[] = [];
+    const validatorsToPost: ValidatorImportRequest[] = [];
+    const wrongFeeRecipientResponse: {
+      status: "error";
+      message: string;
+    }[] = [];
+
     for (const validator of postRequest.validatorsImportRequest) {
       const keystore = validator.keystore.toString();
       const pubkey = JSON.parse(keystore).pubkey;
 
-      const feeRecipient =
-        network !== "gnosis" && !isFeeRecipientEditable(validator.tag)
-          ? await getNonEditableFeeRecipient(
-              pubkey,
-              validator.tag as NonEditableFeeRecipientTag,
-              network
-            )
-          : validator.feeRecipient;
+      try {
+        const feeRecipient =
+          network !== "gnosis" && !isFeeRecipientEditable(validator.tag)
+            ? await getNonEditableFeeRecipient(
+                pubkey,
+                validator.tag as NonEditableFeeRecipientTag,
+                network
+              )
+            : validator.feeRecipient;
 
-      validators.push({
-        keystore,
-        password: validator.password,
-        tag: validator.tag,
-        feeRecipient,
-        pubkey,
-      });
+        validators.push({
+          keystore,
+          password: validator.password,
+          tag: validator.tag,
+          feeRecipient: feeRecipient,
+          pubkey,
+        });
+      } catch (e) {
+        wrongFeeRecipientResponse.push({
+          status: "error",
+          message: `Could not obtain fee recipient for pubkey ${shortenPubkey(
+            pubkey
+          )}. ${e} You can force a specific fee recipient by selecting tag "solo", but for some protocols this might cause you to lose rewards if you set a wrong address.`,
+        });
 
-      validators.push({
-        keystore,
-        password: validator.password,
-        tag: validator.tag,
-        feeRecipient,
-        pubkey,
-      });
+        logger.error(
+          `Error obtaining fee recipient for pubkey ${shortenPubkey(
+            pubkey
+          )}: ${e}`
+        );
+      }
     }
-
-    const validatorsToPost: {
-      keystore: string;
-      password: string;
-      tag: Tag;
-      feeRecipient: string;
-      pubkey: string;
-    }[] = [];
 
     // Import keystores and passwords on web3signer API
     const web3signerPostResponse = await signerApi.importKeystores({
@@ -115,6 +128,9 @@ export async function importValidators(
         validatorsToPost.push(validators[index]);
       }
     }
+
+    // Add info about the wrong fee recipients to the response
+    web3signerPostResponse.data.push(...wrongFeeRecipientResponse);
 
     if (validatorsToPost.length === 0) {
       cron.start();
@@ -176,11 +192,17 @@ export async function importValidators(
   }
 }
 
-async function getNonEditableFeeRecipient<T extends Omit<Network, "gnosis">>(
+async function getNonEditableFeeRecipient(
   pubkey: string,
   tag: NonEditableFeeRecipientTag,
-  network: T
+  network: Network
 ): Promise<string> {
+  if (network == "gnosis") {
+    throw new Error(
+      "Currently, there are no DVT/LSDs supported on Gnosis chain in Dappnode."
+    );
+  }
+
   switch (tag) {
     case "rocketpool":
       return rocketPoolFeeRecipient;
