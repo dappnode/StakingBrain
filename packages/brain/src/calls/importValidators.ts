@@ -129,12 +129,8 @@ export async function importValidators(
       }
     }
 
-    console.log("wrongFeeRecipientResponse", wrongFeeRecipientResponse);
-
     // Add info about the wrong fee recipients to the response
     web3signerPostResponse.data.push(...wrongFeeRecipientResponse);
-
-    console.log("web3signerPostResponse", web3signerPostResponse);
 
     if (validatorsToPost.length === 0) {
       cron.start();
