@@ -122,7 +122,7 @@ async function _getExitValidators(
         epoch: currentEpoch.toString(),
         validator_index: validatorIndex.index,
       },
-      signature: validatorSignature,
+      signature: validatorSignature.signature,
     });
   }
 
