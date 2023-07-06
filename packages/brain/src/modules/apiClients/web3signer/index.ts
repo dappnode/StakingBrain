@@ -7,6 +7,7 @@ import {
   Web3signerHealthcheckResponse,
   prefix0xPubkey,
   Web3SignerPostSignvoluntaryexitRequest,
+  Web3SignerPostSignvoluntaryexitResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 import path from "node:path";
@@ -43,7 +44,7 @@ export class Web3SignerApi extends StandardApi {
   }: {
     signerVoluntaryExitRequest: Web3SignerPostSignvoluntaryexitRequest;
     pubkey: string;
-  }): Promise<string> {
+  }): Promise<Web3SignerPostSignvoluntaryexitResponse> {
     try {
       return await this.request(
         "POST",
