@@ -67,6 +67,8 @@ export async function importValidators(
               )
             : validator.feeRecipient;
 
+        logger.info(`Setting ${feeRecipient} as fee recipient for ${pubkey}`);
+
         validators.push({
           keystore,
           password: validator.password,
