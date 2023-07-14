@@ -5,7 +5,7 @@ export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
   ["prater", { baseUrl: "https://prater.beaconcha.in", apiPath: "/api/v1/" }],
   [
     "gnosis",
-    { baseUrl: "https://beacon.gnosischain.com", apiPath: "/api/v1/" },
+    { baseUrl: "https://gnosischa.in", apiPath: "/api/v1/" },
   ],
 ]);
 
