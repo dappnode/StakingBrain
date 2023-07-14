@@ -88,7 +88,7 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
   [
     "gnosis",
     {
-      baseUrl: "https://beacon.gnosischain.com",
+      baseUrl: "https://gnosischa.in",
       host: "brain.web3signer-gnosis.dappnode",
       apiPath: "/api/v1/",
     },

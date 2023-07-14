@@ -190,7 +190,7 @@ export function loadStakerConfig(): {
       executionClientUrl,
       validatorUrl,
       beaconchainUrl,
-      beaconchaUrl: `https://beacon.gnosischain.com`,
+      beaconchaUrl: `https://gnosischa.in`,
       signerUrl: `http://web3signer.web3signer-gnosis.dappnode:9000`,
       token,
       host: `brain.web3signer-gnosis.dappnode`,
