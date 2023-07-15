@@ -1,8 +1,6 @@
 import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import { beaconchaApiParamsMap } from "../../params";
 import {
-  BeaconchaGetResponse,
   CustomValidatorGetResponse,
 } from "@stakingbrain/common";
 import { GridColDef } from "@mui/x-data-grid";
@@ -49,7 +47,6 @@ export default function KeystoresDataGrid({
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
 }): JSX.Element {
   const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
-  const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
   const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
 
   useEffect(() => {
@@ -115,9 +112,6 @@ export default function KeystoresDataGrid({
 
   const customRows = rows.map((row, index) => ({
     pubkey: row.pubkey,
-    beaconcha_url: beaconchaBaseUrl
-      ? beaconchaBaseUrl + "/validator/" + row.pubkey
-      : "",
     feeRecipient: row.feeRecipient,
     tag: row.tag,
     withdrawalCredentials: row.withdrawalCredentials,
@@ -253,20 +247,13 @@ export default function KeystoresDataGrid({
     );
 
   async function getValidatorSummaryURL() {
-    if (!beaconchaApiParamsMap?.get(network)) {
-      setValidatorSummaryURL("");
-      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
-      return;
-    }
 
-    let allValidatorsInfo: BeaconchaGetResponse[];
+    let allValidatorsInfo: CustomValidatorGetResponse[];
 
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
     try {
-      allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
-        selectedRows.map((row) => rows[row as number].pubkey)
-      );
+      allValidatorsInfo = await api.getValidators()
     } catch (e) {
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
       setValidatorSummaryURL("");

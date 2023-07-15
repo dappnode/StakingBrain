@@ -1,7 +1,3 @@
-export {
-  beaconchaFetchAllValidatorsInfo,
-  beaconchaFetchValidatorsInfo,
-} from "./beaconchaApi.js";
 export { deleteValidators } from "./deleteValidators.js";
 export { exitValidators, getExitValidators } from "./exitValidators.js";
 export { importValidators } from "./importValidators.js";

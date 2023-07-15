@@ -41,14 +41,18 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
   const validators: CustomValidatorGetResponse[] = [];
   for (const [pubkey, { tag, feeRecipient }] of Object.entries(data)) {
     let format: WithdrawalCredentialsFormat,
-      withdrawalAddress = "";
+      withdrawalAddress = "",
+      index = -1;
     try {
-      withdrawalAddress = (
+      const beaconResponse = (
         await beaconchainApi.getValidatorFromState({
           state: "head",
           pubkey,
         })
-      ).data.validator.withdrawal_credentials;
+      );
+      
+      withdrawalAddress = beaconResponse.data.validator.withdrawal_credentials;
+      index = parseInt(beaconResponse.data.index);
 
       format = isValidWithdrawableBlsAddress(withdrawalAddress)
         ? "ecdsa"
@@ -62,6 +66,7 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
 
     validators.push({
       pubkey,
+      index,
       tag,
       feeRecipient,
       withdrawalCredentials: {

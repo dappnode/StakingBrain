@@ -1,11 +1,11 @@
-import { BeaconchaGetResponse } from "@stakingbrain/common";
+import { CustomValidatorGetResponse } from "@stakingbrain/common";
 import { beaconchaApiParamsMap } from "../params";
 
 export default function buildValidatorSummaryURL({
   allValidatorsInfo,
   network,
 }: {
-  allValidatorsInfo: BeaconchaGetResponse[];
+  allValidatorsInfo: CustomValidatorGetResponse[];
   network: string;
 }): string {
   if (!beaconchaApiParamsMap.has(network)) {
@@ -18,10 +18,7 @@ export default function buildValidatorSummaryURL({
   let summaryValidatorURL = baseUrl + "/dashboard?validators=";
 
   allValidatorsInfo.forEach((validatorChunk) => {
-    const chunkIndexes = validatorChunk.data.map(
-      (validator) => validator.validatorindex
-    );
-    summaryValidatorURL += chunkIndexes.join(",");
+    summaryValidatorURL += validatorChunk.index.toString() + ",";
   });
 
   return summaryValidatorURL;

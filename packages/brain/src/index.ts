@@ -4,7 +4,6 @@ import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
 import { Web3SignerApi } from "./modules/apiClients/web3signer/index.js";
 import { Beaconchain } from "./modules/apiClients/beaconchain/index.js";
-import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
 import { startUiServer } from "./modules/apiServers/ui/index.js";
 import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
 import { ValidatorApi } from "./modules/apiClients/validator/index.js";
@@ -28,7 +27,6 @@ export const {
   consensusClient,
   executionClientUrl,
   validatorUrl,
-  beaconchaUrl,
   beaconchainUrl,
   signerUrl,
   token,
@@ -37,7 +35,7 @@ export const {
   tlsCert,
 } = loadStakerConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}\n  - Default fee recipient: ${defaultFeeRecipient}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}\n  - Default fee recipient: ${defaultFeeRecipient}`
 );
 
 // Create API instances. Must preceed db initialization
@@ -46,7 +44,6 @@ export const signerApi = new Web3SignerApi({
   authToken: token,
   host,
 });
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
 export const validatorApi = new ValidatorApi({
   baseUrl: validatorUrl,
   authToken: token,

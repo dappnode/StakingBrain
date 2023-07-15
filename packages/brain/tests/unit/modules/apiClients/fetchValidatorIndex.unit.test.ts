@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ApiParams } from "@stakingbrain/common";
-import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index.js";
+import { Beaconchain } from "../../../../src/modules/apiClients/beaconchain/index.js";
 
 describe.skip("Test for fetching validator indexes in every available network", () => {
   it("should return data corresponding to every validator PK", async () => {
@@ -9,21 +9,19 @@ describe.skip("Test for fetching validator indexes in every available network", 
     for (const network of networks) {
       console.log("NETWORK: ", network);
 
-      const beaconchaApi = new BeaconchaApi(
-        beaconchaApiParamsMap.get(network)!
-      );
+      const beaconchainApi = new Beaconchain({ baseUrl: `http://` });
 
-      const allValidatorsInfo = await beaconchaApi.fetchAllValidatorsInfo({
-        pubkeys: [
-          networkTestMap.get(network)!.pubkeys[0],
-          networkTestMap.get(network)!.pubkeys[1],
-        ],
-      });
+      const allValidatorsInfo = (await Promise.all(
+        networkTestMap.get(network)!.pubkeys.map(pk => beaconchainApi.getValidatorFromState({
+          state: "head",
+          pubkey: pk
+        }))
+      ));
 
-      expect(allValidatorsInfo[0].data[0].validatorindex).to.equal(
+      expect(allValidatorsInfo[0].data.index).to.equal(
         networkTestMap.get(network)!.indexes[0]
       );
-      expect(allValidatorsInfo[0].data[1].validatorindex).to.equal(
+      expect(allValidatorsInfo[1].data.index).to.equal(
         networkTestMap.get(network)!.indexes[1]
       );
     }
@@ -62,35 +60,6 @@ const networkTestMap = new Map<
         "0x8000e5f66ffb58ef1f8bf8994172da85c77142cc7be24a63d53e572f5ba1149466c5aa0e6a383b2cddf83467cf8e688a",
       ],
       indexes: [57102, 81200],
-    },
-  ],
-]);
-
-// TODO: move below to common
-
-const beaconchaApiParamsMap = new Map<string, ApiParams>([
-  [
-    "mainnet",
-    {
-      baseUrl: "https://beaconcha.in",
-      host: "brain.web3signer.dappnode",
-      apiPath: "/api/v1/",
-    },
-  ],
-  [
-    "prater",
-    {
-      baseUrl: "https://prater.beaconcha.in",
-      host: "brain.web3signer-prater.dappnode",
-      apiPath: "/api/v1/",
-    },
-  ],
-  [
-    "gnosis",
-    {
-      baseUrl: "https://gnosischa.in",
-      host: "brain.web3signer-gnosis.dappnode",
-      apiPath: "/api/v1/",
     },
   ],
 ]);
