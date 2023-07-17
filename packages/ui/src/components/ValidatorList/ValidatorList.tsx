@@ -129,6 +129,7 @@ export default function ValidatorList({
                   There was an error loading the dashboard. The explorer may not
                   be able to show a dashboard for all your validators or some of
                   them might not have been indexed yet. Have you done a deposit?
+                  Are your clients synced?
                 </Alert>
               )}
 

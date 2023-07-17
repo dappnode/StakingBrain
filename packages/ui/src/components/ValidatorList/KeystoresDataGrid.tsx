@@ -18,6 +18,7 @@ import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { beaconchaApiParamsMap } from "../../params";
 
 export default function KeystoresDataGrid({
   rows,
@@ -45,6 +46,7 @@ export default function KeystoresDataGrid({
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
 }): JSX.Element {
   const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
+  const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
   const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
 
   useEffect(() => {
@@ -111,6 +113,9 @@ export default function KeystoresDataGrid({
   const customRows = rows.map((row, index) => ({
     pubkey: row.pubkey,
     feeRecipient: row.feeRecipient,
+    beaconcha_url: beaconchaBaseUrl
+      ? beaconchaBaseUrl + "/validator/" + row.pubkey
+      : "",
     tag: row.tag,
     withdrawalCredentials: row.withdrawalCredentials,
     pubkeyInValidator: row.validatorImported,
@@ -251,6 +256,14 @@ export default function KeystoresDataGrid({
 
     try {
       allValidatorsInfo = await api.getValidators();
+
+      // Filter out validators that are not selected
+      const selectedPubkeys = selectedRows.map(
+        (row) => rows[row as number].pubkey
+      );
+      allValidatorsInfo = allValidatorsInfo.filter((validator) =>
+        selectedPubkeys.includes(validator.pubkey)
+      );
     } catch (e) {
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
       setValidatorSummaryURL("");
