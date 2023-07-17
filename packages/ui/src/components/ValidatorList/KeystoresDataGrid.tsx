@@ -1,8 +1,6 @@
 import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import {
-  CustomValidatorGetResponse,
-} from "@stakingbrain/common";
+import { CustomValidatorGetResponse } from "@stakingbrain/common";
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -247,14 +245,19 @@ export default function KeystoresDataGrid({
     );
 
   async function getValidatorSummaryURL() {
-
     let allValidatorsInfo: CustomValidatorGetResponse[];
 
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
     try {
-      allValidatorsInfo = await api.getValidators()
+      allValidatorsInfo = await api.getValidators();
     } catch (e) {
+      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
+      setValidatorSummaryURL("");
+      return;
+    }
+
+    if (allValidatorsInfo.every((validator) => validator.index === -1)) {
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
       setValidatorSummaryURL("");
       return;

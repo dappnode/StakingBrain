@@ -15,11 +15,11 @@ export default function buildValidatorSummaryURL({
   const baseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
   if (!baseUrl) return "";
 
-  let summaryValidatorURL = baseUrl + "/dashboard?validators=";
+  const validIndices = allValidatorsInfo
+    .filter((validator) => validator.index !== -1)
+    .map((validator) => validator.index);
 
-  allValidatorsInfo.forEach((validatorChunk) => {
-    summaryValidatorURL += validatorChunk.index.toString() + ",";
-  });
+  const validatorIndicesStr = validIndices.join(",");
 
-  return summaryValidatorURL;
+  return `${baseUrl}/dashboard?validators=${validatorIndicesStr}`;
 }

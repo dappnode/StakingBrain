@@ -113,10 +113,9 @@ export default function ValidatorList({
                   sx={{ marginTop: 2 }}
                   variant="filled"
                 >
-                  There was an error loading the dashboard. The number of API
-                  calls allowed by the explorer might have been exceeded or the
-                  network might be invalid. Please wait for a minute and refresh
-                  the page.
+                  There was an error loading the dashboard. The beacon chain of
+                  your consensus client might not be synced or the network might
+                  be invalid. Please wait for a while and refresh the page.
                 </Alert>
               )}
 
