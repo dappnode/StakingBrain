@@ -13,6 +13,7 @@ import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
+import { getSmoothingPoolAddress } from "../../utils/addresses";
 
 export default function ValidatorList({
   stakerConfig,
@@ -30,8 +31,10 @@ export default function ValidatorList({
     useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
   const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
-    BeaconchaUrlBuildingStatus.NotStarted
+    BeaconchaUrlBuildingStatus.NOT_STARTED
   );
+
+  const mevSpFeeRecipient = getSmoothingPoolAddress(stakerConfig.network);
 
   // Use effect on timer to refresh the list of validators
   useEffect(() => {
@@ -104,10 +107,11 @@ export default function ValidatorList({
                 setExitOpen={setExitOpen}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
+                mevSpFeeRecipient={mevSpFeeRecipient}
               />
 
               {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.Error && (
+                BeaconchaUrlBuildingStatus.ERROR && (
                 <Alert
                   severity="warning"
                   sx={{ marginTop: 2 }}
@@ -121,7 +125,7 @@ export default function ValidatorList({
               )}
 
               {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.NoIndexes && (
+                BeaconchaUrlBuildingStatus.NO_INDEXES && (
                 <Alert
                   severity="warning"
                   sx={{ marginTop: 2 }}
@@ -133,35 +137,30 @@ export default function ValidatorList({
                 </Alert>
               )}
 
-              {deleteOpen && (
-                <KeystoresDeleteDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  open={deleteOpen}
-                  setOpen={setDeleteOpen}
-                />
-              )}
+              <KeystoresDeleteDialog
+                rows={validatorsGet}
+                selectedRows={selectedRows}
+                setSelectedRows={setSelectedRows}
+                open={deleteOpen}
+                setOpen={setDeleteOpen}
+              />
 
-              {editFeesOpen && (
-                <EditFeesDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  open={editFeesOpen}
-                  setOpen={setEditFeesOpen}
-                />
-              )}
+              <EditFeesDialog
+                rows={validatorsGet}
+                selectedRows={selectedRows}
+                open={editFeesOpen}
+                setOpen={setEditFeesOpen}
+                mevSpAddress={mevSpFeeRecipient}
+              />
 
-              {exitOpen && (
-                <KeystoresExitDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  open={exitOpen}
-                  setOpen={setExitOpen}
-                  network={stakerConfig.network}
-                />
-              )}
+              <KeystoresExitDialog
+                rows={validatorsGet}
+                selectedRows={selectedRows}
+                setSelectedRows={setSelectedRows}
+                open={exitOpen}
+                setOpen={setExitOpen}
+                network={stakerConfig.network}
+              />
             </>
           ) : (
             <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">

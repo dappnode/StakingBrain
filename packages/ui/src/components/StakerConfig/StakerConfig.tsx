@@ -6,7 +6,7 @@ import {
 import { Card, Box, Container, Typography } from "@mui/material";
 import TrendingFlatRoundedIcon from "@mui/icons-material/TrendingFlatRounded";
 import SyncAltRoundedIcon from "@mui/icons-material/SyncAltRounded";
-import { prettyClientDnpName } from "../../utils/dataUtils";
+import { prettyClientDnpName } from "../../utils/data";
 
 export default function StakerConfig({
   stakerConfig,

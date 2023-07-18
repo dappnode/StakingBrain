@@ -42,7 +42,7 @@ export function prefix0xPubkey(pubkey: string): string {
   return pubkey.startsWith("0x") ? pubkey : "0x" + pubkey;
 }
 
-export const shortenPubkey = (key: string | undefined): string => {
+export function shortenPubkey(key: string | undefined): string {
   if (!key) return "";
   let prefix = "";
   let end = 4;
@@ -55,4 +55,4 @@ export const shortenPubkey = (key: string | undefined): string => {
     key.length - 4,
     key.length
   )}`;
-};
+}
