@@ -4,7 +4,7 @@ import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index
 
 describe.skip("Test for fetching validator indexes in every available network", () => {
   it("should return data corresponding to every validator PK", async () => {
-    const networks = ["mainnet", "prater", "gnosis"];
+    const networks = ["mainnet", "prater", "gnosis", "lukso"];
 
     for (const network of networks) {
       console.log("NETWORK: ", network);
@@ -64,6 +64,16 @@ const networkTestMap = new Map<
       indexes: [57102, 81200],
     },
   ],
+  [
+    "lukso",
+    {
+      pubkeys: [
+        "0x8000460289c3435bb6af636314142aed624089edb56dc12fc91475176592067ae4216bfe95b651c3af7c1c491a519134",
+        "0x80012f0aaa40e9cccf47ea7255ec380976d32c9e92fec0701926d9457e9510d108ae8fd5bea82bf13b85cc82de2729ac",
+      ],
+      indexes: [24693, 4272],
+    },
+  ],
 ]);
 
 // TODO: move below to common
@@ -90,6 +100,14 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     {
       baseUrl: "https://gnosischa.in",
       host: "brain.web3signer-gnosis.dappnode",
+      apiPath: "/api/v1/",
+    },
+  ],
+  [
+    "lukso",
+    {
+      baseUrl: "https://explorer.consensus.mainnet.lukso.network",
+      host: "brain.web3signer-lukso.dappnode",
       apiPath: "/api/v1/",
     },
   ],

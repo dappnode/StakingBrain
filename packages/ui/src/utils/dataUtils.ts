@@ -26,7 +26,8 @@ export function prettyClientDnpName(dnpName: string): string {
       (name) =>
         !name.includes("goerli") &&
         !name.includes("prater") &&
-        !name.includes("gnosis")
+        !name.includes("gnosis") &&
+        !name.includes("lukso")
     );
   if (!clientName) return dnpName;
 

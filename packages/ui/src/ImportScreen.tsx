@@ -150,14 +150,16 @@ export default function ImportScreen({
     return false;
   }
 
-  const tagSelectOptions: TagSelectOption[] = network === "gnosis"
-  ? [{ value: "solo", label: "Solo" }]
-  : [
-      { value: "solo", label: "Solo" },
-      { value: "rocketpool", label: "Rocketpool" },
-      { value: "stakehouse", label: "StakeHouse" },
-      { value: "stakewise", label: "Stakewise" },
-    ];
+  const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(
+    network
+  )
+    ? [{ value: "solo", label: "Solo" }]
+    : [
+        { value: "solo", label: "Solo" },
+        { value: "rocketpool", label: "Rocketpool" },
+        { value: "stakehouse", label: "StakeHouse" },
+        { value: "stakewise", label: "Stakewise" },
+      ];
 
   return (
     <div>
