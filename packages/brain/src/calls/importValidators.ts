@@ -59,7 +59,8 @@ export async function importValidators(
 
       try {
         const feeRecipient =
-          network !== "gnosis" && !isFeeRecipientEditable(validator.tag)
+          !["gnosis", "lukso"].includes(network) &&
+          !isFeeRecipientEditable(validator.tag)
             ? await getNonEditableFeeRecipient(
                 pubkey,
                 validator.tag as NonEditableFeeRecipientTag,
@@ -202,6 +203,10 @@ async function getNonEditableFeeRecipient(
   if (network == "gnosis") {
     throw new Error(
       "Currently, there are no DVT/LSDs supported on Gnosis chain in Dappnode."
+    );
+  } else if (network == "lukso") {
+    throw new Error(
+      "Currently, there are no DVT/LSDs supported on Lukso chain in Dappnode."
     );
   }
 

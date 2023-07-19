@@ -4,15 +4,19 @@ import {
   executionClientsMainnet,
   executionClientsPrater,
   executionClientsGnosis,
+  executionClientsLukso,
   ExecutionClientMainnet,
   consensusClientsMainnet,
   ConsensusClientMainnet,
   ExecutionClientGnosis,
+  ExecutionClientLukso,
   ExecutionClientPrater,
   consensusClientsGnosis,
+  consensusClientsLukso,
   consensusClientsPrater,
   ConsensusClientPrater,
   ConsensusClientGnosis,
+  ConsensusClientLukso,
   ExecutionClient,
   ConsensusClient,
 } from "@stakingbrain/common";
@@ -254,6 +258,7 @@ export function loadStakerConfig(): {
           `Unknown consensus client for network ${network}: ${consensusClient}`
         );
     }
+
     return {
       network,
       executionClient,
@@ -265,6 +270,54 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-prater.dappnode:9000`,
       token,
       host: `web3signer.web3signer-prater.dappnode`,
+      defaultFeeRecipient:
+        defaultFeeRecipient && isValidEcdsaPubkey(defaultFeeRecipient)
+          ? defaultFeeRecipient
+          : undefined,
+      tlsCert,
+    };
+  } else if (network === "lukso") {
+    const { executionClient, consensusClient, defaultFeeRecipient } =
+      loadEnvs("lukso");
+    switch (executionClient) {
+      case "lukso-erigon.dnp.dappnode.eth":
+        executionClientUrl = `http://lukso-erigon.dappnode:8545`;
+      case "lukso-geth.dnp.dappnode.eth":
+        executionClientUrl = `http://lukso-geth.dappnode:8545`;
+        break;
+      default:
+        throw Error(
+          `Unknown execution client for network ${network}: ${executionClient}`
+        );
+    }
+    switch (consensusClient) {
+      case "prysm-lukso.dnp.dappnode.eth":
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        beaconchainUrl = `http://beacon-chain.prysm-lukso.dappnode:3500`;
+        validatorUrl = `http://validator.prysm-lukso.dappnode:3500`;
+        break;
+      case "lighthouse-lukso.dnp.dappnode.eth":
+        token = `api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d`;
+        beaconchainUrl = `http://beacon-chain.lighthouse-lukso.dappnode:3500`;
+        validatorUrl = `http://validator.lighthouse-lukso.dappnode:3500`;
+        break;
+      default:
+        throw Error(
+          `Unknown consensus client for network ${network}: ${consensusClient}`
+        );
+    }
+
+    return {
+      network,
+      executionClient,
+      consensusClient,
+      executionClientUrl,
+      validatorUrl,
+      beaconchainUrl,
+      beaconchaUrl: `https://explorer.consensus.mainnet.lukso.network/`,
+      signerUrl: `http://web3signer.web3signer-lukso.dappnode:9000`,
+      token,
+      host: `web3signer.web3signer-lukso.dappnode`,
       defaultFeeRecipient:
         defaultFeeRecipient && isValidEcdsaPubkey(defaultFeeRecipient)
           ? defaultFeeRecipient
@@ -360,6 +413,24 @@ function loadEnvs<T extends Network>(
       )
         errors.push(
           `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsGnosis.join(
+            ", "
+          )}`
+        );
+      break;
+    case "lukso":
+      if (
+        !executionClientsLukso.includes(executionClient as ExecutionClientLukso)
+      )
+        errors.push(
+          `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsLukso.join(
+            ", "
+          )}`
+        );
+      if (
+        !consensusClientsLukso.includes(consensusClient as ConsensusClientLukso)
+      )
+        errors.push(
+          `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsLukso.join(
             ", "
           )}`
         );

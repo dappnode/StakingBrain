@@ -8,8 +8,8 @@ export class StakeHouseSDK {
   wizard: Wizard;
 
   constructor() {
-    if (network == "gnosis") {
-      throw new Error("StakeHouse is not supported on Gnosis chain");
+    if (["gnosis", "lukso"].includes(network)) {
+      throw new Error(`StakeHouse is not supported on ${network} chain`);
     }
 
     const rpcNetwork: providers.Network =

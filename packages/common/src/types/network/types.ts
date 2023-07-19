@@ -1,4 +1,4 @@
-export const networks = ["mainnet", "gnosis", "prater"] as const;
+export const networks = ["mainnet", "gnosis", "prater", "lukso"] as const;
 
 export type Network = (typeof networks)[number];
 
@@ -19,6 +19,8 @@ export type ExecutionClient<T extends Network> = T extends "mainnet"
   ? ExecutionClientGnosis
   : T extends "prater"
   ? ExecutionClientPrater
+  : T extends "lukso"
+  ? ExecutionClientLukso
   : never;
 
 export type ConsensusClient<T extends Network> = T extends "mainnet"
@@ -27,6 +29,8 @@ export type ConsensusClient<T extends Network> = T extends "mainnet"
   ? ConsensusClientGnosis
   : T extends "prater"
   ? ConsensusClientPrater
+  : T extends "lukso"
+  ? ConsensusClientLukso
   : never;
 
 export type Signer<T extends Network> = T extends "mainnet"
@@ -35,6 +39,8 @@ export type Signer<T extends Network> = T extends "mainnet"
   ? SignerGnosis
   : T extends "prater"
   ? SignerPrater
+  : T extends "lukso"
+  ? SignerLukso
   : never;
 
 // Mainnet
@@ -99,3 +105,20 @@ export const consensusClientsGnosis = [
   "lodestar-gnosis.dnp.dappnode.eth",
 ] as const;
 export type ConsensusClientGnosis = (typeof consensusClientsGnosis)[number];
+
+// Lukso
+
+export const signerLukso = "web3signer-lukso.dnp.dappnode.eth";
+export type SignerLukso = typeof signerLukso;
+
+export const consensusClientsLukso = [
+  "prysm-lukso.dnp.dappnode.eth",
+  "lighthouse-lukso.dnp.dappnode.eth",
+] as const;
+export type ConsensusClientLukso = (typeof consensusClientsLukso)[number];
+
+export const executionClientsLukso = [
+  "lukso-geth.dnp.dappnode.eth",
+  "lukso-erigon.dnp.dappnode.eth",
+] as const;
+export type ExecutionClientLukso = (typeof executionClientsLukso)[number];
