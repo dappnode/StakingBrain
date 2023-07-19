@@ -3,7 +3,6 @@ import {
   Web3signerDeleteRequest,
   Web3signerHealthcheckResponse,
   CustomImportRequest,
-  BeaconchaGetResponse,
   StakerConfig,
   Network,
   CustomValidatorGetResponse,
@@ -14,13 +13,6 @@ import {
 } from "./index.js";
 
 export interface Routes {
-  // BeaconchaApi
-  beaconchaFetchAllValidatorsInfo: (
-    pubkeys: string[]
-  ) => Promise<BeaconchaGetResponse[]>;
-  beaconchaFetchValidatorsInfo: (
-    pubkeys: string[]
-  ) => Promise<BeaconchaGetResponse>;
   // Validators
   importValidators: (
     postRequest: CustomImportRequest
@@ -52,8 +44,6 @@ interface RouteData {
 }
 
 export const routesData: { [P in keyof Routes]: RouteData } = {
-  beaconchaFetchAllValidatorsInfo: { log: true },
-  beaconchaFetchValidatorsInfo: { log: true },
   importValidators: { log: true },
   updateValidators: { log: true },
   deleteValidators: { log: true },
