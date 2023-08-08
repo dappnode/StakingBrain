@@ -296,7 +296,7 @@ export function loadStakerConfig(): {
         beaconchainUrl = `http://beacon-chain.prysm-lukso.dappnode:3500`;
         validatorUrl = `http://validator.prysm-lukso.dappnode:3500`;
         break;
-      case " .dnp.dappnode.eth":
+      case "lighthouse-lukso.dnp.dappnode.eth":
         token = `api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d`;
         beaconchainUrl = `http://beacon-chain.lighthouse-lukso.dappnode:3500`;
         validatorUrl = `http://validator.lighthouse-lukso.dappnode:3500`;
