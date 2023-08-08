@@ -296,10 +296,28 @@ export function loadStakerConfig(): {
         beaconchainUrl = `http://beacon-chain.prysm-lukso.dappnode:3500`;
         validatorUrl = `http://validator.prysm-lukso.dappnode:3500`;
         break;
-      case "lighthouse-lukso.dnp.dappnode.eth":
+      case " .dnp.dappnode.eth":
         token = `api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d`;
         beaconchainUrl = `http://beacon-chain.lighthouse-lukso.dappnode:3500`;
         validatorUrl = `http://validator.lighthouse-lukso.dappnode:3500`;
+        break;
+      case "teku-lukso.dnp.dappnode.eth":
+        token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
+        beaconchainUrl = `http://beacon-chain.teku-lukso.dappnode:3500`;
+        validatorUrl = `https://validator.teku-lukso.dappnode:3500`;
+        tlsCert = fs.readFileSync(
+          path.join(certDir, "lukso", "teku_client_keystore.p12")
+        );
+        break;
+      case "lodestar-lukso.dnp.dappnode.eth":
+        token = `api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d`;
+        beaconchainUrl = `http://beacon-chain.lodestar-lukso.dappnode:3500`;
+        validatorUrl = `http://validator.lodestar-lukso.dappnode:3500`;
+        break;
+      case "nimbus-lukso.dnp.dappnode.eth":
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        beaconchainUrl = `http://beacon-validator.nimbus-lukso.dappnode:4500`;
+        validatorUrl = `http://beacon-validator.nimbus-lukso.dappnode:3500`;
         break;
       default:
         throw Error(
