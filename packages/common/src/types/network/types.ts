@@ -114,11 +114,16 @@ export type SignerLukso = typeof signerLukso;
 export const consensusClientsLukso = [
   "prysm-lukso.dnp.dappnode.eth",
   "lighthouse-lukso.dnp.dappnode.eth",
+  "teku-lukso.dnp.dappnode.eth",
+  "nimbus-lukso.dnp.dappnode.eth",
+  "lodestar-lukso.dnp.dappnode.eth",
 ] as const;
 export type ConsensusClientLukso = (typeof consensusClientsLukso)[number];
 
 export const executionClientsLukso = [
   "lukso-geth.dnp.dappnode.eth",
   "lukso-erigon.dnp.dappnode.eth",
+  "lukso-nethermind.dnp.dappnode.eth",
+  "lukso-besu.dnp.dappnode.eth",
 ] as const;
 export type ExecutionClientLukso = (typeof executionClientsLukso)[number];

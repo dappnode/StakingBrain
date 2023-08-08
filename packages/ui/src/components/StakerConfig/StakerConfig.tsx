@@ -37,8 +37,13 @@ export default function StakerConfig({
     // TODO: Add Lukso logos (now mainnet)
     "lukso-geth.dnp.dappnode.eth": "/assets/geth.png",
     "lukso-erigon.dnp.dappnode.eth": "/assets/erigon.png",
+    "lukso-besu.dnp.dappnode.eth": "/assets/besu.png",
+    "lukso-nethermind.dnp.dappnode.eth": "/assets/nethermind.png",
     "prysm-lukso.dnp.dappnode.eth": "/assets/prysm.png",
     "lighthouse-lukso.dnp.dappnode.eth": "/assets/lighthouse.png",
+    "teku-lukso.dnp.dappnode.eth": "/assets/teku.png",
+    "nimbus-lukso.dnp.dappnode.eth": "/assets/nimbus.png",
+    "lodestar-lukso.dnp.dappnode.eth": "/assets/lodestar.png",
 
     // Default logo until we have a package for them
     default: "/assets/dappnode_logo_clean.png",
