@@ -159,7 +159,6 @@ export default function ValidatorList({
                   setSelectedRows={setSelectedRows}
                   open={exitOpen}
                   setOpen={setExitOpen}
-                  network={stakerConfig.network}
                 />
               )}
             </>
