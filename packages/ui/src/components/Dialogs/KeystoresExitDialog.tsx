@@ -147,7 +147,7 @@ export default function KeystoresExitDialog({
                     id="alert-dialog-description"
                     component={"span"}
                   >
-                    <ExitWarning rows={rows} selectedRows={selectedRows} network={network} />
+                    <ExitWarning rows={rows} selectedRows={selectedRows} />
                   </DialogContentText>
 
                   <br />
