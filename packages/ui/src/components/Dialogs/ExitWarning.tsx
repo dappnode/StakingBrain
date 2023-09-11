@@ -32,12 +32,6 @@ export default function ExitWarning({
         the validator(s) staked funds after a period of time known as the
         withdrawal period.
       </Alert>
-      { network === "gnosis" && (
-        <Alert severity="warning">
-        Withdrawals are not enabled in Gnosis Chain yet. If you exit your validators
-        you will not be able to retrieve your funds until they are available.
-        </Alert>
-      )}
     </>
   );
 }
