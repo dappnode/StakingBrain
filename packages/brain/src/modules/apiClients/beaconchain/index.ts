@@ -6,10 +6,12 @@ import {
   BeaconchainGenesisGetResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
+import { network } from "../../../index.js";
 import path from "path";
 
 export class Beaconchain extends StandardApi {
   private SLOTS_PER_EPOCH = 32;
+  private SLOTS_PER_EPOCH_GNOSIS = 16;
   private beaconchainEndpoint = "/eth/v1/beacon";
 
   /**
@@ -138,6 +140,10 @@ export class Beaconchain extends StandardApi {
    * @param slot - The slot number.
    */
   private getEpochFromSlot(slot: number): number {
-    return Math.floor(slot / this.SLOTS_PER_EPOCH);
+    if (network == "gnosis"){
+      return Math.floor(slot / this.SLOTS_PER_EPOCH_GNOSIS);
+    } else {
+      return Math.floor(slot / this.SLOTS_PER_EPOCH);
+    }
   }
 }
