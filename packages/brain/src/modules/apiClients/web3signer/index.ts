@@ -121,7 +121,7 @@ export class Web3SignerApi extends StandardApi {
 
   /**
    * Checks the Web3Signer server status. Confirms if Web3Signer is connected and running.
-   * https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Reload-Signer-Keys/operation/UPCHECK
+   * https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Health-Status/operation/HEALTHCHECK
    */
   public async getStatus(): Promise<Web3signerHealthcheckResponse> {
     try {
