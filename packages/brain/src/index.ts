@@ -52,7 +52,10 @@ export const validatorApi = new ValidatorApi({
   authToken: token,
   tlsCert,
 });
-export const beaconchainApi = new Beaconchain({ baseUrl: beaconchainUrl });
+export const beaconchainApi = new Beaconchain(
+  { baseUrl: beaconchainUrl },
+  network
+);
 
 // Create DB instance
 export const brainDb = new BrainDataBase(
