@@ -4,13 +4,20 @@ import {
   BeaconchainPoolVoluntaryExitsPostRequest,
   BeaconchainForkFromStateGetResponse,
   BeaconchainGenesisGetResponse,
+  Network,
+  ApiParams,
 } from "@stakingbrain/common";
 import { StandardApi } from "../index.js";
 import path from "path";
 
 export class Beaconchain extends StandardApi {
-  private SLOTS_PER_EPOCH = 32;
+  private SLOTS_PER_EPOCH: number;
   private beaconchainEndpoint = "/eth/v1/beacon";
+
+  constructor(apiParams: ApiParams, network: Network) {
+    super(apiParams);
+    this.SLOTS_PER_EPOCH = network === "gnosis" ? 16 : 32;
+  }
 
   /**
    * Submits SignedVoluntaryExit object to node's pool and if passes validation node MUST broadcast it to network.
