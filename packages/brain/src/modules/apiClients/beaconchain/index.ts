@@ -113,7 +113,6 @@ export class Beaconchain extends StandardApi {
    */
   public async getCurrentEpoch(): Promise<number> {
     const head = await this.getBlockHeader({ block_id: "head" });
-    console.log("head", head.data);
     return this.getEpochFromSlot(parseInt(head.data.header.message.slot));
   }
 
@@ -146,7 +145,6 @@ export class Beaconchain extends StandardApi {
    * @param slot - The slot number.
    */
   private getEpochFromSlot(slot: number): number {
-    console.log("slot", slot);
     return Math.floor(slot / this.SLOTS_PER_EPOCH);
   }
 }
