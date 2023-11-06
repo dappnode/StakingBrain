@@ -4,7 +4,7 @@ import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index
 
 describe.skip("Test for fetching validator indexes in every available network", () => {
   it("should return data corresponding to every validator PK", async () => {
-    const networks = ["mainnet", "prater", "gnosis", "lukso"];
+    const networks = ["mainnet", "prater", "gnosis", "lukso", "holesky"];
 
     for (const network of networks) {
       console.log("NETWORK: ", network);
@@ -74,6 +74,16 @@ const networkTestMap = new Map<
       indexes: [24693, 4272],
     },
   ],
+  [
+    "holesky",
+    {
+      pubkeys: [
+        "0x800000b3884235f70b06fec68c19642fc9e81e34fbe7f1c0ae156b8b45860dfe5ac71037ae561c2a759ba83401488e18",
+        "0x800009f644592de8d2de0da0caca00f26fd6fb3d7f99f57101bbbfb45d4b166f8dbe5fd82b3611e6e90fe323de955bd2"
+      ],
+      indexes: [886680, 68945],
+    }
+  ],
 ]);
 
 // TODO: move below to common
@@ -108,6 +118,14 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     {
       baseUrl: "https://explorer.consensus.mainnet.lukso.network",
       host: "brain.web3signer-lukso.dappnode",
+      apiPath: "/api/v1/",
+    },
+  ],
+  [
+    "holesky",
+    {
+      baseUrl: "https://holesky.beaconcha.in",
+      host: "brain.web3signer-holesky.dappnode",
       apiPath: "/api/v1/",
     },
   ],

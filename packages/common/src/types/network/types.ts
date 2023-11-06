@@ -1,4 +1,4 @@
-export const networks = ["mainnet", "gnosis", "prater", "lukso"] as const;
+export const networks = ["mainnet", "gnosis", "prater", "lukso", "holesky"] as const;
 
 export type Network = (typeof networks)[number];
 
@@ -21,6 +21,8 @@ export type ExecutionClient<T extends Network> = T extends "mainnet"
   ? ExecutionClientPrater
   : T extends "lukso"
   ? ExecutionClientLukso
+  : T extends "holesky"
+  ? ExecutionClientHolesky
   : never;
 
 export type ConsensusClient<T extends Network> = T extends "mainnet"
@@ -31,6 +33,8 @@ export type ConsensusClient<T extends Network> = T extends "mainnet"
   ? ConsensusClientPrater
   : T extends "lukso"
   ? ConsensusClientLukso
+  : T extends "holesky"
+  ? ConsensusClientHolesky
   : never;
 
 export type Signer<T extends Network> = T extends "mainnet"
@@ -41,6 +45,8 @@ export type Signer<T extends Network> = T extends "mainnet"
   ? SignerPrater
   : T extends "lukso"
   ? SignerLukso
+  : T extends "holesky"
+  ? SignerHolesky
   : never;
 
 // Mainnet
@@ -127,3 +133,25 @@ export const executionClientsLukso = [
   "lukso-besu.dnp.dappnode.eth",
 ] as const;
 export type ExecutionClientLukso = (typeof executionClientsLukso)[number];
+
+// Holesky 
+
+export const signerHolesky = "web3signer-holesky.dnp.dappnode.eth";
+export type SignerHolesky = typeof signerHolesky;
+
+export const consensusClientsHolesky = [
+  "prysm-holesky.dnp.dappnode.eth",
+  "lighthouse-holesky.dnp.dappnode.eth",
+  "teku-holesky.dnp.dappnode.eth",
+  "nimbus-holesky.dnp.dappnode.eth",
+  "lodestar-holesky.dnp.dappnode.eth",
+] as const;
+export type ConsensusClientHolesky = (typeof consensusClientsHolesky)[number];
+
+export const executionClientsHolesky = [
+  "holesky-geth.dnp.dappnode.eth",
+  "holesky-erigon.dnp.dappnode.eth",
+  "holesky-nethermind.dnp.dappnode.eth",
+  "holesky-besu.dnp.dappnode.eth",
+] as const;
+export type ExecutionClientHolesky = (typeof executionClientsHolesky)[number];

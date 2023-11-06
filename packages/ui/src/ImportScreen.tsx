@@ -154,6 +154,12 @@ export default function ImportScreen({
     network
   )
     ? [{ value: "solo", label: "Solo" }]
+    : ["holesky"].includes(network)
+    ? [
+        { value: "solo", label: "Solo" },
+        { value: "rocketpool", label: "Rocketpool" },
+        { value: "stakehouse", label: "StakeHouse" },
+      ]
     : [
         { value: "solo", label: "Solo" },
         { value: "rocketpool", label: "Rocketpool" },
