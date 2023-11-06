@@ -14,27 +14,38 @@ export default function StakerConfig({
   stakerConfig: StakerConfigType<Network>;
 }): JSX.Element {
   const images = {
+    // Mainnet
     "erigon.dnp.dappnode.eth": "/assets/erigon.png",
-    "goerli-erigon.dnp.dappnode.eth": "/assets/erigon-goerli.png",
     "geth.dnp.dappnode.eth": "/assets/geth.png",
     "besu.public.dappnode.eth": "/assets/besu.png",
     "nethermind.public.dappnode.eth": "/assets/nethermind.png",
-    "nethermind-xdai.dnp.dappnode.eth": "/assets/nethermind-gnosis.png",
-    "goerli-geth.dnp.dappnode.eth": "/assets/geth-goerli.png",
-    "goerli-besu.dnp.dappnode.eth": "/assets/besu-goerli.png",
     "prysm.dnp.dappnode.eth": "/assets/prysm.png",
     "lighthouse.dnp.dappnode.eth": "/assets/lighthouse.png",
     "teku.dnp.dappnode.eth": "/assets/teku.png",
     "nimbus.dnp.dappnode.eth": "/assets/nimbus.png",
+    "lodestar.dnp.dappnode.eth": "/assets/lodestar.png",
+
+    // Goerli/Prater
+    "goerli-erigon.dnp.dappnode.eth": "/assets/erigon-goerli.png",
+    "goerli-geth.dnp.dappnode.eth": "/assets/geth-goerli.png",
+    "goerli-besu.dnp.dappnode.eth": "/assets/besu-goerli.png",
+    "goerli-nethermind.dnp.dappnode.eth": "/assets/nethermind-goerli.png",
     "prysm-prater.dnp.dappnode.eth": "/assets/prysm-prater.png",
     "lighthouse-prater.dnp.dappnode.eth": "/assets/lighthouse-prater.png",
     "teku-prater.dnp.dappnode.eth": "/assets/teku-prater.png",
     "nimbus-prater.dnp.dappnode.eth": "/assets/nimbus-prater.png",
+    "lodestar-prater.dnp.dappnode.eth": "/assets/lodestar-prater.png",
+
+    // Gnosis
+    "nethermind-xdai.dnp.dappnode.eth": "/assets/nethermind-gnosis.png",
     "gnosis-beacon-chain-prysm.dnp.dappnode.eth": "/assets/prysm-gnosis.png",
     "lighthouse-gnosis.dnp.dappnode.eth": "/assets/lighthouse-gnosis.png",
     "teku-gnosis.dnp.dappnode.eth": "/assets/teku-gnosis.png",
-    "nimbus-gnosis.dnp.dappnode.eth": "/assets/nimbus-gnosis.png",
-    // TODO: Add Lukso logos (now mainnet)
+    // TODO: Add Nimbus Gnosis logo (now mainnet)
+    "nimbus-gnosis.dnp.dappnode.eth": "/assets/nimbus.png",
+    "lodestar-gnosis.dnp.dappnode.eth": "/assets/lodestar-gnosis.png",
+
+    // Lukso --> // TODO: Add Lukso logos (now mainnet)
     "lukso-geth.dnp.dappnode.eth": "/assets/geth.png",
     "lukso-erigon.dnp.dappnode.eth": "/assets/erigon.png",
     "lukso-besu.dnp.dappnode.eth": "/assets/besu.png",
@@ -45,12 +56,19 @@ export default function StakerConfig({
     "nimbus-lukso.dnp.dappnode.eth": "/assets/nimbus.png",
     "lodestar-lukso.dnp.dappnode.eth": "/assets/lodestar.png",
 
+    //Holesky --> // TODO: Add Holesky logos (now mainnet)
+    "holesky-geth.dnp.dappnode.eth": "/assets/geth.png",
+    "holesky-erigon.dnp.dappnode.eth": "/assets/erigon.png",
+    "holesky-besu.dnp.dappnode.eth": "/assets/besu.png",
+    "holesky-nethermind.dnp.dappnode.eth": "/assets/nethermind.png",
+    "prysm-holesky.dnp.dappnode.eth": "/assets/prysm.png",
+    "lighthouse-holesky.dnp.dappnode.eth": "/assets/lighthouse.png",
+    "teku-holesky.dnp.dappnode.eth": "/assets/teku.png",
+    "nimbus-holesky.dnp.dappnode.eth": "/assets/nimbus.png",
+    "lodestar-holesky.dnp.dappnode.eth": "/assets/lodestar.png",
+
     // Default logo until we have a package for them
     default: "/assets/dappnode_logo_clean.png",
-    "goerli-nethermind.dnp.dappnode.eth": "/assets/dappnode_logo.png",
-    "lodestar.dnp.dappnode.eth": "/assets/dappnode_logo.png",
-    "lodestar-prater.dnp.dappnode.eth": "/assets/dappnode_logo.png",
-    "lodestar-gnosis.dnp.dappnode.eth": "/assets/dappnode_logo.png",
   };
 
   return (
