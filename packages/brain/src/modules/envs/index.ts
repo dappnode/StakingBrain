@@ -5,18 +5,22 @@ import {
   executionClientsPrater,
   executionClientsGnosis,
   executionClientsLukso,
+  executionClientsHolesky,
   ExecutionClientMainnet,
   consensusClientsMainnet,
   ConsensusClientMainnet,
   ExecutionClientGnosis,
   ExecutionClientLukso,
+  ExecutionClientHolesky,
   ExecutionClientPrater,
   consensusClientsGnosis,
   consensusClientsLukso,
+  consensusClientsHolesky,
   consensusClientsPrater,
   ConsensusClientPrater,
   ConsensusClientGnosis,
   ConsensusClientLukso,
+  ConsensusClientHolesky,
   ExecutionClient,
   ConsensusClient,
 } from "@stakingbrain/common";
@@ -342,6 +346,78 @@ export function loadStakerConfig(): {
           : undefined,
       tlsCert,
     };
+  } else if (network === "holesky") {
+    const { executionClient, consensusClient, defaultFeeRecipient } =
+      loadEnvs("holesky");
+    switch (executionClient) {
+      case "holesky-nethermind.dnp.dappnode.eth":
+        executionClientUrl = `http://holesky-nethermind.dappnode:8545`;
+        break;
+      case "holesky-besu.dnp.dappnode.eth":
+        executionClientUrl = `http://holesky-besu.dappnode:8545`;
+        break;
+      case "holesky-erigon.dnp.dappnode.eth":
+        executionClientUrl = `http://holesky-erigon.dappnode:8545`;
+      case "holesky-geth.dnp.dappnode.eth":
+        executionClientUrl = `http://holesky-geth.dappnode:8545`;
+        break;
+      default:
+        throw Error(
+          `Unknown execution client for network ${network}: ${executionClient}`
+        );
+    }
+    switch (consensusClient) {
+      case "prysm-holesky.dnp.dappnode.eth":
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        beaconchainUrl = `http://beacon-chain.prysm-holesky.dappnode:3500`;
+        validatorUrl = `http://validator.prysm-holesky.dappnode:3500`;
+        break;
+      case "teku-holesky.dnp.dappnode.eth":
+        token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
+        beaconchainUrl = `http://beacon-chain.teku-holesky.dappnode:3500`;
+        validatorUrl = `https://validator.teku-holesky.dappnode:3500`;
+        tlsCert = fs.readFileSync(
+          path.join(certDir, "holesky", "teku_client_keystore.p12")
+        );
+        break;
+      case "lighthouse-holesky.dnp.dappnode.eth":
+        token = `api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d`;
+        beaconchainUrl = `http://beacon-chain.lighthouse-holesky.dappnode:3500`;
+        validatorUrl = `http://validator.lighthouse-holesky.dappnode:3500`;
+        break;
+      case "lodestar-holesky.dnp.dappnode.eth":
+        token = `api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d`;
+        beaconchainUrl = `http://beacon-chain.lodestar-holesky.dappnode:3500`;
+        validatorUrl = `http://validator.lodestar-holesky.dappnode:3500`;
+        break;
+      case "nimbus-holesky.dnp.dappnode.eth":
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        beaconchainUrl = `http://beacon-validator.nimbus-holesky.dappnode:4500`;
+        validatorUrl = `http://beacon-validator.nimbus-holesky.dappnode:3500`;
+        break;
+      default:
+        throw Error(
+          `Unknown consensus client for network ${network}: ${consensusClient}`
+        );
+    }
+
+    return {
+      network,
+      executionClient,
+      consensusClient,
+      executionClientUrl,
+      validatorUrl,
+      beaconchainUrl,
+      beaconchaUrl: `https://holesky.beaconcha.in`,
+      signerUrl: `http://web3signer.web3signer-holesky.dappnode:9000`,
+      token,
+      host: `web3signer.web3signer-holesky.dappnode`,
+      defaultFeeRecipient:
+        defaultFeeRecipient && isValidEcdsaPubkey(defaultFeeRecipient)
+          ? defaultFeeRecipient
+          : undefined,
+      tlsCert,
+    };
   } else {
     throw Error(`Unknown network ${network}`);
   }
@@ -449,6 +525,28 @@ function loadEnvs<T extends Network>(
       )
         errors.push(
           `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsLukso.join(
+            ", "
+          )}`
+        );
+      break;
+    case "holesky":
+      if (
+        !executionClientsHolesky.includes(
+          executionClient as ExecutionClientHolesky
+        )
+      )
+        errors.push(
+          `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsHolesky.join(
+            ", "
+          )}`
+        );
+      if (
+        !consensusClientsHolesky.includes(
+          consensusClient as ConsensusClientHolesky
+        )
+      )
+        errors.push(
+          `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsHolesky.join(
             ", "
           )}`
         );
