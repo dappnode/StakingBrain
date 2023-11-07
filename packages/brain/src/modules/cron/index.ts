@@ -63,23 +63,34 @@ export class Cron {
     try {
       logger.debug(`Reloading data...`);
 
-      // 0. GET data
+      // 0. GET status
+      const signerApiStatus = await this.signerApi.getStatus();
+
+      // If web3signer API is not UP, skip data reload and further steps.
+      // This is done to avoid unintended DB modifications when the API is down.
+      // Status can be "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
+      if (signerApiStatus.status !== "UP") {
+        logger.debug(`Web3Signer is not UP. Skipping data reload until UP. Trying again in ${this.defaultInterval / 1000} seconds`);
+        return;
+      }
+
+      // 1. GET data
       const dbPubkeys = Object.keys(this.brainDb.getData());
       const signerPubkeys = (await this.signerApi.getKeystores()).data.map(
         (keystore) => keystore.validating_pubkey
       );
 
-      // 1. DELETE from signer API pubkeys that are not in DB
+      // 2. DELETE from signer API pubkeys that are not in DB
       await this.deleteSignerPubkeysNotInDB({ signerPubkeys, dbPubkeys });
 
-      // 2. DELETE from DB pubkeys that are not in signer API
+      // 3. DELETE from DB pubkeys that are not in signer API
       await this.deleteDbPubkeysNotInSigner({ dbPubkeys, signerPubkeys });
 
       const validatorPubkeys = (
         await this.validatorApi.getRemoteKeys()
       ).data.map((keystore) => keystore.pubkey);
 
-      // 3. POST to validator API pubkeys that are in DB and not in validator API
+      // 4. POST to validator API pubkeys that are in DB and not in validator API
       await this.postValidatorPubkeysFromDb({
         brainDbPubkeysToAdd: dbPubkeys.filter(
           (pubkey) => !validatorPubkeys.includes(pubkey)
@@ -87,7 +98,7 @@ export class Cron {
         validatorPubkeys,
       });
 
-      // 4. DELETE to validator API pubkeys that are in validator API and not in DB
+      // 5. DELETE to validator API pubkeys that are in validator API and not in DB
       await this.deleteValidatorPubkeysNotInDB({
         validatorPubkeys,
         validatorPubkeysToRemove: validatorPubkeys.filter(
@@ -95,7 +106,7 @@ export class Cron {
         ),
       });
 
-      // 5. POST to validator API fee recipients that are in DB and not in validator API
+      // 6. POST to validator API fee recipients that are in DB and not in validator API
       await this.postValidatorsFeeRecipientsFromDb({
         dbData: this.brainDb.getData(),
         validatorPubkeysFeeRecipients: await this.getValidatorsFeeRecipients({
@@ -125,6 +136,8 @@ export class Cron {
         }
 
         logger.error(`Error reloading data`, e);
+      } else {
+        logger.error(`Unknown error reloading data`, e);
       }
     }
   }
