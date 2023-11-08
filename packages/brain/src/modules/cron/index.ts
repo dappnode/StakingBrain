@@ -70,7 +70,7 @@ export class Cron {
       // This is done to avoid unintended DB modifications when the API is down.
       // Status can be "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
       if (signerApiStatus.status !== "UP") {
-        logger.debug(`Web3Signer is not UP. Skipping data reload until UP. Trying again in ${this.defaultInterval / 1000} seconds`);
+        logger.warn(`Web3Signer is ${signerApiStatus.status}. Skipping data reload until Web3Signer is UP. Trying again in ${this.defaultInterval / 1000} seconds`);
         return;
       }
 
