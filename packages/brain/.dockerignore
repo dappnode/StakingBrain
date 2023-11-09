@@ -1,0 +1,9 @@
+dist
+node_modules
+.env
+.eslintignore
+.eslintrc
+.gitignore
+.mocharc.yaml
+.prettierrc
+tests
