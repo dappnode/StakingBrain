@@ -6,5 +6,9 @@ packages/*/dist
 packages/*/build
 packages/*/tests
 packages/*/keystores
+packages/*/.env
+packages/*/.eslintignore
+packages/*/.mocharc.*
+packages/*/.prettierrc
 packages/brain/brain-db.json
 docs
