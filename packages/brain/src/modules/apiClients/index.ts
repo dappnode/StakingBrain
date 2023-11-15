@@ -155,6 +155,21 @@ export class StandardApi {
               );
             }
           });
+          res.on("error", (e: ErrnoException) => {
+            reject(
+              new ApiError({
+                name: e.name || "Standard ApiError",
+                message: `${e.message}. ` || "",
+                errno: e.errno || -1,
+                code: e.code || "UNKNOWN",
+                path: endpoint,
+                syscall: method,
+                hostname: this.requestOptions.hostname || undefined,
+                address: e.address,
+                port: e.port,
+              })
+            );
+          });
         });
       }
     );
