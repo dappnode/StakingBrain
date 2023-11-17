@@ -325,8 +325,7 @@ export function loadStakerConfig(): {
       tlsCert,
     };
   } else if (network === "holesky") {
-    const { executionClient, consensusClient, defaultFeeRecipient } =
-      loadEnvs("holesky");
+    const { executionClient, consensusClient } = loadEnvs("holesky");
     switch (executionClient) {
       case "holesky-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://holesky-nethermind.dappnode:8545`;
@@ -390,10 +389,6 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-holesky.dappnode:9000`,
       token,
       host: `web3signer.web3signer-holesky.dappnode`,
-      defaultFeeRecipient:
-        defaultFeeRecipient && isValidEcdsaPubkey(defaultFeeRecipient)
-          ? defaultFeeRecipient
-          : undefined,
       tlsCert,
     };
   } else {
