@@ -275,7 +275,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
               `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${params.burnAddress}}`,
               e
             );
-            // TODO: consider setting MEV fee recipient
+            // TODO: consider setting MEV fee recipient.
             feeRecipient = params.burnAddress;
           });
 
