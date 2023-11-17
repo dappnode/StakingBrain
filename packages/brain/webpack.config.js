@@ -25,10 +25,9 @@ export default {
     topLevelAwait: true,
     outputModule: true,
   },
-  // externals: [/node_modules/, "bufferutil", "utf-8-validate"],
+  externals: [nodeExternals(), "express", "ethers"],
   externalsPresets: { node: true },
   target: "node18.13",
-  //externals: [nodeExternals()],
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     extensionAlias: {
