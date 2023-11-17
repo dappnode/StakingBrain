@@ -2,6 +2,9 @@
   "name": "stakingbrain",
   "type": "module",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "workspaces": [
     "packages/*"
   ],
