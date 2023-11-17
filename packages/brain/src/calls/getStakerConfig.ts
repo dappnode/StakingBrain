@@ -3,7 +3,6 @@ import {
   network,
   executionClient,
   consensusClient,
-  defaultFeeRecipient,
   executionClientUrl,
   validatorUrl,
   beaconchainUrl,
@@ -19,6 +18,5 @@ export async function getStakerConfig(): Promise<StakerConfig<Network>> {
     validatorUrl,
     beaconchainUrl,
     signerUrl,
-    defaultFeeRecipient,
   };
 }

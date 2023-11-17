@@ -45,7 +45,7 @@ import { isValidEcdsaPubkey } from "@stakingbrain/common";
  * @throws consensus client is not valid for <network>: <consensus client>. Valid consensus clients for <network>: <consensus clients>
  * This exception is thrown if the consensus client is not valid for the network
  *
- * @returns executionClientUrl, validatorUrl, beaconchainUrl, beaconchaUrl, signerUrl, token, host, defaultFeeRecipient, tlsCert
+ * @returns executionClientUrl, validatorUrl, beaconchainUrl, beaconchaUrl, signerUrl, token, host, tlsCert
  */
 export function loadStakerConfig(): {
   network: Network;
