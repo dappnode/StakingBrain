@@ -10,7 +10,6 @@ export interface StakerConfig<T extends Network> {
   validatorUrl: string;
   beaconchainUrl: string;
   signerUrl: string;
-  defaultFeeRecipient?: string;
 }
 
 export type ExecutionClient<T extends Network> = T extends "mainnet"

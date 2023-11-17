@@ -98,11 +98,7 @@ describe("DataBase", () => {
 
       expect(db.data).to.be.null;
       // initialize
-      await db.initialize(
-        signerApi,
-        validatorApi,
-        "0x0000000000000000000000000000000000000000"
-      );
+      await db.initialize(signerApi, validatorApi);
       // print contents of database
       console.log(db.data);
       // check database
@@ -120,11 +116,7 @@ describe("DataBase", () => {
       const signerApi = sinon.createStubInstance(Web3SignerApi);
       const validatorApi = sinon.createStubInstance(ValidatorApi);
       sinon.stub(db, <any>"databaseMigration").callsFake(databaseMigration);
-      await db.initialize(
-        signerApi,
-        validatorApi,
-        "0x0000000000000000000000000000000000000000"
-      );
+      await db.initialize(signerApi, validatorApi);
 
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
@@ -139,11 +131,7 @@ describe("DataBase", () => {
       fs.writeFileSync(testDbName, JSON.stringify({}));
       const signerApi = sinon.createStubInstance(Web3SignerApi);
       const validatorApi = sinon.createStubInstance(ValidatorApi);
-      db.initialize(
-        signerApi,
-        validatorApi,
-        "0x0000000000000000000000000000000000000000"
-      );
+      db.initialize(signerApi, validatorApi);
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
       expect(db.data).to.be.empty;
