@@ -28,7 +28,6 @@ import path from "path";
 import fs from "fs";
 import { params } from "../../params.js";
 import { __dirname } from "../../index.js";
-import { isValidEcdsaPubkey } from "@stakingbrain/common";
 
 /**
  * Loads the staker config needed to create the base urls for beacon, validator and signer APIs
