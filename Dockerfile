@@ -1,4 +1,4 @@
-ARG NODE_VERSION=18.13.0
+ARG NODE_VERSION=20.3.0
 
 # Build
 FROM node:${NODE_VERSION}-alpine as build-stage
