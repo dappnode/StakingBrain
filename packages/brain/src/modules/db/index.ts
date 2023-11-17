@@ -59,19 +59,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    */
   public async initialize(
     signerApi: Web3SignerApi,
-    validatorApi: ValidatorApi,
-    defaultFeeRecipient: string | undefined
+    validatorApi: ValidatorApi
   ): Promise<void> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
       this.read();
       // If db.json doesn't exist, db.data will be null
       if (this.data === null)
-        await this.databaseMigration(
-          signerApi,
-          validatorApi,
-          defaultFeeRecipient
-        );
+        await this.databaseMigration(signerApi, validatorApi);
       else this.setOwnerWriteRead();
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
@@ -247,12 +242,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    *
    * @param signerApi - The signer API
    * @param validatorApi - The validator API
-   * @param defaultFeeRecipient - The default fee recipient to use if the validator API is not available
    */
   private async databaseMigration(
     signerApi: Web3SignerApi,
-    validatorApi: ValidatorApi,
-    defaultFeeRecipient?: string
+    validatorApi: ValidatorApi
   ): Promise<void> {
     let retries = 0;
     while (retries < 10) {
@@ -279,11 +272,11 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           })
           .catch((e) => {
             logger.error(
-              `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${defaultFeeRecipient}}`,
+              `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${params.burnAddress}}`,
               e
             );
-            if (defaultFeeRecipient) feeRecipient = defaultFeeRecipient;
-            else feeRecipient = params.burnAddress;
+            // TODO: consider setting MEV fee recipient
+            feeRecipient = params.burnAddress;
           });
 
         logger.info(
