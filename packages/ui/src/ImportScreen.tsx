@@ -54,6 +54,10 @@ export default function ImportScreen({
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
+  const [isSoloTag, setIsSoloTag] = useState(false);
+  const [willJoinSmooth, setWillJoinSmooth] = useState(false);
+  const [inputFeeRecipientValue, setInputFeeRecipientValue] =
+    useState<string>("");
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
@@ -331,7 +335,14 @@ export default function ImportScreen({
             useSameFeerecipient,
             getFeeRecipientFieldHelperText,
             isFeeRecipientFieldWrong,
-            tagSelectOptions
+            tagSelectOptions,
+            isSoloTag,
+            setIsSoloTag,
+            willJoinSmooth,
+            setWillJoinSmooth,
+            inputFeeRecipientValue,
+            setInputFeeRecipientValue,
+            network
           )}
 
           <Box
