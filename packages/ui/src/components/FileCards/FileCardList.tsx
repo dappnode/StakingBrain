@@ -19,8 +19,7 @@ import {
   smoothFeeRecipient,
   Network,
 } from "@stakingbrain/common";
-import { useEffect } from "react";
-// import { smoothFeeRecipient } from "../../params";
+import JoinSmoothBox from "../JoinSmoothBox/JoinSmoothBox";
 
 export default function FileCardList(
   fileInfos: KeystoreInfo[],
@@ -43,7 +42,8 @@ export default function FileCardList(
   setWillJoinSmooth: (willJoinSmooth: boolean) => void,
   inputFeeRecipientValue: string,
   setInputFeeRecipientValue: (inputFeeRecipientValue: string) => void,
-  network: Network
+  network: Network,
+  networkAllowsSmooth: (network: Network) => boolean
 ): JSX.Element[] {
   const removeFileFromList = (
     fileInfo: KeystoreInfo,
@@ -64,13 +64,6 @@ export default function FileCardList(
     );
     setTags(tags.filter((f, index) => index !== indexToRemove));
   };
-
-  const networkAllowsSmooth = (network: Network): boolean =>
-    network === "mainnet" ? true : network === "prater" ? true : false;
-
-  useEffect(() => {
-    console.log(inputFeeRecipientValue);
-  }, [inputFeeRecipientValue]);
 
   return Array.from(fileInfos).map((fileInfo, index) => (
     <Card key={index} raised sx={{ padding: 2, marginTop: 4, borderRadius: 2 }}>
@@ -144,12 +137,13 @@ export default function FileCardList(
                     key={option.value}
                     value={option.value}
                     onClick={() => {
-                      willJoinSmooth && option.value !== "solo"
-                        ? setWillJoinSmooth(false)
-                        : null;
-                      option.value === "solo"
-                        ? setIsSoloTag(true)
-                        : setIsSoloTag(false);
+                      if (option.value === "solo") {
+                        setIsSoloTag(true);
+                      } else {
+                        setIsSoloTag(false);
+                        setWillJoinSmooth(false);
+                        setInputFeeRecipientValue("");
+                      }
                     }}
                   >
                     {option.label}
@@ -158,87 +152,12 @@ export default function FileCardList(
               </Select>
               <FormHelperText>Staking protocol</FormHelperText>
               {isSoloTag && networkAllowsSmooth(network) ? (
-                <>
-                  <Box
-                    sx={{
-                      marginY: 2,
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Switch
-                      onChange={(e) => {
-                        setWillJoinSmooth(e.target.checked ? true : false);
-                        console.log(smoothFeeRecipient);
-                        setInputFeeRecipientValue(
-                          e.target.checked ? smoothFeeRecipient(network) : ""
-                        );
-                      }}
-                    />
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        marginTop: 1,
-                        color: willJoinSmooth ? "black" : "gray",
-                      }}
-                    >
-                      <b>
-                        {willJoinSmooth
-                          ? "I'm joining DAppNode Smooth!"
-                          : "I want to join DAppNode Smooth!"}
-                      </b>
-                    </Typography>
-                  </Box>
-
-                  {willJoinSmooth ? (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        marginLeft: 1,
-                        marginBottom: 2,
-                        padding: 2,
-                        backgroundColor: "#fff8e6",
-                        borderLeft: "5px solid #e6a700",
-                        borderRadius: 2,
-                        width: "50%",
-                      }}
-                    >
-                      <Typography variant="subtitle1">
-                        <b>CAUTION</b>
-                      </Typography>
-
-                      <Typography variant="subtitle1">
-                        <ul>
-                          <li>
-                            By checking this option you acknowledge having read
-                            and understood the{" "}
-                            <a
-                              target="_blank"
-                              href="https://docs.dappnode.io/docs/smooth"
-                            >
-                              <b>Smooth Documentation.</b>
-                            </a>
-                          </li>
-                          <li>
-                            {" "}
-                            This way you will be subscribed to the Smoothing
-                            Pool once you propose a block.
-                          </li>
-                          <li>
-                            If you ever want to change the fee of this
-                            validator, make sure that you have first unsuscribed
-                            from the Smoothing Pool in order to not be banned
-                            from it!
-                          </li>
-                        </ul>
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <></>
-                  )}
-                </>
+                <JoinSmoothBox
+                  network={network}
+                  willJoinSmooth={willJoinSmooth}
+                  setWillJoinSmooth={setWillJoinSmooth}
+                  setInputFeeRecipientValue={setInputFeeRecipientValue}
+                />
               ) : (
                 <></>
               )}
@@ -264,7 +183,7 @@ export default function FileCardList(
                 newFeeRecipients[index] = event.target.value;
                 setFeeRecipients(newFeeRecipients);
               }}
-              error={isFeeRecipientFieldWrong(index)}
+              error={willJoinSmooth ? false : isFeeRecipientFieldWrong(index)}
               helperText={getFeeRecipientFieldHelperText(index)}
               disabled={!isFeeRecipientEditable(tags[index]) || willJoinSmooth}
             />
