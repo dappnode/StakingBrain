@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
 import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
@@ -53,7 +53,7 @@ export default function ImportScreen({
   const [tags, setTags] = useState<Tag[]>([]);
   const [useSameTag, setUseSameTag] = useState(false);
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
-  const [useSameFeerecipient, setUseSameFeeRecipient] = useState(false);
+  const [useSameFeeRecipient, setUseSameFeeRecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
   const [isSoloTag, setIsSoloTag] = useState([false]);
   const [willJoinSmooth, setWillJoinSmooth] = useState([false]);
@@ -156,6 +156,19 @@ export default function ImportScreen({
     return false;
   }
 
+  useEffect(() => {
+    if (!useSameTag) {
+      setWillJoinSmooth([...willJoinSmooth.fill(false)]);
+      setFeeRecipients([...feeRecipients.fill("")]);
+    }
+  }, [useSameTag]);
+
+  useEffect(() => {
+    !isSoloTag[0] &&
+      !willJoinSmooth[0] &&
+      setFeeRecipients([...feeRecipients.fill("")]);
+  }, [useSameFeeRecipient]);
+
   const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(
     network
   )
@@ -226,33 +239,22 @@ export default function ImportScreen({
                 />
                 <FormControlLabel
                   control={
-                    <Switch
-                      onChange={(e) => {
-                        setUseSameTag(!useSameTag);
-                        if (!e.target.checked) {
-                          setWillJoinSmooth([...willJoinSmooth.fill(false)]);
-                          setFeeRecipients([...feeRecipients.fill("")]);
-                        }
-                      }}
-                    />
+                    <Switch onChange={() => setUseSameTag(!useSameTag)} />
                   }
                   label="Use same tag for every file"
                 />
                 <FormControlLabel
                   control={
                     <Switch
-                      onChange={() => {
-                        setUseSameFeeRecipient(!useSameFeerecipient);
-                        !isSoloTag[0] &&
-                          !willJoinSmooth[0] &&
-                          setFeeRecipients([...feeRecipients.fill("")]);
-                      }}
+                      onChange={() =>
+                        setUseSameFeeRecipient(!useSameFeeRecipient)
+                      }
                     />
                   }
                   label="Use same fee recipient for every file"
                 />
               </FormGroup>
-              {(useSameTag || useSameFeerecipient || useSamePassword) && (
+              {(useSameTag || useSameFeeRecipient || useSamePassword) && (
                 <FormControl sx={{ marginTop: 2, width: "100%" }}>
                   {useSamePassword && (
                     <>
@@ -315,7 +317,7 @@ export default function ImportScreen({
                       <FormHelperText>Staking protocol</FormHelperText>
                       {isSoloTag[0] &&
                         networkAllowsSmooth(network) &&
-                        useSameFeerecipient && (
+                        useSameFeeRecipient && (
                           <JoinSmoothBox
                             network={network}
                             willJoinSmooth={willJoinSmooth}
@@ -327,7 +329,7 @@ export default function ImportScreen({
                         )}
                     </>
                   )}
-                  {useSameFeerecipient && (
+                  {useSameFeeRecipient && (
                     <>
                       <TextField
                         id={`outlined-fee-recipient-input`}
@@ -377,7 +379,7 @@ export default function ImportScreen({
             useSameTag,
             feeRecipients,
             setFeeRecipients,
-            useSameFeerecipient,
+            useSameFeeRecipient,
             getFeeRecipientFieldHelperText,
             isFeeRecipientFieldWrong,
             tagSelectOptions,
@@ -385,7 +387,6 @@ export default function ImportScreen({
             setIsSoloTag,
             willJoinSmooth,
             setWillJoinSmooth,
-
             network,
             networkAllowsSmooth
           )}
