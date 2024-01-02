@@ -7,7 +7,6 @@ import {
   Select,
   FormControl,
   FormHelperText,
-  Switch,
 } from "@mui/material";
 import { KeystoreInfo, TagSelectOption } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
@@ -16,7 +15,6 @@ import {
   Tag,
   shortenPubkey,
   isFeeRecipientEditable,
-  smoothFeeRecipient,
   Network,
 } from "@stakingbrain/common";
 import JoinSmoothBox from "../JoinSmoothBox/JoinSmoothBox";
@@ -36,12 +34,11 @@ export default function FileCardList(
   getFeeRecipientFieldHelperText: (index: number) => string,
   isFeeRecipientFieldWrong: (index: number) => boolean,
   tagSelectOptions: TagSelectOption[],
-  isSoloTag: boolean,
-  setIsSoloTag: (isSoloTag: boolean) => void,
-  willJoinSmooth: boolean,
-  setWillJoinSmooth: (willJoinSmooth: boolean) => void,
-  inputFeeRecipientValue: string,
-  setInputFeeRecipientValue: (inputFeeRecipientValue: string) => void,
+  isSoloTag: boolean[],
+  setIsSoloTag: (isSoloTag: boolean[]) => void,
+  willJoinSmooth: boolean[],
+  setWillJoinSmooth: (willJoinSmooth: boolean[]) => void,
+
   network: Network,
   networkAllowsSmooth: (network: Network) => boolean
 ): JSX.Element[] {
@@ -137,13 +134,19 @@ export default function FileCardList(
                     key={option.value}
                     value={option.value}
                     onClick={() => {
+                      const newFeeRecipients = [...feeRecipients];
+                      newFeeRecipients[index] = "";
+                      const newWillJoinSmooth = [...willJoinSmooth];
+                      const newIsSolotag = [...isSoloTag];
                       if (option.value === "solo") {
-                        setIsSoloTag(true);
+                        newIsSolotag[index] = true;
                       } else {
-                        setIsSoloTag(false);
-                        setWillJoinSmooth(false);
-                        setInputFeeRecipientValue("");
+                        newIsSolotag[index] = false;
+                        newWillJoinSmooth[index] = false;
+                        setFeeRecipients(newFeeRecipients);
                       }
+                      setIsSoloTag([...newIsSolotag]);
+                      setWillJoinSmooth([...newWillJoinSmooth]);
                     }}
                   >
                     {option.label}
@@ -151,42 +154,49 @@ export default function FileCardList(
                 ))}
               </Select>
               <FormHelperText>Staking protocol</FormHelperText>
-              {isSoloTag && networkAllowsSmooth(network) ? (
+            </>
+          )}
+          {!useSameFeeRecipient && (
+            <>
+              {isSoloTag[index] && networkAllowsSmooth(network) && (
                 <JoinSmoothBox
                   network={network}
                   willJoinSmooth={willJoinSmooth}
                   setWillJoinSmooth={setWillJoinSmooth}
-                  setInputFeeRecipientValue={setInputFeeRecipientValue}
+                  index={index}
+                  feeRecipients={feeRecipients}
+                  setFeeRecipients={setFeeRecipients}
                 />
-              ) : (
-                <></>
               )}
+              <TextField
+                value={feeRecipients[index]}
+                id={`outlined-fee-recipient-input-${index}`}
+                label={
+                  tags[index] === undefined ||
+                  isFeeRecipientEditable(tags[index])
+                    ? willJoinSmooth[index] && isSoloTag[index]
+                      ? null
+                      : "Fee Recipient"
+                    : "For this protocol, fee recipient will be set automatically"
+                }
+                type="text"
+                sx={{ marginTop: 2 }}
+                onChange={(event) => {
+                  const newFeeRecipients = [...feeRecipients];
+                  newFeeRecipients[index] = event.target.value;
+                  setFeeRecipients([...newFeeRecipients]);
+                }}
+                error={
+                  willJoinSmooth[index]
+                    ? false
+                    : isFeeRecipientFieldWrong(index)
+                }
+                helperText={getFeeRecipientFieldHelperText(index)}
+                disabled={
+                  !isFeeRecipientEditable(tags[index]) || willJoinSmooth[index]
+                }
+              />
             </>
-          )}
-          {!useSameFeeRecipient && (
-            <TextField
-              value={inputFeeRecipientValue}
-              id={`outlined-fee-recipient-input-${index}`}
-              label={
-                tags[index] === undefined || isFeeRecipientEditable(tags[index])
-                  ? willJoinSmooth
-                    ? "DAppNode Smooth Fee Recipient"
-                    : "Fee Recipient"
-                  : "For this protocol, fee recipient will be set automatically"
-              }
-              type="text"
-              sx={{ marginTop: 2 }}
-              onChange={(event) => {
-                console.log(event.target.value);
-                setInputFeeRecipientValue(event.target.value);
-                const newFeeRecipients = [...feeRecipients];
-                newFeeRecipients[index] = event.target.value;
-                setFeeRecipients(newFeeRecipients);
-              }}
-              error={willJoinSmooth ? false : isFeeRecipientFieldWrong(index)}
-              helperText={getFeeRecipientFieldHelperText(index)}
-              disabled={!isFeeRecipientEditable(tags[index]) || willJoinSmooth}
-            />
           )}
         </FormControl>
       )}

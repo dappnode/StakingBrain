@@ -5,12 +5,16 @@ import { Network, smoothFeeRecipient } from "@stakingbrain/common";
 export default function JoinSmoothBox({
   willJoinSmooth,
   setWillJoinSmooth,
-  setInputFeeRecipientValue,
+  index,
+  feeRecipients,
+  setFeeRecipients,
   network,
 }: {
-  willJoinSmooth: boolean;
-  setWillJoinSmooth: (willJoinSmooth: boolean) => void;
-  setInputFeeRecipientValue: (inputFeeRecipientValue: string) => void;
+  willJoinSmooth: boolean[];
+  setWillJoinSmooth: (willJoinSmooth: boolean[]) => void;
+  index: number;
+  feeRecipients: string[];
+  setFeeRecipients: (feeRecipients: string[]) => void;
   network: Network;
 }): JSX.Element {
   return (
@@ -24,30 +28,41 @@ export default function JoinSmoothBox({
         }}
       >
         <Switch
+          defaultChecked={willJoinSmooth[index === -1 ? 0 : index]}
           onChange={(e) => {
-            setWillJoinSmooth(e.target.checked ? true : false);
-            setInputFeeRecipientValue("");
-            setInputFeeRecipientValue(
-              e.target.checked ? smoothFeeRecipient(network) : ""
-            );
+            const newFeeRecipients = [...feeRecipients];
+            const newWillJoinSmooth = [...willJoinSmooth];
+            if (index === -1) {
+              newFeeRecipients.fill(
+                e.target.checked ? smoothFeeRecipient(network) : ""
+              );
+              newWillJoinSmooth.fill(e.target.checked);
+            } else {
+              newFeeRecipients[index] = e.target.checked
+                ? smoothFeeRecipient(network)
+                : "";
+              newWillJoinSmooth[index] = e.target.checked;
+            }
+            setWillJoinSmooth([...newWillJoinSmooth]);
+            setFeeRecipients([...newFeeRecipients]);
           }}
         />
         <Typography
           variant="subtitle1"
           sx={{
             marginTop: 1,
-            color: willJoinSmooth ? "black" : "gray",
+            color: willJoinSmooth[index === -1 ? 0 : index] ? "black" : "gray",
           }}
         >
           <b>
-            {willJoinSmooth
+            {willJoinSmooth[index === -1 ? 0 : index]
               ? "I'm joining DAppNode Smooth!"
               : "I want to join DAppNode Smooth!"}
           </b>
         </Typography>
       </Box>
 
-      {willJoinSmooth ? (
+      {willJoinSmooth[index === -1 ? 0 : index] ? (
         <Box
           sx={{
             display: "flex",

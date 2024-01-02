@@ -53,12 +53,11 @@ export default function ImportScreen({
   const [tags, setTags] = useState<Tag[]>([]);
   const [useSameTag, setUseSameTag] = useState(false);
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
-  const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
+  const [useSameFeerecipient, setUseSameFeeRecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
-  const [isSoloTag, setIsSoloTag] = useState(false);
-  const [willJoinSmooth, setWillJoinSmooth] = useState(false);
-  const [inputFeeRecipientValue, setInputFeeRecipientValue] =
-    useState<string>("");
+  const [isSoloTag, setIsSoloTag] = useState([false]);
+  const [willJoinSmooth, setWillJoinSmooth] = useState([false]);
+
   const networkAllowsSmooth = (network: Network): boolean =>
     network === "mainnet" ? true : network === "prater" ? true : false;
 
@@ -227,16 +226,27 @@ export default function ImportScreen({
                 />
                 <FormControlLabel
                   control={
-                    <Switch onChange={() => setUseSameTag(!useSameTag)} />
+                    <Switch
+                      onChange={(e) => {
+                        setUseSameTag(!useSameTag);
+                        if (!e.target.checked) {
+                          setWillJoinSmooth([...willJoinSmooth.fill(false)]);
+                          setFeeRecipients([...feeRecipients.fill("")]);
+                        }
+                      }}
+                    />
                   }
                   label="Use same tag for every file"
                 />
                 <FormControlLabel
                   control={
                     <Switch
-                      onChange={() =>
-                        setUseSameFeerecipient(!useSameFeerecipient)
-                      }
+                      onChange={() => {
+                        setUseSameFeeRecipient(!useSameFeerecipient);
+                        !isSoloTag[0] &&
+                          !willJoinSmooth[0] &&
+                          setFeeRecipients([...feeRecipients.fill("")]);
+                      }}
                     />
                   }
                   label="Use same fee recipient for every file"
@@ -285,13 +295,17 @@ export default function ImportScreen({
                             key={option.value}
                             value={option.value}
                             onClick={() => {
-                              if (option.value === "solo") {
-                                setIsSoloTag(true);
-                              } else {
-                                setIsSoloTag(false);
-                                setWillJoinSmooth(false);
-                                setInputFeeRecipientValue("");
-                              }
+                              const newIsSoloTag = [...isSoloTag];
+                              const newWillJoinSmooth = [...willJoinSmooth];
+                              const newFeeRecipients = [...feeRecipients];
+                              acceptedFiles.forEach((_, i) => {
+                                newIsSoloTag[i] = option.value === "solo";
+                                newWillJoinSmooth[i] = false;
+                                newFeeRecipients[i] = "";
+                              });
+                              setIsSoloTag([...newIsSoloTag]);
+                              setWillJoinSmooth([...newWillJoinSmooth]);
+                              setFeeRecipients([...newFeeRecipients]);
                             }}
                           >
                             {option.label}
@@ -299,28 +313,31 @@ export default function ImportScreen({
                         ))}
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
-                      {isSoloTag && networkAllowsSmooth(network) ? (
-                        <JoinSmoothBox
-                          network={network}
-                          willJoinSmooth={willJoinSmooth}
-                          setWillJoinSmooth={setWillJoinSmooth}
-                          setInputFeeRecipientValue={setInputFeeRecipientValue}
-                        />
-                      ) : (
-                        <></>
-                      )}
+                      {isSoloTag[0] &&
+                        networkAllowsSmooth(network) &&
+                        useSameFeerecipient && (
+                          <JoinSmoothBox
+                            network={network}
+                            willJoinSmooth={willJoinSmooth}
+                            setWillJoinSmooth={setWillJoinSmooth}
+                            index={-1}
+                            feeRecipients={feeRecipients}
+                            setFeeRecipients={setFeeRecipients}
+                          />
+                        )}
                     </>
                   )}
                   {useSameFeerecipient && (
                     <>
                       <TextField
                         id={`outlined-fee-recipient-input`}
+                        value={feeRecipients[0]}
                         label={
                           tags[0] === undefined ||
                           isFeeRecipientEditable(tags[0])
-                            ? willJoinSmooth && isSoloTag
-                            : "Fee Recipient"
-                            ? "DAppNode Smooth Fee Recipient"
+                            ? willJoinSmooth[0] && isSoloTag[0]
+                              ? null
+                              : "Fee Recipient"
                             : "For this protocol, fee recipient will be set automatically"
                         }
                         type="text"
@@ -329,13 +346,11 @@ export default function ImportScreen({
                           setFeeRecipients(
                             Array(acceptedFiles.length).fill(e.target.value)
                           );
-                          setInputFeeRecipientValue(feeRecipients[0]);
                         }}
                         error={isFeeRecipientFieldWrong(0)}
                         helperText={getFeeRecipientFieldHelperText(0)}
-                        value={inputFeeRecipientValue}
                         disabled={
-                          !isFeeRecipientEditable(tags[0]) || willJoinSmooth
+                          !isFeeRecipientEditable(tags[0]) || willJoinSmooth[0]
                         }
                       />
                       {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
@@ -370,8 +385,7 @@ export default function ImportScreen({
             setIsSoloTag,
             willJoinSmooth,
             setWillJoinSmooth,
-            inputFeeRecipientValue,
-            setInputFeeRecipientValue,
+
             network,
             networkAllowsSmooth
           )}
