@@ -31,6 +31,7 @@ import {
   isFeeRecipientEditable,
   areAllFeeRecipientsEditable,
   Network,
+  smoothFeeRecipient,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
@@ -57,9 +58,6 @@ export default function ImportScreen({
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
   const [isSoloTag, setIsSoloTag] = useState([false]);
   const [willJoinSmooth, setWillJoinSmooth] = useState([false]);
-
-  const networkAllowsSmooth = (network: Network): boolean =>
-    network === "mainnet" ? true : network === "prater" ? true : false;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
@@ -299,15 +297,15 @@ export default function ImportScreen({
                             onClick={() => {
                               const newIsSoloTag = [...isSoloTag];
                               const newWillJoinSmooth = [...willJoinSmooth];
-                              const newFeeRecipients = [...feeRecipients];
+                              //const newFeeRecipients = [...feeRecipients];
                               acceptedFiles.forEach((_, i) => {
                                 newIsSoloTag[i] = option.value === "solo";
                                 newWillJoinSmooth[i] = false;
-                                newFeeRecipients[i] = "";
+                                //newFeeRecipients[i] = "";
                               });
                               setIsSoloTag([...newIsSoloTag]);
                               setWillJoinSmooth([...newWillJoinSmooth]);
-                              setFeeRecipients([...newFeeRecipients]);
+                              //setFeeRecipients([...newFeeRecipients]);
                             }}
                           >
                             {option.label}
@@ -316,7 +314,7 @@ export default function ImportScreen({
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
                       {isSoloTag[0] &&
-                        networkAllowsSmooth(network) &&
+                        smoothFeeRecipient(network) !== null &&
                         useSameFeeRecipient && (
                           <JoinSmoothBox
                             network={network}
@@ -387,8 +385,7 @@ export default function ImportScreen({
             setIsSoloTag,
             willJoinSmooth,
             setWillJoinSmooth,
-            network,
-            networkAllowsSmooth
+            network
           )}
 
           <Box

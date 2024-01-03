@@ -34,12 +34,18 @@ export default function JoinSmoothBox({
             const newWillJoinSmooth = [...willJoinSmooth];
             if (index === -1) {
               newFeeRecipients.fill(
-                e.target.checked ? smoothFeeRecipient(network) : ""
+                e.target.checked
+                  ? smoothFeeRecipient(network) !== null
+                    ? smoothFeeRecipient(network)!
+                    : ""
+                  : ""
               );
               newWillJoinSmooth.fill(e.target.checked);
             } else {
               newFeeRecipients[index] = e.target.checked
-                ? smoothFeeRecipient(network)
+                ? smoothFeeRecipient(network) !== null
+                  ? smoothFeeRecipient(network)!
+                  : ""
                 : "";
               newWillJoinSmooth[index] = e.target.checked;
             }

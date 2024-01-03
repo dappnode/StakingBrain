@@ -16,6 +16,7 @@ import {
   shortenPubkey,
   isFeeRecipientEditable,
   Network,
+  smoothFeeRecipient,
 } from "@stakingbrain/common";
 import JoinSmoothBox from "../JoinSmoothBox/JoinSmoothBox";
 
@@ -38,9 +39,7 @@ export default function FileCardList(
   setIsSoloTag: (isSoloTag: boolean[]) => void,
   willJoinSmooth: boolean[],
   setWillJoinSmooth: (willJoinSmooth: boolean[]) => void,
-
-  network: Network,
-  networkAllowsSmooth: (network: Network) => boolean
+  network: Network
 ): JSX.Element[] {
   const removeFileFromList = (
     fileInfo: KeystoreInfo,
@@ -158,7 +157,7 @@ export default function FileCardList(
           )}
           {!useSameFeeRecipient && (
             <>
-              {isSoloTag[index] && networkAllowsSmooth(network) && (
+              {isSoloTag[index] && smoothFeeRecipient(network) !== null && (
                 <JoinSmoothBox
                   network={network}
                   willJoinSmooth={willJoinSmooth}
