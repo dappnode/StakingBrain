@@ -56,8 +56,7 @@ export default function ImportScreen({
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeeRecipient, setUseSameFeeRecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
-  const [isSoloTag, setIsSoloTag] = useState([false]);
-  const [willJoinSmooth, setWillJoinSmooth] = useState([false]);
+  const [willJoinSmooth, setWillJoinSmooth] = useState<boolean[]>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
@@ -162,10 +161,29 @@ export default function ImportScreen({
   }, [useSameTag]);
 
   useEffect(() => {
-    !isSoloTag[0] &&
+    tags.every((tag) => tag !== "solo") &&
       !willJoinSmooth[0] &&
       setFeeRecipients([...feeRecipients.fill("")]);
   }, [useSameFeeRecipient]);
+
+  useEffect(() => {
+    const newFeeRecipients = [...feeRecipients];
+    const newTags = [...tags];
+    const newWillJoinSmooth = [...willJoinSmooth];
+    newFeeRecipients.length = acceptedFiles.length;
+    newTags.length = acceptedFiles.length;
+    newWillJoinSmooth.length = acceptedFiles.length;
+
+    setFeeRecipients([...newFeeRecipients]);
+    setTags([...newTags]);
+    setWillJoinSmooth([...newWillJoinSmooth]);
+  }, [acceptedFiles]);
+
+  useEffect(() => {
+    console.log(`1.feeRecip: ${feeRecipients}`);
+    console.log(`2.tags: ${tags}`);
+    console.log(`3.smooth: ${willJoinSmooth}`);
+  });
 
   const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(
     network
@@ -291,29 +309,13 @@ export default function ImportScreen({
                         }}
                       >
                         {tagSelectOptions.map((option) => (
-                          <MenuItem
-                            key={option.value}
-                            value={option.value}
-                            onClick={() => {
-                              const newIsSoloTag = [...isSoloTag];
-                              const newWillJoinSmooth = [...willJoinSmooth];
-                              //const newFeeRecipients = [...feeRecipients];
-                              acceptedFiles.forEach((_, i) => {
-                                newIsSoloTag[i] = option.value === "solo";
-                                newWillJoinSmooth[i] = false;
-                                //newFeeRecipients[i] = "";
-                              });
-                              setIsSoloTag([...newIsSoloTag]);
-                              setWillJoinSmooth([...newWillJoinSmooth]);
-                              //setFeeRecipients([...newFeeRecipients]);
-                            }}
-                          >
+                          <MenuItem key={option.value} value={option.value}>
                             {option.label}
                           </MenuItem>
                         ))}
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
-                      {isSoloTag[0] &&
+                      {tags.every((tag) => tag === "solo") &&
                         smoothFeeRecipient(network) !== null &&
                         useSameFeeRecipient && (
                           <JoinSmoothBox
@@ -335,7 +337,8 @@ export default function ImportScreen({
                         label={
                           tags[0] === undefined ||
                           isFeeRecipientEditable(tags[0])
-                            ? willJoinSmooth[0] && isSoloTag[0]
+                            ? willJoinSmooth[0] &&
+                              tags.every((tag) => tag === "solo")
                               ? null
                               : "Fee Recipient"
                             : "For this protocol, fee recipient will be set automatically"
@@ -381,8 +384,6 @@ export default function ImportScreen({
             getFeeRecipientFieldHelperText,
             isFeeRecipientFieldWrong,
             tagSelectOptions,
-            isSoloTag,
-            setIsSoloTag,
             willJoinSmooth,
             setWillJoinSmooth,
             network
