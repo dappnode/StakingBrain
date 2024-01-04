@@ -1,6 +1,7 @@
 import { Switch, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { Network, smoothFeeRecipient } from "@stakingbrain/common";
+import { useEffect, useState } from "react";
 
 export default function JoinSmoothBox({
   willJoinSmooth,
@@ -17,6 +18,22 @@ export default function JoinSmoothBox({
   setFeeRecipients: (feeRecipients: string[]) => void;
   network: Network;
 }): JSX.Element {
+  const [isChecked, setIsChecked] = useState<boolean>(
+    willJoinSmooth[index === -1 ? 0 : index]
+  );
+  useEffect(() => {
+    const newFeeRecipients = [...feeRecipients];
+    const newWillJoinSmooth = [...willJoinSmooth];
+    if (index === -1) {
+      newWillJoinSmooth.fill(isChecked ? true : false);
+      newFeeRecipients.fill(isChecked ? smoothFeeRecipient(network)! : "");
+    } else {
+      newWillJoinSmooth[index] = isChecked ? true : false;
+      newFeeRecipients[index] = isChecked ? smoothFeeRecipient(network)! : "";
+    }
+    setWillJoinSmooth([...newWillJoinSmooth]);
+    setFeeRecipients([...newFeeRecipients]);
+  }, [isChecked]);
   return (
     <>
       <Box
@@ -29,29 +46,7 @@ export default function JoinSmoothBox({
       >
         <Switch
           defaultChecked={willJoinSmooth[index === -1 ? 0 : index]}
-          onChange={(e) => {
-            const newFeeRecipients = [...feeRecipients];
-            const newWillJoinSmooth = [...willJoinSmooth];
-            if (index === -1) {
-              newFeeRecipients.fill(
-                e.target.checked
-                  ? smoothFeeRecipient(network) !== null
-                    ? smoothFeeRecipient(network)!
-                    : ""
-                  : ""
-              );
-              newWillJoinSmooth.fill(e.target.checked);
-            } else {
-              newFeeRecipients[index] = e.target.checked
-                ? smoothFeeRecipient(network) !== null
-                  ? smoothFeeRecipient(network)!
-                  : ""
-                : "";
-              newWillJoinSmooth[index] = e.target.checked;
-            }
-            setWillJoinSmooth([...newWillJoinSmooth]);
-            setFeeRecipients([...newFeeRecipients]);
-          }}
+          onChange={(e) => setIsChecked(e.target.checked)}
         />
         <Typography
           variant="subtitle1"
@@ -68,7 +63,7 @@ export default function JoinSmoothBox({
         </Typography>
       </Box>
 
-      {willJoinSmooth[index === -1 ? 0 : index] ? (
+      {willJoinSmooth[index === -1 ? 0 : index] && (
         <Box
           sx={{
             display: "flex",
@@ -108,8 +103,6 @@ export default function JoinSmoothBox({
             </ul>
           </Typography>
         </Box>
-      ) : (
-        <></>
       )}
     </>
   );

@@ -47,14 +47,15 @@ export default function ImportScreen({
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
   const [passwords, setPasswords] = useState<string[]>([]);
-  const [useSamePassword, setUseSamePassword] = useState(false);
+  const [useSamePassword, setUseSamePassword] = useState<boolean>(false);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [useSameTag, setUseSameTag] = useState(false);
+  const [useSameTag, setUseSameTag] = useState<boolean>(false);
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
-  const [useSameFeeRecipient, setUseSameFeeRecipient] = useState(false);
+  const [useSameFeeRecipient, setUseSameFeeRecipient] =
+    useState<boolean>(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
   const [willJoinSmooth, setWillJoinSmooth] = useState<boolean[]>([]);
 
@@ -154,19 +155,6 @@ export default function ImportScreen({
   }
 
   useEffect(() => {
-    if (!useSameTag) {
-      setWillJoinSmooth([...willJoinSmooth.fill(false)]);
-      setFeeRecipients([...feeRecipients.fill("")]);
-    }
-  }, [useSameTag]);
-
-  useEffect(() => {
-    tags.every((tag) => tag !== "solo") &&
-      !willJoinSmooth[0] &&
-      setFeeRecipients([...feeRecipients.fill("")]);
-  }, [useSameFeeRecipient]);
-
-  useEffect(() => {
     const newFeeRecipients = [...feeRecipients];
     const newTags = [...tags];
     const newWillJoinSmooth = [...willJoinSmooth];
@@ -178,6 +166,45 @@ export default function ImportScreen({
     setTags([...newTags]);
     setWillJoinSmooth([...newWillJoinSmooth]);
   }, [acceptedFiles]);
+
+  useEffect(() => {
+    if (!useSameTag) {
+      setWillJoinSmooth([...willJoinSmooth.fill(false)]);
+      setFeeRecipients([...feeRecipients.fill("")]);
+    } else {
+      tags.forEach((_, i) => {
+        tags[i] = tags[0];
+      });
+      setTags(tags);
+    }
+  }, [useSameTag]);
+
+  useEffect(() => {
+    if (useSameFeeRecipient) {
+      tags.every((tag) => tag === "solo") &&
+      willJoinSmooth.every((willJoin) => willJoin === true)
+        ? setFeeRecipients([
+            ...feeRecipients.fill(smoothFeeRecipient(network)!),
+          ])
+        : setFeeRecipients([...feeRecipients.fill("")]);
+    }
+  }, [useSameFeeRecipient]);
+
+  useEffect(() => {
+    const newWillJoinSmooth = [...willJoinSmooth];
+    tags.forEach((tag, i) => {
+      tag !== "solo" && (newWillJoinSmooth[i] = false);
+    });
+    setWillJoinSmooth(newWillJoinSmooth);
+  }, [tags]);
+
+  useEffect(() => {
+    const newFeeRecipients = [...feeRecipients];
+    willJoinSmooth.forEach((joinSmooth, i) => {
+      newFeeRecipients[i] = joinSmooth ? smoothFeeRecipient(network)! : "";
+    });
+    setFeeRecipients(newFeeRecipients);
+  }, [willJoinSmooth]);
 
   useEffect(() => {
     console.log(`1.feeRecip: ${feeRecipients}`);
@@ -315,9 +342,12 @@ export default function ImportScreen({
                         ))}
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
+                    </>
+                  )}
+                  {useSameFeeRecipient && (
+                    <>
                       {tags.every((tag) => tag === "solo") &&
-                        smoothFeeRecipient(network) !== null &&
-                        useSameFeeRecipient && (
+                        smoothFeeRecipient(network) !== null && (
                           <JoinSmoothBox
                             network={network}
                             willJoinSmooth={willJoinSmooth}
@@ -327,10 +357,6 @@ export default function ImportScreen({
                             setFeeRecipients={setFeeRecipients}
                           />
                         )}
-                    </>
-                  )}
-                  {useSameFeeRecipient && (
-                    <>
                       <TextField
                         id={`outlined-fee-recipient-input`}
                         value={feeRecipients[0]}

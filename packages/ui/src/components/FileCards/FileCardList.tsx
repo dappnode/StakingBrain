@@ -127,23 +127,7 @@ export default function FileCardList(
                 }}
               >
                 {tagSelectOptions.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    value={option.value}
-                    onClick={() => {
-                      const newFeeRecipients = [...feeRecipients];
-                      newFeeRecipients[index] = "";
-                      const newTags = [...tags];
-                      newTags[index] = option.value;
-                      const newWillJoinSmooth = [...willJoinSmooth];
-                      if (option.value !== "solo") {
-                        newWillJoinSmooth[index] = false;
-                        setFeeRecipients(newFeeRecipients);
-                        setWillJoinSmooth([...newWillJoinSmooth]);
-                      }
-                      setTags([...newTags]);
-                    }}
-                  >
+                  <MenuItem key={option.value} value={option.value}>
                     {option.label}
                   </MenuItem>
                 ))}
