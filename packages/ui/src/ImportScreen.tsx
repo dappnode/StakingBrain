@@ -168,10 +168,7 @@ export default function ImportScreen({
   }, [acceptedFiles]);
 
   useEffect(() => {
-    if (!useSameTag) {
-      setWillJoinSmooth([...willJoinSmooth.fill(false)]);
-      setFeeRecipients([...feeRecipients.fill("")]);
-    } else {
+    if (useSameTag) {
       tags.forEach((_, i) => {
         tags[i] = tags[0];
       });
@@ -194,6 +191,7 @@ export default function ImportScreen({
     const newWillJoinSmooth = [...willJoinSmooth];
     tags.forEach((tag, i) => {
       tag !== "solo" && (newWillJoinSmooth[i] = false);
+      tag !== tags[0] && setUseSameFeeRecipient(false);
     });
     setWillJoinSmooth(newWillJoinSmooth);
   }, [tags]);
@@ -289,6 +287,7 @@ export default function ImportScreen({
                 <FormControlLabel
                   control={
                     <Switch
+                      checked={useSameFeeRecipient}
                       onChange={() =>
                         setUseSameFeeRecipient(!useSameFeeRecipient)
                       }
@@ -363,9 +362,10 @@ export default function ImportScreen({
                         label={
                           tags[0] === undefined ||
                           isFeeRecipientEditable(tags[0])
-                            ? willJoinSmooth[0] &&
-                              tags.every((tag) => tag === "solo")
-                              ? null
+                            ? willJoinSmooth.every(
+                                (isJoining) => isJoining === true
+                              ) && tags.every((tag) => tag === "solo")
+                              ? "Dappnode Smoothing Pool fee recipient"
                               : "Fee Recipient"
                             : "For this protocol, fee recipient will be set automatically"
                         }
