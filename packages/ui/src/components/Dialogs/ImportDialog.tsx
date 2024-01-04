@@ -13,7 +13,7 @@ import { KeystoreInfo } from "../../types";
 import WaitBox from "../WaitBox/WaitBox";
 import { Web3signerPostResponse, shortenPubkey } from "@stakingbrain/common";
 import { SlideTransition } from "./Transitions";
-import { getEmoji } from "../../utils/dataUtils";
+import { getEmoji } from "../../utils/data";
 
 export default function ImportDialog({
   open,

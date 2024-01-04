@@ -26,7 +26,7 @@ import {
   Web3signerPostResponse,
   Tag,
   isValidEcdsaPubkey,
-  burnAddress,
+  BURN_ADDRESS,
   CustomImportRequest,
   isFeeRecipientEditable,
   areAllFeeRecipientsEditable,
@@ -35,7 +35,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
-import { extractPubkey } from "./utils/dataUtils";
+import { extractPubkey } from "./utils/data";
 
 export default function ImportScreen({
   network,
@@ -53,7 +53,7 @@ export default function ImportScreen({
   const [useSameTag, setUseSameTag] = useState(false);
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
-  const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
+  const [importStatus, setImportStatus] = useState(ImportStatus.NOT_IMPORTED);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
@@ -94,7 +94,7 @@ export default function ImportScreen({
 
   async function importKeystores() {
     try {
-      setImportStatus(ImportStatus.Importing);
+      setImportStatus(ImportStatus.IMPORTING);
       handleClickOpenDialog();
 
       const importRequest: CustomImportRequest = {
@@ -114,11 +114,11 @@ export default function ImportScreen({
 
       setKeystoresPostResponse(response);
       setKeystoresPostError(undefined);
-      setImportStatus(ImportStatus.Imported);
+      setImportStatus(ImportStatus.IMPORTED);
     } catch (e) {
       console.error(e);
       setKeystoresPostError(e.message);
-      setImportStatus(ImportStatus.NotImported);
+      setImportStatus(ImportStatus.NOT_IMPORTED);
     }
   }
 
@@ -131,7 +131,7 @@ export default function ImportScreen({
     if (!isValidEcdsaPubkey(feeRecipient)) {
       return "Invalid address";
     }
-    if (feeRecipient === burnAddress) {
+    if (feeRecipient === BURN_ADDRESS) {
       return "It is not possible to set the fee recipient to the burn address";
     }
     return "Address is valid";
@@ -143,7 +143,7 @@ export default function ImportScreen({
     if (feeRecipient === "" || feeRecipient === undefined) {
       return false;
     }
-    if (!isValidEcdsaPubkey(feeRecipient) || feeRecipient === burnAddress) {
+    if (!isValidEcdsaPubkey(feeRecipient) || feeRecipient === BURN_ADDRESS) {
       return true;
     }
 
