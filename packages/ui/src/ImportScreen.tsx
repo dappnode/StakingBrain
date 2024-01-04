@@ -14,6 +14,7 @@ import {
   FormControl,
   FormHelperText,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
@@ -204,12 +205,6 @@ export default function ImportScreen({
     setFeeRecipients(newFeeRecipients);
   }, [willJoinSmooth]);
 
-  useEffect(() => {
-    console.log(`1.feeRecip: ${feeRecipients}`);
-    console.log(`2.tags: ${tags}`);
-    console.log(`3.smooth: ${willJoinSmooth}`);
-  });
-
   const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(
     network
   )
@@ -269,33 +264,42 @@ export default function ImportScreen({
 
           {acceptedFiles.length > 1 && (
             <>
-              <FormGroup sx={{ marginTop: "6px" }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      onChange={() => setUseSamePassword(!useSamePassword)}
-                    />
-                  }
-                  label="Use same password for every file"
-                />
-                <FormControlLabel
-                  control={
-                    <Switch onChange={() => setUseSameTag(!useSameTag)} />
-                  }
-                  label="Use same tag for every file"
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={useSameFeeRecipient}
-                      onChange={() =>
-                        setUseSameFeeRecipient(!useSameFeeRecipient)
+              <div style={{ display: "inline-block" }}>
+                <FormGroup sx={{ marginTop: "6px" }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        onChange={() => setUseSamePassword(!useSamePassword)}
+                      />
+                    }
+                    label="Use same password for every file"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch onChange={() => setUseSameTag(!useSameTag)} />
+                    }
+                    label="Use same tag for every file"
+                  />
+                  <Tooltip title="The Staking protocols of your validators must be the same to enable this option!">
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          disabled={
+                            !tags.every(
+                              (tag) => tag !== undefined && tag === tags[0]
+                            )
+                          }
+                          checked={useSameFeeRecipient}
+                          onChange={() =>
+                            setUseSameFeeRecipient(!useSameFeeRecipient)
+                          }
+                        />
                       }
+                      label="Use same fee recipient for every file"
                     />
-                  }
-                  label="Use same fee recipient for every file"
-                />
-              </FormGroup>
+                  </Tooltip>
+                </FormGroup>
+              </div>
               {(useSameTag || useSameFeeRecipient || useSamePassword) && (
                 <FormControl sx={{ marginTop: 2, width: "100%" }}>
                   {useSamePassword && (
