@@ -61,7 +61,7 @@ export default function FeeRecipientDialog({
   const handleSubscriptionClick = async () => {
     try {
       await updateValidators();
-      window.open("https://dappnode-mev-pool.vercel.app/", "_blank");
+      window.open("https://smooth.dappnode.io/", "_blank");
       setOpen(false);
     } catch (err) {
       setErrorMessage(
@@ -72,7 +72,7 @@ export default function FeeRecipientDialog({
   };
 
   const handleUnsubscriptionClick = async () => {
-    window.open("https://dappnode-mev-pool.vercel.app/", "_blank");
+    window.open("https://smooth.dappnode.io/", "_blank");
   };
 
   const handleNewFeeRecipientChange = (
@@ -208,10 +208,9 @@ export default function FeeRecipientDialog({
     return (
       <Card sx={{ boxShadow: 2, borderRadius: 2, padding: 2, marginTop: 1 }}>
         <Alert severity="warning">
-          You are removing the Dappnode MEV Smoothing Pool fee recipient from
-          some validators. If you want to{" "}
-          <b>avoid being banned from the pool</b> for the future, please
-          <b>unsubscribe</b> here:
+          You are removing Smooth's fee recipient from some validators.
+          Please make sure you have already <b>manually unsubscribed</b>{" "}
+          all selected validators in Smooth's website to avoid getting banned from Smooth.
         </Alert>
         <Box
           sx={{
@@ -225,7 +224,7 @@ export default function FeeRecipientDialog({
             sx={{ borderRadius: 2, marginLeft: 1 }}
             onClick={handleUnsubscriptionClick}
           >
-            Unsubscribe Now
+            Take me to Smooth's website
           </Button>
         </Box>
       </Card>

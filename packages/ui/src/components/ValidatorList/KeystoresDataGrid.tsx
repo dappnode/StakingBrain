@@ -100,8 +100,8 @@ export default function KeystoresDataGrid({
     },
     {
       field: "spSubscription",
-      headerName: "Smoothing Pool",
-      description: "Dappnode Smoothing Pool subscription status",
+      headerName: "Smooth",
+      description: "Dappnode's Smooth subscription status",
       disableReorder: true,
       disableColumnMenu: true,
       disableExport: true,
@@ -361,6 +361,10 @@ export default function KeystoresDataGrid({
     }
   }
 
+  // This needs to be changed to a call to oracle's API:
+  // https://sp-api.dappnode.io/memory/validators --> to get all validators status
+  // https://sp-api.dappnode.io/memory/validator/<val_index> --> to get a validator status
+  // Take into account that oracle operates on finalized data, so it takes 30m to reflect any validator status changes
   function getSuscriptionStatus(
     row: BasicValidatorRow
   ): MevSpSubscriptionStatus {
