@@ -57,8 +57,8 @@ export default function JoinSmoothBox({
         >
           <b>
             {willJoinSmooth[index === -1 ? 0 : index]
-              ? "I'm joining DAppNode Smooth!"
-              : "I want to join DAppNode Smooth!"}
+              ? "I'm joining Dappnode Smooth!"
+              : "I want to join Dappnode Smooth!"}
           </b>
         </Typography>
       </Box>
