@@ -65,6 +65,65 @@ export default function KeystoresDataGrid({
   const [mevSpOpen, setSetMevSpOpen] = useState(false);
   const [validatorToSubscribeConfig, setValidatorToSubscribeSpConfig] =
     useState<CustomValidatorUpdateRequest>();
+  const [validatorData, setValidatorData] = useState<ValidatorDataMap>({});
+
+  interface ValidatorData {
+    index: number;
+    subscriptionStatus: string;
+  }
+
+  interface ValidatorDataMap {
+    [pubkey: string]: ValidatorData;
+  }
+
+  const fetchSubscriptionStatus = async (
+    validatorIndex: number
+  ): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://sp-api.dappnode.io/memory/validator/${validatorIndex}`
+      );
+      const data = await response.json();
+
+      // Check if the response has a specific error message indicating the validator is not found
+      if (response.ok) {
+        return data.status; // Or whichever field contains the subscription status
+      } else if (
+        data.code === 400 &&
+        data.message.includes("could not find validator")
+      ) {
+        return "Not Subscribed";
+      } else {
+        throw new Error(data.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error("Error fetching subscription status:", error);
+      return "Error"; // Return an error indicator or a default value
+    }
+  };
+
+  const fetchValidatorData = async (pubkeys: string[]) => {
+    try {
+      const validatorsInfo = await api.beaconchaFetchValidatorsInfo(pubkeys);
+      const newData: ValidatorDataMap = {};
+
+      for (const validator of validatorsInfo.data) {
+        if (validator.pubkey && validator.validatorindex !== undefined) {
+          const subscriptionStatus = await fetchSubscriptionStatus(
+            validator.validatorindex
+          );
+          newData[validator.pubkey] = {
+            index: validator.validatorindex,
+            subscriptionStatus,
+          };
+        }
+      }
+
+      setValidatorData(newData);
+    } catch (error) {
+      console.error("Error fetching validator data:", error);
+    }
+  };
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NOT_STARTED);
@@ -74,6 +133,13 @@ export default function KeystoresDataGrid({
   useEffect(() => {
     openDashboardTab();
   }, [validatorSummaryURL]);
+
+  useEffect(() => {
+    if (rows.length > 0) {
+      const pubkeys = rows.map((row) => row.pubkey);
+      fetchValidatorData(pubkeys);
+    }
+  }, []);
 
   const columns: GridColDef[] = [
     {
@@ -109,38 +175,16 @@ export default function KeystoresDataGrid({
       align: "center",
       headerAlign: "center",
       headerClassName: "tableHeader",
-      renderCell: (rowData: { row: BasicValidatorRow }) => (
-        <Tooltip
-          title={getSubscriptionCellTooltipTitle(rowData.row)}
-          placement="top"
-          arrow
-        >
-          {getSuscriptionStatus(rowData.row) ===
-          MevSpSubscriptionStatus.UNAVAILABLE ? (
-            <Button variant="contained" sx={{ fontSize: 10 }} disabled={true}>
-              UNAVAILABLE
-            </Button>
-          ) : getSuscriptionStatus(rowData.row) ===
-            MevSpSubscriptionStatus.UNSUBSCRIBED ? (
-            <Button variant="contained" sx={{ fontSize: 10 }}>
-              SUBSCRIBE
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              sx={{
-                fontSize: 10,
-                backgroundColor: "gray",
-                "&:hover": {
-                  backgroundColor: "gray",
-                },
-              }}
-            >
-              UNSUBSCRIBE
-            </Button>
-          )}
-        </Tooltip>
-      ),
+      renderCell: (rowData) => {
+        const pubkey = rowData.row.pubkey;
+        const validatorInfo = validatorData[pubkey];
+
+        if (validatorInfo) {
+          return <span>{validatorInfo.subscriptionStatus}</span>;
+        } else {
+          return <span>Loading...</span>;
+        }
+      },
     },
     {
       field: "tag",
@@ -348,34 +392,6 @@ export default function KeystoresDataGrid({
 
     setSetMevSpOpen(true);
   };
-
-  function getSubscriptionCellTooltipTitle(row: BasicValidatorRow): string {
-    const subscriptionStatus = getSuscriptionStatus(row);
-
-    if (subscriptionStatus === MevSpSubscriptionStatus.UNAVAILABLE) {
-      return "The current network or the validator protocol (tag) do not support Dappnode MEV Smoothing Pool subscription";
-    } else if (subscriptionStatus === MevSpSubscriptionStatus.SUBSCRIBED) {
-      return "This validator is already subscribed to the Dappnode MEV Smoothing Pool. Click here to unsubscribe";
-    } else {
-      return "This validator is not subscribed to the Dappnode MEV Smoothing Pool. Click here to subscribe";
-    }
-  }
-
-  // This needs to be changed to a call to oracle's API:
-  // https://sp-api.dappnode.io/memory/validators --> to get all validators status
-  // https://sp-api.dappnode.io/memory/validator/<val_index> --> to get a validator status
-  // Take into account that oracle operates on finalized data, so it takes 30m to reflect any validator status changes
-  function getSuscriptionStatus(
-    row: BasicValidatorRow
-  ): MevSpSubscriptionStatus {
-    if (!isFeeRecipientEditable(row.tag)) {
-      return MevSpSubscriptionStatus.UNAVAILABLE;
-    } else if (row.feeRecipient === mevSpFeeRecipient) {
-      return MevSpSubscriptionStatus.SUBSCRIBED;
-    } else {
-      return MevSpSubscriptionStatus.UNSUBSCRIBED;
-    }
-  }
 
   async function openDashboardTab() {
     if (validatorSummaryURL) {
