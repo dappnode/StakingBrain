@@ -14,10 +14,11 @@ import {
   FormControl,
   FormHelperText,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
 import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
@@ -31,11 +32,13 @@ import {
   isFeeRecipientEditable,
   areAllFeeRecipientsEditable,
   Network,
+  smoothFeeRecipient,
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
 import { extractPubkey } from "./utils/dataUtils";
+import JoinSmoothBox from "./components/JoinSmoothBox/JoinSmoothBox";
 
 export default function ImportScreen({
   network,
@@ -45,15 +48,17 @@ export default function ImportScreen({
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
   const [passwords, setPasswords] = useState<string[]>([]);
-  const [useSamePassword, setUseSamePassword] = useState(false);
+  const [useSamePassword, setUseSamePassword] = useState<boolean>(false);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [useSameTag, setUseSameTag] = useState(false);
+  const [useSameTag, setUseSameTag] = useState<boolean>(false);
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
-  const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
+  const [useSameFeeRecipient, setUseSameFeeRecipient] =
+    useState<boolean>(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
+  const [willJoinSmooth, setWillJoinSmooth] = useState<boolean[]>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
@@ -150,6 +155,56 @@ export default function ImportScreen({
     return false;
   }
 
+  useEffect(() => {
+    const newFeeRecipients = [...feeRecipients];
+    const newTags = [...tags];
+    const newWillJoinSmooth = [...willJoinSmooth];
+    newFeeRecipients.length = acceptedFiles.length;
+    newTags.length = acceptedFiles.length;
+    newWillJoinSmooth.length = acceptedFiles.length;
+
+    setFeeRecipients([...newFeeRecipients]);
+    setTags([...newTags]);
+    setWillJoinSmooth([...newWillJoinSmooth]);
+  }, [acceptedFiles]);
+
+  useEffect(() => {
+    if (useSameTag) {
+      tags.forEach((_, i) => {
+        tags[i] = tags[0];
+      });
+      setTags(tags);
+    }
+  }, [useSameTag]);
+
+  useEffect(() => {
+    if (useSameFeeRecipient) {
+      tags.every((tag) => tag === "solo") &&
+      willJoinSmooth.every((willJoin) => willJoin === true)
+        ? setFeeRecipients([
+            ...feeRecipients.fill(smoothFeeRecipient(network)!),
+          ])
+        : setFeeRecipients([...feeRecipients.fill("")]);
+    }
+  }, [useSameFeeRecipient]);
+
+  useEffect(() => {
+    const newWillJoinSmooth = [...willJoinSmooth];
+    tags.forEach((tag, i) => {
+      tag !== "solo" && (newWillJoinSmooth[i] = false);
+      tag !== tags[0] && setUseSameFeeRecipient(false);
+    });
+    setWillJoinSmooth(newWillJoinSmooth);
+  }, [tags]);
+
+  useEffect(() => {
+    const newFeeRecipients = [...feeRecipients];
+    willJoinSmooth.forEach((joinSmooth, i) => {
+      newFeeRecipients[i] = joinSmooth ? smoothFeeRecipient(network)! : "";
+    });
+    setFeeRecipients(newFeeRecipients);
+  }, [willJoinSmooth]);
+
   const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(
     network
   )
@@ -209,33 +264,43 @@ export default function ImportScreen({
 
           {acceptedFiles.length > 1 && (
             <>
-              <FormGroup sx={{ marginTop: "6px" }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      onChange={() => setUseSamePassword(!useSamePassword)}
-                    />
-                  }
-                  label="Use same password for every file"
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      onChange={() =>
-                        setUseSameFeerecipient(!useSameFeerecipient)
+              <div style={{ display: "inline-block" }}>
+                <FormGroup sx={{ marginTop: "6px" }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        onChange={() => setUseSamePassword(!useSamePassword)}
+                      />
+                    }
+                    label="Use same password for every file"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch onChange={() => setUseSameTag(!useSameTag)} />
+                    }
+                    label="Use same tag for every file"
+                  />
+                  <Tooltip title="The Staking protocols of your validators must be the same to enable this option!">
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          disabled={
+                            !tags.every(
+                              (tag) => tag !== undefined && tag === tags[0]
+                            )
+                          }
+                          checked={useSameFeeRecipient}
+                          onChange={() =>
+                            setUseSameFeeRecipient(!useSameFeeRecipient)
+                          }
+                        />
                       }
+                      label="Use same fee recipient for every file"
                     />
-                  }
-                  label="Use same fee recipient for every file"
-                />
-                <FormControlLabel
-                  control={
-                    <Switch onChange={() => setUseSameTag(!useSameTag)} />
-                  }
-                  label="Use same tag for every file"
-                />
-              </FormGroup>
-              {(useSameTag || useSameFeerecipient || useSamePassword) && (
+                  </Tooltip>
+                </FormGroup>
+              </div>
+              {(useSameTag || useSameFeeRecipient || useSamePassword) && (
                 <FormControl sx={{ marginTop: 2, width: "100%" }}>
                   {useSamePassword && (
                     <>
@@ -274,7 +339,7 @@ export default function ImportScreen({
                         }}
                       >
                         {tagSelectOptions.map((option) => (
-                          <MenuItem value={option.value}>
+                          <MenuItem key={option.value} value={option.value}>
                             {option.label}
                           </MenuItem>
                         ))}
@@ -282,14 +347,30 @@ export default function ImportScreen({
                       <FormHelperText>Staking protocol</FormHelperText>
                     </>
                   )}
-                  {useSameFeerecipient && (
+                  {useSameFeeRecipient && (
                     <>
+                      {tags.every((tag) => tag === "solo") &&
+                        smoothFeeRecipient(network) !== null && (
+                          <JoinSmoothBox
+                            network={network}
+                            willJoinSmooth={willJoinSmooth}
+                            setWillJoinSmooth={setWillJoinSmooth}
+                            index={-1}
+                            feeRecipients={feeRecipients}
+                            setFeeRecipients={setFeeRecipients}
+                          />
+                        )}
                       <TextField
                         id={`outlined-fee-recipient-input`}
+                        value={feeRecipients[0]}
                         label={
                           tags[0] === undefined ||
                           isFeeRecipientEditable(tags[0])
-                            ? "Fee Recipient"
+                            ? willJoinSmooth.every(
+                                (isJoining) => isJoining === true
+                              ) && tags.every((tag) => tag === "solo")
+                              ? "Dappnode Smoothing Pool fee recipient"
+                              : "Fee Recipient"
                             : "For this protocol, fee recipient will be set automatically"
                         }
                         type="text"
@@ -301,8 +382,9 @@ export default function ImportScreen({
                         }}
                         error={isFeeRecipientFieldWrong(0)}
                         helperText={getFeeRecipientFieldHelperText(0)}
-                        value={feeRecipients[0]}
-                        disabled={!isFeeRecipientEditable(tags[0])}
+                        disabled={
+                          !isFeeRecipientEditable(tags[0]) || willJoinSmooth[0]
+                        }
                       />
                       {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
                         <Alert severity="info">
@@ -328,10 +410,13 @@ export default function ImportScreen({
             useSameTag,
             feeRecipients,
             setFeeRecipients,
-            useSameFeerecipient,
+            useSameFeeRecipient,
             getFeeRecipientFieldHelperText,
             isFeeRecipientFieldWrong,
-            tagSelectOptions
+            tagSelectOptions,
+            willJoinSmooth,
+            setWillJoinSmooth,
+            network
           )}
 
           <Box
