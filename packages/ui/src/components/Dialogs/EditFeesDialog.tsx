@@ -55,6 +55,7 @@ export default function FeeRecipientDialog({
   const [loading, setLoading] = useState(false);
   const [isMevSpAddressSelected, setIsMevSpAddressSelected] = useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
+  const [isUnsubUndestood, setIsUnsubUndestood] = useState(false);
 
   const handleClose = () => {
     setOpen(false);
@@ -217,7 +218,7 @@ export default function FeeRecipientDialog({
 
   function UnsubscribeCard(): JSX.Element {
     return (
-      <Card sx={{ boxShadow: 2, borderRadius: 2, padding: 2, marginTop: 1 }}>
+      <>
         <Alert severity="warning">
           You are removing Smooth's fee recipient from some validators. Please
           make sure you have already <b>manually unsubscribed</b> all selected
@@ -227,7 +228,7 @@ export default function FeeRecipientDialog({
           sx={{
             display: "flex",
             justifyContent: "center",
-            marginTop: 1,
+            marginY: 3,
           }}
         >
           <Button
@@ -238,7 +239,20 @@ export default function FeeRecipientDialog({
             Take me to Smooth's website
           </Button>
         </Box>
-      </Card>
+        <FormControlLabel
+          control={
+            <Switch onChange={() => setIsUnsubUndestood(!isUnsubUndestood)} />
+          }
+          label={
+            <Typography component="div">
+              By checking this I understand that I have to{" "}
+              <b>unsuscribe manually in order to not get banned</b> from
+              Dappnode MEV Smoothing Pool.
+            </Typography>
+          }
+          checked={isUnsubUndestood}
+        />
+      </>
     );
   }
 
@@ -359,7 +373,8 @@ export default function FeeRecipientDialog({
               sx={{ borderRadius: 2 }}
               disabled={
                 !isNewFeeRecipientValid() ||
-                areAllOldFrsSameAsGiven(newFeeRecipient)
+                areAllOldFrsSameAsGiven(newFeeRecipient) ||
+                (isRemovingMevSpFr() && !isUnsubUndestood)
               }
             >
               Apply changes
