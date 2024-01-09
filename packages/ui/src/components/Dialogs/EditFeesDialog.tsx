@@ -154,16 +154,14 @@ export default function FeeRecipientDialog({
     return areAllFeeRecipientsEditable(selectedTags);
   }
 
-  function isNewFrSameAsAllOldFrs() {
+  function areAllOldFrsSameAsGiven(givenFr: string) {
     const oldFeeRecipients = selectedRows
       .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
       .flat();
 
     console.log(oldFeeRecipients);
-
-    return oldFeeRecipients.every((fr) => fr === newFeeRecipient);
+    return oldFeeRecipients.every((fr) => fr === givenFr);
   }
-
   function isRemovingMevSpFr() {
     const oldFeeRecipients = selectedRows
       .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
@@ -270,22 +268,24 @@ export default function FeeRecipientDialog({
         <FormGroup
           sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
         >
-          <FormControlLabel
-            control={<Switch onChange={() => switchSetMevSpAddress()} />}
-            label={
-              <Typography component="div">
-                Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
-              </Typography>
-            }
-            checked={isMevSpAddressSelected}
-          />
+          {!areAllOldFrsSameAsGiven(mevSpAddress) && (
+            <FormControlLabel
+              control={<Switch onChange={() => switchSetMevSpAddress()} />}
+              label={
+                <Typography component="div">
+                  Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
+                </Typography>
+              }
+              checked={isMevSpAddressSelected}
+            />
+          )}
         </FormGroup>
         {!areAllSelectedFeeRecipientsEditable() && (
           <Alert severity="info">
             This will only apply to the editable fee recipients
           </Alert>
         )}
-        {isNewFrSameAsAllOldFrs() && (
+        {areAllOldFrsSameAsGiven(newFeeRecipient) && (
           <Alert severity="info">
             This fee recipient has already been set to all selected validators
           </Alert>
@@ -301,14 +301,15 @@ export default function FeeRecipientDialog({
             {errorMessage}
           </Alert>
         )}
-        {newFeeRecipient === mevSpAddress && !isNewFrSameAsAllOldFrs() && (
-          <Alert severity="info">
-            You are setting the fee recipient to the MEV Smoothing Pool Address.
-            Doing this will mean that you will be{" "}
-            <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
-            <b>after you propose your first block</b>.
-          </Alert>
-        )}
+        {newFeeRecipient === mevSpAddress &&
+          !areAllOldFrsSameAsGiven(newFeeRecipient) && (
+            <Alert severity="info">
+              You are setting the fee recipient to the MEV Smoothing Pool
+              Address. Doing this will mean that you will be{" "}
+              <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
+              <b>after you propose your first block</b>.
+            </Alert>
+          )}
       </>
     );
   }
@@ -356,7 +357,10 @@ export default function FeeRecipientDialog({
               onClick={() => handleApplyChanges()}
               variant="contained"
               sx={{ borderRadius: 2 }}
-              disabled={!isNewFeeRecipientValid() || isNewFrSameAsAllOldFrs()}
+              disabled={
+                !isNewFeeRecipientValid() ||
+                areAllOldFrsSameAsGiven(newFeeRecipient)
+              }
             >
               Apply changes
             </Button>
