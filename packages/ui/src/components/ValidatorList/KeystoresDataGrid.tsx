@@ -26,6 +26,8 @@ import {
   BasicValidatorRow,
   BeaconchaUrlBuildingStatus,
   MevSpSubscriptionStatus,
+  ValidatorData,
+  ValidatorDataMap,
 } from "../../types";
 import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
@@ -67,63 +69,112 @@ export default function KeystoresDataGrid({
     useState<CustomValidatorUpdateRequest>();
   const [validatorData, setValidatorData] = useState<ValidatorDataMap>({});
 
-  interface ValidatorData {
-    index: number;
-    subscriptionStatus: string;
-  }
-
-  interface ValidatorDataMap {
-    [pubkey: string]: ValidatorData;
-  }
-
   const fetchSubscriptionStatus = async (
-    validatorIndex: number
+    validatorIndex: string
   ): Promise<string> => {
     try {
-      const response = await fetch(
-        `https://sp-api.dappnode.io/memory/validator/${validatorIndex}`
-      );
+      const smoothApiUrl = network === "mainnet"
+        ? "https://sp-api.dappnode.io"
+        : "http://65.109.102.216:7300";
+  
+      const response = await fetch(`${smoothApiUrl}/memory/validator/${validatorIndex}`);
       const data = await response.json();
-
-      // Check if the response has a specific error message indicating the validator is not found
+  
       if (response.ok) {
-        return data.status; // Or whichever field contains the subscription status
-      } else if (
-        data.code === 400 &&
-        data.message.includes("could not find validator")
-      ) {
+        switch (data.status.toLowerCase()) {
+          case "active":
+            return "Active";
+          case "yellowcard":
+            return "YellowCard";
+          case "redcard":
+            return "RedCard";
+          case "banned":
+            return "Banned";
+          case "notsubscribed":
+            return "Not Subscribed";
+          default:
+            return "Unknown Status"; // Handle not considered statuses
+        }
+      } else if (data.code === 400 && data.message.includes("could not find validator")) {
         return "Not Subscribed";
       } else {
         throw new Error(data.message || "Unknown error");
       }
     } catch (error) {
       console.error("Error fetching subscription status:", error);
-      return "Error"; // Return an error indicator or a default value
+      return "Error"; // Handle when something went wrong calling the Oracle API
     }
   };
 
-  const fetchValidatorData = async (pubkeys: string[]) => {
+  const fetchValidatorData = async (rows: CustomValidatorGetResponse[]) => {
     try {
-      const validatorsInfo = await api.beaconchaFetchValidatorsInfo(pubkeys);
       const newData: ValidatorDataMap = {};
-
-      for (const validator of validatorsInfo.data) {
-        if (validator.pubkey && validator.validatorindex !== undefined) {
-          const subscriptionStatus = await fetchSubscriptionStatus(
-            validator.validatorindex
-          );
-          newData[validator.pubkey] = {
-            index: validator.validatorindex,
+      for (const row of rows) {
+        const pubkey = row.pubkey;
+        if (row.index !== "") {
+          const subscriptionStatus = await fetchSubscriptionStatus(row.index);
+          newData[pubkey] = { // save the pubkey --> index & status mapping to use it in the grid renderCell function
+            index: row.index,
             subscriptionStatus,
           };
         }
       }
+      
+      // TODO: try to get index from beaconcha.in API ??
+      // const maxRequestsPerSecond = 5;
+      // const maxRequestsPerMinute = 20;
+      // let requestCount = 0;
+      // let startTime = new Date();
 
+      // for (const pubkeyChunk of chunkArray(pubkeys, maxRequestsPerSecond)) {
+      //   if (requestCount >= maxRequestsPerMinute) {
+      //     // If max requests per minute reached, wait for the remaining time in the minute
+      //     const currentTime = new Date();
+      //     const timeElapsed = currentTime.getTime() - startTime.getTime();
+      //     if (timeElapsed < 60000) {
+      //       await delay(60000 - timeElapsed);
+      //     }
+      //     startTime = new Date();
+      //     requestCount = 0;
+      //   }
+  
+      //   const validatorsInfo = await api.beaconchaFetchValidatorsInfo(pubkeyChunk);
+      //   for (const validator of validatorsInfo.data) {
+      //     if (validator.pubkey && validator.validatorindex !== undefined) {
+      //       const subscriptionStatus = await fetchSubscriptionStatus(
+      //         validator.validatorindex
+      //       );
+      //       newData[validator.pubkey] = {
+      //         index: validator.validatorindex,
+      //         subscriptionStatus,
+      //       };
+      //     }
+      //   }
+  
+      //   requestCount += pubkeyChunk.length;
+      //   await delay(1000); // Wait for 1 second before the next batch
+      // }
+  
       setValidatorData(newData);
     } catch (error) {
       console.error("Error fetching validator data:", error);
     }
   };
+  
+  // // Utility function to create chunks from an array
+  // function chunkArray(array: any[], chunkSize: number): any[][] {
+  //   const chunks = [];
+  //   for (let i = 0; i < array.length; i += chunkSize) {
+  //     chunks.push(array.slice(i, i + chunkSize));
+  //   }
+  //   return chunks;
+  // }
+  
+  // // Utility function to delay execution
+  // function delay(ms: number): Promise<void> {
+  //   return new Promise(resolve => setTimeout(resolve, ms));
+  // }
+  
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NOT_STARTED);
@@ -136,8 +187,7 @@ export default function KeystoresDataGrid({
 
   useEffect(() => {
     if (rows.length > 0) {
-      const pubkeys = rows.map((row) => row.pubkey);
-      fetchValidatorData(pubkeys);
+      fetchValidatorData(rows);
     }
   }, []);
 

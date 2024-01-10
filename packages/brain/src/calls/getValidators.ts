@@ -8,7 +8,7 @@ import { brainDb, validatorApi, signerApi, beaconchainApi } from "../index.js";
 import logger from "../modules/logger/index.js";
 
 /**
- * Get all validators from db
+ * Get data of all validators existing in db
  * If running in development mode (NODE_ENV === "development") it will returns booleans for
  * validatorImported and validatorFeeRecipientCorrect checks from the validator API
  * @returns
@@ -41,14 +41,17 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
   const validators: CustomValidatorGetResponse[] = [];
   for (const [pubkey, { tag, feeRecipient }] of Object.entries(data)) {
     let format: WithdrawalCredentialsFormat,
-      withdrawalAddress = "";
+      withdrawalAddress = "",
+      index = "";
+
     try {
-      withdrawalAddress = (
-        await beaconchainApi.getValidatorFromState({
-          state: "head",
-          pubkey,
-        })
-      ).data.validator.withdrawal_credentials;
+      const validatorStateResponse = await beaconchainApi.getValidatorFromState({
+        state: "head",
+        pubkey,
+      });
+
+      withdrawalAddress = validatorStateResponse.data.validator.withdrawal_credentials;
+      index = validatorStateResponse.data.index; 
 
       format = isValidWithdrawableBlsAddress(withdrawalAddress)
         ? "ecdsa"
@@ -62,6 +65,7 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
 
     validators.push({
       pubkey,
+      index,
       tag,
       feeRecipient,
       withdrawalCredentials: {
@@ -75,6 +79,5 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
       ),
     });
   }
-
   return validators;
 }

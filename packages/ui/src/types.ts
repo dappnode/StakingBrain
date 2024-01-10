@@ -31,7 +31,16 @@ export interface BasicValidatorRow {
 }
 
 export enum MevSpSubscriptionStatus {
-  SUBSCRIBED = "Subscribed",
-  UNSUBSCRIBED = "Unsubscribed",
-  UNAVAILABLE = "Unavailable", // Network or protocol not supported for MEV SP
+  SUBSCRIBED = "active",
+  YELLOW_CARD = "yellowcard",
+  BANNED = "banned",
+}
+
+export interface ValidatorData {
+  index: string;
+  subscriptionStatus: string;
+}
+
+export interface ValidatorDataMap {
+  [pubkey: string]: ValidatorData;
 }

@@ -8,13 +8,13 @@ services:
     volumes:
       - .:/app
     environment:
-      - NETWORK=holesky
-      - _DAPPNODE_CONSENSUS_CLIENT_PRATER=lighthouse-holesky.dnp.dappnode.eth
-      - _DAPPNODE_EXECUTION_CLIENT_PRATER_VERSION=holesky-geth.dnp.dappnode.eth
+      - NETWORK=prater
+      - _DAPPNODE_CONSENSUS_CLIENT_PRATER=nimbus-prater.dnp.dappnode.eth
+      - _DAPPNODE_EXECUTION_CLIENT_PRATER_VERSION=goerli-geth.dnp.dappnode.eth
     networks:
       dncore_network:
         aliases:
-          - brain.web3signer-holesky.dappnode
+          - brain.web3signer-prater.dappnode
 
 networks:
   dncore_network:
