@@ -25,12 +25,16 @@ export interface TagSelectOption {
 }
 
 export const alertTypes = [
+  "successAlert",
+  "errorAlert",
+  "onlyEditableFeesAlert",
+  "feeAlreadySetToAllAlert",
   "subSmoothStep1Alert",
   "subSmoothStep2Alert",
   "unsubSmoothAlert",
   "blsFormatAlert",
   "errorFormatAlert",
-  "alreadySmooth",
+  "alreadySmoothAlert",
 ] as const;
 
 export type AlertType = (typeof alertTypes)[number];

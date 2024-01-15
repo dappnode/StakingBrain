@@ -273,7 +273,6 @@ export default function FeeRecipientDialog({
     return (
       <>
         {alertCard("unsubSmoothAlert")}
-
         <Box
           sx={{
             display: "flex",
@@ -310,9 +309,37 @@ export default function FeeRecipientDialog({
 
   function alertCard(alertType: AlertType): JSX.Element {
     switch (alertType) {
+      case "successAlert":
+        return (
+          <Alert severity="success" variant="filled" sx={{ marginY: 1 }}>
+            {successMessage}
+          </Alert>
+        );
+
+      case "errorAlert":
+        return (
+          <Alert severity="error" variant="filled" sx={{ marginY: 1 }}>
+            {errorMessage}
+          </Alert>
+        );
+
+      case "onlyEditableFeesAlert":
+        return (
+          <Alert severity="info" sx={{ marginY: 1 }}>
+            This will only apply to the editable fee recipients
+          </Alert>
+        );
+
+      case "feeAlreadySetToAllAlert":
+        return (
+          <Alert severity="info" sx={{ marginY: 1 }}>
+            This fee recipient has already been set to all selected validators
+          </Alert>
+        );
+
       case "subSmoothStep1Alert":
         return (
-          <Alert severity="info">
+          <Alert severity="info" sx={{ marginY: 1 }}>
             You are setting the fee recipient to the MEV Smoothing Pool Address.
             Doing this will mean that you will be{" "}
             <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
@@ -338,16 +365,16 @@ export default function FeeRecipientDialog({
 
       case "unsubSmoothAlert":
         return (
-          <Alert severity="warning">
+          <Alert severity="warning" sx={{ marginY: 1 }}>
             You are removing Smooth's fee recipient from some validators. Please
             make sure you have already <b>manually unsubscribed</b> all selected
             validators in Smooth's website to avoid getting banned from Smooth.
           </Alert>
         );
 
-      case "alreadySmooth":
+      case "alreadySmoothAlert":
         return (
-          <Alert severity="info">
+          <Alert severity="info" sx={{ marginY: 1 }}>
             At least one of the selected validators{" "}
             <b>already have the Dappnode MEV Smoothing Pool fee recipient</b>.
             For those validators their fee recipient won't updated, whose public
@@ -366,7 +393,7 @@ export default function FeeRecipientDialog({
 
       case "blsFormatAlert":
         return (
-          <Alert severity="info">
+          <Alert severity="warning" sx={{ marginY: 1 }}>
             {
               NonEcdsaValidatorsData.filter(
                 (validator) => validator.withdrawalFormat !== "error"
@@ -404,7 +431,7 @@ export default function FeeRecipientDialog({
 
       case "errorFormatAlert":
         return (
-          <Alert severity="warning">
+          <Alert severity="warning" sx={{ marginY: 1 }}>
             {
               NonEcdsaValidatorsData.filter(
                 (validator) => validator.withdrawalFormat === "error"
@@ -429,102 +456,111 @@ export default function FeeRecipientDialog({
     }
   }
 
-  function step1Card(): JSX.Element {
+  function modalContent(): JSX.Element {
     return (
-      <>
-        <TextField
-          onChange={handleNewFeeRecipientChange}
-          sx={{ marginTop: 2 }}
-          label="New Fee Recipient"
-          error={
-            (!isNewFeeRecipientValid() && newFeeRecipient !== "") ||
-            (isAnyFormatValidatorSelected({
+      <DialogContent>
+        <Box sx={importDialogBoxStyle}>
+          {isMevSpAddressSelected &&
+            !isAnyFormatValidatorSelected({
               givenFormat: "ecdsa",
               checkEquality: false,
-            }) &&
-              newFeeRecipient === mevSpAddress)
-          }
-          helperText={
-            newFeeRecipient === ""
-              ? "The fee recipient is the address where the validator will send the fees"
-              : !isValidEcdsaPubkey(newFeeRecipient)
-              ? "Invalid address"
-              : newFeeRecipient === BURN_ADDRESS
-              ? "It is not possible to set the fee recipient to the burn address"
-              : isAnyFormatValidatorSelected({
+            }) && (
+              <Stepper activeStep={activeStep} alternativeLabel>
+                {joinSpSteps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            )}
+          {activeStep === 0 ? (
+            <>
+              <TextField
+                onChange={handleNewFeeRecipientChange}
+                sx={{ marginTop: 2 }}
+                label="New Fee Recipient"
+                error={
+                  (!isNewFeeRecipientValid() && newFeeRecipient !== "") ||
+                  (isAnyFormatValidatorSelected({
+                    givenFormat: "ecdsa",
+                    checkEquality: false,
+                  }) &&
+                    newFeeRecipient === mevSpAddress)
+                }
+                helperText={
+                  newFeeRecipient === ""
+                    ? "The fee recipient is the address where the validator will send the fees"
+                    : !isValidEcdsaPubkey(newFeeRecipient)
+                    ? "Invalid address"
+                    : newFeeRecipient === BURN_ADDRESS
+                    ? "It is not possible to set the fee recipient to the burn address"
+                    : isAnyFormatValidatorSelected({
+                        givenFormat: "ecdsa",
+                        checkEquality: false,
+                      }) && newFeeRecipient === mevSpAddress
+                    ? "Dappnode Mev Smoothing Pool Fee Recipient is not valid for some of these validators"
+                    : "Address is valid"
+                }
+                value={newFeeRecipient}
+                disabled={isMevSpAddressSelected}
+              />
+
+              <FormGroup
+                sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
+              >
+                {!areAllOldFrsSameAsGiven(mevSpAddress) && (
+                  <>
+                    <FormControlLabel
+                      control={
+                        <Switch onChange={() => switchSetMevSpAddress()} />
+                      }
+                      label={
+                        <Typography component="div">
+                          Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
+                        </Typography>
+                      }
+                      checked={isMevSpAddressSelected}
+                    />
+                    {isAnyFormatValidatorSelected({
+                      givenFormat: "error",
+                      checkEquality: true,
+                    }) && alertCard("errorFormatAlert")}
+                    {isMevSpAddressSelected &&
+                      (isAnyFormatValidatorSelected({
+                        givenFormat: "bls",
+                        checkEquality: true,
+                      }) ||
+                        isAnyFormatValidatorSelected({
+                          givenFormat: "unknown",
+                          checkEquality: true,
+                        })) &&
+                      alertCard("blsFormatAlert")}
+                  </>
+                )}
+                {smoothValidatorsPubkeys.length > 0 &&
+                  newFeeRecipient === mevSpAddress &&
+                  alertCard("alreadySmoothAlert")}
+              </FormGroup>
+              {isRemovingMevSpFr() && <UnsubscribeCard />}
+              {!areAllSelectedFeeRecipientsEditable() &&
+                alertCard("onlyEditableFeesAlert")}
+              {areAllOldFrsSameAsGiven(newFeeRecipient) &&
+                alertCard("feeAlreadySetToAllAlert")}
+              {successMessage && alertCard("successAlert")}
+              {errorMessage && alertCard("errorAlert")}
+              {newFeeRecipient === mevSpAddress &&
+                !areAllOldFrsSameAsGiven(newFeeRecipient) &&
+                !isAnyFormatValidatorSelected({
                   givenFormat: "ecdsa",
                   checkEquality: false,
-                }) && newFeeRecipient === mevSpAddress
-              ? "Dappnode Mev Smoothing Pool Fee Recipient is not valid for some of these validators"
-              : "Address is valid"
-          }
-          value={newFeeRecipient}
-          disabled={isMevSpAddressSelected}
-        />
-
-        <FormGroup
-          sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
-        >
-          {!areAllOldFrsSameAsGiven(mevSpAddress) && (
-            <>
-              <FormControlLabel
-                control={<Switch onChange={() => switchSetMevSpAddress()} />}
-                label={
-                  <Typography component="div">
-                    Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
-                  </Typography>
-                }
-                checked={isMevSpAddressSelected}
-              />
-              {isAnyFormatValidatorSelected({
-                givenFormat: "error",
-                checkEquality: true,
-              }) && alertCard("errorFormatAlert")}
-              {isMevSpAddressSelected &&
-                (isAnyFormatValidatorSelected({
-                  givenFormat: "bls",
-                  checkEquality: true,
-                }) ||
-                  isAnyFormatValidatorSelected({
-                    givenFormat: "unknown",
-                    checkEquality: true,
-                  })) &&
-                alertCard("blsFormatAlert")}
+                }) &&
+                alertCard("subSmoothStep1Alert")}
             </>
+          ) : (
+            <SubscriptionCard />
           )}
-          {smoothValidatorsPubkeys.length > 0 &&
-            newFeeRecipient !== mevSpAddress &&
-            alertCard("alreadySmooth")}
-        </FormGroup>
-        {!areAllSelectedFeeRecipientsEditable() && (
-          <Alert severity="info">
-            This will only apply to the editable fee recipients
-          </Alert>
-        )}
-        {areAllOldFrsSameAsGiven(newFeeRecipient) && (
-          <Alert severity="info">
-            This fee recipient has already been set to all selected validators
-          </Alert>
-        )}
-        {isRemovingMevSpFr() && <UnsubscribeCard />}
-        {successMessage && (
-          <Alert severity="success" variant="filled" sx={{ marginTop: 2 }}>
-            {successMessage}
-          </Alert>
-        )}
-        {errorMessage && (
-          <Alert severity="error" variant="filled" sx={{ marginTop: 2 }}>
-            {errorMessage}
-          </Alert>
-        )}
-        {newFeeRecipient === mevSpAddress &&
-          !areAllOldFrsSameAsGiven(newFeeRecipient) &&
-          !isAnyFormatValidatorSelected({
-            givenFormat: "ecdsa",
-            checkEquality: false,
-          }) &&
-          alertCard("subSmoothStep1Alert")}
-      </>
+        </Box>
+      </DialogContent>
     );
   }
 
@@ -548,26 +584,7 @@ export default function FeeRecipientDialog({
       >
         Edit Fee Recipient (for selected validators)
       </DialogTitle>
-      <DialogContent>
-        <Box sx={importDialogBoxStyle}>
-          {isMevSpAddressSelected &&
-            !isAnyFormatValidatorSelected({
-              givenFormat: "ecdsa",
-              checkEquality: false,
-            }) && (
-              <Stepper activeStep={activeStep} alternativeLabel>
-                {joinSpSteps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-            )}
-          {activeStep === 0
-            ? step1Card()
-            : activeStep === 1 && <SubscriptionCard />}
-        </Box>
-      </DialogContent>
+      {modalContent()}
       {!loading ? (
         <DialogActions>
           {!errorMessage && activeStep === 0 && (
