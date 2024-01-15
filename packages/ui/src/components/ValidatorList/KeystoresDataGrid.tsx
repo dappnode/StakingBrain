@@ -69,112 +69,63 @@ export default function KeystoresDataGrid({
     useState<CustomValidatorUpdateRequest>();
   const [validatorData, setValidatorData] = useState<ValidatorDataMap>({});
 
-  const fetchSubscriptionStatus = async (
-    validatorIndex: string
-  ): Promise<string> => {
-    try {
-      const smoothApiUrl = network === "mainnet"
-        ? "https://sp-api.dappnode.io"
-        : "http://65.109.102.216:7300";
-  
-      const response = await fetch(`${smoothApiUrl}/memory/validator/${validatorIndex}`);
-      const data = await response.json();
-  
-      if (response.ok) {
-        switch (data.status.toLowerCase()) {
-          case "active":
-            return "Active";
-          case "yellowcard":
-            return "YellowCard";
-          case "redcard":
-            return "RedCard";
-          case "banned":
-            return "Banned";
-          case "notsubscribed":
-            return "Not Subscribed";
-          default:
-            return "Unknown Status"; // Handle not considered statuses
-        }
-      } else if (data.code === 400 && data.message.includes("could not find validator")) {
-        return "Not Subscribed";
-      } else {
-        throw new Error(data.message || "Unknown error");
-      }
-    } catch (error) {
-      console.error("Error fetching subscription status:", error);
-      return "Error"; // Handle when something went wrong calling the Oracle API
-    }
-  };
-
   const fetchValidatorData = async (rows: CustomValidatorGetResponse[]) => {
+    const newData: ValidatorDataMap = {};
     try {
-      const newData: ValidatorDataMap = {};
-      for (const row of rows) {
-        const pubkey = row.pubkey;
-        if (row.index !== "") {
-          const subscriptionStatus = await fetchSubscriptionStatus(row.index);
-          newData[pubkey] = { // save the pubkey --> index & status mapping to use it in the grid renderCell function
-            index: row.index,
-            subscriptionStatus,
+      // Split the indices into batches of 100 or less
+      const clonedRows = [...rows];
+      const batches = [];
+      while (clonedRows.length) {
+        batches.push(clonedRows.splice(0, 100));
+      }
+
+      for (const batch of batches) {
+        const apiUrl =
+          network === "mainnet"
+            ? "https://sp-api.dappnode.io"
+            : "http://65.109.102.216:7300";
+        const response = await fetch(
+          `${apiUrl}/memory/validatorsbyindex/${batch
+            .map((row) => row.index)
+            .join()}`
+        );
+        const data = await response.json();
+        // Check if the response is not ok
+        if (!response.ok) {
+          throw new Error(`HTTP error when calling Oracle! ${response}`);
+        }
+        // If we get here, we assume the response is ok and process the data
+        const foundValidators = data.found_validators || [];
+        for (const foundValidator of foundValidators) {
+          newData[foundValidator.validator_key] = {
+            index: foundValidator.validator_index,
+            subscriptionStatus: foundValidator.status,
           };
         }
+        // process not found validators and mark them as unsubscribed
+        const notFoundValidators = data.not_found_validators || [];
+        for (const notFoundValidator of notFoundValidators) {
+          const notFoundValitoString = notFoundValidator.toString();
+          const validator = batch.find(
+            (validator) => validator.index === notFoundValitoString
+          );
+          if (validator) {
+            newData[validator.pubkey] = {
+              index: validator.index,
+              subscriptionStatus: MevSpSubscriptionStatus.BANNED,
+            };
+          } else {
+            console.log("not found");
+          }
+        }
       }
-      
-      // TODO: try to get index from beaconcha.in API ??
-      // const maxRequestsPerSecond = 5;
-      // const maxRequestsPerMinute = 20;
-      // let requestCount = 0;
-      // let startTime = new Date();
 
-      // for (const pubkeyChunk of chunkArray(pubkeys, maxRequestsPerSecond)) {
-      //   if (requestCount >= maxRequestsPerMinute) {
-      //     // If max requests per minute reached, wait for the remaining time in the minute
-      //     const currentTime = new Date();
-      //     const timeElapsed = currentTime.getTime() - startTime.getTime();
-      //     if (timeElapsed < 60000) {
-      //       await delay(60000 - timeElapsed);
-      //     }
-      //     startTime = new Date();
-      //     requestCount = 0;
-      //   }
-  
-      //   const validatorsInfo = await api.beaconchaFetchValidatorsInfo(pubkeyChunk);
-      //   for (const validator of validatorsInfo.data) {
-      //     if (validator.pubkey && validator.validatorindex !== undefined) {
-      //       const subscriptionStatus = await fetchSubscriptionStatus(
-      //         validator.validatorindex
-      //       );
-      //       newData[validator.pubkey] = {
-      //         index: validator.validatorindex,
-      //         subscriptionStatus,
-      //       };
-      //     }
-      //   }
-  
-      //   requestCount += pubkeyChunk.length;
-      //   await delay(1000); // Wait for 1 second before the next batch
-      // }
-  
+      console.log(newData);
       setValidatorData(newData);
-    } catch (error) {
-      console.error("Error fetching validator data:", error);
+    } catch {
+      console.log("error");
     }
   };
-  
-  // // Utility function to create chunks from an array
-  // function chunkArray(array: any[], chunkSize: number): any[][] {
-  //   const chunks = [];
-  //   for (let i = 0; i < array.length; i += chunkSize) {
-  //     chunks.push(array.slice(i, i + chunkSize));
-  //   }
-  //   return chunks;
-  // }
-  
-  // // Utility function to delay execution
-  // function delay(ms: number): Promise<void> {
-  //   return new Promise(resolve => setTimeout(resolve, ms));
-  // }
-  
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NOT_STARTED);
