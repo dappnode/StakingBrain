@@ -46,3 +46,19 @@ export interface ValidatorData {
 export interface ValidatorDataMap {
   [pubkey: string]: ValidatorData;
 }
+
+export interface SmoothStatusProps {
+  rowData: {
+    row: {
+      pubkey: string;
+      feeRecipient: string;
+      tag: string;
+      withdrawalCredentials: {
+        format: string;
+        address: string;
+      };
+    };
+  };
+  validatorData: ValidatorDataMap;
+  network: string;
+}
