@@ -1,12 +1,14 @@
 import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import { beaconchaApiParamsMap } from "../../params";
+import {
+  beaconchaApiParamsMap,
+  MEV_SP_ADDRESS_MAINNET,
+  MEV_SP_ADDRESS_PRATER,
+} from "../../params";
 import {
   BeaconchaGetResponse,
   CustomValidatorGetResponse,
   CustomValidatorUpdateRequest,
-  isFeeRecipientEditable,
-  nonEditableFeeRecipientTags,
   Tag,
 } from "@stakingbrain/common";
 import { GridColDef } from "@mui/x-data-grid";
@@ -16,6 +18,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HelpIcon from "@mui/icons-material/Help";
+import WarningIcon from "@mui/icons-material/Warning";
+import BlockIcon from "@mui/icons-material/Block";
+import CrisisAlertIcon from "@mui/icons-material/CrisisAlert";
+import CloseIcon from "@mui/icons-material/Close";
+import HourglassTopIcon from "@mui/icons-material/HourglassTop";
+
 import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { Box, darken } from "@mui/system";
@@ -95,7 +103,7 @@ export default function KeystoresDataGrid({
           throw new Error(`HTTP error when calling Oracle! ${response}`);
         }
         // If we get here, we assume the response is ok and process the data
-        const foundValidators = data.found_validators || [];
+        const foundValidators = data.found_validators || []; //treat array as empty if undefined to avoid errors
         for (const foundValidator of foundValidators) {
           newData[foundValidator.validator_key] = {
             index: foundValidator.validator_index,
@@ -103,7 +111,7 @@ export default function KeystoresDataGrid({
           };
         }
         // process not found validators and mark them as unsubscribed
-        const notFoundValidators = data.not_found_validators || [];
+        const notFoundValidators = data.not_found_validators || []; //treat array as empty if undefined to avoid errors
         for (const notFoundValidator of notFoundValidators) {
           const notFoundValitoString = notFoundValidator.toString();
           const validator = batch.find(
@@ -112,14 +120,11 @@ export default function KeystoresDataGrid({
           if (validator) {
             newData[validator.pubkey] = {
               index: validator.index,
-              subscriptionStatus: MevSpSubscriptionStatus.BANNED,
+              subscriptionStatus: MevSpSubscriptionStatus.NOT_SUBSCRIBED,
             };
-          } else {
-            console.log("not found");
           }
         }
       }
-
       console.log(newData);
       setValidatorData(newData);
     } catch {
@@ -168,7 +173,8 @@ export default function KeystoresDataGrid({
     {
       field: "spSubscription",
       headerName: "Smooth",
-      description: "Dappnode's Smooth subscription status",
+      description:
+        "Dappnode's Smooth subscription status. Smooth states can take up to 40 minutes to update.",
       disableReorder: true,
       disableColumnMenu: true,
       disableExport: true,
@@ -177,13 +183,107 @@ export default function KeystoresDataGrid({
       headerAlign: "center",
       headerClassName: "tableHeader",
       renderCell: (rowData) => {
-        const pubkey = rowData.row.pubkey;
-        const validatorInfo = validatorData[pubkey];
+        //TODO: this cell's content should only be rendered when consensus client is online, because if it isnt, we
+        // cant check withdrawal credentials format
 
-        if (validatorInfo) {
-          return <span>{validatorInfo.subscriptionStatus}</span>;
+        // only solo validators can be subscribed to Smooth
+        if (rowData.row.tag === "solo") {
+          const pubkey = rowData.row.pubkey;
+          const validatorInfo = validatorData[pubkey];
+
+          // once validatorData is fetched, return Smooth status of that validator 
+          if (validatorInfo) {
+            const isMainnet = network === "mainnet";
+            const mevSpAddress = isMainnet
+              ? MEV_SP_ADDRESS_MAINNET
+              : MEV_SP_ADDRESS_PRATER;
+
+            if (
+              validatorInfo.subscriptionStatus.toLowerCase() ===
+                "notsubscribed" &&
+              rowData.row.feeRecipient === mevSpAddress &&
+              rowData.row.withdrawalCredentials.format === "ecdsa"
+            ) {
+              return (
+                <Tooltip
+                  title="Awaiting Subscription. This validator will subscribe automatically when it proposes a block. Changes to 
+              the state can take up to 40 minutes to update"
+                >
+                  <HourglassTopIcon style={{ color: "orange" }} />
+                </Tooltip>
+              );
+            } else if (
+              (validatorInfo.subscriptionStatus.toLowerCase() === "active" ||
+                validatorInfo.subscriptionStatus.toLowerCase() ===
+                  "yellowcard" ||
+                validatorInfo.subscriptionStatus.toLowerCase() === "redcard") &&
+              rowData.row.feeRecipient !== mevSpAddress
+            ) {
+              return (
+                <Tooltip
+                  title="Wrong Fee Recipient! This validator is subscribed to Smooth, but it's fee recipient is not set to Smooth's address.
+              Please change it to Smooth's address as soon as possible!"
+                >
+                  <CrisisAlertIcon style={{ color: "red" }} />
+                </Tooltip>
+              );
+            } else if (
+              rowData.row.feeRecipient === mevSpAddress &&
+              rowData.row.withdrawalCredentials.format !== "ecdsa"
+            ) {
+              return (
+                <Tooltip
+                  title="Wrong Withdrawal Address Format! This validator is subscribed to Smooth, but it's withdrawal address format is not ETH1 execution format.
+              Please change it to ETH1 execution format as soon as possible!"
+                >
+                  <CrisisAlertIcon style={{ color: "red" }} />
+                </Tooltip>
+              );
+            }
+
+            switch (validatorInfo.subscriptionStatus.toLowerCase()) {
+              case "active":
+                return (
+                  <Tooltip title="Active">
+                    <CheckCircleIcon style={{ color: "green" }} />
+                  </Tooltip>
+                );
+              case "yellowcard":
+                return (
+                  <Tooltip title="Yellow Card">
+                    <WarningIcon style={{ color: "yellow" }} />
+                  </Tooltip>
+                );
+              case "redcard":
+                return (
+                  <Tooltip title="Red Card">
+                    <WarningIcon style={{ color: "red" }} />
+                  </Tooltip>
+                );
+              case "banned":
+                return (
+                  <Tooltip title="Banned">
+                    <BlockIcon style={{ color: "red" }} />
+                  </Tooltip>
+                );
+              case "notsubscribed":
+                return (
+                  <Tooltip title="Not Subscribed">
+                    <CloseIcon style={{ color: "grey" }} />
+                  </Tooltip>
+                );
+              default:
+                return (
+                  <Tooltip title="There was an error getting this validator's Smooth status.">
+                    <HelpIcon style={{ color: "grey" }} />
+                  </Tooltip>
+                );
+            }
+          } else {
+            return <span>Loading...</span>; //return Loading if validatorData is not fetched yet
+          }
         } else {
-          return <span>Loading...</span>;
+          return <span>-</span>;
         }
       },
     },

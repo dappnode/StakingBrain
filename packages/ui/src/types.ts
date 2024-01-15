@@ -33,7 +33,9 @@ export interface BasicValidatorRow {
 export enum MevSpSubscriptionStatus {
   SUBSCRIBED = "active",
   YELLOW_CARD = "yellowcard",
+  RED_CARD = "redcard",
   BANNED = "banned",
+  NOT_SUBSCRIBED = "notsubscribed",
 }
 
 export interface ValidatorData {
