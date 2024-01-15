@@ -3,7 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,6 +23,7 @@ import {
   isValidEcdsaPubkey,
   CustomValidatorUpdateRequest,
   areAllFeeRecipientsEditable,
+  WithdrawalCredentialsFormat,
 } from "@stakingbrain/common";
 import React from "react";
 
@@ -35,6 +35,7 @@ import { api } from "../../api";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import { SlideTransition } from "./Transitions";
+import { AlertType, NonEcdsaValidatorsData } from "../../types";
 
 export default function FeeRecipientDialog({
   open,
@@ -56,6 +57,24 @@ export default function FeeRecipientDialog({
   const [isMevSpAddressSelected, setIsMevSpAddressSelected] = useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
   const [isUnsubUndestood, setIsUnsubUndestood] = useState(false);
+  const [NonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<
+    NonEcdsaValidatorsData[]
+  >([]);
+  const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<
+    string[]
+  >([]);
+
+  useEffect(() => {
+    console.log(smoothValidatorsPubkeys);
+  });
+
+  useEffect(() => {
+    isAnyFormatValidatorSelected({
+      givenFormat: "ecdsa",
+      checkEquality: false,
+    }) && nonEcdsaValidatorsData();
+    getSmoothValidatorsSelected();
+  }, [selectedRows]);
 
   const handleClose = () => {
     setOpen(false);
@@ -181,22 +200,56 @@ export default function FeeRecipientDialog({
     );
   }
 
+  const isAnyFormatValidatorSelected = ({
+    givenFormat,
+    checkEquality,
+  }: {
+    givenFormat: WithdrawalCredentialsFormat;
+    checkEquality: boolean;
+  }): boolean => {
+    let isAnyGiven = false;
+    for (const row of selectedRows) {
+      const withdrawalFormat =
+        rows[parseInt(row.toString())].withdrawalCredentials.format;
+      if (
+        checkEquality
+          ? withdrawalFormat === givenFormat
+          : withdrawalFormat !== givenFormat
+      ) {
+        isAnyGiven = true;
+        break;
+      }
+    }
+    return isAnyGiven;
+  };
+
+  const getSmoothValidatorsSelected = () => {
+    const auxList: string[] = [];
+    selectedRows.forEach((row) => {
+      rows[parseInt(row.toString())].feeRecipient === mevSpAddress &&
+        auxList.push(rows[parseInt(row.toString())].pubkey);
+    });
+    setSmoothValidatorsPubkeys(auxList);
+  };
+
+  const nonEcdsaValidatorsData = () => {
+    const auxList: NonEcdsaValidatorsData[] = [];
+    selectedRows.forEach((row) => {
+      rows[parseInt(row.toString())].withdrawalCredentials.format !== "ecdsa" &&
+        auxList.push({
+          pubkey: rows[parseInt(row.toString())].pubkey,
+          withdrawalFormat:
+            rows[parseInt(row.toString())].withdrawalCredentials.format,
+        });
+    });
+    setNonEcdsaValidatorsData([...auxList]);
+  };
+
   function SubscriptionCard(): JSX.Element {
     return (
       // TODO: Set proper link to the Dappnode Smoothing Pool
       <>
-        <Alert severity="info" sx={{ marginY: 2 }}>
-          You have successfully changed your fee recipient to smooth. Your
-          validator will be{" "}
-          <b>automatically subscribed once it proposes a block</b>.
-          <p>
-            To start accumulating rewards right now, <b>subscribe manually</b>{" "}
-            through{" "}
-            <a href="https://smooth.dappnode.io/" target="_blank">
-              <b>Smooth's webpage!</b>
-            </a>
-          </p>
-        </Alert>
+        {alertCard("subSmoothStep2Alert")}
         <Box
           sx={{
             display: "flex",
@@ -219,11 +272,8 @@ export default function FeeRecipientDialog({
   function UnsubscribeCard(): JSX.Element {
     return (
       <>
-        <Alert severity="warning">
-          You are removing Smooth's fee recipient from some validators. Please
-          make sure you have already <b>manually unsubscribed</b> all selected
-          validators in Smooth's website to avoid getting banned from Smooth.
-        </Alert>
+        {alertCard("unsubSmoothAlert")}
+
         <Box
           sx={{
             display: "flex",
@@ -258,6 +308,127 @@ export default function FeeRecipientDialog({
 
   const joinSpSteps = ["Edit Fee Recipient", "Subscribe manually (optional)"];
 
+  function alertCard(alertType: AlertType): JSX.Element {
+    switch (alertType) {
+      case "subSmoothStep1Alert":
+        return (
+          <Alert severity="info">
+            You are setting the fee recipient to the MEV Smoothing Pool Address.
+            Doing this will mean that you will be{" "}
+            <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
+            <b>after you propose your first block</b>.
+          </Alert>
+        );
+
+      case "subSmoothStep2Alert":
+        return (
+          <Alert severity="info" sx={{ marginY: 2 }}>
+            You have successfully changed your fee recipient to smooth. Your
+            validator will be{" "}
+            <b>automatically subscribed once it proposes a block</b>.
+            <p>
+              To start accumulating rewards right now, <b>subscribe manually</b>{" "}
+              through{" "}
+              <a href="https://smooth.dappnode.io/" target="_blank">
+                <b>Smooth's webpage!</b>
+              </a>
+            </p>
+          </Alert>
+        );
+
+      case "unsubSmoothAlert":
+        return (
+          <Alert severity="warning">
+            You are removing Smooth's fee recipient from some validators. Please
+            make sure you have already <b>manually unsubscribed</b> all selected
+            validators in Smooth's website to avoid getting banned from Smooth.
+          </Alert>
+        );
+
+      case "alreadySmooth":
+        return (
+          <Alert severity="info">
+            At least one of the selected validators{" "}
+            <b>already have the Dappnode MEV Smoothing Pool fee recipient</b>.
+            For those validators their fee recipient won't updated, whose public
+            keys are:
+            <ul>
+              {smoothValidatorsPubkeys.map((pubkey) => (
+                <li>
+                  {pubkey.substring(0, 20) +
+                    "..." +
+                    pubkey.substring(pubkey.length - 20)}
+                </li>
+              ))}
+            </ul>
+          </Alert>
+        );
+
+      case "blsFormatAlert":
+        return (
+          <Alert severity="info">
+            {
+              NonEcdsaValidatorsData.filter(
+                (validator) => validator.withdrawalFormat !== "error"
+              ).length
+            }{" "}
+            of the selected validators has not ETH1 as withdrawal address
+            format. <b>Dappnode MEV Smoothing Pool</b> does not allow those to
+            join, whose public keys are:
+            <ul>
+              {NonEcdsaValidatorsData.filter(
+                (validator) => validator.withdrawalFormat !== "error"
+              ).map((validator) => (
+                <li>
+                  <b>{validator.withdrawalFormat.toUpperCase() + ": "}</b>
+                  {validator.pubkey.substring(0, 20) +
+                    "..." +
+                    validator.pubkey.substring(validator.pubkey.length - 20)}
+                </li>
+              ))}
+            </ul>
+            <p>
+              You may check how to change from BLS to ETH1{" "}
+              <b>
+                <a
+                  href="https://launchpad.ethereum.org/en/btec/"
+                  target="_blank"
+                >
+                  here
+                </a>
+              </b>
+              !
+            </p>
+          </Alert>
+        );
+
+      case "errorFormatAlert":
+        return (
+          <Alert severity="warning">
+            {
+              NonEcdsaValidatorsData.filter(
+                (validator) => validator.withdrawalFormat === "error"
+              ).length
+            }{" "}
+            of the selected validators' withdrawal address format could not been
+            checked. Please, make sure your <b>consensus client</b> is up and
+            working! Those validators' public keys are:
+            <ul>
+              {NonEcdsaValidatorsData.filter(
+                (validator) => validator.withdrawalFormat === "error"
+              ).map((validator) => (
+                <li>
+                  {validator.pubkey.substring(0, 20) +
+                    "..." +
+                    validator.pubkey.substring(validator.pubkey.length - 20)}
+                </li>
+              ))}
+            </ul>
+          </Alert>
+        );
+    }
+  }
+
   function step1Card(): JSX.Element {
     return (
       <>
@@ -265,7 +436,14 @@ export default function FeeRecipientDialog({
           onChange={handleNewFeeRecipientChange}
           sx={{ marginTop: 2 }}
           label="New Fee Recipient"
-          error={!isNewFeeRecipientValid() && newFeeRecipient !== ""}
+          error={
+            (!isNewFeeRecipientValid() && newFeeRecipient !== "") ||
+            (isAnyFormatValidatorSelected({
+              givenFormat: "ecdsa",
+              checkEquality: false,
+            }) &&
+              newFeeRecipient === mevSpAddress)
+          }
           helperText={
             newFeeRecipient === ""
               ? "The fee recipient is the address where the validator will send the fees"
@@ -273,6 +451,11 @@ export default function FeeRecipientDialog({
               ? "Invalid address"
               : newFeeRecipient === BURN_ADDRESS
               ? "It is not possible to set the fee recipient to the burn address"
+              : isAnyFormatValidatorSelected({
+                  givenFormat: "ecdsa",
+                  checkEquality: false,
+                }) && newFeeRecipient === mevSpAddress
+              ? "Dappnode Mev Smoothing Pool Fee Recipient is not valid for some of these validators"
               : "Address is valid"
           }
           value={newFeeRecipient}
@@ -283,16 +466,35 @@ export default function FeeRecipientDialog({
           sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
         >
           {!areAllOldFrsSameAsGiven(mevSpAddress) && (
-            <FormControlLabel
-              control={<Switch onChange={() => switchSetMevSpAddress()} />}
-              label={
-                <Typography component="div">
-                  Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
-                </Typography>
-              }
-              checked={isMevSpAddressSelected}
-            />
+            <>
+              <FormControlLabel
+                control={<Switch onChange={() => switchSetMevSpAddress()} />}
+                label={
+                  <Typography component="div">
+                    Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
+                  </Typography>
+                }
+                checked={isMevSpAddressSelected}
+              />
+              {isAnyFormatValidatorSelected({
+                givenFormat: "error",
+                checkEquality: true,
+              }) && alertCard("errorFormatAlert")}
+              {isMevSpAddressSelected &&
+                (isAnyFormatValidatorSelected({
+                  givenFormat: "bls",
+                  checkEquality: true,
+                }) ||
+                  isAnyFormatValidatorSelected({
+                    givenFormat: "unknown",
+                    checkEquality: true,
+                  })) &&
+                alertCard("blsFormatAlert")}
+            </>
           )}
+          {smoothValidatorsPubkeys.length > 0 &&
+            newFeeRecipient !== mevSpAddress &&
+            alertCard("alreadySmooth")}
         </FormGroup>
         {!areAllSelectedFeeRecipientsEditable() && (
           <Alert severity="info">
@@ -316,14 +518,12 @@ export default function FeeRecipientDialog({
           </Alert>
         )}
         {newFeeRecipient === mevSpAddress &&
-          !areAllOldFrsSameAsGiven(newFeeRecipient) && (
-            <Alert severity="info">
-              You are setting the fee recipient to the MEV Smoothing Pool
-              Address. Doing this will mean that you will be{" "}
-              <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
-              <b>after you propose your first block</b>.
-            </Alert>
-          )}
+          !areAllOldFrsSameAsGiven(newFeeRecipient) &&
+          !isAnyFormatValidatorSelected({
+            givenFormat: "ecdsa",
+            checkEquality: false,
+          }) &&
+          alertCard("subSmoothStep1Alert")}
       </>
     );
   }
@@ -350,15 +550,19 @@ export default function FeeRecipientDialog({
       </DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {isMevSpAddressSelected && (
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {joinSpSteps.map((label, i) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-          )}
+          {isMevSpAddressSelected &&
+            !isAnyFormatValidatorSelected({
+              givenFormat: "ecdsa",
+              checkEquality: false,
+            }) && (
+              <Stepper activeStep={activeStep} alternativeLabel>
+                {joinSpSteps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            )}
           {activeStep === 0
             ? step1Card()
             : activeStep === 1 && <SubscriptionCard />}
@@ -374,7 +578,12 @@ export default function FeeRecipientDialog({
               disabled={
                 !isNewFeeRecipientValid() ||
                 areAllOldFrsSameAsGiven(newFeeRecipient) ||
-                (isRemovingMevSpFr() && !isUnsubUndestood)
+                (isRemovingMevSpFr() && !isUnsubUndestood) ||
+                (isAnyFormatValidatorSelected({
+                  givenFormat: "ecdsa",
+                  checkEquality: false,
+                }) &&
+                  newFeeRecipient === mevSpAddress)
               }
             >
               Apply changes

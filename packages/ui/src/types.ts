@@ -1,4 +1,4 @@
-import { Tag } from "@stakingbrain/common";
+import { Tag, WithdrawalCredentialsFormat } from "@stakingbrain/common";
 
 export enum ImportStatus {
   Imported = "Imported",
@@ -23,3 +23,19 @@ export interface TagSelectOption {
   value: Tag;
   label: string;
 }
+
+export const alertTypes = [
+  "subSmoothStep1Alert",
+  "subSmoothStep2Alert",
+  "unsubSmoothAlert",
+  "blsFormatAlert",
+  "errorFormatAlert",
+  "alreadySmooth",
+] as const;
+
+export type AlertType = (typeof alertTypes)[number];
+
+export type NonEcdsaValidatorsData = {
+  pubkey: string;
+  withdrawalFormat: WithdrawalCredentialsFormat;
+};
