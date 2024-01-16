@@ -2,14 +2,12 @@ import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import {
   beaconchaApiParamsMap,
-  MEV_SP_ADDRESS_MAINNET,
-  MEV_SP_ADDRESS_PRATER,
 } from "../../params";
 import {
   BeaconchaGetResponse,
   CustomValidatorGetResponse,
   CustomValidatorUpdateRequest,
-  Tag,
+  SmoothValidatorByIndexApiResponse,
 } from "@stakingbrain/common";
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
@@ -18,11 +16,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HelpIcon from "@mui/icons-material/Help";
-import WarningIcon from "@mui/icons-material/Warning";
-import BlockIcon from "@mui/icons-material/Block";
-import CrisisAlertIcon from "@mui/icons-material/CrisisAlert";
-import CloseIcon from "@mui/icons-material/Close";
-import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 
 import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { HeaderTypography } from "../../Styles/Typographies";
@@ -31,11 +24,9 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import {
-  BasicValidatorRow,
   BeaconchaUrlBuildingStatus,
   MevSpSubscriptionStatus,
-  ValidatorData,
-  ValidatorDataMap,
+  SmoothStatusByPubkey,
 } from "../../types";
 import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
@@ -76,10 +67,21 @@ export default function KeystoresDataGrid({
   const [mevSpOpen, setSetMevSpOpen] = useState(false);
   const [validatorToSubscribeConfig, setValidatorToSubscribeSpConfig] =
     useState<CustomValidatorUpdateRequest>();
-  const [validatorData, setValidatorData] = useState<ValidatorDataMap>({});
+  const [validatorsSubscriptionMap, setValidatorsData] = useState<SmoothStatusByPubkey>({});
 
-  const fetchValidatorData = async (rows: CustomValidatorGetResponse[]) => {
-    const newData: ValidatorDataMap = {};
+
+  // Check that Smooth API returns an expected response format
+  function isValidResponse(response: any): boolean {
+    return (
+      response &&
+      response.found_validators instanceof Array &&
+      response.not_found_validators instanceof Array
+    );
+  }
+
+  // For a given list of validators, get their subscription status from the Oracle
+  const fetchValidatorsData = async (rows: CustomValidatorGetResponse[]) => {
+    const newValidatorSubscriptionStatus: SmoothStatusByPubkey = {};
     try {
       // Split the indices into batches of 100 or less
       const clonedRows = [...rows];
@@ -93,12 +95,20 @@ export default function KeystoresDataGrid({
           network === "mainnet"
             ? "https://sp-api.dappnode.io"
             : "http://65.109.102.216:7300";
+
+        // Call the Oracle API to get the subscription status of the validators in the batch by their index
         const response = await fetch(
           `${apiUrl}/memory/validatorsbyindex/${batch
             .map((row) => row.index)
             .join()}`
         );
-        const data = await response.json();
+
+        const data: SmoothValidatorByIndexApiResponse = await response.json();
+
+        if (!isValidResponse(data)) {
+          throw new Error("Unexpected response structure when calling Oracle! Could not fetch validator subscription status");
+        }
+
         // Check if the response is not ok
         if (!response.ok) {
           throw new Error(`HTTP error when calling Oracle! ${response}`);
@@ -106,28 +116,22 @@ export default function KeystoresDataGrid({
         // If we get here, we assume the response is ok and process the data
         const foundValidators = data.found_validators || []; //treat array as empty if undefined to avoid errors
         for (const foundValidator of foundValidators) {
-          newData[foundValidator.validator_key] = {
-            index: foundValidator.validator_index,
-            subscriptionStatus: foundValidator.status,
-          };
+          newValidatorSubscriptionStatus[foundValidator.validator_key] = foundValidator.status
         }
         // process not found validators and mark them as unsubscribed
         const notFoundValidators = data.not_found_validators || []; //treat array as empty if undefined to avoid errors
         for (const notFoundValidator of notFoundValidators) {
           const notFoundValitoString = notFoundValidator.toString();
+          // find the validator in the batch and mark it as not subscribed
           const validator = batch.find(
             (validator) => validator.index === notFoundValitoString
           );
           if (validator) {
-            newData[validator.pubkey] = {
-              index: validator.index,
-              subscriptionStatus: MevSpSubscriptionStatus.NOT_SUBSCRIBED,
-            };
+            newValidatorSubscriptionStatus[validator.pubkey] = MevSpSubscriptionStatus.NOT_SUBSCRIBED;
           }
         }
       }
-      console.log(newData);
-      setValidatorData(newData);
+      setValidatorsData(newValidatorSubscriptionStatus);
     } catch {
       console.log("error");
     }
@@ -143,11 +147,10 @@ export default function KeystoresDataGrid({
   }, [validatorSummaryURL]);
 
   useEffect(() => {
-    console.log("USE EFFECT ORACLE")
     if (rows.length > 0) {
-      fetchValidatorData(rows);
+      fetchValidatorsData(rows);
     }
-  }, []);
+  }, [rows]);
 
   const columns: GridColDef[] = [
     {
@@ -185,14 +188,24 @@ export default function KeystoresDataGrid({
       headerAlign: "center",
       headerClassName: "tableHeader",
       renderCell: (rowData) => {
-      return (
-        
-      <SmoothStatus
-           rowData={rowData}
-           validatorData={validatorData}
-           network={network}
-         />
-      );
+        // Dont render anythin in Smooth column if validator tag isnt solo
+        if (rowData.row.tag !== "solo") {
+          return <span></span>;
+        }
+
+        // If tag === solo, render Smooth status
+        const validatorSubscriptionStatus = validatorsSubscriptionMap[rowData.row.pubkey];
+        if (validatorSubscriptionStatus) {
+          return (
+            <SmoothStatus
+              rowData={rowData}
+              subscriptionStatus={validatorSubscriptionStatus}
+              network={network}
+            />
+          );
+        } else {
+          return <span>Loading...</span>;
+        }
       },
       },
     {
@@ -519,3 +532,4 @@ export default function KeystoresDataGrid({
     </>
   );
 }
+

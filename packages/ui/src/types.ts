@@ -31,20 +31,15 @@ export interface BasicValidatorRow {
 }
 
 export enum MevSpSubscriptionStatus {
-  SUBSCRIBED = "active",
+  ACTIVE = "active",
   YELLOW_CARD = "yellowcard",
   RED_CARD = "redcard",
   BANNED = "banned",
   NOT_SUBSCRIBED = "notsubscribed",
 }
 
-export interface ValidatorData {
-  index: string;
-  subscriptionStatus: string;
-}
-
-export interface ValidatorDataMap {
-  [pubkey: string]: ValidatorData;
+export interface SmoothStatusByPubkey {
+  [pubkey: string]: MevSpSubscriptionStatus;
 }
 
 export interface SmoothStatusProps {
@@ -59,6 +54,6 @@ export interface SmoothStatusProps {
       };
     };
   };
-  validatorData: ValidatorDataMap;
+  subscriptionStatus: MevSpSubscriptionStatus;
   network: string;
 }
