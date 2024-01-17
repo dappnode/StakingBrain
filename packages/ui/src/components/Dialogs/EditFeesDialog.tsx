@@ -89,7 +89,7 @@ export default function FeeRecipientDialog({
       setOpen(false);
     } catch (err) {
       setErrorMessage(
-        "There was an error setting the Dappnode MEV Smoothing Pool Fee Recipient to some validators: " +
+        "There was an error setting the Smooth Fee Recipient to some validators: " +
           err
       );
     }
@@ -294,9 +294,9 @@ export default function FeeRecipientDialog({
           }
           label={
             <Typography component="div">
-              By checking this I understand that I have to{" "}
-              <b>unsuscribe manually in order to not get banned</b> from
-              Dappnode MEV Smoothing Pool.
+              By checking this I understand that being subscribed to Smooth
+              while having a wrong fee recipient can result in my validators to
+              getting banned from it.
             </Typography>
           }
           checked={isUnsubUndestood}
@@ -340,9 +340,8 @@ export default function FeeRecipientDialog({
       case "subSmoothStep1Alert":
         return (
           <Alert severity="info" sx={{ marginY: 1 }}>
-            You are setting the fee recipient to the MEV Smoothing Pool Address.
-            Doing this will mean that you will be{" "}
-            <b>automatically subscribed</b> to the Dappnode Smoothing Pool{" "}
+            You are setting the fee recipient to the Smooth Address. Doing this
+            will mean that you will be <b>automatically subscribed</b> to Smooth{" "}
             <b>after you propose your first block</b>.
           </Alert>
         );
@@ -366,19 +365,19 @@ export default function FeeRecipientDialog({
       case "unsubSmoothAlert":
         return (
           <Alert severity="warning" sx={{ marginY: 1 }}>
-            You are removing Smooth's fee recipient from some validators. Please
-            make sure you have already <b>manually unsubscribed</b> all selected
-            validators in Smooth's website to avoid getting banned from Smooth.
+            You are removing Smooth's fee recipient from <b>1 or more</b>{" "}
+            validators. Please make sure all these validators are not subscribed
+            to Smooth before changing the fee recipient. Unsubscriptions from
+            Smooth can be done in Smooth's website.
           </Alert>
         );
 
       case "alreadySmoothAlert":
         return (
           <Alert severity="info" sx={{ marginY: 1 }}>
-            At least one of the selected validators{" "}
-            <b>already have the Dappnode MEV Smoothing Pool fee recipient</b>.
-            For those validators their fee recipient won't updated, whose public
-            keys are:
+            1 or more of the selected validators{" "}
+            <b>already have the Smooth fee recipient</b>. For those validators
+            their fee recipient won't updated, whose public keys are:
             <ul>
               {smoothValidatorsPubkeys.map((pubkey) => (
                 <li>
@@ -394,14 +393,10 @@ export default function FeeRecipientDialog({
       case "blsFormatAlert":
         return (
           <Alert severity="warning" sx={{ marginY: 1 }}>
-            {
-              NonEcdsaValidatorsData.filter(
-                (validator) => validator.withdrawalFormat !== "error"
-              ).length
-            }{" "}
-            of the selected validators has not ETH1 as withdrawal address
-            format. <b>Dappnode MEV Smoothing Pool</b> does not allow those to
-            join, whose public keys are:
+            Some of the selected validators have an incorrect withdrawal address
+            format. In Smooth, only validators with an ETH1 withdrawal address
+            are permitted to join. The validators with an incorrect withdrawal
+            address are:
             <ul>
               {NonEcdsaValidatorsData.filter(
                 (validator) => validator.withdrawalFormat !== "error"
@@ -415,7 +410,7 @@ export default function FeeRecipientDialog({
               ))}
             </ul>
             <p>
-              You may check how to change from BLS to ETH1{" "}
+              Check how to change from BLS to ETH1{" "}
               <b>
                 <a
                   href="https://launchpad.ethereum.org/en/btec/"
@@ -498,7 +493,7 @@ export default function FeeRecipientDialog({
                         givenFormat: "ecdsa",
                         checkEquality: false,
                       }) && isMevSpAddressSelected
-                    ? "Dappnode Mev Smoothing Pool Fee Recipient is not valid for some of these validators"
+                    ? "Smooth Fee Recipient is not valid for some of these validators"
                     : "Address is valid"
                 }
                 value={newFeeRecipient}
@@ -516,7 +511,7 @@ export default function FeeRecipientDialog({
                       }
                       label={
                         <Typography component="div">
-                          Set <b>Dappnode MEV Smoothing Pool</b> Fee Recipient
+                          Set <b>Smooth</b> Fee Recipient
                         </Typography>
                       }
                       checked={isMevSpAddressSelected}
