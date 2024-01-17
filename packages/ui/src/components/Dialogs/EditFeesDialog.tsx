@@ -497,7 +497,7 @@ export default function FeeRecipientDialog({
                     : isAnyFormatValidatorSelected({
                         givenFormat: "ecdsa",
                         checkEquality: false,
-                      }) && newFeeRecipient === mevSpAddress
+                      }) && isMevSpAddressSelected
                     ? "Dappnode Mev Smoothing Pool Fee Recipient is not valid for some of these validators"
                     : "Address is valid"
                 }
@@ -524,7 +524,9 @@ export default function FeeRecipientDialog({
                     {isAnyFormatValidatorSelected({
                       givenFormat: "error",
                       checkEquality: true,
-                    }) && alertCard("errorFormatAlert")}
+                    }) &&
+                      isMevSpAddressSelected &&
+                      alertCard("errorFormatAlert")}
                     {isMevSpAddressSelected &&
                       (isAnyFormatValidatorSelected({
                         givenFormat: "bls",
@@ -538,7 +540,7 @@ export default function FeeRecipientDialog({
                   </>
                 )}
                 {smoothValidatorsPubkeys.length > 0 &&
-                  newFeeRecipient === mevSpAddress &&
+                  isMevSpAddressSelected &&
                   alertCard("alreadySmoothAlert")}
               </FormGroup>
               {isRemovingMevSpFr() && <UnsubscribeCard />}
@@ -548,7 +550,7 @@ export default function FeeRecipientDialog({
                 alertCard("feeAlreadySetToAllAlert")}
               {successMessage && alertCard("successAlert")}
               {errorMessage && alertCard("errorAlert")}
-              {newFeeRecipient === mevSpAddress &&
+              {isMevSpAddressSelected &&
                 !areAllOldFrsSameAsGiven(newFeeRecipient) &&
                 !isAnyFormatValidatorSelected({
                   givenFormat: "ecdsa",
@@ -600,7 +602,7 @@ export default function FeeRecipientDialog({
                   givenFormat: "ecdsa",
                   checkEquality: false,
                 }) &&
-                  newFeeRecipient === mevSpAddress)
+                  isMevSpAddressSelected)
               }
             >
               Apply changes
