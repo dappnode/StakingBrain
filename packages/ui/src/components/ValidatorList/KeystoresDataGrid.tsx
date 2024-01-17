@@ -2,6 +2,8 @@ import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import {
   beaconchaApiParamsMap,
+  MAINNET_ORACLE_URL,
+  TESTNET_ORACLE_URL,
 } from "../../params";
 import {
   BeaconchaGetResponse,
@@ -67,8 +69,10 @@ export default function KeystoresDataGrid({
   const [mevSpOpen, setSetMevSpOpen] = useState(false);
   const [validatorToSubscribeConfig, setValidatorToSubscribeSpConfig] =
     useState<CustomValidatorUpdateRequest>();
-  const [validatorsSubscriptionMap, setValidatorsData] = useState<SmoothStatusByPubkey>({});
-
+  const [validatorsSubscriptionMap, setValidatorsData] =
+    useState<SmoothStatusByPubkey>({});
+  const [validatorsSubscriptionMapError, setValidatorsSubscriptionError] =
+    useState<string>();
 
   // Check that Smooth API returns an expected response format
   function isValidResponse(response: any): boolean {
@@ -82,58 +86,69 @@ export default function KeystoresDataGrid({
   // For a given list of validators, get their subscription status from the Oracle
   const fetchValidatorsData = async (rows: CustomValidatorGetResponse[]) => {
     const newValidatorSubscriptionStatus: SmoothStatusByPubkey = {};
-    try {
-      // Split the indices into batches of 100 or less
-      const clonedRows = [...rows];
-      const batches = [];
-      while (clonedRows.length) {
-        batches.push(clonedRows.splice(0, 100));
-      }
-
-      for (const batch of batches) {
-        const apiUrl =
-          network === "mainnet"
-            ? "https://sp-api.dappnode.io"
-            : "http://65.109.102.216:7300";
-
-        // Call the Oracle API to get the subscription status of the validators in the batch by their index
-        const response = await fetch(
-          `${apiUrl}/memory/validatorsbyindex/${batch
-            .map((row) => row.index)
-            .join()}`
-        );
-
-        const data: SmoothValidatorByIndexApiResponse = await response.json();
-
-        if (!isValidResponse(data)) {
-          throw new Error("Unexpected response structure when calling Oracle! Could not fetch validator subscription status");
+    // only fetch data if index could be fetched for all validators
+    if (rows.every((row) => row.index)) {
+      try {
+        // Split the indices into batches of 100 or less
+        const clonedRows = [...rows];
+        const batches = [];
+        while (clonedRows.length) {
+          batches.push(clonedRows.splice(0, 100));
         }
 
-        // Check if the response is not ok
-        if (!response.ok) {
-          throw new Error(`HTTP error when calling Oracle! ${response}`);
-        }
-        // If we get here, we assume the response is ok and process the data
-        const foundValidators = data.found_validators || []; //treat array as empty if undefined to avoid errors
-        for (const foundValidator of foundValidators) {
-          newValidatorSubscriptionStatus[foundValidator.validator_key] = foundValidator.status
-        }
-        // process not found validators and mark them as unsubscribed
-        const notFoundValidators = data.not_found_validators || []; //treat array as empty if undefined to avoid errors
-        for (const notFoundValidator of notFoundValidators) {
-          const notFoundValitoString = notFoundValidator.toString();
-          // find the validator in the batch and mark it as not subscribed
-          const validator = batch.find(
-            (validator) => validator.index === notFoundValitoString
+        for (const batch of batches) {
+          const apiUrl =
+            network === "mainnet" ? MAINNET_ORACLE_URL : TESTNET_ORACLE_URL;
+
+          // Call the Oracle API to get the subscription status of the validators in the batch by their index
+          const response = await fetch(
+            `${apiUrl}/memory/validatorsbyindex/${batch
+              .map((row) => row.index)
+              .join()}`
           );
-          if (validator) {
-            newValidatorSubscriptionStatus[validator.pubkey] = MevSpSubscriptionStatus.NOT_SUBSCRIBED;
+
+          const data: SmoothValidatorByIndexApiResponse = await response.json();
+
+          if (!isValidResponse(data)) {
+            throw new Error(
+              "Unexpected response structure when calling Oracle! Could not fetch validator subscription status"
+            );
+          }
+
+          // Check if the response is not ok
+          if (!response.ok) {
+            throw new Error(`HTTP error when calling Oracle! ${response}`);
+          }
+          // If we get here, we assume the response is ok and process the data
+          const foundValidators = data.found_validators || []; //treat array as empty if undefined to avoid errors
+          for (const foundValidator of foundValidators) {
+            newValidatorSubscriptionStatus[foundValidator.validator_key] =
+              foundValidator.status;
+          }
+          // process not found validators and mark them as unsubscribed
+          const notFoundValidators = data.not_found_validators || []; //treat array as empty if undefined to avoid errors
+          for (const notFoundValidator of notFoundValidators) {
+            const notFoundValitoString = notFoundValidator.toString();
+            // find the validator in the batch and mark it as not subscribed
+            const validator = batch.find(
+              (validator) => validator.index === notFoundValitoString
+            );
+            if (validator) {
+              newValidatorSubscriptionStatus[validator.pubkey] =
+                MevSpSubscriptionStatus.NOT_SUBSCRIBED;
+            }
           }
         }
+        setValidatorsData(newValidatorSubscriptionStatus);
+        setValidatorsSubscriptionError(undefined);
+      } catch (e) {
+        setValidatorsSubscriptionError(e.message);
+        console.error("Oracle API Error: ", e.message);
       }
-      setValidatorsData(newValidatorSubscriptionStatus);
-    } catch {
-      console.log("error");
+    } else {
+      console.error(
+        "Skipping Oracle subscription status fetch, not all validator indexes could be fetched"
+      );
     }
   };
 
@@ -188,26 +203,47 @@ export default function KeystoresDataGrid({
       headerAlign: "center",
       headerClassName: "tableHeader",
       renderCell: (rowData) => {
-        // Dont render anythin in Smooth column if validator tag isnt solo
-        if (rowData.row.tag !== "solo") {
-          return <span></span>;
-        }
 
-        // If tag === solo, render Smooth status
-        const validatorSubscriptionStatus = validatorsSubscriptionMap[rowData.row.pubkey];
-        if (validatorSubscriptionStatus) {
-          return (
-            <SmoothStatus
-              rowData={rowData}
-              subscriptionStatus={validatorSubscriptionStatus}
-              network={network}
-            />
-          );
+        // only render smooth status if tag is "solo"
+        if (rowData.row.tag === "solo") {
+          const indexWithdrawalAvailable =
+            rowData.row.index !== undefined &&
+            rowData.row.withdrawalCredentials.format !== "error";
+          const hasSubscriptionError =
+            validatorsSubscriptionMapError !== undefined;
+
+          // if index is available and there was no error calling oracle, render unknown status
+          if (indexWithdrawalAvailable && !hasSubscriptionError) {
+            const validatorSubscriptionStatus =
+              validatorsSubscriptionMap[rowData.row.pubkey];
+
+            // wait for validatorSubscriptionStatus to be fetched
+            if (validatorSubscriptionStatus) {
+              return (
+                <SmoothStatus
+                  rowData={rowData}
+                  subscriptionStatus={validatorSubscriptionStatus}
+                  network={network}
+                />
+              );
+            } else {
+              return <span>Loading...</span>;
+            }
+          } else {
+            const errorTitle = hasSubscriptionError
+              ? validatorsSubscriptionMapError
+              : "Validator subscription status could not be fetched. Is your consensus client synced?";
+            return (
+              <Tooltip title={errorTitle}>
+                <HelpIcon style={{ color: "red" }} />
+              </Tooltip>
+            );
+          }
         } else {
-          return <span>Loading...</span>;
+          return <span>-</span>;
         }
       },
-      },
+    },
     {
       field: "tag",
       headerName: "Tag",
@@ -243,6 +279,7 @@ export default function KeystoresDataGrid({
       ? beaconchaBaseUrl + "/validator/" + row.pubkey
       : "",
     feeRecipient: row.feeRecipient,
+    index: row.index,
     tag: row.tag,
     withdrawalCredentials: row.withdrawalCredentials,
     pubkeyInValidator: row.validatorImported,

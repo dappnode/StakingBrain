@@ -27,3 +27,7 @@ export const MEV_SP_ADDRESS_PRATER =
 
 export const MEV_SP_ADDRESS_MAINNET =
   "0xAdFb8D27671F14f297eE94135e266aAFf8752e35" as const;
+
+export const MAINNET_ORACLE_URL = "https://sp-api.dappnode.io" as const;
+
+export const TESTNET_ORACLE_URL = "http://65.109.102.216:7300" as const;

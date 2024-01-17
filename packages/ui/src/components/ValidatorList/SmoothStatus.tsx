@@ -62,14 +62,14 @@ export default function SmoothStatus({
 
   // rendering logic
   if (
-    // healthy pending subscription. Good withdrawal address format and fee recipient
+    // healthy pending_subscription. Good withdrawal address format and fee recipient
     subscriptionStatus.toLowerCase() === "notsubscribed" &&
     feeRecipient === mevSpAddress &&
     withdrawalFormat === "ecdsa"
   ) {
     return renderAwaitingSubscription();
 
-    // unhealthy pending subscription. Wrong withdrawal address format
+    // unhealthy pending_subscription/subscription. Wrong withdrawal address format
   } else if (feeRecipient === mevSpAddress && withdrawalFormat !== "ecdsa") {
     return renderWrongWithdrawalAddressFormat();
 
