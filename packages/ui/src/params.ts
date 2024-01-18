@@ -22,7 +22,7 @@ export interface AppParams {
   executionClient?: string;
 }
 
-export const getSmoothingPoolUrl = (network: Network): string => {
+export const getSmoothUrlByNetwork = (network: Network): string => {
   if (network == "prater") {
     return "https://smooth-goerli.dappnode.io/";
   } else if (network == "mainnet") {

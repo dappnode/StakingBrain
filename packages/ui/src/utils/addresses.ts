@@ -4,7 +4,7 @@ import {
   Network,
 } from "@stakingbrain/common";
 
-export const getSmoothingPoolAddress = (network: Network) => {
+export const getSmoothAddressByNetwork = (network: Network) => {
   if (network == "prater") {
     return MEV_SP_ADDRESS_PRATER;
   } else if (network == "mainnet") {

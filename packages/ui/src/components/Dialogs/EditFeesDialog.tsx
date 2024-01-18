@@ -37,7 +37,7 @@ import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import { SlideTransition } from "./Transitions";
 import { AlertType, NonEcdsaValidatorsData } from "../../types";
-import { getSmoothingPoolUrl } from "../../params";
+import { getSmoothUrlByNetwork } from "../../params";
 
 export default function FeeRecipientDialog({
   open,
@@ -80,7 +80,7 @@ export default function FeeRecipientDialog({
     setSuccessMessage("");
   };
 
-  const smoothUrl = getSmoothingPoolUrl(network);
+  const smoothUrl = getSmoothUrlByNetwork(network);
 
   const handleSubscriptionClick = async () => {
     try {
@@ -364,7 +364,7 @@ export default function FeeRecipientDialog({
             <p>
               To start accumulating rewards right now, <b>subscribe manually</b>{" "}
               through{" "}
-              <a href={getSmoothingPoolUrl(network)} target="_blank">
+              <a href={getSmoothUrlByNetwork(network)} target="_blank">
                 <b>Smooth's webpage!</b>
               </a>
             </p>
