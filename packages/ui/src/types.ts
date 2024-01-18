@@ -41,5 +41,5 @@ export type AlertType = (typeof alertTypes)[number];
 
 export type NonEcdsaValidatorsData = {
   pubkey: string;
-  withdrawalFormat: WithdrawalCredentialsFormat;
+  withdrawalFormat: "bls" | "unknown" | "error";
 };

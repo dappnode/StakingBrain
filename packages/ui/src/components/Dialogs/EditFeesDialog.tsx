@@ -60,8 +60,8 @@ export default function FeeRecipientDialog({
   const [loading, setLoading] = useState(false);
   const [isMevSpAddressSelected, setIsMevSpAddressSelected] = useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
-  const [isUnsubUndestood, setIsUnsubUndestood] = useState(false);
-  const [NonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<
+  const [isUnsubUnderstood, setIsUnsubUnderstood] = useState(false);
+  const [nonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<
     NonEcdsaValidatorsData[]
   >([]);
   const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<
@@ -69,10 +69,8 @@ export default function FeeRecipientDialog({
   >([]);
 
   useEffect(() => {
-    isAnyFormatValidatorSelected({
-      givenFormat: "ecdsa",
-      checkEquality: false,
-    }) && nonEcdsaValidatorsData();
+    isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
+      getNonEcdsaValidatorsData();
     getSmoothValidatorsSelected();
   }, [selectedRows]);
 
@@ -82,9 +80,11 @@ export default function FeeRecipientDialog({
     setSuccessMessage("");
   };
 
+  const smoothUrl = getSmoothingPoolUrl(network);
+
   const handleSubscriptionClick = async () => {
     try {
-      window.open(getSmoothingPoolUrl(network), "_blank");
+      window.open(smoothUrl, "_blank");
       await updateValidators();
       setOpen(false);
     } catch (err) {
@@ -96,7 +96,7 @@ export default function FeeRecipientDialog({
   };
 
   const handleUnsubscriptionClick = async () => {
-    window.open(getSmoothingPoolUrl(network), "_blank");
+    window.open(smoothUrl, "_blank");
   };
 
   const handleNewFeeRecipientChange = (
@@ -179,7 +179,6 @@ export default function FeeRecipientDialog({
       .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
       .flat();
 
-    console.log(oldFeeRecipients);
     return oldFeeRecipients.every((fr) => fr === givenFr);
   }
   function isRemovingMevSpFr() {
@@ -200,54 +199,64 @@ export default function FeeRecipientDialog({
     );
   }
 
-  const isAnyFormatValidatorSelected = ({
-    givenFormat,
-    checkEquality,
-  }: {
-    givenFormat: WithdrawalCredentialsFormat;
-    checkEquality: boolean;
-  }): boolean => {
-    let isAnyGiven = false;
+  const isAnyGivenFormatValidatorSelected = (
+    givenFormat: WithdrawalCredentialsFormat
+  ): boolean => {
+    let isAnyAsGivenFormat = false;
     for (const row of selectedRows) {
       const withdrawalFormat =
         rows[parseInt(row.toString())].withdrawalCredentials.format;
-      if (
-        checkEquality
-          ? withdrawalFormat === givenFormat
-          : withdrawalFormat !== givenFormat
-      ) {
-        isAnyGiven = true;
+      if (withdrawalFormat === givenFormat) {
+        isAnyAsGivenFormat = true;
         break;
       }
     }
-    return isAnyGiven;
+    return isAnyAsGivenFormat;
   };
 
-  const getSmoothValidatorsSelected = () => {
-    const auxList: string[] = [];
-    selectedRows.forEach((row) => {
-      rows[parseInt(row.toString())].feeRecipient === mevSpAddress &&
-        auxList.push(rows[parseInt(row.toString())].pubkey);
-    });
-    setSmoothValidatorsPubkeys(auxList);
+  const isAnyDifferentGivenFormatValidatorSelected = (
+    givenFormat: WithdrawalCredentialsFormat
+  ): boolean => {
+    let isAnyAsGivenFormat = false;
+    for (const row of selectedRows) {
+      const withdrawalFormat =
+        rows[parseInt(row.toString())].withdrawalCredentials.format;
+      if (withdrawalFormat !== givenFormat) {
+        isAnyAsGivenFormat = true;
+        break;
+      }
+    }
+    return isAnyAsGivenFormat;
   };
 
-  const nonEcdsaValidatorsData = () => {
-    const auxList: NonEcdsaValidatorsData[] = [];
-    selectedRows.forEach((row) => {
-      rows[parseInt(row.toString())].withdrawalCredentials.format !== "ecdsa" &&
-        auxList.push({
-          pubkey: rows[parseInt(row.toString())].pubkey,
-          withdrawalFormat:
-            rows[parseInt(row.toString())].withdrawalCredentials.format,
-        });
-    });
-    setNonEcdsaValidatorsData([...auxList]);
+  const getSmoothValidatorsSelected = (): void => {
+    const smoothValidatorsPubkeys: string[] = selectedRows
+      .map((row) =>
+        rows[+row].feeRecipient === mevSpAddress ? rows[+row].pubkey : null
+      )
+      .filter((pubkey): pubkey is string => pubkey !== null);
+
+    setSmoothValidatorsPubkeys(smoothValidatorsPubkeys);
+  };
+
+  const getNonEcdsaValidatorsData = (): void => {
+    const filteredValidators = selectedRows
+      .map((row) => {
+        const rowData = rows[+row];
+        return rowData.withdrawalCredentials.format !== "ecdsa"
+          ? {
+              pubkey: rowData.pubkey,
+              withdrawalFormat: rowData.withdrawalCredentials.format,
+            }
+          : null;
+      })
+      .filter((item) => item !== null) as NonEcdsaValidatorsData[];
+
+    setNonEcdsaValidatorsData(filteredValidators);
   };
 
   function SubscriptionCard(): JSX.Element {
     return (
-      // TODO: Set proper link to the Dappnode Smoothing Pool
       <>
         {alertCard("subSmoothStep2Alert")}
         <Box
@@ -290,7 +299,7 @@ export default function FeeRecipientDialog({
         </Box>
         <FormControlLabel
           control={
-            <Switch onChange={() => setIsUnsubUndestood(!isUnsubUndestood)} />
+            <Switch onChange={() => setIsUnsubUnderstood(!isUnsubUnderstood)} />
           }
           label={
             <Typography component="div">
@@ -299,7 +308,7 @@ export default function FeeRecipientDialog({
               getting banned from it.
             </Typography>
           }
-          checked={isUnsubUndestood}
+          checked={isUnsubUnderstood}
         />
       </>
     );
@@ -398,16 +407,16 @@ export default function FeeRecipientDialog({
             are permitted to join. The validators with an incorrect withdrawal
             address are:
             <ul>
-              {NonEcdsaValidatorsData.filter(
-                (validator) => validator.withdrawalFormat !== "error"
-              ).map((validator) => (
-                <li>
-                  <b>{validator.withdrawalFormat.toUpperCase() + ": "}</b>
-                  {validator.pubkey.substring(0, 20) +
-                    "..." +
-                    validator.pubkey.substring(validator.pubkey.length - 20)}
-                </li>
-              ))}
+              {nonEcdsaValidatorsData
+                .filter((validator) => validator.withdrawalFormat !== "error")
+                .map((validator) => (
+                  <li>
+                    <b>{validator.withdrawalFormat.toUpperCase() + ": "}</b>
+                    {validator.pubkey.substring(0, 20) +
+                      "..." +
+                      validator.pubkey.substring(validator.pubkey.length - 20)}
+                  </li>
+                ))}
             </ul>
             <p>
               Check how to change from BLS to ETH1{" "}
@@ -428,7 +437,7 @@ export default function FeeRecipientDialog({
         return (
           <Alert severity="warning" sx={{ marginY: 1 }}>
             {
-              NonEcdsaValidatorsData.filter(
+              nonEcdsaValidatorsData.filter(
                 (validator) => validator.withdrawalFormat === "error"
               ).length
             }{" "}
@@ -436,15 +445,15 @@ export default function FeeRecipientDialog({
             checked. Please, make sure your <b>consensus client</b> is up and
             working! Those validators' public keys are:
             <ul>
-              {NonEcdsaValidatorsData.filter(
-                (validator) => validator.withdrawalFormat === "error"
-              ).map((validator) => (
-                <li>
-                  {validator.pubkey.substring(0, 20) +
-                    "..." +
-                    validator.pubkey.substring(validator.pubkey.length - 20)}
-                </li>
-              ))}
+              {nonEcdsaValidatorsData
+                .filter((validator) => validator.withdrawalFormat === "error")
+                .map((validator) => (
+                  <li>
+                    {validator.pubkey.substring(0, 20) +
+                      "..." +
+                      validator.pubkey.substring(validator.pubkey.length - 20)}
+                  </li>
+                ))}
             </ul>
           </Alert>
         );
@@ -456,10 +465,7 @@ export default function FeeRecipientDialog({
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {isMevSpAddressSelected &&
-            !isAnyFormatValidatorSelected({
-              givenFormat: "ecdsa",
-              checkEquality: false,
-            }) && (
+            !isAnyDifferentGivenFormatValidatorSelected("ecdsa") && (
               <Stepper activeStep={activeStep} alternativeLabel>
                 {joinSpSteps.map((label) => (
                   <Step key={label}>
@@ -476,10 +482,7 @@ export default function FeeRecipientDialog({
                 label="New Fee Recipient"
                 error={
                   (!isNewFeeRecipientValid() && newFeeRecipient !== "") ||
-                  (isAnyFormatValidatorSelected({
-                    givenFormat: "ecdsa",
-                    checkEquality: false,
-                  }) &&
+                  (isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
                     newFeeRecipient === mevSpAddress)
                 }
                 helperText={
@@ -489,10 +492,8 @@ export default function FeeRecipientDialog({
                     ? "Invalid address"
                     : newFeeRecipient === BURN_ADDRESS
                     ? "It is not possible to set the fee recipient to the burn address"
-                    : isAnyFormatValidatorSelected({
-                        givenFormat: "ecdsa",
-                        checkEquality: false,
-                      }) && isMevSpAddressSelected
+                    : isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
+                      isMevSpAddressSelected
                     ? "Smooth Fee Recipient is not valid for some of these validators"
                     : "Address is valid"
                 }
@@ -523,21 +524,12 @@ export default function FeeRecipientDialog({
               {smoothValidatorsPubkeys.length > 0 &&
                 isMevSpAddressSelected &&
                 alertCard("alreadySmoothAlert")}
-              {isAnyFormatValidatorSelected({
-                givenFormat: "error",
-                checkEquality: true,
-              }) &&
+              {isAnyGivenFormatValidatorSelected("error") &&
                 isMevSpAddressSelected &&
                 alertCard("errorFormatAlert")}
               {isMevSpAddressSelected &&
-                (isAnyFormatValidatorSelected({
-                  givenFormat: "bls",
-                  checkEquality: true,
-                }) ||
-                  isAnyFormatValidatorSelected({
-                    givenFormat: "unknown",
-                    checkEquality: true,
-                  })) &&
+                (isAnyGivenFormatValidatorSelected("bls") ||
+                  isAnyGivenFormatValidatorSelected("unknown")) &&
                 alertCard("blsFormatAlert")}
               {!areAllSelectedFeeRecipientsEditable() &&
                 alertCard("onlyEditableFeesAlert")}
@@ -547,10 +539,7 @@ export default function FeeRecipientDialog({
               {errorMessage && alertCard("errorAlert")}
               {isMevSpAddressSelected &&
                 !areAllOldFrsSameAsGiven(newFeeRecipient) &&
-                !isAnyFormatValidatorSelected({
-                  givenFormat: "ecdsa",
-                  checkEquality: false,
-                }) &&
+                !isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
                 alertCard("subSmoothStep1Alert")}
             </>
           ) : (
@@ -592,11 +581,8 @@ export default function FeeRecipientDialog({
               disabled={
                 !isNewFeeRecipientValid() ||
                 areAllOldFrsSameAsGiven(newFeeRecipient) ||
-                (isRemovingMevSpFr() && !isUnsubUndestood) ||
-                (isAnyFormatValidatorSelected({
-                  givenFormat: "ecdsa",
-                  checkEquality: false,
-                }) &&
+                (isRemovingMevSpFr() && !isUnsubUnderstood) ||
+                (isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
                   isMevSpAddressSelected)
               }
             >
