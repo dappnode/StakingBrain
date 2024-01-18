@@ -24,6 +24,7 @@ import {
   CustomValidatorUpdateRequest,
   areAllFeeRecipientsEditable,
   WithdrawalCredentialsFormat,
+  Network,
 } from "@stakingbrain/common";
 import React from "react";
 
@@ -36,6 +37,7 @@ import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import { SlideTransition } from "./Transitions";
 import { AlertType, NonEcdsaValidatorsData } from "../../types";
+import { getSmoothingPoolUrl } from "../../params";
 
 export default function FeeRecipientDialog({
   open,
@@ -43,12 +45,14 @@ export default function FeeRecipientDialog({
   rows,
   selectedRows,
   mevSpAddress,
+  network,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
   mevSpAddress: string;
+  network: Network;
 }): JSX.Element {
   const [newFeeRecipient, setNewFeeRecipient] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -63,10 +67,6 @@ export default function FeeRecipientDialog({
   const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<
     string[]
   >([]);
-
-  useEffect(() => {
-    console.log(smoothValidatorsPubkeys);
-  });
 
   useEffect(() => {
     isAnyFormatValidatorSelected({
@@ -84,8 +84,8 @@ export default function FeeRecipientDialog({
 
   const handleSubscriptionClick = async () => {
     try {
+      window.open(getSmoothingPoolUrl(network), "_blank");
       await updateValidators();
-      window.open("https://smooth.dappnode.io/", "_blank");
       setOpen(false);
     } catch (err) {
       setErrorMessage(
@@ -96,7 +96,7 @@ export default function FeeRecipientDialog({
   };
 
   const handleUnsubscriptionClick = async () => {
-    window.open("https://smooth.dappnode.io/", "_blank");
+    window.open(getSmoothingPoolUrl(network), "_blank");
   };
 
   const handleNewFeeRecipientChange = (
@@ -355,7 +355,7 @@ export default function FeeRecipientDialog({
             <p>
               To start accumulating rewards right now, <b>subscribe manually</b>{" "}
               through{" "}
-              <a href="https://smooth.dappnode.io/" target="_blank">
+              <a href={getSmoothingPoolUrl(network)} target="_blank">
                 <b>Smooth's webpage!</b>
               </a>
             </p>
@@ -516,29 +516,29 @@ export default function FeeRecipientDialog({
                       }
                       checked={isMevSpAddressSelected}
                     />
-                    {isAnyFormatValidatorSelected({
-                      givenFormat: "error",
-                      checkEquality: true,
-                    }) &&
-                      isMevSpAddressSelected &&
-                      alertCard("errorFormatAlert")}
-                    {isMevSpAddressSelected &&
-                      (isAnyFormatValidatorSelected({
-                        givenFormat: "bls",
-                        checkEquality: true,
-                      }) ||
-                        isAnyFormatValidatorSelected({
-                          givenFormat: "unknown",
-                          checkEquality: true,
-                        })) &&
-                      alertCard("blsFormatAlert")}
                   </>
                 )}
-                {smoothValidatorsPubkeys.length > 0 &&
-                  isMevSpAddressSelected &&
-                  alertCard("alreadySmoothAlert")}
               </FormGroup>
               {isRemovingMevSpFr() && <UnsubscribeCard />}
+              {smoothValidatorsPubkeys.length > 0 &&
+                isMevSpAddressSelected &&
+                alertCard("alreadySmoothAlert")}
+              {isAnyFormatValidatorSelected({
+                givenFormat: "error",
+                checkEquality: true,
+              }) &&
+                isMevSpAddressSelected &&
+                alertCard("errorFormatAlert")}
+              {isMevSpAddressSelected &&
+                (isAnyFormatValidatorSelected({
+                  givenFormat: "bls",
+                  checkEquality: true,
+                }) ||
+                  isAnyFormatValidatorSelected({
+                    givenFormat: "unknown",
+                    checkEquality: true,
+                  })) &&
+                alertCard("blsFormatAlert")}
               {!areAllSelectedFeeRecipientsEditable() &&
                 alertCard("onlyEditableFeesAlert")}
               {areAllOldFrsSameAsGiven(newFeeRecipient) &&

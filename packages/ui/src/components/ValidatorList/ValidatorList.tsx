@@ -153,6 +153,7 @@ export default function ValidatorList({
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
                   mevSpAddress={mevSpFeeRecipient}
+                  network={stakerConfig.network}
                 />
               )}
 

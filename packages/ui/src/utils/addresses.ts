@@ -9,8 +9,6 @@ export const getSmoothingPoolAddress = (network: Network) => {
     return MEV_SP_ADDRESS_PRATER;
   } else if (network == "mainnet") {
     return MEV_SP_ADDRESS_MAINNET;
-  } else if (network == "holesky") {
-    return MEV_SP_ADDRESS_PRATER;
   } else {
     throw new Error(
       "MEV Smoothing Pool Address can only be set in Prater or Mainnet"
