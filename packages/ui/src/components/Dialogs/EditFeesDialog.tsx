@@ -334,14 +334,14 @@ export default function FeeRecipientDialog({
 
       case "onlyEditableFeesAlert":
         return (
-          <Alert severity="info" sx={{ marginY: 1 }}>
+          <Alert severity="warning" sx={{ marginY: 1 }}>
             This will only apply to the editable fee recipients
           </Alert>
         );
 
       case "feeAlreadySetToAllAlert":
         return (
-          <Alert severity="info" sx={{ marginY: 1 }}>
+          <Alert severity="warning" sx={{ marginY: 1 }}>
             This fee recipient has already been set to all selected validators
           </Alert>
         );
@@ -351,14 +351,14 @@ export default function FeeRecipientDialog({
           <Alert severity="info" sx={{ marginY: 1 }}>
             You are setting the fee recipient to the Smooth Address. Doing this
             will mean that you will be <b>automatically subscribed</b> to Smooth{" "}
-            <b>after you propose your first block</b>.
+            <b>after you propose your next block</b>.
           </Alert>
         );
 
       case "subSmoothStep2Alert":
         return (
           <Alert severity="info" sx={{ marginY: 2 }}>
-            You have successfully changed your fee recipient to smooth. Your
+            You have successfully changed your fee recipient to Smooth. Your
             validator will be{" "}
             <b>automatically subscribed once it proposes a block</b>.
             <p>
@@ -375,18 +375,21 @@ export default function FeeRecipientDialog({
         return (
           <Alert severity="warning" sx={{ marginY: 1 }}>
             You are removing Smooth's fee recipient from <b>1 or more</b>{" "}
-            validators. Please make sure all these validators are not subscribed
-            to Smooth before changing the fee recipient. Unsubscriptions from
-            Smooth can be done in Smooth's website.
+            validators.{" "}
+            <b>
+              Please make sure all these validators are not subscribed to Smooth
+              before changing the fee recipient.
+            </b>{" "}
+            Unsubscribing from Smooth can be done in Smooth's website.
           </Alert>
         );
 
       case "alreadySmoothAlert":
         return (
-          <Alert severity="info" sx={{ marginY: 1 }}>
+          <Alert severity="warning" sx={{ marginY: 1 }}>
             1 or more of the selected validators{" "}
-            <b>already have the Smooth fee recipient</b>. For those validators
-            their fee recipient won't updated, whose public keys are:
+            <b>already have Smooth's fee recipient set</b>. For those
+            validators, the fee recipient won't updated. Their public keys are:
             <ul>
               {smoothValidatorsPubkeys.map((pubkey) => (
                 <li>
@@ -401,11 +404,11 @@ export default function FeeRecipientDialog({
 
       case "blsFormatAlert":
         return (
-          <Alert severity="warning" sx={{ marginY: 1 }}>
-            Some of the selected validators have an incorrect withdrawal address
-            format. In Smooth, only validators with an ETH1 withdrawal address
-            are permitted to join. The validators with an incorrect withdrawal
-            address are:
+          <Alert severity="error" sx={{ marginY: 1 }}>
+            Some of the selected validators have an{" "}
+            <b>incorrect withdrawal address format</b>. In Smooth, only
+            validators with an ETH1 withdrawal address are permitted to join.
+            The validators with an incorrect withdrawal address are:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat !== "error")
@@ -435,15 +438,16 @@ export default function FeeRecipientDialog({
 
       case "errorFormatAlert":
         return (
-          <Alert severity="warning" sx={{ marginY: 1 }}>
+          <Alert severity="error" sx={{ marginY: 1 }}>
             {
               nonEcdsaValidatorsData.filter(
                 (validator) => validator.withdrawalFormat === "error"
               ).length
             }{" "}
-            of the selected validators' withdrawal address format could not been
-            checked. Please, make sure your <b>consensus client</b> is up and
-            working! Those validators' public keys are:
+            of the selected validators' withdrawal address format could not be
+            checked. Please,{" "}
+            <b>make sure your consensus clientis up and working!</b> These
+            validators' public keys are:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat === "error")
