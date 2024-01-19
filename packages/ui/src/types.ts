@@ -1,4 +1,4 @@
-import { Tag, WithdrawalCredentialsFormat } from "@stakingbrain/common";
+import { Tag } from "@stakingbrain/common";
 
 export enum ImportStatus {
   Imported = "Imported",

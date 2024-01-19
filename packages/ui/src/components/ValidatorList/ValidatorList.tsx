@@ -36,15 +36,6 @@ export default function ValidatorList({
 
   const mevSpFeeRecipient = getSmoothAddressByNetwork(stakerConfig.network);
 
-  // Use effect on timer to refresh the list of validators
-  useEffect(() => {
-    getValidators();
-    const interval = setInterval(() => {
-      getValidators();
-    }, 60 * 3 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Re-render table after delete/update validators
   useEffect(() => {
     if (!deleteOpen && !editFeesOpen && !exitOpen) {
