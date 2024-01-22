@@ -68,8 +68,7 @@ export default function FeeRecipientDialog({
   >([]);
 
   useEffect(() => {
-    isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
-      getNonEcdsaValidatorsData();
+    isAnyWithdrawalCredentialsDiff("ecdsa") && getNonEcdsaValidatorsData();
     getSmoothValidatorsSelected();
   }, [selectedRows]);
 
@@ -202,7 +201,7 @@ export default function FeeRecipientDialog({
     );
   }
 
-  const isAnyGivenFormatValidatorSelected = (
+  const isAnyWithdrawalCredentialsEqual = (
     givenFormat: WithdrawalCredentialsFormat
   ): boolean => {
     let isAnyAsGivenFormat = false;
@@ -217,7 +216,7 @@ export default function FeeRecipientDialog({
     return isAnyAsGivenFormat;
   };
 
-  const isAnyDifferentGivenFormatValidatorSelected = (
+  const isAnyWithdrawalCredentialsDiff = (
     givenFormat: WithdrawalCredentialsFormat
   ): boolean => {
     let isAnyAsGivenFormat = false;
@@ -474,7 +473,7 @@ export default function FeeRecipientDialog({
         <Box sx={importDialogBoxStyle}>
           {isSmoothNetwork &&
             isMevSpAddressSelected &&
-            !isAnyDifferentGivenFormatValidatorSelected("ecdsa") && (
+            !isAnyWithdrawalCredentialsDiff("ecdsa") && (
               <Stepper activeStep={activeStep} alternativeLabel>
                 {joinSpSteps.map((label) => (
                   <Step key={label}>
@@ -491,7 +490,7 @@ export default function FeeRecipientDialog({
                 label="New Fee Recipient"
                 error={
                   (!isNewFeeRecipientValid() && newFeeRecipient !== "") ||
-                  (isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
+                  (isAnyWithdrawalCredentialsDiff("ecdsa") &&
                     newFeeRecipient === mevSpAddress)
                 }
                 helperText={
@@ -503,7 +502,7 @@ export default function FeeRecipientDialog({
                     ? "It is not possible to set the fee recipient to the burn address"
                     : isSmoothNetwork &&
                       isMevSpAddressSelected &&
-                      isAnyDifferentGivenFormatValidatorSelected("ecdsa")
+                      isAnyWithdrawalCredentialsDiff("ecdsa")
                     ? "Smooth Fee Recipient is not valid for some of these validators"
                     : "Address is valid"
                 }
@@ -544,17 +543,17 @@ export default function FeeRecipientDialog({
                   {smoothValidatorsPubkeys.length > 0 &&
                     isMevSpAddressSelected &&
                     alertCard("alreadySmoothAlert")}
-                  {isAnyGivenFormatValidatorSelected("error") &&
+                  {isAnyWithdrawalCredentialsEqual("error") &&
                     isMevSpAddressSelected &&
                     alertCard("errorFormatAlert")}
                   {isMevSpAddressSelected &&
-                    (isAnyGivenFormatValidatorSelected("bls") ||
-                      isAnyGivenFormatValidatorSelected("unknown")) &&
+                    (isAnyWithdrawalCredentialsEqual("bls") ||
+                      isAnyWithdrawalCredentialsEqual("unknown")) &&
                     alertCard("blsFormatAlert")}
 
                   {isMevSpAddressSelected &&
                     !areAllOldFrsSameAsGiven(newFeeRecipient) &&
-                    !isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
+                    !isAnyWithdrawalCredentialsDiff("ecdsa") &&
                     alertCard("subSmoothStep1Alert")}
                 </>
               )}
@@ -599,7 +598,7 @@ export default function FeeRecipientDialog({
                 !isNewFeeRecipientValid() ||
                 areAllOldFrsSameAsGiven(newFeeRecipient) ||
                 (isRemovingMevSpFr() && !isUnsubUnderstood) ||
-                (isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
+                (isAnyWithdrawalCredentialsDiff("ecdsa") &&
                   isMevSpAddressSelected)
               }
             >
