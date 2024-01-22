@@ -27,6 +27,12 @@ export const getSmoothUrlByNetwork = (network: Network): string => {
     return "https://smooth-goerli.dappnode.io/";
   } else if (network == "mainnet") {
     return "https://smooth.dappnode.io/";
+  } else if (
+    network == "gnosis" ||
+    network == "holesky" ||
+    network == "lukso"
+  ) {
+    return "";
   } else {
     throw new Error(
       "MEV Smoothing Pool Address can only be set in Prater or Mainnet"

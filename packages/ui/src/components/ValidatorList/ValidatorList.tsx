@@ -13,7 +13,6 @@ import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
-import { getSmoothAddressByNetwork } from "../../utils/addresses";
 
 export default function ValidatorList({
   stakerConfig,
@@ -34,7 +33,11 @@ export default function ValidatorList({
     BeaconchaUrlBuildingStatus.NotStarted
   );
 
-  const mevSpFeeRecipient = getSmoothAddressByNetwork(stakerConfig.network);
+  const network = stakerConfig.network;
+
+  useEffect(() => {
+    getValidators();
+  }, []);
 
   // Re-render table after delete/update validators
   useEffect(() => {
@@ -91,7 +94,7 @@ export default function ValidatorList({
                 areRowsSelected={selectedRows.length !== 0}
                 selectedRows={selectedRows}
                 setSelectedRows={setSelectedRows}
-                network={stakerConfig.network}
+                network={network}
                 userMode={userMode}
                 setDeleteOpen={setDeleteOpen}
                 setEditFeesOpen={setEditFeesOpen}
@@ -143,8 +146,7 @@ export default function ValidatorList({
                   selectedRows={selectedRows}
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
-                  mevSpAddress={mevSpFeeRecipient}
-                  network={stakerConfig.network}
+                  network={network}
                 />
               )}
 

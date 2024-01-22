@@ -38,20 +38,19 @@ import WaitBox from "../WaitBox/WaitBox";
 import { SlideTransition } from "./Transitions";
 import { AlertType, NonEcdsaValidatorsData } from "../../types";
 import { getSmoothUrlByNetwork } from "../../params";
+import { getSmoothAddressByNetwork } from "../../utils/addresses";
 
 export default function FeeRecipientDialog({
   open,
   setOpen,
   rows,
   selectedRows,
-  mevSpAddress,
   network,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
-  mevSpAddress: string;
   network: Network;
 }): JSX.Element {
   const [newFeeRecipient, setNewFeeRecipient] = useState("");
@@ -74,13 +73,15 @@ export default function FeeRecipientDialog({
     getSmoothValidatorsSelected();
   }, [selectedRows]);
 
+  const mevSpAddress = getSmoothAddressByNetwork(network);
+  const isSmoothNetwork = mevSpAddress !== null;
+  const smoothUrl = getSmoothUrlByNetwork(network);
+
   const handleClose = () => {
     setOpen(false);
     setErrorMessage("");
     setSuccessMessage("");
   };
-
-  const smoothUrl = getSmoothUrlByNetwork(network);
 
   const handleSubscriptionClick = async () => {
     try {
@@ -102,7 +103,11 @@ export default function FeeRecipientDialog({
   const handleNewFeeRecipientChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    if (!isMevSpAddressSelected && event.target.value === mevSpAddress) {
+    if (
+      isSmoothNetwork &&
+      !isMevSpAddressSelected &&
+      event.target.value === mevSpAddress
+    ) {
       switchSetMevSpAddress();
     } else {
       setNewFeeRecipient(event.target.value);
@@ -114,7 +119,7 @@ export default function FeeRecipientDialog({
       setNewFeeRecipient("");
       setIsMevSpAddressSelected(false);
     } else {
-      setNewFeeRecipient(mevSpAddress);
+      setNewFeeRecipient(mevSpAddress!);
       setIsMevSpAddressSelected(true);
     }
   };
@@ -135,7 +140,7 @@ export default function FeeRecipientDialog({
     const validatorsData: CustomValidatorUpdateRequest[] = [];
 
     selectedRows.forEach((rowId) => {
-      const row = rows[parseInt(rowId.toString())];
+      const row = rows[+rowId];
 
       if (row) {
         validatorsData.push({
@@ -167,27 +172,25 @@ export default function FeeRecipientDialog({
   };
 
   function areAllSelectedFeeRecipientsEditable() {
-    const selectedTags = selectedRows
-      .map((rowId) => rows[parseInt(rowId.toString())].tag)
-      .flat();
+    const selectedTags = selectedRows.map((rowId) => rows[+rowId].tag).flat();
 
     return areAllFeeRecipientsEditable(selectedTags);
   }
 
   function areAllOldFrsSameAsGiven(givenFr: string) {
     const oldFeeRecipients = selectedRows
-      .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
+      .map((rowId) => rows[+rowId].feeRecipient)
       .flat();
 
     return oldFeeRecipients.every((fr) => fr === givenFr);
   }
   function isRemovingMevSpFr() {
     const oldFeeRecipients = selectedRows
-      .map((rowId) => rows[parseInt(rowId.toString())].feeRecipient)
+      .map((rowId) => rows[+rowId].feeRecipient)
       .flat();
 
     return (
-      oldFeeRecipients.includes(mevSpAddress) &&
+      oldFeeRecipients.includes(mevSpAddress!) &&
       isNewFeeRecipientValid() &&
       newFeeRecipient !== mevSpAddress
     );
@@ -204,8 +207,8 @@ export default function FeeRecipientDialog({
   ): boolean => {
     let isAnyAsGivenFormat = false;
     for (const row of selectedRows) {
-      const withdrawalFormat =
-        rows[parseInt(row.toString())].withdrawalCredentials.format;
+      const rowData = rows[+row];
+      const withdrawalFormat = rowData.withdrawalCredentials.format;
       if (withdrawalFormat === givenFormat) {
         isAnyAsGivenFormat = true;
         break;
@@ -219,8 +222,8 @@ export default function FeeRecipientDialog({
   ): boolean => {
     let isAnyAsGivenFormat = false;
     for (const row of selectedRows) {
-      const withdrawalFormat =
-        rows[parseInt(row.toString())].withdrawalCredentials.format;
+      const rowData = rows[+row];
+      const withdrawalFormat = rowData.withdrawalCredentials.format;
       if (withdrawalFormat !== givenFormat) {
         isAnyAsGivenFormat = true;
         break;
@@ -231,9 +234,10 @@ export default function FeeRecipientDialog({
 
   const getSmoothValidatorsSelected = (): void => {
     const smoothValidatorsPubkeys: string[] = selectedRows
-      .map((row) =>
-        rows[+row].feeRecipient === mevSpAddress ? rows[+row].pubkey : null
-      )
+      .map((row) => {
+        const rowData = rows[+row];
+        return rowData.feeRecipient === mevSpAddress ? rowData.pubkey : null;
+      })
       .filter((pubkey): pubkey is string => pubkey !== null);
 
     setSmoothValidatorsPubkeys(smoothValidatorsPubkeys);
@@ -468,7 +472,8 @@ export default function FeeRecipientDialog({
     return (
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {isMevSpAddressSelected &&
+          {isSmoothNetwork &&
+            isMevSpAddressSelected &&
             !isAnyDifferentGivenFormatValidatorSelected("ecdsa") && (
               <Stepper activeStep={activeStep} alternativeLabel>
                 {joinSpSteps.map((label) => (
@@ -496,8 +501,9 @@ export default function FeeRecipientDialog({
                     ? "Invalid address"
                     : newFeeRecipient === BURN_ADDRESS
                     ? "It is not possible to set the fee recipient to the burn address"
-                    : isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
-                      isMevSpAddressSelected
+                    : isSmoothNetwork &&
+                      isMevSpAddressSelected &&
+                      isAnyDifferentGivenFormatValidatorSelected("ecdsa")
                     ? "Smooth Fee Recipient is not valid for some of these validators"
                     : "Address is valid"
                 }
@@ -508,43 +514,50 @@ export default function FeeRecipientDialog({
               <FormGroup
                 sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
               >
-                {!areAllOldFrsSameAsGiven(mevSpAddress) && (
+                {isSmoothNetwork && (
                   <>
-                    <FormControlLabel
-                      control={
-                        <Switch onChange={() => switchSetMevSpAddress()} />
-                      }
-                      label={
-                        <Typography component="div">
-                          Set <b>Smooth</b> Fee Recipient
-                        </Typography>
-                      }
-                      checked={isMevSpAddressSelected}
-                    />
+                    {!areAllOldFrsSameAsGiven(mevSpAddress!) && (
+                      <FormControlLabel
+                        control={
+                          <Switch onChange={() => switchSetMevSpAddress()} />
+                        }
+                        label={
+                          <Typography component="div">
+                            Set <b>Smooth</b> Fee Recipient
+                          </Typography>
+                        }
+                        checked={isMevSpAddressSelected}
+                      />
+                    )}
                   </>
                 )}
               </FormGroup>
-              {isRemovingMevSpFr() && <UnsubscribeCard />}
-              {smoothValidatorsPubkeys.length > 0 &&
-                isMevSpAddressSelected &&
-                alertCard("alreadySmoothAlert")}
-              {isAnyGivenFormatValidatorSelected("error") &&
-                isMevSpAddressSelected &&
-                alertCard("errorFormatAlert")}
-              {isMevSpAddressSelected &&
-                (isAnyGivenFormatValidatorSelected("bls") ||
-                  isAnyGivenFormatValidatorSelected("unknown")) &&
-                alertCard("blsFormatAlert")}
               {!areAllSelectedFeeRecipientsEditable() &&
                 alertCard("onlyEditableFeesAlert")}
               {areAllOldFrsSameAsGiven(newFeeRecipient) &&
                 alertCard("feeAlreadySetToAllAlert")}
               {successMessage && alertCard("successAlert")}
               {errorMessage && alertCard("errorAlert")}
-              {isMevSpAddressSelected &&
-                !areAllOldFrsSameAsGiven(newFeeRecipient) &&
-                !isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
-                alertCard("subSmoothStep1Alert")}
+              {isSmoothNetwork && (
+                <>
+                  {isRemovingMevSpFr() && <UnsubscribeCard />}
+                  {smoothValidatorsPubkeys.length > 0 &&
+                    isMevSpAddressSelected &&
+                    alertCard("alreadySmoothAlert")}
+                  {isAnyGivenFormatValidatorSelected("error") &&
+                    isMevSpAddressSelected &&
+                    alertCard("errorFormatAlert")}
+                  {isMevSpAddressSelected &&
+                    (isAnyGivenFormatValidatorSelected("bls") ||
+                      isAnyGivenFormatValidatorSelected("unknown")) &&
+                    alertCard("blsFormatAlert")}
+
+                  {isMevSpAddressSelected &&
+                    !areAllOldFrsSameAsGiven(newFeeRecipient) &&
+                    !isAnyDifferentGivenFormatValidatorSelected("ecdsa") &&
+                    alertCard("subSmoothStep1Alert")}
+                </>
+              )}
             </>
           ) : (
             <SubscriptionCard />
