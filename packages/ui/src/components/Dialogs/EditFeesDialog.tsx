@@ -73,9 +73,8 @@ export default function FeeRecipientDialog({
   }, [selectedRows]);
 
   const mevSpAddress = getSmoothAddressByNetwork(network);
-  const isSmoothNetwork = mevSpAddress !== null;
   const smoothUrl = getSmoothUrlByNetwork(network);
-
+  
   const handleClose = () => {
     setOpen(false);
     setErrorMessage("");
@@ -103,7 +102,7 @@ export default function FeeRecipientDialog({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (
-      isSmoothNetwork &&
+      mevSpAddress &&
       !isMevSpAddressSelected &&
       event.target.value === mevSpAddress
     ) {
@@ -114,12 +113,18 @@ export default function FeeRecipientDialog({
   };
 
   const switchSetMevSpAddress = () => {
-    if (isMevSpAddressSelected) {
-      setNewFeeRecipient("");
-      setIsMevSpAddressSelected(false);
+    if (mevSpAddress) {
+      if (isMevSpAddressSelected) {
+        setNewFeeRecipient("");
+        setIsMevSpAddressSelected(false);
+      } else {
+        setNewFeeRecipient(mevSpAddress);
+        setIsMevSpAddressSelected(true);
+      }
     } else {
-      setNewFeeRecipient(mevSpAddress!);
-      setIsMevSpAddressSelected(true);
+      console.error(
+        "Error: Tried to switch Smooth's address in a network that doesn't have it"
+      );
     }
   };
 
@@ -188,11 +193,12 @@ export default function FeeRecipientDialog({
       .map((rowId) => rows[+rowId].feeRecipient)
       .flat();
 
-    return (
-      oldFeeRecipients.includes(mevSpAddress!) &&
-      isNewFeeRecipientValid() &&
-      newFeeRecipient !== mevSpAddress
-    );
+      return (
+        mevSpAddress !== null &&
+        oldFeeRecipients.includes(mevSpAddress) &&
+        isNewFeeRecipientValid() &&
+        newFeeRecipient !== mevSpAddress
+      );
   }
 
   function isNewFeeRecipientValid() {
@@ -307,7 +313,7 @@ export default function FeeRecipientDialog({
           label={
             <Typography component="div">
               By checking this I understand that being subscribed to Smooth
-              while having a wrong fee recipient can result in my validators to
+              while having a wrong fee recipient can result in my validators
               getting banned from it.
             </Typography>
           }
@@ -471,7 +477,7 @@ export default function FeeRecipientDialog({
     return (
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {isSmoothNetwork &&
+          {mevSpAddress &&
             isMevSpAddressSelected &&
             !isAnyWithdrawalCredentialsDiff("ecdsa") && (
               <Stepper activeStep={activeStep} alternativeLabel>
@@ -500,7 +506,7 @@ export default function FeeRecipientDialog({
                     ? "Invalid address"
                     : newFeeRecipient === BURN_ADDRESS
                     ? "It is not possible to set the fee recipient to the burn address"
-                    : isSmoothNetwork &&
+                    : mevSpAddress &&
                       isMevSpAddressSelected &&
                       isAnyWithdrawalCredentialsDiff("ecdsa")
                     ? "Smooth Fee Recipient is not valid for some of these validators"
@@ -513,9 +519,9 @@ export default function FeeRecipientDialog({
               <FormGroup
                 sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
               >
-                {isSmoothNetwork && (
+                {mevSpAddress && (
                   <>
-                    {!areAllOldFrsSameAsGiven(mevSpAddress!) && (
+                    {!areAllOldFrsSameAsGiven(mevSpAddress) && (
                       <FormControlLabel
                         control={
                           <Switch onChange={() => switchSetMevSpAddress()} />
@@ -537,7 +543,7 @@ export default function FeeRecipientDialog({
                 alertCard("feeAlreadySetToAllAlert")}
               {successMessage && alertCard("successAlert")}
               {errorMessage && alertCard("errorAlert")}
-              {isSmoothNetwork && (
+              {mevSpAddress && (
                 <>
                   {isRemovingMevSpFr() && <UnsubscribeCard />}
                   {smoothValidatorsPubkeys.length > 0 &&
@@ -597,7 +603,7 @@ export default function FeeRecipientDialog({
               disabled={
                 !isNewFeeRecipientValid() ||
                 areAllOldFrsSameAsGiven(newFeeRecipient) ||
-                (isRemovingMevSpFr() && !isUnsubUnderstood) ||
+                (mevSpAddress !== null && isRemovingMevSpFr() && !isUnsubUnderstood) ||
                 (isAnyWithdrawalCredentialsDiff("ecdsa") &&
                   isMevSpAddressSelected)
               }

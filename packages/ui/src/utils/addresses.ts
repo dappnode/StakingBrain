@@ -4,6 +4,7 @@ import {
   Network,
 } from "@stakingbrain/common";
 
+// if not in a network that has a Smooth, return null
 export const getSmoothAddressByNetwork = (network: Network) => {
   if (network == "prater") {
     return MEV_SP_ADDRESS_PRATER;
