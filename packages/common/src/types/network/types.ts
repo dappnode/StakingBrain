@@ -99,6 +99,7 @@ export type SignerGnosis = typeof signerGnosis;
 
 export const executionClientsGnosis = [
   "nethermind-xdai.dnp.dappnode.eth",
+  "erigon-gnosis.dnp.dappnode.eth",
 ] as const;
 export type ExecutionClientGnosis = (typeof executionClientsGnosis)[number];
 
@@ -133,7 +134,7 @@ export const executionClientsLukso = [
 ] as const;
 export type ExecutionClientLukso = (typeof executionClientsLukso)[number];
 
-// Holesky 
+// Holesky
 
 export const signerHolesky = "web3signer-holesky.dnp.dappnode.eth";
 export type SignerHolesky = typeof signerHolesky;
