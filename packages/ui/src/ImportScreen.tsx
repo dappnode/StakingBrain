@@ -26,7 +26,7 @@ import {
   Web3signerPostResponse,
   Tag,
   isValidEcdsaPubkey,
-  burnAddress,
+  BURN_ADDRESS,
   CustomImportRequest,
   isFeeRecipientEditable,
   areAllFeeRecipientsEditable,
@@ -131,7 +131,7 @@ export default function ImportScreen({
     if (!isValidEcdsaPubkey(feeRecipient)) {
       return "Invalid address";
     }
-    if (feeRecipient === burnAddress) {
+    if (feeRecipient === BURN_ADDRESS) {
       return "It is not possible to set the fee recipient to the burn address";
     }
     return "Address is valid";
@@ -143,7 +143,7 @@ export default function ImportScreen({
     if (feeRecipient === "" || feeRecipient === undefined) {
       return false;
     }
-    if (!isValidEcdsaPubkey(feeRecipient) || feeRecipient === burnAddress) {
+    if (!isValidEcdsaPubkey(feeRecipient) || feeRecipient === BURN_ADDRESS) {
       return true;
     }
 

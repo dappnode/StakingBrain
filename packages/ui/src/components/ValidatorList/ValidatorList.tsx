@@ -33,13 +33,10 @@ export default function ValidatorList({
     BeaconchaUrlBuildingStatus.NotStarted
   );
 
-  // Use effect on timer to refresh the list of validators
+  const network = stakerConfig.network;
+
   useEffect(() => {
     getValidators();
-    const interval = setInterval(() => {
-      getValidators();
-    }, 60 * 3 * 1000);
-    return () => clearInterval(interval);
   }, []);
 
   // Re-render table after delete/update validators
@@ -97,7 +94,7 @@ export default function ValidatorList({
                 areRowsSelected={selectedRows.length !== 0}
                 selectedRows={selectedRows}
                 setSelectedRows={setSelectedRows}
-                network={stakerConfig.network}
+                network={network}
                 userMode={userMode}
                 setDeleteOpen={setDeleteOpen}
                 setEditFeesOpen={setEditFeesOpen}
@@ -149,6 +146,7 @@ export default function ValidatorList({
                   selectedRows={selectedRows}
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
+                  network={network}
                 />
               )}
 

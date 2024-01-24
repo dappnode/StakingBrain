@@ -1,4 +1,4 @@
-import { ApiParams } from "@stakingbrain/common";
+import { ApiParams, Network } from "@stakingbrain/common";
 
 export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
   ["mainnet", { baseUrl: "https://beaconcha.in", apiPath: "/api/v1/" }],
@@ -21,3 +21,13 @@ export interface AppParams {
   consensusClient?: string;
   executionClient?: string;
 }
+
+export const getSmoothUrlByNetwork = (network: Network): string => {
+  if (network == "prater") {
+    return "https://smooth-goerli.dappnode.io/";
+  } else if (network == "mainnet") {
+    return "https://smooth.dappnode.io/";
+  } else {
+    return "";
+  }
+};
