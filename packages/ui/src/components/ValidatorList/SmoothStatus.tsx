@@ -8,21 +8,19 @@ import {
   Help,
   Block,
 } from "@mui/icons-material";
-import { MEV_SP_ADDRESS_MAINNET, MEV_SP_ADDRESS_PRATER } from "@stakingbrain/common";
-import { SmoothStatusProps, MevSpSubscriptionStatus } from "../../types";
+import { MevSpSubscriptionStatus } from "@stakingbrain/common";
+import { SmoothStatusProps } from "../../types";
 
 export default function SmoothStatus({
   rowData,
   subscriptionStatus,
-  network,
+  mevSpFeeRecipient,
+  oracleCallError
 }: SmoothStatusProps): JSX.Element {
+
   const feeRecipient = rowData.row.feeRecipient;
   const withdrawalFormat = rowData.row.withdrawalCredentials.format;
-
-  const isMainnet = network === "mainnet";
-  const mevSpAddress = isMainnet
-    ? MEV_SP_ADDRESS_MAINNET
-    : MEV_SP_ADDRESS_PRATER;
+  const mevSpAddress = mevSpFeeRecipient
 
   // Helper functions for rendering based on conditions
   const renderAwaitingSubscription = () => (
@@ -43,6 +41,7 @@ export default function SmoothStatus({
     </Tooltip>
   );
 
+  //Helper functions for rendering healthy oracle statuses
   const renderSubscriptionStatusIcon = (status: string) => {
     switch (status) {
       case MevSpSubscriptionStatus.ACTIVE:
@@ -56,11 +55,26 @@ export default function SmoothStatus({
       case MevSpSubscriptionStatus.NOT_SUBSCRIBED:
         return <Close style={{ color: "grey" }} />;
       default:
-        return <Help style={{ color: "grey" }} />;
+        return <Help style={{ color: "red" }} />; // should never happen. Status not expected
     }
   };
 
-  // rendering logic
+  // RENDERING LOGIC
+
+  // if oracleCall had an error, return "?" status (couldnt be fetched)
+  if (oracleCallError) {
+    return (
+      <Tooltip title={oracleCallError}>
+        <Help style={{ color: "red" }} />
+      </Tooltip>
+    );
+  }
+  // subscriptionStatus is null when oracleCall hasnt finished yet
+  if (!subscriptionStatus) {
+    return <span>Loading...</span>;
+  }
+
+  // if we get here, we assume oracleCall was successful
   if (
     // healthy pending_subscription. Good withdrawal address format and fee recipient
     subscriptionStatus.toLowerCase() === "notsubscribed" &&

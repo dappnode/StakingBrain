@@ -1,4 +1,5 @@
 import { Tag } from "@stakingbrain/common";
+import { MevSpSubscriptionStatus } from "@stakingbrain/common";
 
 export enum ImportStatus {
   Imported = "Imported",
@@ -44,14 +45,6 @@ export type NonEcdsaValidatorsData = {
   withdrawalFormat: "bls" | "unknown" | "error";
 };
 
-export enum MevSpSubscriptionStatus {
-  ACTIVE = "active",
-  YELLOW_CARD = "yellowcard",
-  RED_CARD = "redcard",
-  BANNED = "banned",
-  NOT_SUBSCRIBED = "notsubscribed",
-}
-
 export interface SmoothStatusByPubkey {
   [pubkey: string]: MevSpSubscriptionStatus;
 }
@@ -69,5 +62,6 @@ export interface SmoothStatusProps {
     };
   };
   subscriptionStatus: MevSpSubscriptionStatus;
-  network: string;
+  mevSpFeeRecipient: string | null;
+  oracleCallError: string | undefined;
 }
