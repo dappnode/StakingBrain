@@ -75,7 +75,7 @@ export default function KeystoresDataGrid({
   const [oracleCallError, setOracleCallError] = useState<string>();
 
   // Check that Smooth API returns an expected response format
-  function isValidResponse(response: any): boolean {
+  function isValidOracleResponse(response: SmoothValidatorByIndexApiResponse): boolean {
     return (
       response &&
       (Array.isArray(response.found_validators) ||
@@ -117,10 +117,10 @@ export default function KeystoresDataGrid({
               .join()}`
           );
 
-          const data: SmoothValidatorByIndexApiResponse = await response.json();
+          const data = await response.json();
 
           // Healthy checks: check that the response is valid and that the response is ok
-          if (!isValidResponse(data)) {
+          if (!isValidOracleResponse(data)) {
             throw new Error(
               "Unexpected response structure when calling Oracle! Could not fetch validator subscription status"
             );
@@ -205,6 +205,7 @@ export default function KeystoresDataGrid({
       align: "center"  as GridAlignment,
       headerAlign: "center"  as GridAlignment,
       headerClassName: "tableHeader",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderCell: (rowData: { row: any; }) => {
         // only render smooth status if tag is "solo"
         if (rowData.row.tag === "solo") {
