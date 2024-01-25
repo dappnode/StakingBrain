@@ -13,6 +13,7 @@ import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
 import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
+import { getSmoothAddressByNetwork } from "../../utils/addresses";
 
 export default function ValidatorList({
   stakerConfig,
@@ -34,7 +35,7 @@ export default function ValidatorList({
   );
 
   const network = stakerConfig.network;
-
+  const smoothAddress = getSmoothAddressByNetwork(network);
   useEffect(() => {
     getValidators();
   }, []);
@@ -101,6 +102,7 @@ export default function ValidatorList({
                 setExitOpen={setExitOpen}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
+                mevSpFeeRecipient={smoothAddress}
               />
 
               {summaryUrlBuildingStatus ===

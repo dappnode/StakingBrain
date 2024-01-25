@@ -43,3 +43,31 @@ export type NonEcdsaValidatorsData = {
   pubkey: string;
   withdrawalFormat: "bls" | "unknown" | "error";
 };
+
+export enum MevSpSubscriptionStatus {
+  ACTIVE = "active",
+  YELLOW_CARD = "yellowcard",
+  RED_CARD = "redcard",
+  BANNED = "banned",
+  NOT_SUBSCRIBED = "notsubscribed",
+}
+
+export interface SmoothStatusByPubkey {
+  [pubkey: string]: MevSpSubscriptionStatus;
+}
+
+export interface SmoothStatusProps {
+  rowData: {
+    row: {
+      pubkey: string;
+      feeRecipient: string;
+      tag: string;
+      withdrawalCredentials: {
+        format: string;
+        address: string;
+      };
+    };
+  };
+  subscriptionStatus: MevSpSubscriptionStatus;
+  network: string;
+}
