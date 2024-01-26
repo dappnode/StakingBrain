@@ -69,13 +69,15 @@ export default function KeystoresDataGrid({
     openDashboardTab();
   }, [validatorSummaryURL]);
 
-  useState<CustomValidatorUpdateRequest>();
-  const [validatorsSubscriptionMap, setValidatorsData] =
-    useState<SmoothStatusByPubkey>({});
+  const [validatorsSubscriptionMap, setValidatorsSubscriptionMap] =
+    useState<SmoothStatusByPubkey | null>(null);
+
   const [oracleCallError, setOracleCallError] = useState<string>();
 
   // Check that Smooth API returns an expected response format
-  function isValidOracleResponse(response: SmoothValidatorByIndexApiResponse): boolean {
+  function isValidOracleResponse(
+    response: SmoothValidatorByIndexApiResponse
+  ): boolean {
     return (
       response &&
       (Array.isArray(response.found_validators) ||
@@ -91,13 +93,28 @@ export default function KeystoresDataGrid({
   const fetchValidatorsData = async (rows: CustomValidatorGetResponse[]) => {
     const newValidatorSubscriptionStatus: SmoothStatusByPubkey = {};
     // Filter rows to include only those with an index
-    const rowsWithIndex = rows.filter(row => row.index);
-  
-    // Only proceed if there is at least one row with an index
-    // new validatos will not have an index yet
-    if (rowsWithIndex.length > 0) {
-      try {
-        // Initialize an array to hold the batches
+    const rowsWithIndex = rows.filter((row) => row.index);
+
+    try {
+      // Only proceed if there is at least one row with an index
+      // new validatos will not have an index yet
+      if (rowsWithIndex.length < 1) {
+        throw new Error(
+          "No validators with index found! Is your consensus client synced? Have you done the deposit recently?"
+        );
+      }
+
+      const apiUrl =
+        network === "mainnet" ? MAINNET_ORACLE_URL : TESTNET_ORACLE_URL;
+
+      const healthCheckResponse = await fetch(`${apiUrl}/status`);
+      const healthCheckData = await healthCheckResponse.json();
+
+      if (!healthCheckData.is_oracle_in_sync) {
+        throw new Error("Oracle is not in sync. Please try again later.");
+      }
+
+      // Initialize an array to hold the batches
       const batches = [];
       // Create a helper array from rowsWithIndex to avoid modifying the original array
       const helperArray = [...rowsWithIndex];
@@ -106,60 +123,56 @@ export default function KeystoresDataGrid({
       while (helperArray.length) {
         batches.push(helperArray.splice(0, 100));
       }
-        for (const batch of batches) {
-          const apiUrl =
-            network === "mainnet" ? MAINNET_ORACLE_URL : TESTNET_ORACLE_URL;
+      for (const batch of batches) {
+        // Call the Oracle API to get the subscription status of the validators in the batch by their index
+        const oracleApiResponse = await fetch(
+          `${apiUrl}/memory/validatorsbyindex/${batch
+            .map((row) => row.index)
+            .join(",")}`
+        );
 
-          // Call the Oracle API to get the subscription status of the validators in the batch by their index
-          const response = await fetch(
-            `${apiUrl}/memory/validatorsbyindex/${batch
-              .map((row) => row.index)
-              .join()}`
+        // if this happens, the oracle is online and synced but something went wrong
+        if (!oracleApiResponse.ok) {
+          throw new Error(
+            `HTTP error when calling Oracle! Please try again later. ${oracleApiResponse}`
           );
+        }
 
-          const data = await response.json();
+        // If response is ok, parse its json content and sanitize it
+        const oracleJsonResponse = await oracleApiResponse.json();
+        if (!isValidOracleResponse(oracleJsonResponse)) {
+          throw new Error(
+            "Unexpected response structure when calling Oracle! Could not fetch validator subscription status"
+          );
+        }
 
-          // Healthy checks: check that the response is valid and that the response is ok
-          if (!isValidOracleResponse(data)) {
-            throw new Error(
-              "Unexpected response structure when calling Oracle! Could not fetch validator subscription status"
-            );
-          }
-          if (!response.ok) {
-            throw new Error(`HTTP error when calling Oracle! ${response}`);
-          }
+        // If we get here, we assume everything went well and process the data
+        const foundValidators = oracleJsonResponse.found_validators || []; //treat array as empty if undefined to avoid errors
+        for (const foundValidator of foundValidators) {
+          newValidatorSubscriptionStatus[foundValidator.validator_key] =
+            foundValidator.status;
+        }
+        // process not found validators and mark them as unsubscribed
+        const notFoundValidators =
+          oracleJsonResponse.not_found_validators || []; //treat array as empty if undefined to avoid errors
+        for (const notFoundValidator of notFoundValidators) {
+          const notFoundValiToString = notFoundValidator.toString();
 
-          // If we get here, we assume the response is ok and process the data
-          const foundValidators = data.found_validators || []; //treat array as empty if undefined to avoid errors
-          for (const foundValidator of foundValidators) {
-            newValidatorSubscriptionStatus[foundValidator.validator_key] =
-              foundValidator.status;
-          }
-          // process not found validators and mark them as unsubscribed
-          const notFoundValidators = data.not_found_validators || []; //treat array as empty if undefined to avoid errors
-          for (const notFoundValidator of notFoundValidators) {
-            const notFoundValiToString = notFoundValidator.toString();
-
-            // find the validator in the batch and mark it as not subscribed
-            const validator = batch.find(
-              (validator) => validator.index === notFoundValiToString
-            );
-            if (validator) {
-              newValidatorSubscriptionStatus[validator.pubkey] =
-                MevSpSubscriptionStatus.NOT_SUBSCRIBED;
-            }
+          // find the validator in the batch and mark it as not subscribed
+          const validator = batch.find(
+            (validator) => validator.index === notFoundValiToString
+          );
+          if (validator) {
+            newValidatorSubscriptionStatus[validator.pubkey] =
+              MevSpSubscriptionStatus.NOT_SUBSCRIBED;
           }
         }
-        //Update the object containing the subscription status by pubkey of all validators
-        setValidatorsData(newValidatorSubscriptionStatus);
-        setOracleCallError(undefined);
-      } catch (e) {
-        setOracleCallError(e.message);
       }
-    } else {
-      setOracleCallError(
-        "Skipping Oracle subscription status fetch, no validator index could be fetch. Is your consensus client synced?"
-      );
+      //Update the object containing the subscription status by pubkey of all validators
+      setValidatorsSubscriptionMap(newValidatorSubscriptionStatus);
+      setOracleCallError(undefined);
+    } catch (e) {
+      setOracleCallError("Error fetching subscription status: " + e.message);
     }
   };
 
@@ -192,36 +205,45 @@ export default function KeystoresDataGrid({
       headerClassName: "tableHeader",
       width: 360,
     },
-     // Only render Smooth column if mevSpFeeRecipient is not null (mainnet or prater)
-    ...(mevSpFeeRecipient != null && (network === "mainnet" || network ==="prater") ? [{
-      field: "spSubscription",
-      headerName: "Smooth",
-      description:
-        "Dappnode's Smooth subscription status. Smooth states can take up to 40 minutes to update.",
-      disableReorder: true,
-      disableColumnMenu: true,
-      disableExport: true,
-      sortable: false,
-      align: "center"  as GridAlignment,
-      headerAlign: "center"  as GridAlignment,
-      headerClassName: "tableHeader",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      renderCell: (rowData: { row: any; }) => {
-        // only render smooth status if tag is "solo"
-        if (rowData.row.tag === "solo") {
-          return (
-            <SmoothStatus
-              rowData={rowData}
-              subscriptionStatus={validatorsSubscriptionMap[rowData.row.pubkey]}
-              mevSpFeeRecipient={mevSpFeeRecipient}
-              oracleCallError={oracleCallError}
-            />
-          );
-        } else {
-          return <span>-</span>;
-        }
-      },
-    }] : []),
+    // Only render Smooth column if mevSpFeeRecipient is not null (mainnet or prater)
+    ...(mevSpFeeRecipient != null &&
+    (network === "mainnet" || network === "prater")
+      ? [
+          {
+            field: "spSubscription",
+            headerName: "Smooth",
+            description:
+              "Dappnode's Smooth subscription status. Smooth states can take up to 40 minutes to update.",
+            disableReorder: true,
+            disableColumnMenu: true,
+            disableExport: true,
+            sortable: false,
+            align: "center" as GridAlignment,
+            headerAlign: "center" as GridAlignment,
+            headerClassName: "tableHeader",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            renderCell: (rowData: { row: any }) => {
+              // only render smooth status if tag is "solo"
+              if (rowData.row.tag === "solo") {
+                return (
+                  <SmoothStatus
+                    rowData={rowData}
+                    subscriptionStatus={
+                      validatorsSubscriptionMap
+                        ? validatorsSubscriptionMap[rowData.row.pubkey]
+                        : null
+                    }
+                    mevSpFeeRecipient={mevSpFeeRecipient}
+                    oracleCallError={oracleCallError}
+                  />
+                );
+              } else {
+                return <span>-</span>;
+              }
+            },
+          },
+        ]
+      : []),
     {
       field: "tag",
       headerName: "Tag",

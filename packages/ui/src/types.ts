@@ -61,7 +61,7 @@ export interface SmoothStatusProps {
       };
     };
   };
-  subscriptionStatus: MevSpSubscriptionStatus;
+  subscriptionStatus: MevSpSubscriptionStatus | null;
   mevSpFeeRecipient: string | null;
   oracleCallError: string | undefined;
 }

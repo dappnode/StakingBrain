@@ -8,6 +8,7 @@ import {
   Help,
   Block,
 } from "@mui/icons-material";
+import CircularProgress from "@mui/material/CircularProgress";
 import { MevSpSubscriptionStatus } from "@stakingbrain/common";
 import { SmoothStatusProps } from "../../types";
 
@@ -20,7 +21,7 @@ export default function SmoothStatus({
 
   const feeRecipient = rowData.row.feeRecipient;
   const withdrawalFormat = rowData.row.withdrawalCredentials.format;
-  const mevSpAddress = mevSpFeeRecipient
+  const mevSpAddress = mevSpFeeRecipient;
 
   // Helper functions for rendering based on conditions
   const renderAwaitingSubscription = () => (
@@ -69,9 +70,9 @@ export default function SmoothStatus({
       </Tooltip>
     );
   }
-  // subscriptionStatus is null when oracleCall hasnt finished yet
+  // subscriptionStatus is falsy or nullish when oracleCall hasnt finished yet
   if (!subscriptionStatus) {
-    return <span>Loading...</span>;
+    return <CircularProgress size={22} />;
   }
 
   // if we get here, we assume oracleCall was successful
