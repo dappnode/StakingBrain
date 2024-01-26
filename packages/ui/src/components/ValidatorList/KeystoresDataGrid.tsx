@@ -4,7 +4,6 @@ import { beaconchaApiParamsMap } from "../../params";
 import {
   BeaconchaGetResponse,
   CustomValidatorGetResponse,
-  CustomValidatorUpdateRequest,
   SmoothValidatorByIndexApiResponse,
   MevSpSubscriptionStatus,
   MAINNET_ORACLE_URL,
