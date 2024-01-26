@@ -20,4 +20,5 @@ export enum MevSpSubscriptionStatus {
   RED_CARD = "redcard",
   BANNED = "banned",
   NOT_SUBSCRIBED = "notsubscribed",
+  UNKNOWN = "unknown",
 }

@@ -453,10 +453,9 @@ export default function FeeRecipientDialog({
                 (validator) => validator.withdrawalFormat === "error"
               ).length
             }{" "}
-            of the selected validators' withdrawal address format could not be
-            checked. Please,{" "}
-            <b>make sure your consensus clientis up and working!</b> These
-            validators' public keys are:
+            of the selected validators' withdrawal address format could not be checked. Please,{" "}
+    <b>make sure your consensus client is up and working!</b> This may also happen if some validators are new to the chain.
+    Affected validator's public keys:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat === "error")

@@ -8,6 +8,7 @@ import {
   MevSpSubscriptionStatus,
   MAINNET_ORACLE_URL,
   TESTNET_ORACLE_URL,
+  SmoothValidator,
 } from "@stakingbrain/common";
 import SmoothStatus from "./SmoothStatus";
 import { GridColDef } from "@mui/x-data-grid";
@@ -91,18 +92,16 @@ export default function KeystoresDataGrid({
   // It updates the validatorsSubscriptionMap state with the new data
   const fetchValidatorsData = async (rows: CustomValidatorGetResponse[]) => {
     const newValidatorSubscriptionStatus: SmoothStatusByPubkey = {};
-    // Filter rows to include only those with an index
-    const rowsWithIndex = rows.filter((row) => row.index);
+
+    // Initialize all validators with "UNKNOWN" status
+    rows.forEach((row) => {
+      if (row.pubkey) {
+        newValidatorSubscriptionStatus[row.pubkey] =
+          MevSpSubscriptionStatus.UNKNOWN;
+      }
+    });
 
     try {
-      // Only proceed if there is at least one row with an index
-      // new validatos will not have an index yet
-      if (rowsWithIndex.length < 1) {
-        throw new Error(
-          "No validators with index found! Is your consensus client synced? Have you done the deposit recently?"
-        );
-      }
-
       const apiUrl =
         network === "mainnet" ? MAINNET_ORACLE_URL : TESTNET_ORACLE_URL;
 
@@ -113,15 +112,18 @@ export default function KeystoresDataGrid({
         throw new Error("Oracle is not in sync. Please try again later.");
       }
 
+      // Filter rows to include only those with an index
+      const rowsWithIndex = rows.filter((row) => row.index);
+
       // Initialize an array to hold the batches
       const batches = [];
-      // Create a helper array from rowsWithIndex to avoid modifying the original array
+      // Create a helper array from rows to avoid modifying the original array
       const helperArray = [...rowsWithIndex];
-
       // Split the indices into batches of 100 or less
       while (helperArray.length) {
         batches.push(helperArray.splice(0, 100));
       }
+
       for (const batch of batches) {
         // Call the Oracle API to get the subscription status of the validators in the batch by their index
         const oracleApiResponse = await fetch(
@@ -130,14 +132,12 @@ export default function KeystoresDataGrid({
             .join(",")}`
         );
 
-        // if this happens, the oracle is online and synced but something went wrong
         if (!oracleApiResponse.ok) {
           throw new Error(
             `HTTP error when calling Oracle! Please try again later. ${oracleApiResponse}`
           );
         }
 
-        // If response is ok, parse its json content and sanitize it
         const oracleJsonResponse = await oracleApiResponse.json();
         if (!isValidOracleResponse(oracleJsonResponse)) {
           throw new Error(
@@ -145,36 +145,35 @@ export default function KeystoresDataGrid({
           );
         }
 
-        // If we get here, we assume everything went well and process the data
-        const foundValidators = oracleJsonResponse.found_validators || []; //treat array as empty if undefined to avoid errors
-        for (const foundValidator of foundValidators) {
+        // Update the subscription status of the validators in the batch (had index)
+        // Mark validators in the found_validators array with their subscription status
+        const foundValidators = oracleJsonResponse.found_validators || []; // if null, set to empty array to avoid errors
+        foundValidators.forEach((foundValidator: SmoothValidator) => {
           newValidatorSubscriptionStatus[foundValidator.validator_key] =
             foundValidator.status;
-        }
-        // process not found validators and mark them as unsubscribed
-        const notFoundValidators =
-          oracleJsonResponse.not_found_validators || []; //treat array as empty if undefined to avoid errors
-        for (const notFoundValidator of notFoundValidators) {
-          const notFoundValiToString = notFoundValidator.toString();
+        });
 
-          // find the validator in the batch and mark it as not subscribed
-          const validator = batch.find(
-            (validator) => validator.index === notFoundValiToString
+        // Mark validators not in the found_validators array as NOT_SUBSCRIBED
+        batch.forEach((validator) => {
+          const validatorNotFound = !foundValidators.some(
+            (foundValidator: { validator_key: string }) =>
+              foundValidator.validator_key === validator.pubkey
           );
-          if (validator) {
+          if (validatorNotFound) {
             newValidatorSubscriptionStatus[validator.pubkey] =
               MevSpSubscriptionStatus.NOT_SUBSCRIBED;
           }
-        }
+        });
       }
-      //Update the object containing the subscription status by pubkey of all validators
+
       setValidatorsSubscriptionMap(newValidatorSubscriptionStatus);
       setOracleCallError(undefined);
     } catch (e) {
-      setOracleCallError("Error fetching subscription status: " + e.message);
+      setOracleCallError(
+        "Error fetching subscription status. Oracle might be down: " + e.message
+      );
     }
   };
-
   useEffect(() => {
     if (rows.length > 0) {
       fetchValidatorsData(rows);
