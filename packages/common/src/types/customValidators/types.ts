@@ -20,6 +20,7 @@ export interface CustomValidatorUpdateRequest {
 export type WithdrawalCredentialsFormat = "ecdsa" | "bls" | "unknown" | "error";
 export interface CustomValidatorGetResponse {
   pubkey: string;
+  index: string;
   tag: Tag;
   feeRecipient: string;
   withdrawalCredentials: {

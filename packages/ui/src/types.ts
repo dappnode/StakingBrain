@@ -1,4 +1,5 @@
 import { Tag } from "@stakingbrain/common";
+import { MevSpSubscriptionStatus } from "@stakingbrain/common";
 
 export enum ImportStatus {
   Imported = "Imported",
@@ -43,3 +44,24 @@ export type NonEcdsaValidatorsData = {
   pubkey: string;
   withdrawalFormat: "bls" | "unknown" | "error";
 };
+
+export interface SmoothStatusByPubkey {
+  [pubkey: string]: MevSpSubscriptionStatus;
+}
+
+export interface SmoothStatusProps {
+  rowData: {
+    row: {
+      pubkey: string;
+      feeRecipient: string;
+      tag: string;
+      withdrawalCredentials: {
+        format: string;
+        address: string;
+      };
+    };
+  };
+  subscriptionStatus: MevSpSubscriptionStatus | null;
+  mevSpFeeRecipient: string | null;
+  oracleCallError: string | undefined;
+}

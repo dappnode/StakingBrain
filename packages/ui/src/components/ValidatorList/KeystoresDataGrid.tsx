@@ -1,10 +1,16 @@
-import { DataGrid, GridSelectionModel } from "@mui/x-data-grid";
+import { DataGrid, GridAlignment, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
 import {
   BeaconchaGetResponse,
   CustomValidatorGetResponse,
+  SmoothValidatorByIndexApiResponse,
+  MevSpSubscriptionStatus,
+  MAINNET_ORACLE_URL,
+  TESTNET_ORACLE_URL,
+  SmoothValidator,
 } from "@stakingbrain/common";
+import SmoothStatus from "./SmoothStatus";
 import { GridColDef } from "@mui/x-data-grid";
 import LinkIcon from "@mui/icons-material/Link";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -18,7 +24,7 @@ import { Box } from "@mui/system";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
-import { BeaconchaUrlBuildingStatus } from "../../types";
+import { BeaconchaUrlBuildingStatus, SmoothStatusByPubkey } from "../../types";
 import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -35,6 +41,7 @@ export default function KeystoresDataGrid({
   setExitOpen,
   summaryUrlBuildingStatus,
   setSummaryUrlBuildingStatus,
+  mevSpFeeRecipient,
 }: {
   rows: CustomValidatorGetResponse[];
   areRowsSelected: boolean;
@@ -47,6 +54,7 @@ export default function KeystoresDataGrid({
   setExitOpen(open: boolean): void;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
+  mevSpFeeRecipient: string | null;
 }): JSX.Element {
   const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
@@ -61,6 +69,117 @@ export default function KeystoresDataGrid({
     openDashboardTab();
   }, [validatorSummaryURL]);
 
+  const [validatorsSubscriptionMap, setValidatorsSubscriptionMap] =
+    useState<SmoothStatusByPubkey | null>(null);
+
+  const [oracleCallError, setOracleCallError] = useState<string>();
+
+  // Check that Smooth API returns an expected response format
+  function isValidOracleResponse(
+    response: SmoothValidatorByIndexApiResponse
+  ): boolean {
+    return (
+      response &&
+      (Array.isArray(response.found_validators) ||
+        response.found_validators === null) &&
+      (Array.isArray(response.not_found_validators) ||
+        response.not_found_validators === null)
+    );
+  }
+
+  // This function fetches the subscription status of the validators in the rows array
+  // It uses the validator index to fetch the status from the Oracle API
+  // It updates the validatorsSubscriptionMap state with the new data
+  const fetchValidatorsData = async (rows: CustomValidatorGetResponse[]) => {
+    const newValidatorSubscriptionStatus: SmoothStatusByPubkey = {};
+
+    // Initialize all validators with "UNKNOWN" status
+    rows.forEach((row) => {
+      if (row.pubkey) {
+        newValidatorSubscriptionStatus[row.pubkey] =
+          MevSpSubscriptionStatus.UNKNOWN;
+      }
+    });
+
+    try {
+      const apiUrl =
+        network === "mainnet" ? MAINNET_ORACLE_URL : TESTNET_ORACLE_URL;
+
+      const healthCheckResponse = await fetch(`${apiUrl}/status`);
+      const healthCheckData = await healthCheckResponse.json();
+
+      if (!healthCheckData.is_oracle_in_sync) {
+        throw new Error("Oracle is not in sync. Please try again later.");
+      }
+
+      // Filter rows to include only those with an index
+      const rowsWithIndexAndTagSolo = rows.filter((row) => row.index && row.tag === 'solo');
+
+      // Initialize an array to hold the batches
+      const batches = [];
+      // Create a helper array from rows to avoid modifying the original array
+      const helperArray = [...rowsWithIndexAndTagSolo];
+      // Split the indices into batches of 100 or less
+      while (helperArray.length) {
+        batches.push(helperArray.splice(0, 100));
+      }
+
+      for (const batch of batches) {
+        // Call the Oracle API to get the subscription status of the validators in the batch by their index
+        const oracleApiResponse = await fetch(
+          `${apiUrl}/memory/validatorsbyindex/${batch
+            .map((row) => row.index)
+            .join(",")}`
+        );
+
+        if (!oracleApiResponse.ok) {
+          throw new Error(
+            `HTTP error when calling Oracle! Please try again later. ${oracleApiResponse}`
+          );
+        }
+
+        const oracleJsonResponse = await oracleApiResponse.json();
+        if (!isValidOracleResponse(oracleJsonResponse)) {
+          throw new Error(
+            "Unexpected response structure when calling Oracle! Could not fetch validator subscription status"
+          );
+        }
+
+        // Update the subscription status of the validators in the batch (had index)
+        // Mark validators in the found_validators array with their subscription status
+        const foundValidators = oracleJsonResponse.found_validators || []; // if null, set to empty array to avoid errors
+        foundValidators.forEach((foundValidator: SmoothValidator) => {
+          newValidatorSubscriptionStatus[foundValidator.validator_key] =
+            foundValidator.status;
+        });
+
+        // Mark validators not in the found_validators array as NOT_SUBSCRIBED
+        batch.forEach((validator) => {
+          const validatorNotFound = !foundValidators.some(
+            (foundValidator: { validator_key: string }) =>
+              foundValidator.validator_key === validator.pubkey
+          );
+          if (validatorNotFound) {
+            newValidatorSubscriptionStatus[validator.pubkey] =
+              MevSpSubscriptionStatus.NOT_SUBSCRIBED;
+          }
+        });
+      }
+
+      setValidatorsSubscriptionMap(newValidatorSubscriptionStatus);
+      setOracleCallError(undefined);
+    } catch (e) {
+      setOracleCallError(
+        "Error fetching subscription status. Oracle might be down: " + e.message
+      );
+    }
+  };
+  useEffect(() => {
+    if (rows.length > 0) {
+      fetchValidatorsData(rows);
+    }
+  }, [rows]);
+
   const columns: GridColDef[] = [
     {
       field: "pubkey",
@@ -74,7 +193,7 @@ export default function KeystoresDataGrid({
       field: "feeRecipient",
       headerName: "Fee Recipient",
       description:
-        "Fee Recipient is a feature that lets you specify a priority fee recipient address on your validator client instance and beacon node",
+        "Address to which the rewards generated from proposing a block are sent",
       disableReorder: true,
       disableColumnMenu: true,
       disableExport: true,
@@ -84,6 +203,45 @@ export default function KeystoresDataGrid({
       headerClassName: "tableHeader",
       width: 360,
     },
+    // Only render Smooth column if mevSpFeeRecipient is not null (mainnet or prater)
+    ...(mevSpFeeRecipient != null &&
+    (network === "mainnet" || network === "prater")
+      ? [
+          {
+            field: "spSubscription",
+            headerName: "Smooth",
+            description:
+              "Dappnode's Smooth subscription status. Smooth states can take up to 40 minutes to update.",
+            disableReorder: true,
+            disableColumnMenu: true,
+            disableExport: true,
+            sortable: false,
+            align: "center" as GridAlignment,
+            headerAlign: "center" as GridAlignment,
+            headerClassName: "tableHeader",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            renderCell: (rowData: { row: any }) => {
+              // only render smooth status if tag is "solo"
+              if (rowData.row.tag === "solo") {
+                return (
+                  <SmoothStatus
+                    rowData={rowData}
+                    subscriptionStatus={
+                      validatorsSubscriptionMap
+                        ? validatorsSubscriptionMap[rowData.row.pubkey]
+                        : null
+                    }
+                    mevSpFeeRecipient={mevSpFeeRecipient}
+                    oracleCallError={oracleCallError}
+                  />
+                );
+              } else {
+                return <span>-</span>;
+              }
+            },
+          },
+        ]
+      : []),
     {
       field: "tag",
       headerName: "Tag",
@@ -119,6 +277,7 @@ export default function KeystoresDataGrid({
       ? beaconchaBaseUrl + "/validator/" + row.pubkey
       : "",
     feeRecipient: row.feeRecipient,
+    index: row.index,
     tag: row.tag,
     withdrawalCredentials: row.withdrawalCredentials,
     pubkeyInValidator: row.validatorImported,
