@@ -113,12 +113,12 @@ export default function KeystoresDataGrid({
       }
 
       // Filter rows to include only those with an index
-      const rowsWithIndex = rows.filter((row) => row.index);
+      const rowsWithIndexAndTagSolo = rows.filter((row) => row.index && row.tag === 'solo');
 
       // Initialize an array to hold the batches
       const batches = [];
       // Create a helper array from rows to avoid modifying the original array
-      const helperArray = [...rowsWithIndex];
+      const helperArray = [...rowsWithIndexAndTagSolo];
       // Split the indices into batches of 100 or less
       while (helperArray.length) {
         batches.push(helperArray.splice(0, 100));
