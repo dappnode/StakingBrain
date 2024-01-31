@@ -1,4 +1,4 @@
-import { RpcPayload, RpcResponse } from "@stakingbrain/common";
+import { Network, RpcPayload, RpcResponse } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -9,7 +9,10 @@ import * as routes from "../../../calls/index.js";
 import http from "http";
 import { params } from "../../../params.js";
 
-export function startUiServer(uiBuildPath: string): http.Server {
+export function startUiServer(
+  uiBuildPath: string,
+  network: Network
+): http.Server {
   const app = express();
   const server = http.createServer(app);
 
@@ -50,7 +53,17 @@ export function startUiServer(uiBuildPath: string): http.Server {
   });
 
   // Express
-  app.use(cors());
+  const allowedOrigins = [
+    "http://my.dappnode",
+    `http://brain.web3signer${
+      network === "mainnet" ? "" : "-" + network
+    }.dappnode`,
+  ];
+  app.use(
+    cors({
+      origin: allowedOrigins,
+    })
+  );
   app.use(express.json());
   app.use(express.static(uiBuildPath));
   app.get("*", (req, res) => {
