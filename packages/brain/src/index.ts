@@ -64,7 +64,10 @@ export const brainDb = new BrainDataBase(
 );
 
 // Start server APIs
-const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName));
+const uiServer = startUiServer(
+  path.resolve(__dirname, params.uiBuildDirName),
+  network
+);
 const launchpadServer = startLaunchpadApi();
 
 await brainDb.initialize(signerApi, validatorApi);
