@@ -165,6 +165,7 @@ export default function ImportScreen({
         { value: "rocketpool", label: "Rocketpool" },
         { value: "stakehouse", label: "StakeHouse" },
         { value: "stakewise", label: "Stakewise" },
+        { value: "stader", label: "Stader" },
       ];
 
   return (
