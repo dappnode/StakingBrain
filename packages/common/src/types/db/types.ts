@@ -32,11 +32,13 @@ export const tags = [
   "stakewise",
   "stakehouse",
   "solo",
+  "stader",
 ] as const;
 
 export const nonEditableFeeRecipientTags = [
   "rocketpool",
   "stakehouse",
+  "stader",
 ] as const;
 
 export type NonEditableFeeRecipientTag =

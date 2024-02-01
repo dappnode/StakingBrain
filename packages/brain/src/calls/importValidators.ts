@@ -9,6 +9,8 @@ import {
   PubkeyDetails,
   Network,
   ROCKET_POOL_FEE_RECIPIENT,
+  STADER_FEE_RECIPIENT_MAINNET,
+  STADER_FEE_RECIPIENT_PRATER,
 } from "@stakingbrain/common";
 import {
   cron,
@@ -215,6 +217,12 @@ async function getNonEditableFeeRecipient(
       return ROCKET_POOL_FEE_RECIPIENT;
     case "stakehouse":
       return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
+    case "stader":
+      if (network === "mainnet") {
+        return STADER_FEE_RECIPIENT_MAINNET;
+      } else if (network === "prater") {
+        return STADER_FEE_RECIPIENT_PRATER;
+      }
     default:
       throw new Error("Fee recipient not found for tag: " + tag);
   }
