@@ -31,3 +31,9 @@ export const getSmoothUrlByNetwork = (network: Network): string => {
     return "";
   }
 };
+
+export const getStakersLink = (network: Network): string => {
+  return network === "prater"
+    ? "http://my.dappnode/stakers/prater"
+    : "http://my.dappnode/stakers/ethereum";
+};
