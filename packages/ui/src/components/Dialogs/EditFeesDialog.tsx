@@ -46,12 +46,14 @@ export default function FeeRecipientDialog({
   rows,
   selectedRows,
   network,
+  isMevBoostSet,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
   network: Network;
+  isMevBoostSet: boolean;
 }): JSX.Element {
   const [newFeeRecipient, setNewFeeRecipient] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -174,14 +176,6 @@ export default function FeeRecipientDialog({
       isMevSpAddressSelected && setActiveStep(1);
     }
   };
-
-  // Checks wether the MEV Boost is set for the given network,
-  // used to determine if the user can subscribe (set the FR) to Smooth
-  function isMevBoostSet(network: Network): boolean {
-    const mevBoostEnvVar =
-      process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`];
-    return mevBoostEnvVar === "true";
-  }
 
   function areAllSelectedFeeRecipientsEditable() {
     const selectedTags = selectedRows.map((rowId) => rows[+rowId].tag).flat();
@@ -492,7 +486,7 @@ export default function FeeRecipientDialog({
                   Stakers tab
                 </a>
               </strong>{" "}
-              and register for at least one MEV relay.
+              and register to at least one MEV relay.
             </Alert>
           );
         
@@ -584,12 +578,12 @@ export default function FeeRecipientDialog({
                       isAnyWithdrawalCredentialsEqual("unknown")) &&
                     alertCard("blsFormatAlert")}
                   {isMevSpAddressSelected &&
-                    !isMevBoostSet(network) &&
+                    !isMevBoostSet &&
                     alertCard("noMevBoostSetAlert")}
                   {isMevSpAddressSelected &&
                     !areAllOldFrsSameAsGiven(newFeeRecipient) &&
                     !isAnyWithdrawalCredentialsDiff("ecdsa") &&
-                    isMevBoostSet(network) &&
+                    isMevBoostSet &&
                     alertCard("subSmoothStep1Alert")}
                 </>
               )}
@@ -635,7 +629,7 @@ export default function FeeRecipientDialog({
                 areAllOldFrsSameAsGiven(newFeeRecipient) ||
                 (mevSpAddress !== null && isRemovingMevSpFr() && !isUnsubUnderstood) ||
                 (isAnyWithdrawalCredentialsDiff("ecdsa") && isMevSpAddressSelected) ||
-                (isMevSpAddressSelected && !isMevBoostSet(network))
+                (isMevSpAddressSelected && !isMevBoostSet)
               }
             >
               Apply changes

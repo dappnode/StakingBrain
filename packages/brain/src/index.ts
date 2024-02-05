@@ -26,6 +26,7 @@ export const {
   network,
   executionClient,
   consensusClient,
+  isMevBoostSet,
   executionClientUrl,
   validatorUrl,
   beaconchaUrl,

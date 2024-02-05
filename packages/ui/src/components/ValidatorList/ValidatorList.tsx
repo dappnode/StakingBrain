@@ -35,6 +35,7 @@ export default function ValidatorList({
   );
 
   const network = stakerConfig.network;
+  const isMevBoostSet = stakerConfig.isMevBoostSet;
   const smoothAddress = getSmoothAddressByNetwork(network);
   useEffect(() => {
     getValidators();
@@ -149,6 +150,7 @@ export default function ValidatorList({
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
                   network={network}
+                  isMevBoostSet={isMevBoostSet}
                 />
               )}
 
