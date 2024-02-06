@@ -68,7 +68,7 @@ const uiServer = startUiServer(
   path.resolve(__dirname, params.uiBuildDirName),
   network
 );
-const launchpadServer = startLaunchpadApi(network);
+const launchpadServer = startLaunchpadApi();
 
 await brainDb.initialize(signerApi, validatorApi);
 logger.debug(brainDb.data);

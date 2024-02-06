@@ -1,12 +1,12 @@
 import express from "express";
 import cors from "cors";
-import { tags as availableTags, Network, Tag } from "@stakingbrain/common";
+import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
 import http from "node:http";
 import { params } from "../../../params.js";
 import { importValidators } from "../../../calls/importValidators.js";
 
-export function startLaunchpadApi(network: Network): http.Server {
+export function startLaunchpadApi(): http.Server {
   const app = express();
   const server = new http.Server(app);
   app.use(express.json());
@@ -45,12 +45,6 @@ export function startLaunchpadApi(network: Network): http.Server {
             feeRecipient: feeRecipients[index],
           })
         ),
-        headers: {
-          Origin:
-            network === "mainnet"
-              ? "http://brain.web3signer.dappnode"
-              : `http://brain.web3signer-${network}.dappnode`,
-        },
         slashing_protection: slashingProtection,
       });
 

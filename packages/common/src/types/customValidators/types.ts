@@ -3,7 +3,6 @@ import { Tag } from "../index.js";
 export interface CustomImportRequest {
   validatorsImportRequest: CustomValidatorImportRequest[];
   importFrom: "ui" | "api";
-  headers: { [key: string]: string };
   slashing_protection?: File | string;
 }
 export interface CustomValidatorImportRequest {

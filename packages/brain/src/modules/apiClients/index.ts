@@ -7,6 +7,7 @@ import {
 } from "@stakingbrain/common";
 import { ApiError } from "./error.js";
 import logger from "../logger/index.js";
+import { network } from "../../index.js";
 
 export class StandardApi {
   private useTls = false;
@@ -46,13 +47,20 @@ export class StandardApi {
     return `${protocol}//${hostname}:${port || 80}`;
   }
 
-  protected async request(
+  protected async request({
+    method,
+    endpoint,
+    body,
+    setOrigin = false
+  }: {
     method: AllowedMethods,
     endpoint: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    body?: any
+    body?: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
+    setOrigin?: boolean
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }): Promise<any> {
     let req: http.ClientRequest;
     this.requestOptions.method = method;
     this.requestOptions.path = endpoint;
@@ -61,6 +69,11 @@ export class StandardApi {
       this.requestOptions.rejectUnauthorized = false;
       req = https.request(this.requestOptions);
     } else req = http.request(this.requestOptions);
+
+    if (setOrigin)
+      req.setHeader("Origin", network === "mainnet"
+        ? "http://brain.web3signer.dappnode"
+        : `http://brain.web3signer-${network}.dappnode`);
 
     if (body) {
       req.setHeader("Content-Length", Buffer.byteLength(body));
