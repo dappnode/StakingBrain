@@ -3,13 +3,10 @@ import { ApiParams, Network } from "@stakingbrain/common";
 import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index.js";
 
 describe.only("Test for fetching validator indexes in every available network", () => {
-
   const networks: Network[] = ["mainnet", "prater", "gnosis", "lukso", "holesky"];
 
   networks.forEach((network) => {
-
-    it("should return data corresponding to every validator PK", async () => {
-
+    it(`should return data corresponding to every validator PK for ${network}`, async () => {
       const apiParams = beaconchaApiParamsMap.get(network);
       if (!apiParams) {
         throw new Error(`API parameters for ${network} are not defined`);
@@ -21,21 +18,22 @@ describe.only("Test for fetching validator indexes in every available network", 
         throw new Error(`Test parameters for ${network} are not defined`);
       }
 
-      try {
-        const allValidatorsInfo = await beaconchaApi.fetchAllValidatorsInfo({
-          pubkeys: testParams.pubkeys,
-        });
+      const allValidatorsInfo = await beaconchaApi.fetchAllValidatorsInfo({
+        pubkeys: testParams.pubkeys,
+      });
 
-        const validators = allValidatorsInfo[0].data;
+      // Assuming allValidatorsInfo[0].data contains an array of validators
+      const validators = allValidatorsInfo[0].data;
 
-        validators.forEach((validator, index) => {
-          expect(validator.pubkey).to.equal(testParams.pubkeys[index]);
-          expect(validator.validatorindex).to.equal(testParams.indexes[index]);
-        });
-      } catch (error) {
-        console.error(`Failed to fetch validator info for ${network}: ${error}`);
-        throw error; // Rethrow to ensure the test fails correctly.
-      }
+      // This loop assumes that the API returns validators in the same order as requested.
+      // If this assumption is not valid, additional logic is needed to match returned validators to expected values.
+      testParams.pubkeys.forEach((pubkey, index) => {
+        const validator = validators.find(v => v.pubkey === pubkey);
+        if (!validator) {
+          throw new Error(`Validator with pubkey ${pubkey} not found for ${network}`);
+        }
+        expect(validator.validatorindex).to.equal(testParams.indexes[index]);
+      });
     });
   });
 });
