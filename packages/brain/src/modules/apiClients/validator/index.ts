@@ -31,14 +31,14 @@ export class ValidatorApi extends StandardApi {
     publicKey: string
   ): Promise<ValidatorGetFeeResponse> {
     try {
-      return (await this.request(
-        "GET",
-        path.join(
+      return (await this.request({
+        method: "GET",
+        endpoint: path.join(
           this.feeRecipientEndpoint,
           prefix0xPubkey(publicKey),
           "feerecipient"
         )
-      )) as ValidatorGetFeeResponse;
+      })) as ValidatorGetFeeResponse;
     } catch (e) {
       e.message += `Error getting (GET) fee recipient for pubkey ${publicKey} from validator. `;
       throw e;
@@ -54,15 +54,15 @@ export class ValidatorApi extends StandardApi {
     publicKey: string
   ): Promise<void> {
     try {
-      await this.request(
-        "POST",
-        path.join(
+      await this.request({
+        method: "POST",
+        endpoint: path.join(
           this.feeRecipientEndpoint,
           prefix0xPubkey(publicKey),
           "feerecipient"
         ),
-        JSON.stringify({ ethaddress: newFeeRecipient })
-      );
+        body: JSON.stringify({ ethaddress: newFeeRecipient })
+      });
     } catch (e) {
       e.message += `Error setting (POST) fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. `;
       throw e;
@@ -75,14 +75,14 @@ export class ValidatorApi extends StandardApi {
    */
   public async deleteFeeRecipient(publicKey: string): Promise<void> {
     try {
-      await this.request(
-        "DELETE",
-        path.join(
+      await this.request({
+        method: "DELETE",
+        endpoint: path.join(
           this.feeRecipientEndpoint,
           prefix0xPubkey(publicKey),
           "feerecipient"
         )
-      );
+      });
     } catch (e) {
       e.message += `Error deleting (DELETE) fee recipient for pubkey ${publicKey} from validator. `;
       throw e;
@@ -95,10 +95,10 @@ export class ValidatorApi extends StandardApi {
    */
   public async getRemoteKeys(): Promise<ValidatorGetRemoteKeysResponse> {
     try {
-      return (await this.request(
-        "GET",
-        this.remoteKeymanagerEndpoint
-      )) as ValidatorGetRemoteKeysResponse;
+      return (await this.request({
+        method: "GET",
+        endpoint: this.remoteKeymanagerEndpoint
+      })) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
       e.message += `Error getting (GET) remote keys from validator. `;
       throw e;
@@ -116,11 +116,11 @@ export class ValidatorApi extends StandardApi {
       remoteKeys.remote_keys = remoteKeys.remote_keys.map((k) => {
         return { pubkey: prefix0xPubkey(k.pubkey), url: k.url };
       });
-      return (await this.request(
-        "POST",
-        this.remoteKeymanagerEndpoint,
-        JSON.stringify(remoteKeys)
-      )) as ValidatorPostRemoteKeysResponse;
+      return (await this.request({
+        method: "POST",
+        endpoint: this.remoteKeymanagerEndpoint,
+        body: JSON.stringify(remoteKeys)
+      })) as ValidatorPostRemoteKeysResponse;
     } catch (e) {
       e.message += `Error posting (POST) remote keys to validator. `;
       throw e;
@@ -137,11 +137,11 @@ export class ValidatorApi extends StandardApi {
     try {
       // Make sure all pubkeys are prefixed with 0x
       pubkeys.pubkeys = pubkeys.pubkeys.map((k) => prefix0xPubkey(k));
-      return (await this.request(
-        "DELETE",
-        this.remoteKeymanagerEndpoint,
-        JSON.stringify(pubkeys)
-      )) as ValidatorDeleteRemoteKeysResponse;
+      return (await this.request({
+        method: "DELETE",
+        endpoint: this.remoteKeymanagerEndpoint,
+        body: JSON.stringify(pubkeys)
+      })) as ValidatorDeleteRemoteKeysResponse;
     } catch (e) {
       e.message += `Error deleting (DELETE) remote keys from validator. `;
       throw e;

@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
 import http from "node:http";
@@ -9,6 +10,16 @@ export function startLaunchpadApi(): http.Server {
   const app = express();
   const server = new http.Server(app);
   app.use(express.json());
+  app.use(
+    cors({
+      origin: [
+        "http://rocketpool-testnet.public.dappnode", // TODO: deprecate after holesky published
+        "http://rocketpool.dappnode", // Mainnet
+        "http://stader-testnet.dappnode", // Testnet
+        "http://stader.dappnode", // Mainnet
+      ],
+    })
+  );
   app.post("/eth/v1/keystores", async (req, res) => {
     const { keystores, passwords, slashingProtection, tags, feeRecipients } =
       req.body;

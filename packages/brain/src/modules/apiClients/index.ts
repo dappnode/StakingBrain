@@ -4,6 +4,7 @@ import {
   ApiParams,
   AllowedMethods,
   ErrnoException,
+  Network,
 } from "@stakingbrain/common";
 import { ApiError } from "./error.js";
 import logger from "../logger/index.js";
@@ -11,9 +12,12 @@ import logger from "../logger/index.js";
 export class StandardApi {
   private useTls = false;
   private requestOptions: https.RequestOptions;
+  protected network: Network;
 
-  constructor(apiParams: ApiParams) {
+  constructor(apiParams: ApiParams, network: Network) {
     const urlOptions = new URL(apiParams.baseUrl + (apiParams.apiPath || ""));
+
+    this.network = network;
 
     this.requestOptions = {
       hostname: urlOptions.hostname,
@@ -46,13 +50,19 @@ export class StandardApi {
     return `${protocol}//${hostname}:${port || 80}`;
   }
 
-  protected async request(
+  protected async request({
+    method,
+    endpoint,
+    body,
+    setOrigin = false
+  }: {
     method: AllowedMethods,
     endpoint: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    body?: any
+    body?: any,
+    setOrigin?: boolean
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
+  }): Promise<any> {
     let req: http.ClientRequest;
     this.requestOptions.method = method;
     this.requestOptions.path = endpoint;
@@ -61,6 +71,11 @@ export class StandardApi {
       this.requestOptions.rejectUnauthorized = false;
       req = https.request(this.requestOptions);
     } else req = http.request(this.requestOptions);
+
+    if (setOrigin)
+      req.setHeader("Origin", this.network === "mainnet"
+        ? "http://brain.web3signer.dappnode"
+        : `http://brain.web3signer-${this.network}.dappnode`);
 
     if (body) {
       req.setHeader("Content-Length", Buffer.byteLength(body));
