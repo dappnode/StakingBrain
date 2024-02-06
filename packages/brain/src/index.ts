@@ -44,13 +44,13 @@ export const signerApi = new Web3SignerApi({
   baseUrl: signerUrl,
   authToken: token,
   host,
-});
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl });
+}, network);
+export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl }, network);
 export const validatorApi = new ValidatorApi({
   baseUrl: validatorUrl,
   authToken: token,
   tlsCert,
-});
+}, network);
 export const beaconchainApi = new Beaconchain(
   { baseUrl: beaconchainUrl },
   network

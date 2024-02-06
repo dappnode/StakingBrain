@@ -15,7 +15,7 @@ export class Beaconchain extends StandardApi {
   private beaconchainEndpoint = "/eth/v1/beacon";
 
   constructor(apiParams: ApiParams, network: Network) {
-    super(apiParams);
+    super(apiParams, network);
     this.SLOTS_PER_EPOCH = network === "gnosis" ? 16 : 32;
   }
 

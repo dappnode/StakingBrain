@@ -7,7 +7,7 @@ import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import path from "path";
 import { Cron } from "../../../../src/modules/cron/index.js";
-import { PubkeyDetails } from "@stakingbrain/common";
+import { Network, PubkeyDetails } from "@stakingbrain/common";
 
 describe.skip("Cron: Prater", () => {
   const defaultFeeRecipient = "0x0000000000000000000000000000000000000000";
@@ -26,7 +26,7 @@ describe.skip("Cron: Prater", () => {
   const keystorePass = "stakingbrain";
 
   const stakerSpecs = {
-    network: "prater",
+    network: "prater" as Network,
     consensusClients: [
       /*{
         name: "Prysm",
@@ -81,7 +81,7 @@ describe.skip("Cron: Prater", () => {
         validatorApi = new ValidatorApi({
           baseUrl: `http://${consensusIp}:3500`,
           authToken: consensusClient.token,
-        });
+        }, stakerSpecs.network);
 
         const signerIp = execSync(
           `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${signerContainerName}`
@@ -91,7 +91,7 @@ describe.skip("Cron: Prater", () => {
         signerApi = new Web3SignerApi({
           baseUrl: `http://${signerIp}:9000`,
           host,
-        });
+        }, stakerSpecs.network);
 
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);

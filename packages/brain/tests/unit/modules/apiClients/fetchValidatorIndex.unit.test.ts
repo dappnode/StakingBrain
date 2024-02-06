@@ -1,16 +1,17 @@
 import { expect } from "chai";
-import { ApiParams } from "@stakingbrain/common";
+import { ApiParams, Network } from "@stakingbrain/common";
 import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index.js";
 
-describe.skip("Test for fetching validator indexes in every available network", () => {
+describe("Test for fetching validator indexes in every available network", () => {
   it("should return data corresponding to every validator PK", async () => {
-    const networks = ["mainnet", "prater", "gnosis", "lukso", "holesky"];
+    const networks: Network[] = ["mainnet", "prater", "gnosis", "lukso", "holesky"];
 
     for (const network of networks) {
       console.log("NETWORK: ", network);
 
       const beaconchaApi = new BeaconchaApi(
-        beaconchaApiParamsMap.get(network)!
+        beaconchaApiParamsMap.get(network)!,
+        network
       );
 
       const allValidatorsInfo = await beaconchaApi.fetchAllValidatorsInfo({

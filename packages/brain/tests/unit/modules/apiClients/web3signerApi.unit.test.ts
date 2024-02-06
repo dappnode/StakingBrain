@@ -30,7 +30,7 @@ describe.skip("Signer API: Prater", () => {
     signerApi = new Web3SignerApi({
       baseUrl: `http://${signerIp}:9000`,
       host,
-    });
+    }, "prater");
   });
 
   it("Should post validators", async () => {

@@ -4,17 +4,20 @@ import {
   ApiParams,
   AllowedMethods,
   ErrnoException,
+  Network,
 } from "@stakingbrain/common";
 import { ApiError } from "./error.js";
 import logger from "../logger/index.js";
-import { network } from "../../index.js";
 
 export class StandardApi {
   private useTls = false;
   private requestOptions: https.RequestOptions;
+  protected network: Network;
 
-  constructor(apiParams: ApiParams) {
+  constructor(apiParams: ApiParams, network: Network) {
     const urlOptions = new URL(apiParams.baseUrl + (apiParams.apiPath || ""));
+
+    this.network = network;
 
     this.requestOptions = {
       hostname: urlOptions.hostname,
@@ -70,9 +73,9 @@ export class StandardApi {
     } else req = http.request(this.requestOptions);
 
     if (setOrigin)
-      req.setHeader("Origin", network === "mainnet"
+      req.setHeader("Origin", this.network === "mainnet"
         ? "http://brain.web3signer.dappnode"
-        : `http://brain.web3signer-${network}.dappnode`);
+        : `http://brain.web3signer-${this.network}.dappnode`);
 
     if (body) {
       req.setHeader("Content-Length", Buffer.byteLength(body));
