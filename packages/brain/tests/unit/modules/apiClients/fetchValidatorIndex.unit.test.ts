@@ -1,32 +1,40 @@
 import { expect } from "chai";
-import { ApiParams } from "@stakingbrain/common";
+import { ApiParams, Network } from "@stakingbrain/common";
 import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index.js";
 
-describe.skip("Test for fetching validator indexes in every available network", () => {
-  it("should return data corresponding to every validator PK", async () => {
-    const networks = ["mainnet", "prater", "gnosis", "lukso", "holesky"];
+describe.only("Test for fetching validator indexes in every available network", () => {
+  const networks: Network[] = ["mainnet", "prater", "gnosis", "lukso", "holesky"];
 
-    for (const network of networks) {
-      console.log("NETWORK: ", network);
+  networks.forEach((network) => {
+    it(`should return data corresponding to every validator PK for ${network}`, async () => {
+      const apiParams = beaconchaApiParamsMap.get(network);
+      if (!apiParams) {
+        throw new Error(`API parameters for ${network} are not defined`);
+      }
 
-      const beaconchaApi = new BeaconchaApi(
-        beaconchaApiParamsMap.get(network)!
-      );
+      const beaconchaApi = new BeaconchaApi(apiParams, network);
+      const testParams = networkTestMap.get(network);
+      if (!testParams) {
+        throw new Error(`Test parameters for ${network} are not defined`);
+      }
 
       const allValidatorsInfo = await beaconchaApi.fetchAllValidatorsInfo({
-        pubkeys: [
-          networkTestMap.get(network)!.pubkeys[0],
-          networkTestMap.get(network)!.pubkeys[1],
-        ],
+        pubkeys: testParams.pubkeys,
       });
 
-      expect(allValidatorsInfo[0].data[0].validatorindex).to.equal(
-        networkTestMap.get(network)!.indexes[0]
-      );
-      expect(allValidatorsInfo[0].data[1].validatorindex).to.equal(
-        networkTestMap.get(network)!.indexes[1]
-      );
-    }
+      // Assuming allValidatorsInfo[0].data contains an array of validators
+      const validators = allValidatorsInfo[0].data;
+
+      // This loop assumes that the API returns validators in the same order as requested.
+      // If this assumption is not valid, additional logic is needed to match returned validators to expected values.
+      testParams.pubkeys.forEach((pubkey, index) => {
+        const validator = validators.find(v => v.pubkey === pubkey);
+        if (!validator) {
+          throw new Error(`Validator with pubkey ${pubkey} not found for ${network}`);
+        }
+        expect(validator.validatorindex).to.equal(testParams.indexes[index]);
+      });
+    });
   });
 });
 
@@ -93,7 +101,6 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     "mainnet",
     {
       baseUrl: "https://beaconcha.in",
-      host: "brain.web3signer.dappnode",
       apiPath: "/api/v1/",
     },
   ],
@@ -101,7 +108,6 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     "prater",
     {
       baseUrl: "https://prater.beaconcha.in",
-      host: "brain.web3signer-prater.dappnode",
       apiPath: "/api/v1/",
     },
   ],
@@ -109,7 +115,6 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     "gnosis",
     {
       baseUrl: "https://gnosischa.in",
-      host: "brain.web3signer-gnosis.dappnode",
       apiPath: "/api/v1/",
     },
   ],
@@ -117,7 +122,6 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     "lukso",
     {
       baseUrl: "https://explorer.consensus.mainnet.lukso.network",
-      host: "brain.web3signer-lukso.dappnode",
       apiPath: "/api/v1/",
     },
   ],
@@ -125,7 +129,6 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     "holesky",
     {
       baseUrl: "https://holesky.beaconcha.in",
-      host: "brain.web3signer-holesky.dappnode",
       apiPath: "/api/v1/",
     },
   ],

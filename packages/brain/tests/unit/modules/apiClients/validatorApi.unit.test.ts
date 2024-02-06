@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { before } from "mocha";
 import { ValidatorApi } from "../../../../src/modules/apiClients/validator/index.js";
 import { execSync } from "node:child_process";
+import { Network } from "@stakingbrain/common";
 
 describe.skip("Validator API: Prater", () => {
   const defaultFeeRecipient = "0x0000000000000000000000000000000000000000";
@@ -13,7 +14,7 @@ describe.skip("Validator API: Prater", () => {
     "0xa1735a0dd72205dae313c36d7d17f5b06685944c8886ddac530e5aedbe1fca0c8003e7e274ec1b4ddd08b884f5b9a830",
   ];
   const stakerSpecs = {
-    network: "prater",
+    network: "prater" as Network,
     consensusClients: [
       {
         name: "Prysm",
@@ -57,7 +58,7 @@ describe.skip("Validator API: Prater", () => {
         validatorApi = new ValidatorApi({
           baseUrl: `http://${consensusIp}:3500`,
           authToken: consensusClient.token,
-        });
+        }, stakerSpecs.network);
       });
 
       it("Should post validators", async () => {

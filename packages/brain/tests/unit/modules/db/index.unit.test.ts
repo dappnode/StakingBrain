@@ -28,40 +28,40 @@ describe("DataBase", () => {
     it.skip("Should do migration if database file not found", async () => {
       const expectedDb = {
         "0x821a80380122281580ba8a56cd21956933d43c62fdc8f5b4ec31b2c620e8534e80b6b816c9a2cc8d25568dc4ebcfd47a":
-          {
-            tag: "solo",
-            feeRecipient: "0x0000000000000000000000000000000000000000",
-            feeRecipientValidator: "0x0000000000000000000000000000000000000000",
-            automaticImport: true,
-          },
+        {
+          tag: "solo",
+          feeRecipient: "0x0000000000000000000000000000000000000000",
+          feeRecipientValidator: "0x0000000000000000000000000000000000000000",
+          automaticImport: true,
+        },
         "0x86d25af52627204ab822a20ac70da6767952841edbcb0b83c84a395205313661de5f7f76efa475a46f45fa89d95c1dd7":
-          {
-            tag: "solo",
-            feeRecipient: "0x0000000000000000000000000000000000000000",
-            feeRecipientValidator: "0x0000000000000000000000000000000000000000",
-            automaticImport: true,
-          },
+        {
+          tag: "solo",
+          feeRecipient: "0x0000000000000000000000000000000000000000",
+          feeRecipientValidator: "0x0000000000000000000000000000000000000000",
+          automaticImport: true,
+        },
         "0x8f2b698583d69c7a78b4482871282602adb7fb47a1aab66c63feb48e7b9245dad77b82346e0201328d66a8b4d483b716":
-          {
-            tag: "solo",
-            feeRecipient: "0x0000000000000000000000000000000000000000",
-            feeRecipientValidator: "0x0000000000000000000000000000000000000000",
-            automaticImport: true,
-          },
+        {
+          tag: "solo",
+          feeRecipient: "0x0000000000000000000000000000000000000000",
+          feeRecipientValidator: "0x0000000000000000000000000000000000000000",
+          automaticImport: true,
+        },
         "0xa1735a0dd72205dae313c36d7d17f5b06685944c8886ddac530e5aedbe1fca0c8003e7e274ec1b4ddd08b884f5b9a830":
-          {
-            tag: "solo",
-            feeRecipient: "0x0000000000000000000000000000000000000000",
-            feeRecipientValidator: "0x0000000000000000000000000000000000000000",
-            automaticImport: true,
-          },
+        {
+          tag: "solo",
+          feeRecipient: "0x0000000000000000000000000000000000000000",
+          feeRecipientValidator: "0x0000000000000000000000000000000000000000",
+          automaticImport: true,
+        },
         "0xa2cc280ce811bb680cba309103e23dc3c9902f2a08541c6737e8adfe8198e796023b959fc8aadfad39499b56ec3dd184":
-          {
-            tag: "solo",
-            feeRecipient: "0x0000000000000000000000000000000000000000",
-            feeRecipientValidator: "0x0000000000000000000000000000000000000000",
-            automaticImport: true,
-          },
+        {
+          tag: "solo",
+          feeRecipient: "0x0000000000000000000000000000000000000000",
+          feeRecipientValidator: "0x0000000000000000000000000000000000000000",
+          automaticImport: true,
+        },
       };
       // get container IPs
       const signerIp = execSync(
@@ -77,11 +77,11 @@ describe("DataBase", () => {
       const signerApi = new Web3SignerApi({
         baseUrl: `http://${signerIp}:9000`,
         host: `web3signer.web3signer-prater.dappnode`,
-      });
+      }, "prater");
       const validatorApi = new ValidatorApi({
         baseUrl: `http://${consensusIp}:3500`,
         authToken: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`,
-      });
+      }, "prater");
       // import to web3signer
       const keystoresPath = path.resolve(process.cwd(), "keystores");
       const keystoresPaths = fs
@@ -154,22 +154,22 @@ describe("DataBase", () => {
     /**
      * Should create a new database if it doesn't exist
      */
-    it("Should create a new database if it doesn't exist", () => {});
+    it("Should create a new database if it doesn't exist", () => { });
 
     /**
      * Should throw an error if the pubkeys to be added are invalid
      */
-    it("Should throw an error if the pubkeys to be added are invalid", () => {});
+    it("Should throw an error if the pubkeys to be added are invalid", () => { });
 
     /**
      * Should throw an error if the pubkeys to be added and the existing pubkeys exceed the maximum database size
      */
-    it("Should throw an error if the pubkeys to be added and the existing pubkeys exceed the maximum database size", () => {});
+    it("Should throw an error if the pubkeys to be added and the existing pubkeys exceed the maximum database size", () => { });
 
     /**
      * Should add the pubkeys to the database
      */
-    it("Should add the pubkeys to the database", () => {});
+    it("Should add the pubkeys to the database", () => { });
   });
 
   after(() => {

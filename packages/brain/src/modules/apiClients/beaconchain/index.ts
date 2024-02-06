@@ -15,7 +15,7 @@ export class Beaconchain extends StandardApi {
   private beaconchainEndpoint = "/eth/v1/beacon";
 
   constructor(apiParams: ApiParams, network: Network) {
-    super(apiParams);
+    super(apiParams, network);
     this.SLOTS_PER_EPOCH = network === "gnosis" ? 16 : 32;
   }
 
@@ -30,11 +30,11 @@ export class Beaconchain extends StandardApi {
     postVoluntaryExitsRequest: BeaconchainPoolVoluntaryExitsPostRequest;
   }): Promise<void> {
     try {
-      await this.request(
-        "POST",
-        path.join(this.beaconchainEndpoint, "pool", "voluntary_exits"),
-        JSON.stringify(postVoluntaryExitsRequest)
-      );
+      await this.request({
+        method: "POST",
+        endpoint: path.join(this.beaconchainEndpoint, "pool", "voluntary_exits"),
+        body: JSON.stringify(postVoluntaryExitsRequest)
+      });
     } catch (e) {
       e.message += `Error posting (POST) voluntary exits to beaconchain. `;
       throw e;
@@ -47,10 +47,10 @@ export class Beaconchain extends StandardApi {
    */
   public async getGenesis(): Promise<BeaconchainGenesisGetResponse> {
     try {
-      return (await this.request(
-        "GET",
-        path.join(this.beaconchainEndpoint, "genesis")
-      )) as BeaconchainGenesisGetResponse;
+      return (await this.request({
+        method: "GET",
+        endpoint: path.join(this.beaconchainEndpoint, "genesis")
+      })) as BeaconchainGenesisGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) genesis from beaconchain. `;
       throw e;
@@ -68,10 +68,10 @@ export class Beaconchain extends StandardApi {
     state_id: string;
   }): Promise<BeaconchainForkFromStateGetResponse> {
     try {
-      return (await this.request(
-        "GET",
-        path.join(this.beaconchainEndpoint, "states", state_id, "fork")
-      )) as BeaconchainForkFromStateGetResponse;
+      return (await this.request({
+        method: "GET",
+        endpoint: path.join(this.beaconchainEndpoint, "states", state_id, "fork")
+      })) as BeaconchainForkFromStateGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) fork from beaconchain. `;
       throw e;
@@ -92,16 +92,16 @@ export class Beaconchain extends StandardApi {
     pubkey: string;
   }): Promise<BeaconchainValidatorFromStateGetResponse> {
     try {
-      return (await this.request(
-        "GET",
-        path.join(
+      return (await this.request({
+        method: "GET",
+        endpoint: path.join(
           this.beaconchainEndpoint,
           "states",
           state,
           "validators",
           pubkey
         )
-      )) as BeaconchainValidatorFromStateGetResponse;
+      })) as BeaconchainValidatorFromStateGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) validator from beaconchain. `;
       throw e;
@@ -128,10 +128,10 @@ export class Beaconchain extends StandardApi {
     block_id: string;
   }): Promise<BeaconchainBlockHeaderGetResponse> {
     try {
-      return (await this.request(
-        "GET",
-        path.join(this.beaconchainEndpoint, "headers", block_id)
-      )) as BeaconchainBlockHeaderGetResponse;
+      return (await this.request({
+        method: "GET",
+        endpoint: path.join(this.beaconchainEndpoint, "headers", block_id)
+      })) as BeaconchainBlockHeaderGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) block header from beaconchain. `;
       throw e;
