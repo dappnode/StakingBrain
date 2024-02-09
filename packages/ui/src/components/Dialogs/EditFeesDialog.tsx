@@ -393,16 +393,11 @@ export default function FeeRecipientDialog({
       case "subSmoothStep2Alert":
         return (
           <Alert severity="info" sx={{ marginY: 2 }}>
-            You have successfully changed your fee recipient to Smooth. Your
-            validator will be{" "}
-            <b>automatically subscribed once it proposes a block</b>.
-            <p>
-              To start accumulating rewards right now, <b>subscribe manually</b>{" "}
-              through{" "}
-              <a href={getSmoothUrlByNetwork(network)} target="_blank">
-                <b>Smooth's webpage!</b>
-              </a>
-            </p>
+            You have changed your fee recipient to Smooth. To{" "}
+            <b>start accumulating rewards</b> right now,{" "}
+            <b>subscribe manually</b> thorugh Smooth's webpage.
+            <br /> In the Smooth web you can see pending rewards, claim them and
+            manage your smooth validators.
           </Alert>
         );
 
