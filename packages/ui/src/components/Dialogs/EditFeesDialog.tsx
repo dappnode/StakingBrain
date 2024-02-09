@@ -112,10 +112,6 @@ export default function FeeRecipientDialog({
     }
   };
 
-  const handlewithdrawalAccessCheck = () => {
-    setWithdrawalAccessCheck(!withdrawalAccessCheck);
-  };
-
   const switchSetMevSpAddress = () => {
     if (mevSpAddress) {
       if (isMevSpAddressSelected) {
@@ -314,19 +310,22 @@ export default function FeeRecipientDialog({
             Take me to Smooth's website
           </Button>
         </Box>
-        <FormControlLabel
-          control={
-            <Switch onChange={() => setIsUnsubUnderstood(!isUnsubUnderstood)} />
-          }
-          label={
-            <Typography component="div">
-              By checking this I understand that being subscribed to Smooth
-              while having a wrong fee recipient can result in my validators
-              getting banned from it.
-            </Typography>
-          }
-          checked={isUnsubUnderstood}
-        />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Checkbox
+            checked={isUnsubUnderstood}
+            onChange={() => setIsUnsubUnderstood(!isUnsubUnderstood)}
+          />
+          <span style={{ fontSize: 13 }}>
+            By checking this I understand that being subscribed to Smooth while
+            having a wrong fee recipient can result in my validators getting
+            banned from it.
+          </span>
+        </div>
       </>
     );
   }
