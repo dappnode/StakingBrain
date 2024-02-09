@@ -15,6 +15,8 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Tooltip,
+  Checkbox,
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import {
@@ -110,6 +112,10 @@ export default function FeeRecipientDialog({
     }
   };
 
+  const handlewithdrawalAccessCheck = () => {
+    setWithdrawalAccessCheck(!withdrawalAccessCheck);
+  };
+
   const switchSetMevSpAddress = () => {
     if (mevSpAddress) {
       if (isMevSpAddressSelected) {
@@ -191,12 +197,12 @@ export default function FeeRecipientDialog({
       .map((rowId) => rows[+rowId].feeRecipient)
       .flat();
 
-      return (
-        mevSpAddress !== null &&
-        oldFeeRecipients.includes(mevSpAddress) &&
-        isNewFeeRecipientValid() &&
-        newFeeRecipient !== mevSpAddress
-      );
+    return (
+      mevSpAddress !== null &&
+      oldFeeRecipients.includes(mevSpAddress) &&
+      isNewFeeRecipientValid() &&
+      newFeeRecipient !== mevSpAddress
+    );
   }
 
   function isNewFeeRecipientValid() {
@@ -358,11 +364,30 @@ export default function FeeRecipientDialog({
         );
 
       case "subSmoothStep1Alert":
+        //TODO: change a tag href to landing page's url when this been finished
         return (
           <Alert severity="info" sx={{ marginY: 1 }}>
-            You are setting the fee recipient to the Smooth Address. Doing this
-            will mean that you will be <b>automatically subscribed</b> to Smooth{" "}
-            <b>after you propose your next block</b>.
+            By setting the fee recipient to Smooth you are participating in the
+            smoothing pool. You will be able to claim your rewards{" "}
+            <Tooltip
+              placement="top"
+              title={
+                <p style={{ fontSize: 12 }}>
+                  You don't need to change your withdrawal address, but you must
+                  have access to it to recieve rewards from Smooth.
+                  <br /> <br />
+                  You will need to log in to Smooth UI from your Withdrawal
+                  address.
+                  <br /> <br /> EigenPods are not currently supported as they
+                  can't recieve Execution Layer rewards.
+                </p>
+              }
+              arrow
+            >
+              <b> to your withdrawal address</b>
+            </Tooltip>{" "}
+            from the Smooth UI.{" "}
+            <a href={getSmoothUrlByNetwork(network)}>Learn more</a>
           </Alert>
         );
 
@@ -455,9 +480,11 @@ export default function FeeRecipientDialog({
                 (validator) => validator.withdrawalFormat === "error"
               ).length
             }{" "}
-            of the selected validators' withdrawal address format could not be checked. Please,{" "}
-    <b>make sure your consensus client is up and working!</b> This may also happen if some validators are new to the chain.
-    Affected validator's public keys:
+            of the selected validators' withdrawal address format could not be
+            checked. Please,{" "}
+            <b>make sure your consensus client is up and working!</b> This may
+            also happen if some validators are new to the chain. Affected
+            validator's public keys:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat === "error")
