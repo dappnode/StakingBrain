@@ -149,8 +149,8 @@ export function loadStakerConfig(): {
       case "nethermind-xdai.dnp.dappnode.eth":
         executionClientUrl = `http://nethermind-xdai.dappnode:8545`;
         break;
-      case "erigon-gnosis.dnp.dappnode.eth":
-        executionClientUrl = `http://erigon-gnosis.dappnode:8545`;
+      case "gnosis-erigon.dnp.dappnode.eth":
+        executionClientUrl = `http://gnosis-erigon.dappnode:8545`;
         break;
       default:
         throw Error(

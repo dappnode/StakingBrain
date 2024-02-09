@@ -38,7 +38,7 @@ export default function StakerConfig({
 
     // Gnosis
     "nethermind-xdai.dnp.dappnode.eth": "/assets/nethermind-gnosis.png",
-    "erigon-gnosis.dnp.dappnode.eth": "/assets/erigon-gnosis.png",
+    "gnosis-erigon.dnp.dappnode.eth": "/assets/gnosis-erigon.png",
     "gnosis-beacon-chain-prysm.dnp.dappnode.eth": "/assets/prysm-gnosis.png",
     "lighthouse-gnosis.dnp.dappnode.eth": "/assets/lighthouse-gnosis.png",
     "teku-gnosis.dnp.dappnode.eth": "/assets/teku-gnosis.png",
