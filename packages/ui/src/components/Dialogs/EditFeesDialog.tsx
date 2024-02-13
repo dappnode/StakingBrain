@@ -365,29 +365,49 @@ export default function FeeRecipientDialog({
       case "subSmoothStep1Alert":
         //TODO: change a tag href to landing page's url when this been finished
         return (
-          <Alert severity="info" sx={{ marginY: 1 }}>
-            By setting the fee recipient to Smooth you are participating in the
-            smoothing pool. You will be able to claim your rewards{" "}
-            <Tooltip
-              placement="top"
-              title={
-                <p style={{ fontSize: 12 }}>
-                  You don't need to change your withdrawal address, but you must
-                  have access to it to recieve rewards from Smooth.
-                  <br /> <br />
-                  You will need to log in to Smooth UI from your Withdrawal
-                  address.
-                  <br /> <br /> EigenPods are not currently supported as they
-                  can't recieve Execution Layer rewards.
-                </p>
-              }
-              arrow
+          <>
+            <Alert severity="info" sx={{ marginY: 1 }}>
+              By setting the fee recipient to Smooth you are participating in
+              the smoothing pool. You will be able to claim your rewards{" "}
+              <Tooltip
+                placement="top"
+                title={
+                  <p style={{ fontSize: 12 }}>
+                    You don't need to change your withdrawal address, but you
+                    must have access to it to recieve rewards from Smooth.
+                    <br /> <br />
+                    You will need to log in to Smooth UI from your Withdrawal
+                    address.
+                    <br /> <br /> EigenPods are not currently supported as they
+                    can't recieve Execution Layer rewards.
+                  </p>
+                }
+                arrow
+              >
+                <b> to your withdrawal address</b>
+              </Tooltip>{" "}
+              from the Smooth UI.{" "}
+              <a href={getSmoothUrlByNetwork(network)}>Learn more</a>
+            </Alert>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
             >
-              <b> to your withdrawal address</b>
-            </Tooltip>{" "}
-            from the Smooth UI.{" "}
-            <a href={getSmoothUrlByNetwork(network)}>Learn more</a>
-          </Alert>
+              <Checkbox
+                checked={withdrawalAccessCheck}
+                onChange={() => {
+                  setWithdrawalAccessCheck(!withdrawalAccessCheck);
+                }}
+              />
+              <span style={{ fontSize: 13 }}>
+                I understand I must have access to the withdrawal address to
+                recieve Smooth rewards
+              </span>
+            </div>
+          </>
         );
 
       case "subSmoothStep2Alert":
