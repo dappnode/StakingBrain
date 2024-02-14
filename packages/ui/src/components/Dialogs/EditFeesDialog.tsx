@@ -18,6 +18,7 @@ import {
   Tooltip,
   Checkbox,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import {
   CustomValidatorGetResponse,
@@ -386,12 +387,8 @@ export default function FeeRecipientDialog({
               >
                 <b>
                   <u>
-                    to your withdrawal address{" "}
-                    <img
-                      width={15}
-                      height={15}
-                      src="/assets/tooltip-icon.svg"
-                    />
+                    to your withdrawal address
+                    <InfoOutlinedIcon fontSize="small" />
                   </u>
                 </b>
               </Tooltip>{" "}
