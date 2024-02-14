@@ -384,7 +384,16 @@ export default function FeeRecipientDialog({
                 }
                 arrow
               >
-                <b> to your withdrawal address</b>
+                <b>
+                  <u>
+                    to your withdrawal address{" "}
+                    <img
+                      width={15}
+                      height={15}
+                      src="/assets/tooltip-icon.svg"
+                    />
+                  </u>
+                </b>
               </Tooltip>{" "}
               from the Smooth UI.{" "}
               <a href={getSmoothUrlByNetwork(network)}>Learn more</a>
