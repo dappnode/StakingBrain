@@ -1,10 +1,11 @@
 import express from "express";
+import { tags as availableTags, Tag, Web3signerDeleteRequest } from "@stakingbrain/common";
 import cors from "cors";
-import { tags as availableTags, Tag } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
 import http from "node:http";
 import { params } from "../../../params.js";
 import { importValidators } from "../../../calls/importValidators.js";
+import { deleteValidators } from "../../../calls/deleteValidators.js";
 
 export function startLaunchpadApi(): http.Server {
   const app = express();
@@ -25,14 +26,16 @@ export function startLaunchpadApi(): http.Server {
       req.body;
 
     // Validate request body
-    const errors = validateRequestBody(
+    const errors = validateImportKeystoresRequestBody(
       keystores,
       passwords,
       tags,
       feeRecipients
     );
-    if (errors.length > 0)
+    if (errors.length > 0) {
       res.status(400).send({ message: `Bad request: ${errors.join(". ")}` });
+      return;
+    }
 
     try {
       const importResponse = await importValidators({
@@ -55,6 +58,27 @@ export function startLaunchpadApi(): http.Server {
     }
   });
 
+  // Following schema: https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager/deleteRemoteKeys
+  app.delete("/eth/v1/keystores", async (req, res) => {
+    const deleteRequest = req.body as Web3signerDeleteRequest;
+
+    // Validate request body
+    const errors = validateDeleteRequestBody(deleteRequest);
+    if (errors.length > 0) {
+      res.status(400).send({ message: `Bad request: ${errors.join(". ")}` });
+      return;
+    }
+
+    try {
+      const deleteResponse = await deleteValidators(deleteRequest);
+
+      res.status(200).send(deleteResponse);
+    } catch (e) {
+      logger.error(e);
+      res.status(500).send({ message: "Internal server error" });
+    }
+  });
+
   server.listen(params.launchpadPort, () => {
     logger.info(`Launchpad API listening on port ${params.launchpadPort}`);
   });
@@ -62,7 +86,7 @@ export function startLaunchpadApi(): http.Server {
   return server;
 }
 
-function validateRequestBody(
+function validateImportKeystoresRequestBody(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   keystores: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,3 +127,24 @@ function validateRequestBody(
 
   return errors;
 }
+
+function validateDeleteRequestBody(deleteReq: Web3signerDeleteRequest): string[] {
+  const errors: string[] = [];
+  const { pubkeys } = deleteReq;
+
+  if (!pubkeys) {
+    errors.push("pubkeys parameter is required.");
+  } else if (!Array.isArray(pubkeys)) {
+    errors.push("pubkeys must be an array of strings.");
+  } else {
+    const hexPattern = /^0x[a-fA-F0-9]{96}$/;
+    pubkeys.forEach(pubkey => {
+      if (!hexPattern.test(pubkey)) {
+        errors.push(`Invalid pubkey format: ${pubkey}. Expected format is 0x followed by 96 hexadecimal characters.`);
+      }
+    });
+  }
+
+  return errors;
+}
+
