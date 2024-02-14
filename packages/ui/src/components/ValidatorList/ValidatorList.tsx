@@ -1,5 +1,5 @@
 import KeystoresDataGrid from "./KeystoresDataGrid";
-import { SmoothBanner } from "./SmoothBanner"; 
+import { SmoothBanner } from "./SmoothBanner";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
 import { Alert, Box, CircularProgress, Card } from "@mui/material";
@@ -74,8 +74,7 @@ export default function ValidatorList({
           alignItems: "left",
         }}
       >
-
-        <SmoothBanner />
+        {(network === "prater" || network === "mainnet") && <SmoothBanner />}
 
         <Card
           sx={{
