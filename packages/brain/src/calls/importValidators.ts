@@ -9,8 +9,8 @@ import {
   PubkeyDetails,
   Network,
   ROCKET_POOL_FEE_RECIPIENT,
-  STADER_FEE_RECIPIENT_MAINNET,
-  STADER_FEE_RECIPIENT_PRATER,
+  STADER_POOL_FEE_RECIPIENT_MAINNET,
+  STADER_POOL_FEE_RECIPIENT_PRATER,
 } from "@stakingbrain/common";
 import {
   cron,
@@ -62,12 +62,13 @@ export async function importValidators(
       try {
         const feeRecipient =
           !["gnosis", "lukso"].includes(network) &&
-          !isFeeRecipientEditable(validator.tag)
+            !isFeeRecipientEditable(validator.tag)
             ? await getNonEditableFeeRecipient(
-                pubkey,
-                validator.tag as NonEditableFeeRecipientTag,
-                network
-              )
+              pubkey,
+              validator.tag as NonEditableFeeRecipientTag,
+              network,
+              validator.feeRecipient
+            )
             : validator.feeRecipient;
 
         logger.info(`Setting ${feeRecipient} as fee recipient for ${pubkey}`);
@@ -123,8 +124,7 @@ export async function importValidators(
         web3signerPostResponse.data[index].message +=
           ". Check that the keystore file format is valid and the password is correct.";
         logger.error(
-          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
-            web3signerPostResponse.data[index].message
+          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${web3signerPostResponse.data[index].message
           }`
         );
       } else if (web3signerPostResponse.data[index].status === "duplicate") {
@@ -200,7 +200,8 @@ export async function importValidators(
 async function getNonEditableFeeRecipient(
   pubkey: string,
   tag: NonEditableFeeRecipientTag,
-  network: Network
+  network: Network,
+  suggestedFeeRecipient?: string
 ): Promise<string> {
   if (network == "gnosis") {
     throw new Error(
@@ -217,11 +218,19 @@ async function getNonEditableFeeRecipient(
       return ROCKET_POOL_FEE_RECIPIENT;
     case "stakehouse":
       return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
+
+    // Stader FR cannot be known in advance
     case "stader":
-      if (network === "mainnet") {
-        return STADER_FEE_RECIPIENT_MAINNET;
-      } else if (network === "prater") {
-        return STADER_FEE_RECIPIENT_PRATER;
+      if (suggestedFeeRecipient) {
+        return suggestedFeeRecipient;
+
+        // Set fee recipient to socializing pool adddress if it is not defined
+      } else {
+        if (network === "mainnet") {
+          return STADER_POOL_FEE_RECIPIENT_MAINNET;
+        } else if (network === "prater") {
+          return STADER_POOL_FEE_RECIPIENT_PRATER;
+        }
       }
     default:
       throw new Error("Fee recipient not found for tag: " + tag);
