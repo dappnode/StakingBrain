@@ -62,7 +62,7 @@ export async function importValidators(
       try {
         const feeRecipient =
           !["gnosis", "lukso"].includes(network) &&
-            !isFeeRecipientEditable(validator.tag)
+            !isFeeRecipientEditable(validator.tag, postRequest.importFrom)
             ? await getNonEditableFeeRecipient(
               pubkey,
               validator.tag as NonEditableFeeRecipientTag,

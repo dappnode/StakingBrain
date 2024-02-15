@@ -126,7 +126,7 @@ feeRecipientsRouter.post(feeRecipientsEndpoint, async (req, res) => {
             }
         });
 
-        await updateValidators(validatorsToUpdate);
+        await updateValidators(validatorsToUpdate, "api");
 
         return res.status(200).send();
     } catch (error) {

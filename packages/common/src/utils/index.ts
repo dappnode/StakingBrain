@@ -1,4 +1,5 @@
 import { nonEditableFeeRecipientTags, Tag, tags } from "../types/db/types.js";
+import { ActionRequestOrigin } from "../types/index.js";
 
 export function isValidEcdsaPubkey(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -20,7 +21,10 @@ export function isValidTag(tag: Tag): boolean {
   return tags.includes(tag);
 }
 
-export function isFeeRecipientEditable(tag: Tag): boolean {
+export function isFeeRecipientEditable(tag: Tag, requestOrigin?: ActionRequestOrigin): boolean {
+
+  if (requestOrigin === "api" && tag === "stader") return true;
+
   return !nonEditableFeeRecipientTags.some((t) => t === tag);
 }
 

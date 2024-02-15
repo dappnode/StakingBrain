@@ -6,6 +6,7 @@ import {
 } from "@stakingbrain/common";
 import { cron, brainDb, validatorApi } from "../index.js";
 import logger from "../modules/logger/index.js";
+import { ActionRequestOrigin } from "@stakingbrain/common";
 
 /**
  * Updates validators on DB:
@@ -14,7 +15,8 @@ import logger from "../modules/logger/index.js";
  * @param param0
  */
 export async function updateValidators(
-  customValidatorUpdateRequest: CustomValidatorUpdateRequest[]
+  customValidatorUpdateRequest: CustomValidatorUpdateRequest[],
+  requestFrom?: ActionRequestOrigin
 ): Promise<void> {
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
@@ -28,7 +30,7 @@ export async function updateValidators(
       customValidatorUpdateRequest.filter(
         (validator) =>
           dbData[prefix0xPubkey(validator.pubkey)] &&
-          isFeeRecipientEditable(dbData[prefix0xPubkey(validator.pubkey)].tag)
+          isFeeRecipientEditable(dbData[prefix0xPubkey(validator.pubkey)].tag, requestFrom)
       );
 
     if (editableValidators.length === 0) {
