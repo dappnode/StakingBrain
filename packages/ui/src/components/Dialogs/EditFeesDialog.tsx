@@ -62,12 +62,8 @@ export default function FeeRecipientDialog({
   const [isMevSpAddressSelected, setIsMevSpAddressSelected] = useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
   const [isUnsubUnderstood, setIsUnsubUnderstood] = useState(false);
-  const [nonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<
-    NonEcdsaValidatorsData[]
-  >([]);
-  const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<
-    string[]
-  >([]);
+  const [nonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<NonEcdsaValidatorsData[]>([]);
+  const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<string[]>([]);
 
   useEffect(() => {
     isAnyWithdrawalCredentialsDiff("ecdsa") && getNonEcdsaValidatorsData();
@@ -209,6 +205,7 @@ export default function FeeRecipientDialog({
     );
   }
 
+  // Given a possible withdrawal credentials format, checks if any of the selected validators has it
   const isAnyWithdrawalCredentialsEqual = (
     givenFormat: WithdrawalCredentialsFormat
   ): boolean => {
@@ -224,6 +221,7 @@ export default function FeeRecipientDialog({
     return isAnyAsGivenFormat;
   };
 
+  // Given a possible withdrawal credentials format, checks if any of the selected validators has a different format
   const isAnyWithdrawalCredentialsDiff = (
     givenFormat: WithdrawalCredentialsFormat
   ): boolean => {
@@ -239,6 +237,7 @@ export default function FeeRecipientDialog({
     return isAnyAsGivenFormat;
   };
 
+  // Update the smoothValidatorsPubkeys state with the selected validators that have Smooth's fee recipient
   const getSmoothValidatorsSelected = (): void => {
     const smoothValidatorsPubkeys: string[] = selectedRows
       .map((row) => {
@@ -250,6 +249,7 @@ export default function FeeRecipientDialog({
     setSmoothValidatorsPubkeys(smoothValidatorsPubkeys);
   };
 
+  // Update the nonEcdsaValidatorsData state with the selected validators that have a withdrawal address format different from ecdsa
   const getNonEcdsaValidatorsData = (): void => {
     const filteredValidators = selectedRows
       .map((row) => {
@@ -266,7 +266,7 @@ export default function FeeRecipientDialog({
     setNonEcdsaValidatorsData(filteredValidators);
   };
 
-  function SubscriptionCard(): JSX.Element {
+  function SmoothSubscriptionCard(): JSX.Element {
     return (
       <>
         {alertCard("subSmoothStep2Alert")}
@@ -289,7 +289,7 @@ export default function FeeRecipientDialog({
     );
   }
 
-  function UnsubscribeCard(): JSX.Element {
+  function UnsubscribeFromSmoothCard(): JSX.Element {
     return (
       <>
         {alertCard("unsubSmoothAlert")}
@@ -494,6 +494,51 @@ export default function FeeRecipientDialog({
     }
   }
 
+  // This function renders the alerts that are related to Smooth. 
+  // If all conditions are met, all alerts are rendered.
+  function renderMevSpAddressAlerts(mevSpAddress: string | null) {
+    if (!mevSpAddress) {
+      return null;
+    }
+  
+    return (
+      <>
+        {/* Renders UnsubscribeFromSmoothCard if isRemovingMevSpFr() is true */}
+        {isRemovingMevSpFr() && <UnsubscribeFromSmoothCard />}
+
+        {/* If one or more selected validators has smooth as FR and we're setting Smooth FR */}
+        {smoothValidatorsPubkeys.length > 0 && isMevSpAddressSelected && alertCard("alreadySmoothAlert")}
+
+        {/* If we couldnt check withdrawalcredential of one or more validators */}
+        {isMevSpAddressSelected && isAnyWithdrawalCredentialsEqual("error") && alertCard("errorFormatAlert")}
+
+        {/* If one or more validators has an incorrect withdrawal credentials format */}
+        {isMevSpAddressSelected && (isAnyWithdrawalCredentialsEqual("bls") || isAnyWithdrawalCredentialsEqual("unknown")) && alertCard("blsFormatAlert")}
+
+        {/* If mevBoost is not installed */}
+        {isMevSpAddressSelected && !isMevBoostSet && alertCard("noMevBoostSetAlert")}
+
+        {/* If everything okay, render alert (only info) */}
+        {isMevSpAddressSelected && !areAllOldFrsSameAsGiven(newFeeRecipient) && !isAnyWithdrawalCredentialsDiff("ecdsa") && isMevBoostSet && alertCard("subSmoothStep1Alert")}
+      </>
+    );
+  }
+
+  const isApplyChangesDisabled = () => {
+    // Not-Smooth related conditions
+    const notSmoothRelated = !isNewFeeRecipientValid() || areAllOldFrsSameAsGiven(newFeeRecipient);
+  
+    // Smooth-related conditions. Will always be false if mevSpAddress is null (not in a network with Smooth)
+    const smoothRelated = mevSpAddress !== null && (
+      isRemovingMevSpFr() && !isUnsubUnderstood ||
+      isAnyWithdrawalCredentialsDiff("ecdsa") && isMevSpAddressSelected ||
+      isMevSpAddressSelected && !isMevBoostSet
+    );
+  
+    return notSmoothRelated || smoothRelated;
+  };
+  
+
   function modalContent(): JSX.Element {
     return (
       <DialogContent>
@@ -564,32 +609,10 @@ export default function FeeRecipientDialog({
                 alertCard("feeAlreadySetToAllAlert")}
               {successMessage && alertCard("successAlert")}
               {errorMessage && alertCard("errorAlert")}
-              {mevSpAddress && (
-                <>
-                  {isRemovingMevSpFr() && <UnsubscribeCard />}
-                  {smoothValidatorsPubkeys.length > 0 &&
-                    isMevSpAddressSelected &&
-                    alertCard("alreadySmoothAlert")}
-                  {isAnyWithdrawalCredentialsEqual("error") &&
-                    isMevSpAddressSelected &&
-                    alertCard("errorFormatAlert")}
-                  {isMevSpAddressSelected &&
-                    (isAnyWithdrawalCredentialsEqual("bls") ||
-                      isAnyWithdrawalCredentialsEqual("unknown")) &&
-                    alertCard("blsFormatAlert")}
-                  {isMevSpAddressSelected &&
-                    !isMevBoostSet &&
-                    alertCard("noMevBoostSetAlert")}
-                  {isMevSpAddressSelected &&
-                    !areAllOldFrsSameAsGiven(newFeeRecipient) &&
-                    !isAnyWithdrawalCredentialsDiff("ecdsa") &&
-                    isMevBoostSet &&
-                    alertCard("subSmoothStep1Alert")}
-                </>
-              )}
+              {renderMevSpAddressAlerts(mevSpAddress)}
             </>
           ) : (
-            <SubscriptionCard />
+            <SmoothSubscriptionCard />
           )}
         </Box>
       </DialogContent>
@@ -624,13 +647,7 @@ export default function FeeRecipientDialog({
               onClick={() => handleApplyChanges()}
               variant="contained"
               sx={{ borderRadius: 2 }}
-              disabled={
-                !isNewFeeRecipientValid() ||
-                areAllOldFrsSameAsGiven(newFeeRecipient) ||
-                (mevSpAddress !== null && isRemovingMevSpFr() && !isUnsubUnderstood) ||
-                (isAnyWithdrawalCredentialsDiff("ecdsa") && isMevSpAddressSelected) ||
-                (isMevSpAddressSelected && !isMevBoostSet)
-              }
+              disabled={isApplyChangesDisabled()}
             >
               Apply changes
             </Button>

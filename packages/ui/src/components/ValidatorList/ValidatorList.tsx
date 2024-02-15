@@ -1,5 +1,4 @@
 import KeystoresDataGrid from "./KeystoresDataGrid";
-import { SmoothBanner } from "./SmoothBanner";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
 import { Alert, Box, CircularProgress, Card } from "@mui/material";
@@ -35,8 +34,7 @@ export default function ValidatorList({
     BeaconchaUrlBuildingStatus.NotStarted
   );
 
-  const network = stakerConfig.network;
-  const isMevBoostSet = stakerConfig.isMevBoostSet;
+  const { network, isMevBoostSet } = stakerConfig
   const smoothAddress = getSmoothAddressByNetwork(network);
   useEffect(() => {
     getValidators();
@@ -62,6 +60,18 @@ export default function ValidatorList({
       setLoading(false);
     }
   }
+
+  const SmoothBanner = () => {
+    return (
+      <Box sx={{ marginBottom: 3 }}>
+        <Alert severity="info" variant="filled">
+          🎉 Calling all solo stakers: Smooth has arrived! To join, select your validators and click on change fee recipient.  Learn more{" "}
+          <strong><a href="https://smooth.dappnode.io/" target="_blank" rel="noopener noreferrer">here!</a></strong>
+        </Alert>
+      </Box>
+    );
+  };
+  
 
   return (
     <div>
