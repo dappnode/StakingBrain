@@ -5,14 +5,15 @@ import http from "node:http";
 import { params } from "../../../params.js";
 import { corsOptions } from "./config.js";
 import keystoresRouter from "./routes/keystores.js";
+import feeRecipientsRouter from "./routes/feeRecipients.js";
 
 export function startLaunchpadApi(): http.Server {
   const app = express();
   app.use(express.json());
   app.use(cors(corsOptions));
 
-  // To manage keystores import and deletion
   app.use(keystoresRouter);
+  app.use(feeRecipientsRouter);
 
   const server = new http.Server(app);
   server.listen(params.launchpadPort, () => {
