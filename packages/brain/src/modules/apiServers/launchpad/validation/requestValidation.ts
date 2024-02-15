@@ -1,5 +1,5 @@
-import { tags as availableTags, isValidBlsPubkey, Tag, Web3signerDeleteRequest } from "@stakingbrain/common";
-import { BrainKeystoreImportRequest } from "../types.js";
+import { tags as availableTags, isValidBlsPubkey, isValidEcdsaPubkey, Tag, Web3signerDeleteRequest } from "@stakingbrain/common";
+import { BrainKeystoreImportRequest, BrainPubkeysFeeRecipients } from "../types.js";
 
 export function validateImportKeystoresRequestBody(
     { keystores, passwords, tags, feeRecipients }: BrainKeystoreImportRequest
@@ -57,4 +57,29 @@ export function validatePubkeysQueryParam(pubkeys: string | string[] | undefined
     const invalidPubkeys = pubkeyArray.filter(pubkey => !isValidBlsPubkey(pubkey));
 
     return invalidPubkeys.length > 0 ? invalidPubkeys : null;
+}
+
+export function validateUpdateFeeRecipientRequestBody(requestBody: BrainPubkeysFeeRecipients): string[] {
+    const errors: string[] = [];
+
+    if (!requestBody || !Array.isArray(requestBody.validators)) {
+        errors.push("The request body must contain a 'validators' array.");
+        return errors;
+    }
+
+    requestBody.validators.forEach((validator, index) => {
+        if (typeof validator.pubkey !== 'string') {
+            errors.push(`Validator at index ${index} is missing a valid 'pubkey' string.`);
+        } else if (!isValidBlsPubkey(validator.pubkey)) {
+            errors.push(`Validator at index ${index} has an invalid BLS public key: ${validator.pubkey}.`);
+        }
+
+        if (typeof validator.feeRecipient !== 'string') {
+            errors.push(`Validator at index ${index} is missing a valid 'feeRecipient' string.`);
+        } else if (!isValidEcdsaPubkey(validator.feeRecipient)) {
+            errors.push(`Validator at index ${index} has an invalid Ethereum address: ${validator.feeRecipient}.`);
+        }
+    });
+
+    return errors;
 }

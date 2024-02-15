@@ -2,6 +2,8 @@ import express from "express";
 import { getValidators } from "../../../../calls/getValidators.js";
 import { CustomValidatorGetResponse, isValidBlsPubkey } from "@stakingbrain/common";
 import { BrainPubkeysFeeRecipients } from "../types.js";
+import { validateUpdateFeeRecipientRequestBody } from "../validation/requestValidation.js";
+import { updateValidators } from "../../../../calls/updateValidators.js";
 
 const feeRecipientsRouter = express.Router();
 
@@ -52,17 +54,69 @@ feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
             }))
         };
 
-        res.status(200).json(response);
+        return res.status(200).json(response);
     } catch (error) {
         console.error('Failed to retrieve validators:', error);
-        res.status(500).send({ message: "Internal server error" });
+        return res.status(500).send({ message: "Internal server error" });
     }
 });
 
-
+/**
+ * Updates the fee recipient addresses for a list of specified validators. Only validators
+ * whose public keys are provided in the request will have their fee recipient addresses updated.
+ *
+ * Example request body:
+ * POST /eth/v1/feeRecipients
+ * {
+ *   "validators": [
+ *     {
+ *       "pubkey": "0x12345",
+ *       "feeRecipient": "0xabcdef"
+ *     },
+ *     {
+ *       "pubkey": "0x67890",
+ *       "feeRecipient": "0x123456"
+ *     }
+ *   ]
+ * }
+ *
+ * A successful update returns a 200 status code with no body. Errors in the request format or
+ * validation process result in a 400 Bad Request response detailing the issues found.
+ */
 feeRecipientsRouter.post(feeRecipientsEndpoint, async (req, res) => {
-    // TODO: Implement this endpoint
-    res.status(405).send({ message: "Method not allowed" });
+    try {
+        const requestBody: BrainPubkeysFeeRecipients = req.body;
+
+        const errors = validateUpdateFeeRecipientRequestBody(requestBody);
+        if (errors.length > 0) {
+            res.status(400).send({ message: `Bad request: ${errors.join("\n")}` });
+            return;
+        }
+
+        const currentValidators: CustomValidatorGetResponse[] = await getValidators();
+
+        const validatorsToUpdate = currentValidators.filter(validator =>
+            requestBody.validators.some(reqValidator =>
+                reqValidator.pubkey.toLowerCase() === validator.pubkey.toLowerCase()
+            )
+        );
+
+        validatorsToUpdate.forEach(validator => {
+            const matchingValidator = requestBody.validators.find(reqValidator =>
+                reqValidator.pubkey.toLowerCase() === validator.pubkey.toLowerCase()
+            );
+            if (matchingValidator) {
+                validator.feeRecipient = matchingValidator.feeRecipient;
+            }
+        });
+
+        await updateValidators(validatorsToUpdate);
+
+        return res.status(200).send();
+    } catch (error) {
+        console.error('Failed to update validators:', error);
+        return res.status(500).send({ message: "Internal server error" });
+    }
 });
 
 export default feeRecipientsRouter;
