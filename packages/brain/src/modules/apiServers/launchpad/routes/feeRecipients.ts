@@ -103,11 +103,13 @@ feeRecipientsRouter.post(feeRecipientsEndpoint, async (req, res) => {
     try {
         const requestBody: BrainPubkeysFeeRecipients = req.body;
 
-        const errors = validateUpdateFeeRecipientRequestBody(requestBody);
-        if (errors.length > 0) {
-            res.status(400).send({ message: `Bad request: ${errors.join("\n")}` });
+        try {
+            validateUpdateFeeRecipientRequestBody(requestBody);
+        } catch (e) {
+            res.status(400).send({ message: `Bad request: ${e}` });
             return;
         }
+
 
         const currentValidators: CustomValidatorGetResponse[] = await getValidators();
 

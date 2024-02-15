@@ -1,85 +1,73 @@
 import { tags as availableTags, isValidBlsPubkey, isValidEcdsaPubkey, Tag, Web3signerDeleteRequest } from "@stakingbrain/common";
 import { BrainKeystoreImportRequest, BrainPubkeysFeeRecipients } from "../types.js";
 
-export function validateImportKeystoresRequestBody(
-    { keystores, passwords, tags, feeRecipients }: BrainKeystoreImportRequest
-): string[] {
-    const errors: string[] = [];
-
-    if (!keystores || !Array.isArray(keystores) || keystores.some(keystore => typeof keystore !== 'string')) {
-        errors.push("keystores must be an array of strings.");
-    }
-    if (!passwords || !Array.isArray(passwords) || passwords.some(password => typeof password !== 'string')) {
-        errors.push("passwords must be an array of strings.");
-    }
-    if (!tags || !Array.isArray(tags) || tags.some(tag => !availableTags.includes(tag as Tag))) {
-        errors.push(`tags must be one of the following: ${availableTags.join(", ")}.`);
-    }
-    if (!feeRecipients || !Array.isArray(feeRecipients) || feeRecipients.some(feeRecipient => typeof feeRecipient !== 'string')) {
-        errors.push("feeRecipients must be an array of strings.");
+export function validateImportKeystoresRequestBody(request: BrainKeystoreImportRequest): void {
+    // Check if the request contains keystores
+    if (!request.keystores || !Array.isArray(request.keystores) || request.keystores.length === 0) {
+        throw new Error("Keystores array is required and must not be empty.");
     }
 
-    // Check for matching array lengths
-    const lengths = [keystores.length, passwords.length, tags.length, feeRecipients.length];
-    if (new Set(lengths).size !== 1) {
-        errors.push("keystores, passwords, tags, and feeRecipients must have the same length.");
+    // Check if the request contains passwords
+    if (!request.passwords || !Array.isArray(request.passwords) || request.passwords.length === 0) {
+        throw new Error("Passwords array is required and must not be empty.");
     }
 
-    return errors;
+    // Check if the request contains tags
+    if (!request.tags || !Array.isArray(request.tags) || request.tags.length === 0) {
+        throw new Error("Tags array is required and must not be empty.");
+    }
+
+    // Check if the request contains fee recipients
+    if (!request.feeRecipients || !Array.isArray(request.feeRecipients) || request.feeRecipients.length === 0) {
+        throw new Error("Fee recipients array is required and must not be empty.");
+    }
+
+    // Check if the lengths of all arrays are consistent
+    const { keystores, passwords, tags, feeRecipients } = request;
+    const arrays = [keystores, passwords, tags, feeRecipients];
+    if (arrays.some(arr => arr.length !== keystores.length)) {
+        throw new Error("All arrays (keystores, passwords, tags, fee recipients) must have the same length.");
+    }
 }
 
-export function validateDeleteRequestBody(deleteReq: Web3signerDeleteRequest): string[] {
-    const errors: string[] = [];
+export function validateDeleteRequestBody(deleteReq: Web3signerDeleteRequest): void {
     const { pubkeys } = deleteReq;
 
     if (!pubkeys) {
-        errors.push("pubkeys parameter is required.");
+        throw new Error("pubkeys parameter is required.");
     } else if (!Array.isArray(pubkeys)) {
-        errors.push("pubkeys must be an array of strings.");
+        throw new Error("pubkeys must be an array of strings.");
     } else {
-        const hexPattern = /^0x[a-fA-F0-9]{96}$/;
-        pubkeys.forEach(pubkey => {
-            if (!hexPattern.test(pubkey)) {
-                errors.push(`Invalid pubkey format: ${pubkey}. Expected format is 0x followed by 96 hexadecimal characters.`);
-            }
-        });
+        const invalidPubkeys = pubkeys.filter(pubkey => !isValidBlsPubkey(pubkey));
+        if (invalidPubkeys.length > 0) {
+            throw new Error(`Invalid pubkey format: ${invalidPubkeys.join(", ")}. Pubkeys should follow BLS format (beginning with 0x)`);
+        }
     }
-
-    return errors;
 }
 
-export function validatePubkeysQueryParam(pubkeys: string | string[] | undefined): string[] | null {
-    if (!pubkeys) {
-        return null; // No pubkeys provided
-    }
+export function validatePubkeysQueryParam(pubkeys: string | string[] | undefined): void {
+    if (!pubkeys) return;
 
     const pubkeyArray = Array.isArray(pubkeys) ? pubkeys : pubkeys.split(',');
     const invalidPubkeys = pubkeyArray.filter(pubkey => !isValidBlsPubkey(pubkey));
 
-    return invalidPubkeys.length > 0 ? invalidPubkeys : null;
+    if (invalidPubkeys.length > 0)
+        throw new Error(`Invalid pubkey format: ${invalidPubkeys.join(", ")}. Pubkeys should follow BLS format (beginning with 0x)`);
 }
 
-export function validateUpdateFeeRecipientRequestBody(requestBody: BrainPubkeysFeeRecipients): string[] {
-    const errors: string[] = [];
-
+export function validateUpdateFeeRecipientRequestBody(requestBody: BrainPubkeysFeeRecipients): void {
     if (!requestBody || !Array.isArray(requestBody.validators)) {
-        errors.push("The request body must contain a 'validators' array.");
-        return errors;
+        throw new Error("The request body must contain a 'validators' array.");
     }
 
-    requestBody.validators.forEach((validator, index) => {
-        if (typeof validator.pubkey !== 'string') {
-            errors.push(`Validator at index ${index} is missing a valid 'pubkey' string.`);
-        } else if (!isValidBlsPubkey(validator.pubkey)) {
-            errors.push(`Validator at index ${index} has an invalid BLS public key: ${validator.pubkey}.`);
+    const { validators } = requestBody;
+    validators.forEach((validator, index) => {
+        if (typeof validator.pubkey !== 'string' || !isValidBlsPubkey(validator.pubkey)) {
+            throw new Error(`Validator at index ${index} is missing a valid or has an invalid BLS public key: ${validator.pubkey}.`);
         }
 
-        if (typeof validator.feeRecipient !== 'string') {
-            errors.push(`Validator at index ${index} is missing a valid 'feeRecipient' string.`);
-        } else if (!isValidEcdsaPubkey(validator.feeRecipient)) {
-            errors.push(`Validator at index ${index} has an invalid Ethereum address: ${validator.feeRecipient}.`);
+        if (typeof validator.feeRecipient !== 'string' || !isValidEcdsaPubkey(validator.feeRecipient)) {
+            throw new Error(`Validator at index ${index} is missing a valid or has an invalid Ethereum address: ${validator.feeRecipient}.`);
         }
     });
-
-    return errors;
 }

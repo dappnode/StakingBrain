@@ -13,10 +13,10 @@ const keystoresEndpoint = "/eth/v1/keystores";
 keystoresRouter.post(keystoresEndpoint, async (req, res) => {
     const importRequest = req.body as BrainKeystoreImportRequest;
 
-    const errors = validateImportKeystoresRequestBody(importRequest);
-
-    if (errors.length > 0) {
-        res.status(400).send({ message: `Bad request: ${errors.join("\n")}` });
+    try {
+        validateImportKeystoresRequestBody(importRequest);
+    } catch (e) {
+        res.status(400).send({ message: `Bad request: ${e}` });
         return;
     }
 
@@ -45,9 +45,10 @@ keystoresRouter.post(keystoresEndpoint, async (req, res) => {
 keystoresRouter.delete(keystoresEndpoint, async (req, res) => {
     const deleteRequest = req.body as Web3signerDeleteRequest;
 
-    const errors = validateDeleteRequestBody(deleteRequest);
-    if (errors.length > 0) {
-        res.status(400).send({ message: `Bad request: ${errors.join("\n")}` });
+    try {
+        validateDeleteRequestBody(deleteRequest);
+    } catch (e) {
+        res.status(400).send({ message: `Bad request: ${e}` });
         return;
     }
 
