@@ -52,11 +52,9 @@ feeRecipientsRouter.get("/eth/v1/feeRecipients", async (req, res) => {
         }
 
         const pubkeys = pubkeysParam.split(',').map(pubkey => pubkey.toLowerCase());
-        // Validate public keys first
         const invalidPubkeys = pubkeys.filter(pubkey => !isValidBlsPubkey(pubkey));
 
         if (invalidPubkeys.length > 0) {
-            // If any pubkey is invalid, return 400 Bad Request
             return res.status(400).send({ message: `Invalid pubkey format: ${invalidPubkeys.join(", ")}. Pubkeys should follow BLS format (beginning with 0x)` });
         }
 
