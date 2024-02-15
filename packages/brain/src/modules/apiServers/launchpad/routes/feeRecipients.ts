@@ -34,18 +34,33 @@ const feeRecipientsEndpoint = "/eth/v1/feeRecipients";
  *   ]
  * }
  */
-feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
+feeRecipientsRouter.get("/eth/v1/feeRecipients", async (req, res) => {
     try {
         const validators: CustomValidatorGetResponse[] = await getValidators();
-
         const pubkeysParam = req.query.pubkeys as string | undefined;
-        let filteredValidators = validators;
 
-        if (pubkeysParam) {
-            const pubkeys = pubkeysParam.split(',');
-            const validPubkeys = pubkeys.filter(pubkey => isValidBlsPubkey(pubkey));
-            filteredValidators = validators.filter(validator => validPubkeys.includes(validator.pubkey));
+        if (!pubkeysParam) {
+            // If no pubkeys are provided, return information for all validators
+            const response: BrainPubkeysFeeRecipients = {
+                validators: validators.map(validator => ({
+                    pubkey: validator.pubkey,
+                    feeRecipient: validator.feeRecipient
+                }))
+            };
+
+            return res.status(200).json(response);
         }
+
+        const pubkeys = pubkeysParam.split(',').map(pubkey => pubkey.toLowerCase());
+        // Validate public keys first
+        const invalidPubkeys = pubkeys.filter(pubkey => !isValidBlsPubkey(pubkey));
+
+        if (invalidPubkeys.length > 0) {
+            // If any pubkey is invalid, return 400 Bad Request
+            return res.status(400).send({ message: `Invalid pubkey format: ${invalidPubkeys.join(", ")}. Pubkeys should follow BLS format (beginning with 0x)` });
+        }
+
+        const filteredValidators = validators.filter(validator => pubkeys.includes(validator.pubkey.toLowerCase()));
 
         const response: BrainPubkeysFeeRecipients = {
             validators: filteredValidators.map(validator => ({
@@ -55,6 +70,7 @@ feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
         };
 
         return res.status(200).json(response);
+
     } catch (error) {
         console.error('Failed to retrieve validators:', error);
         return res.status(500).send({ message: "Internal server error" });
