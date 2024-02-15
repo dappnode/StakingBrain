@@ -74,7 +74,7 @@ export default function FeeRecipientDialog({
 
   const mevSpAddress = getSmoothAddressByNetwork(network);
   const smoothUrl = getSmoothUrlByNetwork(network);
-  
+
   const handleClose = () => {
     setOpen(false);
     setErrorMessage("");
@@ -104,7 +104,7 @@ export default function FeeRecipientDialog({
     if (
       mevSpAddress &&
       !isMevSpAddressSelected &&
-      event.target.value === mevSpAddress
+      event.target.value.toLowerCase() === mevSpAddress.toLocaleLowerCase()
     ) {
       switchSetMevSpAddress();
     } else {
@@ -193,12 +193,12 @@ export default function FeeRecipientDialog({
       .map((rowId) => rows[+rowId].feeRecipient)
       .flat();
 
-      return (
-        mevSpAddress !== null &&
-        oldFeeRecipients.includes(mevSpAddress) &&
-        isNewFeeRecipientValid() &&
-        newFeeRecipient !== mevSpAddress
-      );
+    return (
+      mevSpAddress !== null &&
+      oldFeeRecipients.includes(mevSpAddress) &&
+      isNewFeeRecipientValid() &&
+      newFeeRecipient !== mevSpAddress
+    );
   }
 
   function isNewFeeRecipientValid() {
@@ -453,9 +453,11 @@ export default function FeeRecipientDialog({
                 (validator) => validator.withdrawalFormat === "error"
               ).length
             }{" "}
-            of the selected validators' withdrawal address format could not be checked. Please,{" "}
-    <b>make sure your consensus client is up and working!</b> This may also happen if some validators are new to the chain.
-    Affected validator's public keys:
+            of the selected validators' withdrawal address format could not be
+            checked. Please,{" "}
+            <b>make sure your consensus client is up and working!</b> This may
+            also happen if some validators are new to the chain. Affected
+            validator's public keys:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat === "error")
@@ -602,7 +604,9 @@ export default function FeeRecipientDialog({
               disabled={
                 !isNewFeeRecipientValid() ||
                 areAllOldFrsSameAsGiven(newFeeRecipient) ||
-                (mevSpAddress !== null && isRemovingMevSpFr() && !isUnsubUnderstood) ||
+                (mevSpAddress !== null &&
+                  isRemovingMevSpFr() &&
+                  !isUnsubUnderstood) ||
                 (isAnyWithdrawalCredentialsDiff("ecdsa") &&
                   isMevSpAddressSelected)
               }
