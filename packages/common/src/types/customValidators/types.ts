@@ -1,8 +1,10 @@
 import { Tag } from "../index.js";
 
+export type ActionRequestOrigin = "ui" | "api";
+
 export interface CustomImportRequest {
   validatorsImportRequest: CustomValidatorImportRequest[];
-  importFrom: "ui" | "api";
+  importFrom: ActionRequestOrigin;
   slashing_protection?: File | string;
 }
 export interface CustomValidatorImportRequest {
