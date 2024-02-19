@@ -1,9 +1,8 @@
 import express from "express";
-import { getValidators } from "../../../../calls/index.js";
 import { CustomValidatorGetResponse, isValidBlsPubkey } from "@stakingbrain/common";
-import { BrainPubkeysFeeRecipients } from "../types.js";
-import { validateUpdateFeeRecipientRequestBody } from "../validation/requestValidation.js";
-import { updateValidators } from "../../../../calls/updateValidators.js";
+import { getValidators, updateValidators } from "../../../../../calls/index.js";
+import { BrainPubkeysFeeRecipients } from "../../types.js";
+import { validateUpdateFeeRecipientRequestBody } from "./validation.js";
 
 const feeRecipientsRouter = express.Router();
 

@@ -4,8 +4,7 @@ import logger from "../../logger/index.js";
 import http from "node:http";
 import { params } from "../../../params.js";
 import { corsOptions } from "./config.js";
-import keystoresRouter from "./routes/keystores.js";
-import feeRecipientsRouter from "./routes/feeRecipients.js";
+import { keystoresRouter, feeRecipientsRouter } from "./routes/index.js";
 
 export function startLaunchpadApi(): http.Server {
   const app = express();
