@@ -10,6 +10,7 @@ const keystoresRouter = express.Router();
 
 const keystoresEndpoint = "/eth/v1/keystores";
 
+// Following schema: https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/listKeys
 keystoresRouter.post(keystoresEndpoint, async (req, res) => {
     const importRequest = req.body as BrainKeystoreImportRequest;
 
