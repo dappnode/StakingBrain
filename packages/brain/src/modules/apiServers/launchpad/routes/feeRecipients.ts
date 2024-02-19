@@ -1,5 +1,5 @@
 import express from "express";
-import { getValidators } from "../../../../calls/getValidators.js";
+import { getValidators } from "../../../../calls/index.js";
 import { CustomValidatorGetResponse, isValidBlsPubkey } from "@stakingbrain/common";
 import { BrainPubkeysFeeRecipients } from "../types.js";
 import { validateUpdateFeeRecipientRequestBody } from "../validation/requestValidation.js";
@@ -34,7 +34,7 @@ const feeRecipientsEndpoint = "/eth/v1/feeRecipients";
  *   ]
  * }
  */
-feeRecipientsRouter.get("/eth/v1/feeRecipients", async (req, res) => {
+feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
     try {
         const validators: CustomValidatorGetResponse[] = await getValidators();
         const pubkeysParam = req.query.pubkeys as string | undefined;
@@ -54,11 +54,13 @@ feeRecipientsRouter.get("/eth/v1/feeRecipients", async (req, res) => {
         const pubkeys = pubkeysParam.split(',').map(pubkey => pubkey.toLowerCase());
         const invalidPubkeys = pubkeys.filter(pubkey => !isValidBlsPubkey(pubkey));
 
-        if (invalidPubkeys.length > 0) {
+        if (invalidPubkeys.length > 0)
             return res.status(400).send({ message: `Invalid pubkey format: ${invalidPubkeys.join(", ")}. Pubkeys should follow BLS format (beginning with 0x)` });
-        }
 
         const filteredValidators = validators.filter(validator => pubkeys.includes(validator.pubkey.toLowerCase()));
+
+        if (filteredValidators.length === 0)
+            return res.status(404).send({ message: "No validators found for the provided pubkeys" });
 
         const response: BrainPubkeysFeeRecipients = {
             validators: filteredValidators.map(validator => ({
