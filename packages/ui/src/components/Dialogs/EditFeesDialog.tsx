@@ -68,7 +68,7 @@ export default function FeeRecipientDialog({
   const [nonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<NonEcdsaValidatorsData[]>([]);
   const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<string[]>([]);
   const [withdrawalAccessCheck, setWithdrawalAccessCheck] = useState(false);
-  
+
   useEffect(() => {
     isAnyWithdrawalCredentialsDiff("ecdsa") && getNonEcdsaValidatorsData();
     getSmoothValidatorsSelected();
@@ -394,7 +394,7 @@ export default function FeeRecipientDialog({
                 </b>
               </Tooltip>{" "}
               from the Smooth UI.{" "}
-              <a href={getSmoothUrlByNetwork(network)}>Learn more</a>
+              <a href={getSmoothUrlByNetwork(network)} target="_blank">Learn more</a>
             </Alert>
 
             <div
@@ -424,7 +424,7 @@ export default function FeeRecipientDialog({
             <b>start accumulating rewards</b> right now,{" "}
             <b>subscribe manually</b> thorugh Smooth's webpage.
             <br /> In the Smooth web you can see pending rewards, claim them and
-            manage your smooth validators.
+            manage your Smooth validators.
           </Alert>
         );
 
