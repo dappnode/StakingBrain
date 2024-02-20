@@ -604,7 +604,9 @@ export default function FeeRecipientDialog({
               disabled={
                 !isNewFeeRecipientValid() ||
                 areAllOldFrsSameAsGiven(newFeeRecipient) ||
-                (mevSpAddress !== null && isRemovingMevSpFr() && !isUnsubUnderstood) ||
+                (mevSpAddress !== null &&
+                  isRemovingMevSpFr() &&
+                  !isUnsubUnderstood) ||
                 (isAnyWithdrawalCredentialsDiff("ecdsa") &&
                   isMevSpAddressSelected)
               }

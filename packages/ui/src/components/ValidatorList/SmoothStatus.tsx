@@ -16,9 +16,8 @@ export default function SmoothStatus({
   rowData,
   subscriptionStatus,
   mevSpFeeRecipient,
-  oracleCallError
+  oracleCallError,
 }: SmoothStatusProps): JSX.Element {
-
   const feeRecipient = rowData.row.feeRecipient;
   const withdrawalFormat = rowData.row.withdrawalCredentials.format;
   const mevSpAddress = mevSpFeeRecipient;
@@ -53,15 +52,18 @@ export default function SmoothStatus({
         break;
       case MevSpSubscriptionStatus.YELLOW_CARD:
         icon = <Warning style={{ color: "yellow" }} />;
-        tooltipText = "Yellow Card Subscription. This validator missed it's last proposal. Propose successfully next block to get back to active.";
+        tooltipText =
+          "Yellow Card Subscription. This validator missed it's last proposal. Propose successfully next block to get back to active.";
         break;
       case MevSpSubscriptionStatus.RED_CARD:
         icon = <Warning style={{ color: "red" }} />;
-        tooltipText = "Red Card Subscription. This validator missed it's two last proposals in a row. Propose successfully next block to get back to yellow card.";
+        tooltipText =
+          "Red Card Subscription. This validator missed it's two last proposals in a row. Propose successfully next block to get back to yellow card.";
         break;
       case MevSpSubscriptionStatus.BANNED:
         icon = <Block style={{ color: "red" }} />;
-        tooltipText = "Banned Subscription. This validator proposed a block with an incorrect fee recipient.";
+        tooltipText =
+          "Banned Subscription. This validator proposed a block with an incorrect fee recipient.";
         break;
       case MevSpSubscriptionStatus.NOT_SUBSCRIBED:
         icon = <Close style={{ color: "grey" }} />;
@@ -73,13 +75,8 @@ export default function SmoothStatus({
         break;
     }
 
-    return (
-      <Tooltip title={tooltipText}>
-        {icon}
-      </Tooltip>
-    );
+    return <Tooltip title={tooltipText}>{icon}</Tooltip>;
   };
-
 
   // RENDERING LOGIC
 
@@ -116,7 +113,10 @@ export default function SmoothStatus({
     return renderAwaitingSubscription();
 
     // unhealthy pending_subscription/subscription. Wrong withdrawal address format
-  } else if (feeRecipient.toLowerCase() === mevSpAddress?.toLowerCase() && withdrawalFormat !== "ecdsa") {
+  } else if (
+    feeRecipient.toLowerCase() === mevSpAddress?.toLowerCase() &&
+    withdrawalFormat !== "ecdsa"
+  ) {
     return renderWrongWithdrawalAddressFormat();
 
     // unhealthy subscription. Wrong fee recipient
