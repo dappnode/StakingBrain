@@ -67,7 +67,8 @@ export default function FeeRecipientDialog({
   const [isUnsubUnderstood, setIsUnsubUnderstood] = useState(false);
   const [nonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<NonEcdsaValidatorsData[]>([]);
   const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<string[]>([]);
-
+  const [withdrawalAccessCheck, setWithdrawalAccessCheck] = useState(false);
+  
   useEffect(() => {
     isAnyWithdrawalCredentialsDiff("ecdsa") && getNonEcdsaValidatorsData();
     getSmoothValidatorsSelected();
