@@ -45,7 +45,7 @@ export default function SmoothStatus({
   //Helper functions for rendering healthy oracle statuses
   const renderSubscriptionStatusIcon = (status: string) => {
     let icon, tooltipText;
-  
+
     switch (status) {
       case MevSpSubscriptionStatus.ACTIVE:
         icon = <CheckCircle style={{ color: "green" }} />;
@@ -72,14 +72,14 @@ export default function SmoothStatus({
         tooltipText = "Unknown Status. Something went wrong."; // we should never get here
         break;
     }
-  
+
     return (
       <Tooltip title={tooltipText}>
         {icon}
       </Tooltip>
     );
   };
-  
+
 
   // RENDERING LOGIC
 
@@ -110,13 +110,13 @@ export default function SmoothStatus({
   if (
     // healthy pending_subscription. Good withdrawal address format and fee recipient
     subscriptionStatus.toLowerCase() === "notsubscribed" &&
-    feeRecipient === mevSpAddress &&
+    feeRecipient.toLowerCase() === mevSpAddress?.toLowerCase() &&
     withdrawalFormat === "ecdsa"
   ) {
     return renderAwaitingSubscription();
 
     // unhealthy pending_subscription/subscription. Wrong withdrawal address format
-  } else if (feeRecipient === mevSpAddress && withdrawalFormat !== "ecdsa") {
+  } else if (feeRecipient.toLowerCase() === mevSpAddress?.toLowerCase() && withdrawalFormat !== "ecdsa") {
     return renderWrongWithdrawalAddressFormat();
 
     // unhealthy subscription. Wrong fee recipient
@@ -124,7 +124,7 @@ export default function SmoothStatus({
     (subscriptionStatus.toLowerCase() === "active" ||
       subscriptionStatus.toLowerCase() === "yellowcard" ||
       subscriptionStatus.toLowerCase() === "redcard") &&
-    rowData.row.feeRecipient !== mevSpAddress
+    rowData.row.feeRecipient.toLowerCase() !== mevSpAddress?.toLowerCase()
   ) {
     return renderWrongFeeRecipient();
 
