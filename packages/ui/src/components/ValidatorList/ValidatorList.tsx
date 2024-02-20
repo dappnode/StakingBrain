@@ -34,7 +34,7 @@ export default function ValidatorList({
     BeaconchaUrlBuildingStatus.NotStarted
   );
 
-  const network = stakerConfig.network;
+  const { network, isMevBoostSet } = stakerConfig
   const smoothAddress = getSmoothAddressByNetwork(network);
   useEffect(() => {
     getValidators();
@@ -61,6 +61,18 @@ export default function ValidatorList({
     }
   }
 
+  const SmoothBanner = () => {
+    return (
+      <Box sx={{ marginBottom: 3 }}>
+        <Alert severity="info" variant="filled">
+          🎉 Calling all solo stakers: Smooth has arrived! To join, select your validators and click on change fee recipient.  Learn more{" "}
+          <strong><a href="https://smooth.dappnode.io/" target="_blank" rel="noopener noreferrer">here!</a></strong>
+        </Alert>
+      </Box>
+    );
+  };
+  
+
   return (
     <div>
       {userMode === "advanced" && <StakerConfig stakerConfig={stakerConfig} />}
@@ -72,6 +84,8 @@ export default function ValidatorList({
           alignItems: "left",
         }}
       >
+        {(network === "prater" || network === "mainnet") && <SmoothBanner />}
+
         <Card
           sx={{
             padding: 4,
@@ -149,6 +163,7 @@ export default function ValidatorList({
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
                   network={network}
+                  isMevBoostSet={isMevBoostSet}
                 />
               )}
 

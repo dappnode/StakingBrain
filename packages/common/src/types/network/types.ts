@@ -6,6 +6,7 @@ export interface StakerConfig<T extends Network> {
   network: T;
   executionClient: ExecutionClient<T>;
   consensusClient: ConsensusClient<T>;
+  isMevBoostSet: boolean;
   executionClientUrl: string;
   validatorUrl: string;
   beaconchainUrl: string;

@@ -36,6 +36,7 @@ export const alertTypes = [
   "blsFormatAlert",
   "errorFormatAlert",
   "alreadySmoothAlert",
+  "noMevBoostSetAlert",
 ] as const;
 
 export type AlertType = (typeof alertTypes)[number];

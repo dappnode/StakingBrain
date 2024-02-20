@@ -11,6 +11,9 @@ services:
       - NETWORK=prater
       - _DAPPNODE_CONSENSUS_CLIENT_PRATER=prysm-prater.dnp.dappnode.eth
       - _DAPPNODE_EXECUTION_CLIENT_PRATER_VERSION=goerli-geth.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_MEVBOOST_MAINNET=false
+      - _DAPPNODE_GLOBAL_MEVBOOST_PRATER=false
+
     networks:
       dncore_network:
         aliases:

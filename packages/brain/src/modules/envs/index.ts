@@ -50,6 +50,7 @@ export function loadStakerConfig(): {
   network: Network;
   executionClient: ExecutionClient<Network>;
   consensusClient: ConsensusClient<Network>;
+  isMevBoostSet: boolean;
   executionClientUrl: string;
   validatorUrl: string;
   beaconchainUrl: string;
@@ -77,7 +78,7 @@ export function loadStakerConfig(): {
     tlsCert: Buffer | undefined;
 
   if (network === "mainnet") {
-    const { executionClient, consensusClient } = loadEnvs("mainnet");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("mainnet");
     switch (executionClient) {
       case "geth.dnp.dappnode.eth":
         executionClientUrl = `http://geth.dappnode:8545`;
@@ -134,6 +135,7 @@ export function loadStakerConfig(): {
       network,
       executionClient,
       consensusClient,
+      isMevBoostSet,
       executionClientUrl,
       validatorUrl,
       beaconchainUrl,
@@ -144,7 +146,7 @@ export function loadStakerConfig(): {
       tlsCert,
     };
   } else if (network === "gnosis") {
-    const { executionClient, consensusClient } = loadEnvs("gnosis");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("gnosis");
     switch (executionClient) {
       case "nethermind-xdai.dnp.dappnode.eth":
         executionClientUrl = `http://nethermind-xdai.dappnode:8545`;
@@ -195,6 +197,7 @@ export function loadStakerConfig(): {
       network,
       executionClient,
       consensusClient,
+      isMevBoostSet,
       executionClientUrl,
       validatorUrl,
       beaconchainUrl,
@@ -205,7 +208,7 @@ export function loadStakerConfig(): {
       tlsCert,
     };
   } else if (network === "prater") {
-    const { executionClient, consensusClient } = loadEnvs("prater");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("prater");
     switch (executionClient) {
       case "goerli-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://goerli-nethermind.dappnode:8545`;
@@ -262,6 +265,7 @@ export function loadStakerConfig(): {
       network,
       executionClient,
       consensusClient,
+      isMevBoostSet,
       executionClientUrl,
       validatorUrl,
       beaconchainUrl,
@@ -272,7 +276,7 @@ export function loadStakerConfig(): {
       tlsCert,
     };
   } else if (network === "lukso") {
-    const { executionClient, consensusClient } = loadEnvs("lukso");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("lukso");
     switch (executionClient) {
       case "lukso-erigon.dnp.dappnode.eth":
         executionClientUrl = `http://lukso-erigon.dappnode:8545`;
@@ -323,6 +327,7 @@ export function loadStakerConfig(): {
       network,
       executionClient,
       consensusClient,
+      isMevBoostSet,
       executionClientUrl,
       validatorUrl,
       beaconchainUrl,
@@ -333,7 +338,7 @@ export function loadStakerConfig(): {
       tlsCert,
     };
   } else if (network === "holesky") {
-    const { executionClient, consensusClient } = loadEnvs("holesky");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("holesky");
     switch (executionClient) {
       case "holesky-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://holesky-nethermind.dappnode:8545`;
@@ -390,6 +395,7 @@ export function loadStakerConfig(): {
       network,
       executionClient,
       consensusClient,
+      isMevBoostSet,
       executionClientUrl,
       validatorUrl,
       beaconchainUrl,
@@ -413,6 +419,7 @@ function loadEnvs<T extends Network>(
 ): {
   executionClient: ExecutionClient<T>;
   consensusClient: ConsensusClient<T>;
+  isMevBoostSet: boolean;
 } {
   const errors = [];
 
@@ -420,6 +427,8 @@ function loadEnvs<T extends Network>(
     process.env[`_DAPPNODE_GLOBAL_EXECUTION_CLIENT_${network.toUpperCase()}`];
   const consensusClient =
     process.env[`_DAPPNODE_GLOBAL_CONSENSUS_CLIENT_${network.toUpperCase()}`];
+  const isMevBoostSet =
+    process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`] === "true";
 
   switch (network) {
     case "mainnet":
@@ -542,5 +551,6 @@ function loadEnvs<T extends Network>(
   return {
     executionClient: executionClient as ExecutionClient<T>,
     consensusClient: consensusClient as ConsensusClient<T>,
+    isMevBoostSet: isMevBoostSet,
   };
 }
