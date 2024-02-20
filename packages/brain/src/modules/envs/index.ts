@@ -165,8 +165,8 @@ export function loadStakerConfig(): {
         break;
       case "nimbus-gnosis.dnp.dappnode.eth":
         token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
-        beaconchainUrl = `http://beacon-chain.nimbus-gnosis.dappnode:3500`;
-        validatorUrl = `http://validator.nimbus-gnosis.dappnode:3500`;
+        beaconchainUrl = `http://beacon-validator.nimbus-gnosis.dappnode:4500`;
+        validatorUrl = `http://beacon-validator.nimbus-gnosis.dappnode:3500`;
         break;
       case "teku-gnosis.dnp.dappnode.eth":
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
