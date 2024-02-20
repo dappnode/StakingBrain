@@ -15,7 +15,10 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Tooltip,
+  Checkbox,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import {
   CustomValidatorGetResponse,
@@ -64,6 +67,7 @@ export default function FeeRecipientDialog({
   const [isUnsubUnderstood, setIsUnsubUnderstood] = useState(false);
   const [nonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<NonEcdsaValidatorsData[]>([]);
   const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<string[]>([]);
+  const [withdrawalAccessCheck, setWithdrawalAccessCheck] = useState(false);
 
   useEffect(() => {
     isAnyWithdrawalCredentialsDiff("ecdsa") && getNonEcdsaValidatorsData();
@@ -191,12 +195,12 @@ export default function FeeRecipientDialog({
       .map((rowId) => rows[+rowId].feeRecipient)
       .flat();
 
-      return (
-        mevSpAddress !== null &&
-        oldFeeRecipients.includes(mevSpAddress) &&
-        isNewFeeRecipientValid() &&
-        newFeeRecipient !== mevSpAddress
-      );
+    return (
+      mevSpAddress !== null &&
+      oldFeeRecipients.includes(mevSpAddress) &&
+      isNewFeeRecipientValid() &&
+      newFeeRecipient !== mevSpAddress
+    );
   }
 
   function isNewFeeRecipientValid() {
@@ -308,19 +312,22 @@ export default function FeeRecipientDialog({
             Take me to Smooth's website
           </Button>
         </Box>
-        <FormControlLabel
-          control={
-            <Switch onChange={() => setIsUnsubUnderstood(!isUnsubUnderstood)} />
-          }
-          label={
-            <Typography component="div">
-              By checking this I understand that being subscribed to Smooth
-              while having a wrong fee recipient can result in my validators
-              getting banned from it.
-            </Typography>
-          }
-          checked={isUnsubUnderstood}
-        />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Checkbox
+            checked={isUnsubUnderstood}
+            onChange={() => setIsUnsubUnderstood(!isUnsubUnderstood)}
+          />
+          <span style={{ fontSize: 13 }}>
+            By checking this I understand that being subscribed to Smooth while
+            having a wrong fee recipient can result in my validators getting
+            banned from it.
+          </span>
+        </div>
       </>
     );
   }
@@ -358,27 +365,66 @@ export default function FeeRecipientDialog({
         );
 
       case "subSmoothStep1Alert":
+        //TODO: change a tag href to landing page's url when this been finished
         return (
-          <Alert severity="info" sx={{ marginY: 1 }}>
-            You are setting the fee recipient to the Smooth Address. Doing this
-            will mean that you will be <b>automatically subscribed</b> to Smooth{" "}
-            <b>after you propose your next block</b>.
-          </Alert>
+          <>
+            <Alert severity="info" sx={{ marginY: 1 }}>
+              By setting the fee recipient to Smooth you are participating in
+              the smoothing pool. You will be able to claim your rewards{" "}
+              <Tooltip
+                placement="top"
+                title={
+                  <p style={{ fontSize: 12 }}>
+                    You don't need to change your withdrawal address, but you
+                    must have access to it to recieve rewards from Smooth.
+                    <br /> <br />
+                    You will need to log in to Smooth UI from your Withdrawal
+                    address.
+                    <br /> <br /> EigenPods are not currently supported as they
+                    can't recieve Execution Layer rewards.
+                  </p>
+                }
+                arrow
+              >
+                <b>
+                  <u>
+                    to your withdrawal address
+                    <InfoOutlinedIcon fontSize="small" />
+                  </u>
+                </b>
+              </Tooltip>{" "}
+              from the Smooth UI.{" "}
+              <a href={getSmoothUrlByNetwork(network)} target="_blank">Learn more</a>
+            </Alert>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Checkbox
+                checked={withdrawalAccessCheck}
+                onChange={() => {
+                  setWithdrawalAccessCheck(!withdrawalAccessCheck);
+                }}
+              />
+              <span style={{ fontSize: 13 }}>
+                I understand I must have access to the withdrawal address to
+                recieve Smooth rewards
+              </span>
+            </div>
+          </>
         );
 
       case "subSmoothStep2Alert":
         return (
           <Alert severity="info" sx={{ marginY: 2 }}>
-            You have successfully changed your fee recipient to Smooth. Your
-            validator will be{" "}
-            <b>automatically subscribed once it proposes a block</b>.
-            <p>
-              To start accumulating rewards right now, <b>subscribe manually</b>{" "}
-              through{" "}
-              <a href={getSmoothUrlByNetwork(network)} target="_blank">
-                <b>Smooth's webpage!</b>
-              </a>
-            </p>
+            You have changed your fee recipient to Smooth. To{" "}
+            <b>start accumulating rewards</b> right now,{" "}
+            <b>subscribe manually</b> thorugh Smooth's webpage.
+            <br /> In the Smooth web you can see pending rewards, claim them and
+            manage your Smooth validators.
           </Alert>
         );
 
@@ -455,9 +501,11 @@ export default function FeeRecipientDialog({
                 (validator) => validator.withdrawalFormat === "error"
               ).length
             }{" "}
-            of the selected validators' withdrawal address format could not be checked. Please,{" "}
-    <b>make sure your consensus client is up and working!</b> This may also happen if some validators are new to the chain.
-    Affected validator's public keys:
+            of the selected validators' withdrawal address format could not be
+            checked. Please,{" "}
+            <b>make sure your consensus client is up and working!</b> This may
+            also happen if some validators are new to the chain. Affected
+            validator's public keys:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat === "error")
