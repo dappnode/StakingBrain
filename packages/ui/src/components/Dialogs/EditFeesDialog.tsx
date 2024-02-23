@@ -106,7 +106,7 @@ export default function FeeRecipientDialog({
     if (
       mevSpAddress &&
       !isMevSpAddressSelected &&
-      event.target.value === mevSpAddress
+      event.target.value.toLowerCase() === mevSpAddress.toLocaleLowerCase()
     ) {
       switchSetMevSpAddress();
     } else {
