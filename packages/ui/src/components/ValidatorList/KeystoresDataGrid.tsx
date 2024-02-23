@@ -9,6 +9,8 @@ import {
   MAINNET_ORACLE_URL,
   TESTNET_ORACLE_URL,
   SmoothValidator,
+  nonEditableFeeRecipientTags,
+  NonEditableFeeRecipientTag,
 } from "@stakingbrain/common";
 import SmoothStatus from "./SmoothStatus";
 import { GridColDef } from "@mui/x-data-grid";
@@ -453,6 +455,15 @@ export default function KeystoresDataGrid({
     );
   }
 
+  function areAllSelectedRowsUneditable() {
+    return selectedRows.every((row) => {
+      const tag = rows[row as number].tag;
+      return nonEditableFeeRecipientTags.includes(
+        tag as NonEditableFeeRecipientTag
+      );
+    });
+  }
+
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -479,7 +490,7 @@ export default function KeystoresDataGrid({
 
           <Tooltip title="Edit validators fee recipient">
             <IconButton
-              disabled={!areRowsSelected}
+              disabled={!areRowsSelected || areAllSelectedRowsUneditable()}
               onClick={() => setEditFeesOpen(true)}
             >
               <EditIcon />
