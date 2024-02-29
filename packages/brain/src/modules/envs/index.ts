@@ -99,7 +99,7 @@ export function loadStakerConfig(): {
     }
     switch (consensusClient) {
       case "prysm.dnp.dappnode.eth":
-        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Dg9ESJIbTPgG2tMPQ8pUP8aCcWpUMVHUt0JxomEGE48`;
         validatorUrl = `http://validator.prysm.dappnode:3500`;
         beaconchainUrl = `http://beacon-chain.prysm.dappnode:3500`;
         break;
@@ -161,7 +161,7 @@ export function loadStakerConfig(): {
     }
     switch (consensusClient) {
       case "gnosis-beacon-chain-prysm.dnp.dappnode.eth":
-        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Dg9ESJIbTPgG2tMPQ8pUP8aCcWpUMVHUt0JxomEGE48`;
         beaconchainUrl = `http://beacon-chain.gnosis-beacon-chain-prysm.dappnode:3500`;
         validatorUrl = `http://validator.gnosis-beacon-chain-prysm.dappnode:3500`;
         break;
@@ -228,7 +228,7 @@ export function loadStakerConfig(): {
     }
     switch (consensusClient) {
       case "prysm-prater.dnp.dappnode.eth":
-        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Dg9ESJIbTPgG2tMPQ8pUP8aCcWpUMVHUt0JxomEGE48`;
         beaconchainUrl = `http://beacon-chain.prysm-prater.dappnode:3500`;
         validatorUrl = `http://validator.prysm-prater.dappnode:3500`;
         break;
@@ -290,7 +290,7 @@ export function loadStakerConfig(): {
     }
     switch (consensusClient) {
       case "prysm-lukso.dnp.dappnode.eth":
-        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Dg9ESJIbTPgG2tMPQ8pUP8aCcWpUMVHUt0JxomEGE48`;
         beaconchainUrl = `http://beacon-chain.prysm-lukso.dappnode:3500`;
         validatorUrl = `http://validator.prysm-lukso.dappnode:3500`;
         break;
@@ -358,7 +358,7 @@ export function loadStakerConfig(): {
     }
     switch (consensusClient) {
       case "prysm-holesky.dnp.dappnode.eth":
-        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`;
+        token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Dg9ESJIbTPgG2tMPQ8pUP8aCcWpUMVHUt0JxomEGE48`;
         beaconchainUrl = `http://beacon-chain.prysm-holesky.dappnode:3500`;
         validatorUrl = `http://validator.prysm-holesky.dappnode:3500`;
         break;
