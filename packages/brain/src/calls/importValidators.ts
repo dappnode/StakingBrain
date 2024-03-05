@@ -120,16 +120,18 @@ export async function importValidators(
 
     //Iterate over pubkeysToPost with index and pubkey
     for (const [index, pubkey] of pubkeysToPostIterator) {
-      if (web3signerPostResponse.data[index].status === "error") {
+      const postStatus = web3signerPostResponse.data[index].status;
+
+      if (postStatus === "error") {
         web3signerPostResponse.data[index].message +=
           ". Check that the keystore file format is valid and the password is correct.";
         logger.error(
           `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${web3signerPostResponse.data[index].message
           }`
         );
-      } else if (web3signerPostResponse.data[index].status === "duplicate") {
+      } else if (postStatus === "duplicate") {
         logger.warn(`Duplicate keystore for pubkey ${shortenPubkey(pubkey)}`);
-      } else if (web3signerPostResponse.data[index].status === "imported") {
+      } else if (postStatus === "imported") {
         validatorsToPost.push(validators[index]);
       }
     }

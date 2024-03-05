@@ -116,11 +116,13 @@ export class ValidatorApi extends StandardApi {
       remoteKeys.remote_keys = remoteKeys.remote_keys.map((k) => {
         return { pubkey: prefix0xPubkey(k.pubkey), url: k.url };
       });
-      return (await this.request({
+      const response = (await this.request({
         method: "POST",
         endpoint: this.remoteKeymanagerEndpoint,
         body: JSON.stringify(remoteKeys)
       })) as ValidatorPostRemoteKeysResponse;
+
+      return this.toLowerCaseStatus(response);
     } catch (e) {
       e.message += `Error posting (POST) remote keys to validator. `;
       throw e;
@@ -137,14 +139,29 @@ export class ValidatorApi extends StandardApi {
     try {
       // Make sure all pubkeys are prefixed with 0x
       pubkeys.pubkeys = pubkeys.pubkeys.map((k) => prefix0xPubkey(k));
-      return (await this.request({
+      const response = (await this.request({
         method: "DELETE",
         endpoint: this.remoteKeymanagerEndpoint,
         body: JSON.stringify(pubkeys)
       })) as ValidatorDeleteRemoteKeysResponse;
+
+      return this.toLowerCaseStatus(response);
     } catch (e) {
       e.message += `Error deleting (DELETE) remote keys from validator. `;
       throw e;
     }
+  }
+
+  /**
+ * Converts the status to lowercase for Web3SignerPostResponse and Web3SignerDeleteResponse
+ */
+  private toLowerCaseStatus<T extends ValidatorPostRemoteKeysResponse | ValidatorDeleteRemoteKeysResponse>(validatorResponse: T): T {
+    return {
+      ...validatorResponse,
+      data: validatorResponse.data.map((item) => ({
+        ...item,
+        status: item.status.toLowerCase()
+      })),
+    } as T;
   }
 }
