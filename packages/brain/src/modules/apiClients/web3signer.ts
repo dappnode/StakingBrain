@@ -5,9 +5,11 @@ import {
   Web3signerDeleteResponse,
   Web3signerGetResponse,
   Web3signerHealthcheckResponse,
+  Web3signerPostSignDappnodeRequest,
   prefix0xPubkey,
   Web3SignerPostSignvoluntaryexitRequest,
   Web3SignerPostSignvoluntaryexitResponse,
+  Web3signerPostSignDappnodeResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "./standard.js";
 import path from "node:path";
@@ -36,7 +38,7 @@ export class Web3SignerApi extends StandardApi {
   private serverStatusEndpoint = "/healthcheck";
 
   /**
-   *
+   * Signs a voluntary exit for the validator with the specified public key
    */
   public async signVoluntaryExit({
     signerVoluntaryExitRequest,
@@ -54,6 +56,29 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Signs a proof of validation for the validator with the specified public key
+   */
+  public async signDappnodeProofOfValidation({
+    signerDappnodeSignRequest,
+    pubkey,
+  }: {
+    signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest;
+    pubkey: string;
+  }): Promise<Web3signerPostSignDappnodeResponse> {
+    try {
+      return await this.request({
+        method: "POST",
+        endpoint: path.join(this.signEndpoint, pubkey),
+        body: JSON.stringify(signerDappnodeSignRequest),
+        setOrigin: true,
+      });
+    } catch (e) {
+      e.message += `Error signing (POST) proof of validation for validator ${pubkey}. `;
       throw e;
     }
   }

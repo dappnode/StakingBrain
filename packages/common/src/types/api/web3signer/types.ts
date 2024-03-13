@@ -1,5 +1,7 @@
 export type Web3SignerStatus = "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
 
+// keymanager
+
 export interface Web3signerGetResponse {
   data: {
     validating_pubkey: string;
@@ -28,6 +30,9 @@ export interface Web3signerDeleteResponse {
   }[];
   slashing_protection?: string;
 }
+
+// healthcheck
+
 export interface Web3signerHealthcheckResponse {
   status: Web3SignerStatus;
   checks: {
@@ -36,6 +41,8 @@ export interface Web3signerHealthcheckResponse {
   }[];
   outcome: string;
 }
+
+// Signing
 
 export interface Web3SignerPostSignvoluntaryexitRequest {
   type: "VOLUNTARY_EXIT";
@@ -55,5 +62,20 @@ export interface Web3SignerPostSignvoluntaryexitRequest {
 }
 
 export interface Web3SignerPostSignvoluntaryexitResponse {
+  signature: string;
+}
+
+export interface Web3signerPostSignDappnodeRequest {
+  type: "PROOF_OF_VALIDATION";
+  platform: string;
+  timestamp: string;
+}
+
+export interface Web3signerPostSignDappnodeResponse {
+  message: {
+    platform: string;
+    timestamp: string;
+    pubkey: string;
+  };
   signature: string;
 }
