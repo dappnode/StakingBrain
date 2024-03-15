@@ -15,7 +15,7 @@ import {
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
-import { Cron } from "./modules/cron/index.js";
+import { CronJob, ReloadValidators } from "./modules/cron/index.js";
 
 logger.info(`Starting brain...`);
 
@@ -88,19 +88,21 @@ await brainDb.initialize(signerApi, validatorApi);
 logger.debug(brainDb.data);
 
 // CRON
-export const cron = new Cron(
+export const reloadValidatorsCron = new CronJob(
   60 * 1000,
-  signerApi,
-  signerUrl,
-  validatorApi,
-  brainDb
+  new ReloadValidators(
+    signerApi,
+    signerUrl,
+    validatorApi,
+    brainDb
+  ).reloadValidators
 );
-cron.start();
+reloadValidatorsCron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
-  cron.stop();
+  reloadValidatorsCron.stop();
   brainDb.close();
   uiServer.close();
   launchpadServer.close();

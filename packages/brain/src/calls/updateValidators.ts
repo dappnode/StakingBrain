@@ -4,7 +4,7 @@ import {
   isFeeRecipientEditable,
   PubkeyDetails,
 } from "@stakingbrain/common";
-import { cron, brainDb, validatorApi } from "../index.js";
+import { reloadValidatorsCron, brainDb, validatorApi } from "../index.js";
 import logger from "../modules/logger/index.js";
 import { ActionRequestOrigin } from "@stakingbrain/common";
 
@@ -21,7 +21,7 @@ export async function updateValidators(
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    cron.stop();
+    reloadValidatorsCron.stop();
 
     const dbData = brainDb.getData();
 
@@ -30,7 +30,10 @@ export async function updateValidators(
       customValidatorUpdateRequest.filter(
         (validator) =>
           dbData[prefix0xPubkey(validator.pubkey)] &&
-          isFeeRecipientEditable(dbData[prefix0xPubkey(validator.pubkey)].tag, requestFrom)
+          isFeeRecipientEditable(
+            dbData[prefix0xPubkey(validator.pubkey)].tag,
+            requestFrom
+          )
       );
 
     if (editableValidators.length === 0) {
@@ -58,9 +61,9 @@ export async function updateValidators(
         );
 
     // IMPORTANT: start the cron
-    cron.start();
+    reloadValidatorsCron.start();
   } catch (e) {
-    cron.restart();
+    reloadValidatorsCron.restart();
     throw e;
   }
 }
