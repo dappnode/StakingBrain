@@ -1,5 +1,4 @@
 import { setInterval, clearInterval } from "timers";
-
 import logger from "../logger/index.js";
 
 export class CronJob {

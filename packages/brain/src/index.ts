@@ -15,7 +15,12 @@ import {
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
-import { CronJob, ReloadValidators } from "./modules/cron/index.js";
+import {
+  CronJob,
+  ReloadValidators,
+  ProofOfAttestation,
+} from "./modules/cron/index.js";
+import { DappnodeSigningProover } from "./modules/apiClients/dappnodeSigningProover/index.js";
 
 logger.info(`Starting brain...`);
 
@@ -69,6 +74,7 @@ export const beaconchainApi = new Beaconchain(
   { baseUrl: beaconchainUrl },
   network
 );
+export const dappnodeSignerProoverApi = new DappnodeSigningProover(network);
 
 // Create DB instance
 export const brainDb = new BrainDataBase(
@@ -98,11 +104,21 @@ export const reloadValidatorsCron = new CronJob(
   ).reloadValidators
 );
 reloadValidatorsCron.start();
+export const proofOfAttestationCron = new CronJob(
+  60 * 60 * 1000,
+  new ProofOfAttestation(
+    signerApi,
+    brainDb,
+    dappnodeSignerProoverApi
+  ).sendProofOfAttestation
+);
+proofOfAttestationCron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCron.stop();
+  proofOfAttestationCron.stop();
   brainDb.close();
   uiServer.close();
   launchpadServer.close();
