@@ -1,8 +1,10 @@
 import { expect } from "chai";
 import { before } from "mocha";
-import { ValidatorApi } from "../../../../src/modules/apiClients/validator/index.js";
+import {
+  ValidatorApi,
+  Web3SignerApi,
+} from "../../../../src/modules/apiClients/index.js";
 import { execSync } from "node:child_process";
-import { Web3SignerApi } from "../../../../src/modules/apiClients/web3signer/index.js";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import path from "path";
@@ -78,20 +80,26 @@ describe.skip("Cron: Prater", () => {
         )
           .toString()
           .trim();
-        validatorApi = new ValidatorApi({
-          baseUrl: `http://${consensusIp}:3500`,
-          authToken: consensusClient.token,
-        }, stakerSpecs.network);
+        validatorApi = new ValidatorApi(
+          {
+            baseUrl: `http://${consensusIp}:3500`,
+            authToken: consensusClient.token,
+          },
+          stakerSpecs.network
+        );
 
         const signerIp = execSync(
           `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${signerContainerName}`
         )
           .toString()
           .trim();
-        signerApi = new Web3SignerApi({
-          baseUrl: `http://${signerIp}:9000`,
-          host,
-        }, stakerSpecs.network);
+        signerApi = new Web3SignerApi(
+          {
+            baseUrl: `http://${signerIp}:9000`,
+            host,
+          },
+          stakerSpecs.network
+        );
 
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);

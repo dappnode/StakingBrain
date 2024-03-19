@@ -1,9 +1,15 @@
 import { expect } from "chai";
 import { ApiParams, Network } from "@stakingbrain/common";
-import { BeaconchaApi } from "../../../../src/modules/apiClients/beaconcha/index.js";
+import { BeaconchaApi } from "../../../../src/modules/apiClients/index.js";
 
 describe.only("Test for fetching validator indexes in every available network", () => {
-  const networks: Network[] = ["mainnet", "prater", "gnosis", "lukso", "holesky"];
+  const networks: Network[] = [
+    "mainnet",
+    "prater",
+    "gnosis",
+    "lukso",
+    "holesky",
+  ];
 
   networks.forEach((network) => {
     it(`should return data corresponding to every validator PK for ${network}`, async () => {
@@ -28,9 +34,11 @@ describe.only("Test for fetching validator indexes in every available network", 
       // This loop assumes that the API returns validators in the same order as requested.
       // If this assumption is not valid, additional logic is needed to match returned validators to expected values.
       testParams.pubkeys.forEach((pubkey, index) => {
-        const validator = validators.find(v => v.pubkey === pubkey);
+        const validator = validators.find((v) => v.pubkey === pubkey);
         if (!validator) {
-          throw new Error(`Validator with pubkey ${pubkey} not found for ${network}`);
+          throw new Error(
+            `Validator with pubkey ${pubkey} not found for ${network}`
+          );
         }
         expect(validator.validatorindex).to.equal(testParams.indexes[index]);
       });
@@ -87,10 +95,10 @@ const networkTestMap = new Map<
     {
       pubkeys: [
         "0x800000b3884235f70b06fec68c19642fc9e81e34fbe7f1c0ae156b8b45860dfe5ac71037ae561c2a759ba83401488e18",
-        "0x800009f644592de8d2de0da0caca00f26fd6fb3d7f99f57101bbbfb45d4b166f8dbe5fd82b3611e6e90fe323de955bd2"
+        "0x800009f644592de8d2de0da0caca00f26fd6fb3d7f99f57101bbbfb45d4b166f8dbe5fd82b3611e6e90fe323de955bd2",
       ],
       indexes: [886680, 68945],
-    }
+    },
   ],
 ]);
 

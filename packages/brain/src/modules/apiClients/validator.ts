@@ -7,7 +7,7 @@ import {
   ValidatorPostRemoteKeysResponse,
   prefix0xPubkey,
 } from "@stakingbrain/common";
-import { StandardApi } from "../index.js";
+import { StandardApi } from "./standard.js";
 import path from "path";
 
 export class ValidatorApi extends StandardApi {
@@ -37,7 +37,7 @@ export class ValidatorApi extends StandardApi {
           this.feeRecipientEndpoint,
           prefix0xPubkey(publicKey),
           "feerecipient"
-        )
+        ),
       })) as ValidatorGetFeeResponse;
     } catch (e) {
       e.message += `Error getting (GET) fee recipient for pubkey ${publicKey} from validator. `;
@@ -61,7 +61,7 @@ export class ValidatorApi extends StandardApi {
           prefix0xPubkey(publicKey),
           "feerecipient"
         ),
-        body: JSON.stringify({ ethaddress: newFeeRecipient })
+        body: JSON.stringify({ ethaddress: newFeeRecipient }),
       });
     } catch (e) {
       e.message += `Error setting (POST) fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. `;
@@ -81,7 +81,7 @@ export class ValidatorApi extends StandardApi {
           this.feeRecipientEndpoint,
           prefix0xPubkey(publicKey),
           "feerecipient"
-        )
+        ),
       });
     } catch (e) {
       e.message += `Error deleting (DELETE) fee recipient for pubkey ${publicKey} from validator. `;
@@ -97,7 +97,7 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: this.remoteKeymanagerEndpoint
+        endpoint: this.remoteKeymanagerEndpoint,
       })) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
       e.message += `Error getting (GET) remote keys from validator. `;
@@ -119,7 +119,7 @@ export class ValidatorApi extends StandardApi {
       const response = (await this.request({
         method: "POST",
         endpoint: this.remoteKeymanagerEndpoint,
-        body: JSON.stringify(remoteKeys)
+        body: JSON.stringify(remoteKeys),
       })) as ValidatorPostRemoteKeysResponse;
 
       return this.toLowerCaseStatus(response);
@@ -142,7 +142,7 @@ export class ValidatorApi extends StandardApi {
       const response = (await this.request({
         method: "DELETE",
         endpoint: this.remoteKeymanagerEndpoint,
-        body: JSON.stringify(pubkeys)
+        body: JSON.stringify(pubkeys),
       })) as ValidatorDeleteRemoteKeysResponse;
 
       return this.toLowerCaseStatus(response);
@@ -153,14 +153,18 @@ export class ValidatorApi extends StandardApi {
   }
 
   /**
- * Converts the status to lowercase for Web3SignerPostResponse and Web3SignerDeleteResponse
- */
-  private toLowerCaseStatus<T extends ValidatorPostRemoteKeysResponse | ValidatorDeleteRemoteKeysResponse>(validatorResponse: T): T {
+   * Converts the status to lowercase for Web3SignerPostResponse and Web3SignerDeleteResponse
+   */
+  private toLowerCaseStatus<
+    T extends
+      | ValidatorPostRemoteKeysResponse
+      | ValidatorDeleteRemoteKeysResponse
+  >(validatorResponse: T): T {
     return {
       ...validatorResponse,
       data: validatorResponse.data.map((item) => ({
         ...item,
-        status: item.status.toLowerCase()
+        status: item.status.toLowerCase(),
       })),
     } as T;
   }

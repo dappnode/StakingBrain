@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { before } from "mocha";
-import { ValidatorApi } from "../../../../src/modules/apiClients/validator/index.js";
+import { ValidatorApi } from "../../../../src/modules/apiClients/index.js";
 import { execSync } from "node:child_process";
 import { Network } from "@stakingbrain/common";
 
@@ -55,10 +55,13 @@ describe.skip("Validator API: Prater", () => {
         )
           .toString()
           .trim();
-        validatorApi = new ValidatorApi({
-          baseUrl: `http://${consensusIp}:3500`,
-          authToken: consensusClient.token,
-        }, stakerSpecs.network);
+        validatorApi = new ValidatorApi(
+          {
+            baseUrl: `http://${consensusIp}:3500`,
+            authToken: consensusClient.token,
+          },
+          stakerSpecs.network
+        );
       });
 
       it("Should post validators", async () => {

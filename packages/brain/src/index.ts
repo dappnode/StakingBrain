@@ -2,12 +2,16 @@ import path from "path";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import { loadStakerConfig } from "./modules/envs/index.js";
-import { Web3SignerApi } from "./modules/apiClients/web3signer/index.js";
-import { Beaconchain } from "./modules/apiClients/beaconchain/index.js";
-import { BeaconchaApi } from "./modules/apiClients/beaconcha/index.js";
-import { startUiServer } from "./modules/apiServers/ui/index.js";
-import { startLaunchpadApi } from "./modules/apiServers/launchpad/index.js";
-import { ValidatorApi } from "./modules/apiClients/validator/index.js";
+import {
+  Web3SignerApi,
+  Beaconchain,
+  BeaconchaApi,
+  ValidatorApi,
+} from "./modules/apiClients/index.js";
+import {
+  startUiServer,
+  startLaunchpadApi,
+} from "./modules/apiServers/index.js";
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
@@ -41,17 +45,26 @@ logger.debug(
 );
 
 // Create API instances. Must preceed db initialization
-export const signerApi = new Web3SignerApi({
-  baseUrl: signerUrl,
-  authToken: token,
-  host,
-}, network);
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl }, network);
-export const validatorApi = new ValidatorApi({
-  baseUrl: validatorUrl,
-  authToken: token,
-  tlsCert,
-}, network);
+export const signerApi = new Web3SignerApi(
+  {
+    baseUrl: signerUrl,
+    authToken: token,
+    host,
+  },
+  network
+);
+export const beaconchaApi = new BeaconchaApi(
+  { baseUrl: beaconchaUrl },
+  network
+);
+export const validatorApi = new ValidatorApi(
+  {
+    baseUrl: validatorUrl,
+    authToken: token,
+    tlsCert,
+  },
+  network
+);
 export const beaconchainApi = new Beaconchain(
   { baseUrl: beaconchainUrl },
   network

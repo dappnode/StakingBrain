@@ -3,7 +3,7 @@ import { before } from "mocha";
 import path from "path";
 import fs from "fs";
 import { execSync } from "node:child_process";
-import { Web3SignerApi } from "../../../../src/modules/apiClients/web3signer/index.js";
+import { Web3SignerApi } from "../../../../src/modules/apiClients/index.js";
 
 describe.skip("Signer API: Prater", () => {
   const keystoresPath = path.resolve(process.cwd(), "keystores");
@@ -27,10 +27,13 @@ describe.skip("Signer API: Prater", () => {
     )
       .toString()
       .trim();
-    signerApi = new Web3SignerApi({
-      baseUrl: `http://${signerIp}:9000`,
-      host,
-    }, "prater");
+    signerApi = new Web3SignerApi(
+      {
+        baseUrl: `http://${signerIp}:9000`,
+        host,
+      },
+      "prater"
+    );
   });
 
   it("Should post validators", async () => {

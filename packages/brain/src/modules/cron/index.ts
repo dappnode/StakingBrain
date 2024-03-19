@@ -1,7 +1,5 @@
 import { StakingBrainDb } from "@stakingbrain/common";
-import { ApiError } from "../apiClients/error.js";
-import { ValidatorApi } from "../apiClients/validator/index.js";
-import { Web3SignerApi } from "../apiClients/web3signer/index.js";
+import { ValidatorApi, Web3SignerApi, ApiError } from "../apiClients/index.js";
 import { BrainDataBase } from "../db/index.js";
 import logger from "../logger/index.js";
 
@@ -70,7 +68,13 @@ export class Cron {
       // This is done to avoid unintended DB modifications when the API is down.
       // Status can be "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
       if (signerApiStatus.status !== "UP") {
-        logger.warn(`Web3Signer is ${signerApiStatus.status}. Skipping data reload until Web3Signer is UP. Trying again in ${this.defaultInterval / 1000} seconds`);
+        logger.warn(
+          `Web3Signer is ${
+            signerApiStatus.status
+          }. Skipping data reload until Web3Signer is UP. Trying again in ${
+            this.defaultInterval / 1000
+          } seconds`
+        );
         return;
       }
 
