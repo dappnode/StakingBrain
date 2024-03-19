@@ -9,7 +9,7 @@ import {
   Web3SignerPostSignvoluntaryexitRequest,
   Web3SignerPostSignvoluntaryexitResponse,
 } from "@stakingbrain/common";
-import { StandardApi } from "../index.js";
+import { StandardApi } from "./standard.js";
 import path from "node:path";
 
 /**

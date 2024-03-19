@@ -1,4 +1,4 @@
-import { StandardApi } from "../index.js";
+import { StandardApi } from "./standard.js";
 import { BeaconchaGetResponse } from "@stakingbrain/common";
 
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
@@ -44,7 +44,10 @@ export class BeaconchaApi extends StandardApi {
     const endpoint = `/api/v1/validator/${pubkeys.join(",")}`;
 
     try {
-      return (await this.request({ method: "GET", endpoint })) as BeaconchaGetResponse;
+      return (await this.request({
+        method: "GET",
+        endpoint,
+      })) as BeaconchaGetResponse;
     } catch (e) {
       e.message += "Error on getting indexes for validator public keys";
       throw e;

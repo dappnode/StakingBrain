@@ -11,8 +11,7 @@ import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
 import logger from "../logger/index.js";
-import { Web3SignerApi } from "../apiClients/web3signer/index.js";
-import { ValidatorApi } from "../apiClients/validator/index.js";
+import { Web3SignerApi, ValidatorApi } from "../apiClients/index.js";
 import { params } from "../../params.js";
 
 // TODO:

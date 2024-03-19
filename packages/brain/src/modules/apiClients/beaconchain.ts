@@ -7,7 +7,7 @@ import {
   Network,
   ApiParams,
 } from "@stakingbrain/common";
-import { StandardApi } from "../index.js";
+import { StandardApi } from "./standard.js";
 import path from "path";
 
 export class Beaconchain extends StandardApi {
@@ -32,8 +32,12 @@ export class Beaconchain extends StandardApi {
     try {
       await this.request({
         method: "POST",
-        endpoint: path.join(this.beaconchainEndpoint, "pool", "voluntary_exits"),
-        body: JSON.stringify(postVoluntaryExitsRequest)
+        endpoint: path.join(
+          this.beaconchainEndpoint,
+          "pool",
+          "voluntary_exits"
+        ),
+        body: JSON.stringify(postVoluntaryExitsRequest),
       });
     } catch (e) {
       e.message += `Error posting (POST) voluntary exits to beaconchain. `;
@@ -49,7 +53,7 @@ export class Beaconchain extends StandardApi {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "genesis")
+        endpoint: path.join(this.beaconchainEndpoint, "genesis"),
       })) as BeaconchainGenesisGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) genesis from beaconchain. `;
@@ -70,7 +74,12 @@ export class Beaconchain extends StandardApi {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "states", state_id, "fork")
+        endpoint: path.join(
+          this.beaconchainEndpoint,
+          "states",
+          state_id,
+          "fork"
+        ),
       })) as BeaconchainForkFromStateGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) fork from beaconchain. `;
@@ -100,7 +109,7 @@ export class Beaconchain extends StandardApi {
           state,
           "validators",
           pubkey
-        )
+        ),
       })) as BeaconchainValidatorFromStateGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) validator from beaconchain. `;
@@ -130,7 +139,7 @@ export class Beaconchain extends StandardApi {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "headers", block_id)
+        endpoint: path.join(this.beaconchainEndpoint, "headers", block_id),
       })) as BeaconchainBlockHeaderGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) block header from beaconchain. `;
