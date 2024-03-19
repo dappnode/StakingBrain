@@ -13,7 +13,7 @@ import {
   STADER_POOL_FEE_RECIPIENT_PRATER,
 } from "@stakingbrain/common";
 import {
-  cron,
+  reloadValidatorsCron,
   network,
   signerApi,
   validatorApi,
@@ -46,7 +46,7 @@ export async function importValidators(
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    cron.stop();
+    reloadValidatorsCron.stop();
 
     const validators: ValidatorImportRequest[] = [];
     const validatorsToPost: ValidatorImportRequest[] = [];
@@ -62,13 +62,13 @@ export async function importValidators(
       try {
         const feeRecipient =
           !["gnosis", "lukso"].includes(network) &&
-            !isFeeRecipientEditable(validator.tag, postRequest.importFrom)
+          !isFeeRecipientEditable(validator.tag, postRequest.importFrom)
             ? await getNonEditableFeeRecipient(
-              pubkey,
-              validator.tag as NonEditableFeeRecipientTag,
-              network,
-              validator.feeRecipient
-            )
+                pubkey,
+                validator.tag as NonEditableFeeRecipientTag,
+                network,
+                validator.feeRecipient
+              )
             : validator.feeRecipient;
 
         logger.info(`Setting ${feeRecipient} as fee recipient for ${pubkey}`);
@@ -126,7 +126,8 @@ export async function importValidators(
         web3signerPostResponse.data[index].message +=
           ". Check that the keystore file format is valid and the password is correct.";
         logger.error(
-          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${web3signerPostResponse.data[index].message
+          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
+            web3signerPostResponse.data[index].message
           }`
         );
       } else if (postStatus === "duplicate") {
@@ -140,7 +141,7 @@ export async function importValidators(
     web3signerPostResponse.data.push(...wrongFeeRecipientResponse);
 
     if (validatorsToPost.length === 0) {
-      cron.start();
+      reloadValidatorsCron.start();
       return web3signerPostResponse;
     }
 
@@ -191,10 +192,10 @@ export async function importValidators(
     );
 
     // IMPORTANT: start the cron
-    cron.start();
+    reloadValidatorsCron.start();
     return web3signerPostResponse;
   } catch (e) {
-    cron.restart();
+    reloadValidatorsCron.restart();
     throw e;
   }
 }

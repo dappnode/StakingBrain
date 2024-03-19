@@ -7,6 +7,7 @@ import {
   Beaconchain,
   BeaconchaApi,
   ValidatorApi,
+  DappnodeSigningProover,
 } from "./modules/apiClients/index.js";
 import {
   startUiServer,
@@ -15,7 +16,11 @@ import {
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
-import { Cron } from "./modules/cron/index.js";
+import {
+  CronJob,
+  ReloadValidators,
+  ProofOfAttestation,
+} from "./modules/cron/index.js";
 
 logger.info(`Starting brain...`);
 
@@ -69,6 +74,7 @@ export const beaconchainApi = new Beaconchain(
   { baseUrl: beaconchainUrl },
   network
 );
+export const dappnodeSignerProoverApi = new DappnodeSigningProover(network);
 
 // Create DB instance
 export const brainDb = new BrainDataBase(
@@ -88,19 +94,31 @@ await brainDb.initialize(signerApi, validatorApi);
 logger.debug(brainDb.data);
 
 // CRON
-export const cron = new Cron(
+export const reloadValidatorsCron = new CronJob(
   60 * 1000,
-  signerApi,
-  signerUrl,
-  validatorApi,
-  brainDb
+  new ReloadValidators(
+    signerApi,
+    signerUrl,
+    validatorApi,
+    brainDb
+  ).reloadValidators
 );
-cron.start();
+reloadValidatorsCron.start();
+export const proofOfAttestationCron = new CronJob(
+  60 * 60 * 1000,
+  new ProofOfAttestation(
+    signerApi,
+    brainDb,
+    dappnodeSignerProoverApi
+  ).sendProofOfAttestation
+);
+proofOfAttestationCron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
-  cron.stop();
+  reloadValidatorsCron.stop();
+  proofOfAttestationCron.stop();
   brainDb.close();
   uiServer.close();
   launchpadServer.close();

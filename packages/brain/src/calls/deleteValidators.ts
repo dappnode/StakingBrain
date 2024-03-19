@@ -2,7 +2,12 @@ import {
   Web3signerDeleteRequest,
   Web3signerDeleteResponse,
 } from "@stakingbrain/common";
-import { cron, validatorApi, signerApi, brainDb } from "../index.js";
+import {
+  reloadValidatorsCron,
+  validatorApi,
+  signerApi,
+  brainDb,
+} from "../index.js";
 import logger from "../modules/logger/index.js";
 
 /**
@@ -20,7 +25,7 @@ export async function deleteValidators(
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are deleting validators
-    cron.stop();
+    reloadValidatorsCron.stop();
 
     // Delete feeRecipient on Validator API
     for (const pubkey of deleteRequest.pubkeys)
@@ -45,10 +50,10 @@ export async function deleteValidators(
     brainDb.deleteValidators(deleteRequest.pubkeys);
 
     // IMPORTANT: start the cron
-    cron.start();
+    reloadValidatorsCron.start();
     return web3signerDeleteResponse;
   } catch (e) {
-    cron.restart();
+    reloadValidatorsCron.restart();
     throw e;
   }
 }

@@ -8,7 +8,7 @@ import { execSync } from "node:child_process";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import path from "path";
-import { Cron } from "../../../../src/modules/cron/index.js";
+import { ReloadValidators } from "../../../../src/modules/cron/index.js";
 import { Network, PubkeyDetails } from "@stakingbrain/common";
 
 describe.skip("Cron: Prater", () => {
@@ -65,7 +65,7 @@ describe.skip("Cron: Prater", () => {
       let validatorApi: ValidatorApi;
       let signerApi: Web3SignerApi;
       let brainDb: BrainDataBase;
-      let cron: Cron;
+      let reloadValidators: ReloadValidators;
 
       const testDbName = "testDb.json";
 
@@ -104,8 +104,7 @@ describe.skip("Cron: Prater", () => {
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);
 
-        cron = new Cron(
-          60 * 1000,
+        reloadValidators = new ReloadValidators(
           signerApi,
           `http://${signerIp}:9000`,
           validatorApi,
@@ -144,7 +143,7 @@ describe.skip("Cron: Prater", () => {
         });
 
         //Check that fee recipient has changed in validator
-        await cron.reloadValidators();
+        await reloadValidators.reloadValidators();
 
         const validatorFeeRecipient = await validatorApi.getFeeRecipient(
           pubkeyToTest
@@ -158,7 +157,7 @@ describe.skip("Cron: Prater", () => {
         addSampleValidatorsToDB(1);
         await addSampleKeystoresToSigner(2);
 
-        await cron.reloadValidators();
+        await reloadValidators.reloadValidators();
 
         const signerPubkeys = await signerApi.getKeystores();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -175,7 +174,7 @@ describe.skip("Cron: Prater", () => {
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(1);
 
-        await cron.reloadValidators();
+        await reloadValidators.reloadValidators();
 
         const signerPubkeys = await signerApi.getKeystores();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -195,7 +194,7 @@ describe.skip("Cron: Prater", () => {
         brainDb.deleteValidators([pubkeys[0]]);
         await signerApi.deleteKeystores({ pubkeys: [pubkeys[1]] });
 
-        await cron.reloadValidators();
+        await reloadValidators.reloadValidators();
 
         const signerPubkeys = await signerApi.getKeystores();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -208,7 +207,7 @@ describe.skip("Cron: Prater", () => {
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(2);
 
-        await cron.reloadValidators();
+        await reloadValidators.reloadValidators();
 
         const signerPubkeys = await signerApi.getKeystores();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -226,7 +225,7 @@ describe.skip("Cron: Prater", () => {
 
         console.log("Added pubkeys to validator");
 
-        await cron.reloadValidators();
+        await reloadValidators.reloadValidators();
 
         console.log("Validators reloaded");
 
@@ -243,7 +242,7 @@ describe.skip("Cron: Prater", () => {
 
         const pubkeysToTest = pubkeys.slice(0, 2);
 
-        await cron.reloadValidators();
+        await reloadValidators.reloadValidators();
 
         const validatorPubkeys = await validatorApi.getRemoteKeys();
 
