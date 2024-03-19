@@ -1,8 +1,8 @@
 import { Web3signerPostSignDappnodeResponse } from "@stakingbrain/common";
-import { Web3SignerApi } from "../apiClients/web3signer/index.js";
+import { Web3SignerApi } from "../apiClients/index.js";
 import { BrainDataBase } from "../db/index.js";
 import logger from "../logger/index.js";
-import { DappnodeSigningProover } from "../apiClients/dappnodeSigningProover/index.js";
+import { DappnodeSigningProover } from "../apiClients/dappnodeSignerProover.js";
 
 export class ProofOfAttestation {
   private signerApi: Web3SignerApi;

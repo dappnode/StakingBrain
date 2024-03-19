@@ -7,6 +7,7 @@ import {
   Beaconchain,
   BeaconchaApi,
   ValidatorApi,
+  DappnodeSigningProover,
 } from "./modules/apiClients/index.js";
 import {
   startUiServer,
@@ -20,7 +21,6 @@ import {
   ReloadValidators,
   ProofOfAttestation,
 } from "./modules/cron/index.js";
-import { DappnodeSigningProover } from "./modules/apiClients/dappnodeSigningProover/index.js";
 
 logger.info(`Starting brain...`);
 

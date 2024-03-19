@@ -1,4 +1,4 @@
-import { StandardApi } from "../index.js";
+import { StandardApi } from "./index.js";
 import path from "path";
 import {
   Network,
