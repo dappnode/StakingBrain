@@ -39,6 +39,7 @@ export const nonEditableFeeRecipientTags = [
   "rocketpool",
   "stakehouse",
   "stader",
+  "stakewise"
 ] as const;
 
 export type NonEditableFeeRecipientTag =
