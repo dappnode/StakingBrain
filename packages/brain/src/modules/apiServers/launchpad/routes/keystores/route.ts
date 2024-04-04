@@ -5,6 +5,7 @@ import { importValidators } from "../../../../../calls/index.js";
 import { BrainKeystoreImportRequest } from "../../types.js";
 import { validateDeleteRequestBody, validateImportKeystoresRequestBody } from "./validation.js";
 import logger from "../../../../logger/index.js";
+import { signerApi } from "../../../../../index.js";
 
 const keystoresRouter = express.Router();
 
@@ -57,6 +58,17 @@ keystoresRouter.delete(keystoresEndpoint, async (req, res) => {
         const deleteResponse = await deleteValidators(deleteRequest);
 
         res.status(200).send(deleteResponse);
+    } catch (e) {
+        logger.error(e);
+        res.status(500).send({ message: "Internal server error" });
+    }
+});
+
+keystoresRouter.get(keystoresEndpoint, async (_req, res) => {
+    try {
+        const getResponse = await signerApi.getKeystores();
+
+        res.status(200).send(getResponse);
     } catch (e) {
         logger.error(e);
         res.status(500).send({ message: "Internal server error" });
