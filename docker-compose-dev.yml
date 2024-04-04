@@ -8,16 +8,15 @@ services:
     volumes:
       - .:/app
     environment:
-      - NETWORK=prater
-      - _DAPPNODE_CONSENSUS_CLIENT_PRATER=prysm-prater.dnp.dappnode.eth
-      - _DAPPNODE_EXECUTION_CLIENT_PRATER_VERSION=goerli-geth.dnp.dappnode.eth
-      - _DAPPNODE_GLOBAL_MEVBOOST_MAINNET=false
-      - _DAPPNODE_GLOBAL_MEVBOOST_PRATER=false
+      - NETWORK=holesky
+      - _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOLESKY=prysm-holesky.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_EXECUTION_CLIENT_HOLESKY=holesky-nethermind.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_MEVBOOST_HOLESKY=false
 
     networks:
       dncore_network:
         aliases:
-          - brain.web3signer-prater.dappnode
+          - brain.web3signer-holesky.dappnode
 
 networks:
   dncore_network:
