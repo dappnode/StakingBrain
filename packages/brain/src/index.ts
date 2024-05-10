@@ -43,6 +43,9 @@ export const {
   signerUrl,
   token,
   host,
+  shareDataWithDappnode,
+  validatorsMonitorUrl,
+  shareCronInterval,
   tlsCert,
 } = loadStakerConfig();
 logger.debug(
@@ -74,7 +77,10 @@ export const beaconchainApi = new Beaconchain(
   { baseUrl: beaconchainUrl },
   network
 );
-export const dappnodeSignerProoverApi = new DappnodeSigningProover(network);
+export const dappnodeSignerProoverApi = new DappnodeSigningProover(
+  network,
+  validatorsMonitorUrl
+);
 
 // Create DB instance
 export const brainDb = new BrainDataBase(
@@ -104,15 +110,15 @@ export const reloadValidatorsCron = new CronJob(
   ).reloadValidators
 );
 reloadValidatorsCron.start();
-export const proofOfAttestationCron = new CronJob(
-  60 * 60 * 1000,
+const proofOfAttestationCron = new CronJob(
+  shareCronInterval,
   new ProofOfAttestation(
     signerApi,
     brainDb,
     dappnodeSignerProoverApi
   ).sendProofOfAttestation
 );
-proofOfAttestationCron.start();
+if (shareDataWithDappnode) proofOfAttestationCron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {

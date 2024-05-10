@@ -58,6 +58,9 @@ export function loadStakerConfig(): {
   signerUrl: string;
   token: string;
   host: string;
+  shareDataWithDappnode: boolean;
+  validatorsMonitorUrl: string;
+  shareCronInterval: number;
   tlsCert?: Buffer;
 } {
   const network = process.env.NETWORK as Network;
@@ -69,6 +72,15 @@ export function loadStakerConfig(): {
       )}`
     );
 
+  const shareDataWithDappnode = process.env.SHARE_DATA_WITH_DAPPNODE === "true";
+  const validatorsMonitorUrl = process.env.VALIDATORS_MONITOR_URL || "";
+  const shareCronInterval = parseInt(process.env.SHARE_CRON_INTERVAL || "");
+  if (shareDataWithDappnode && (!validatorsMonitorUrl || !shareCronInterval)) {
+    throw Error(
+      "SHARE_DATA_WITH_DAPPNODE is true, but VALIDATORS_MONITOR_URL or SHARE_CRON_INTERVAL are not set"
+    );
+  }
+
   const certDir = path.join(__dirname, params.certDirName);
 
   let executionClientUrl: string,
@@ -78,7 +90,8 @@ export function loadStakerConfig(): {
     tlsCert: Buffer | undefined;
 
   if (network === "mainnet") {
-    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("mainnet");
+    const { executionClient, consensusClient, isMevBoostSet } =
+      loadEnvs("mainnet");
     switch (executionClient) {
       case "geth.dnp.dappnode.eth":
         executionClientUrl = `http://geth.dappnode:8545`;
@@ -143,10 +156,14 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer.dappnode:9000`,
       token,
       host: `brain.web3signer.dappnode`,
+      shareDataWithDappnode,
+      validatorsMonitorUrl,
+      shareCronInterval,
       tlsCert,
     };
   } else if (network === "gnosis") {
-    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("gnosis");
+    const { executionClient, consensusClient, isMevBoostSet } =
+      loadEnvs("gnosis");
     switch (executionClient) {
       case "nethermind-xdai.dnp.dappnode.eth":
         executionClientUrl = `http://nethermind-xdai.dappnode:8545`;
@@ -205,10 +222,14 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-gnosis.dappnode:9000`,
       token,
       host: `brain.web3signer-gnosis.dappnode`,
+      shareDataWithDappnode,
+      validatorsMonitorUrl,
+      shareCronInterval,
       tlsCert,
     };
   } else if (network === "prater") {
-    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("prater");
+    const { executionClient, consensusClient, isMevBoostSet } =
+      loadEnvs("prater");
     switch (executionClient) {
       case "goerli-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://goerli-nethermind.dappnode:8545`;
@@ -273,10 +294,14 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-prater.dappnode:9000`,
       token,
       host: `web3signer.web3signer-prater.dappnode`,
+      shareDataWithDappnode,
+      validatorsMonitorUrl,
+      shareCronInterval,
       tlsCert,
     };
   } else if (network === "lukso") {
-    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("lukso");
+    const { executionClient, consensusClient, isMevBoostSet } =
+      loadEnvs("lukso");
     switch (executionClient) {
       case "lukso-erigon.dnp.dappnode.eth":
         executionClientUrl = `http://lukso-erigon.dappnode:8545`;
@@ -335,10 +360,14 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-lukso.dappnode:9000`,
       token,
       host: `web3signer.web3signer-lukso.dappnode`,
+      shareDataWithDappnode,
+      validatorsMonitorUrl,
+      shareCronInterval,
       tlsCert,
     };
   } else if (network === "holesky") {
-    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("holesky");
+    const { executionClient, consensusClient, isMevBoostSet } =
+      loadEnvs("holesky");
     switch (executionClient) {
       case "holesky-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://holesky-nethermind.dappnode:8545`;
@@ -403,6 +432,9 @@ export function loadStakerConfig(): {
       signerUrl: `http://web3signer.web3signer-holesky.dappnode:9000`,
       token,
       host: `web3signer.web3signer-holesky.dappnode`,
+      shareDataWithDappnode,
+      validatorsMonitorUrl,
+      shareCronInterval,
       tlsCert,
     };
   } else {
@@ -428,7 +460,8 @@ function loadEnvs<T extends Network>(
   const consensusClient =
     process.env[`_DAPPNODE_GLOBAL_CONSENSUS_CLIENT_${network.toUpperCase()}`];
   const isMevBoostSet =
-    process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`] === "true";
+    process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`] ===
+    "true";
 
   switch (network) {
     case "mainnet":

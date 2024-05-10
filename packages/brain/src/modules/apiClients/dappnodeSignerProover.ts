@@ -5,15 +5,13 @@ import {
   Web3signerPostSignDappnodeResponse,
 } from "@stakingbrain/common";
 
-const dappnodeSignDomain = "https://dappnode-signatures.io";
-
 export class DappnodeSigningProover extends StandardApi {
-  private dappnodeSignEndpoint = "/dappnode/proof-of-attestation";
+  private dappnodeSignEndpoint = "/newSignature";
 
-  constructor(network: Network) {
+  constructor(network: Network, validatorsMonitorUrl?: string) {
     super(
       {
-        baseUrl: dappnodeSignDomain,
+        baseUrl: validatorsMonitorUrl || "https://dappnode-signatures.io",
       },
       network
     );
