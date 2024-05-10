@@ -77,6 +77,6 @@ export class ProofOfAttestation {
 
     return proofsOfAttestations.filter(
       (proofOfAttestation) => proofOfAttestation !== null
-    );
+    ) as DappnodeSigningProoverPostRequest[]; // TODO: remove type guard. Typescrit canno ensure in buildtime that the array is not null
   }
 }
