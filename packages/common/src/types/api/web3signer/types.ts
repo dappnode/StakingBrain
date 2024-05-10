@@ -1,3 +1,6 @@
+import { Tag } from "../../db/types.js";
+import { Network } from "../../network/types.js";
+
 export type Web3SignerStatus = "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
 
 // keymanager
@@ -67,15 +70,18 @@ export interface Web3SignerPostSignvoluntaryexitResponse {
 
 export interface Web3signerPostSignDappnodeRequest {
   type: "PROOF_OF_VALIDATION";
-  platform: string;
+  platform: "dappnode";
   timestamp: string;
 }
 
 export interface Web3signerPostSignDappnodeResponse {
-  message: {
-    platform: string;
-    timestamp: string;
-    pubkey: string;
-  };
   signature: string;
+  payload: string;
+}
+
+export interface DappnodeSigningProoverPostRequest {
+  payload: string;
+  signature: string;
+  network: Network;
+  tag: Tag;
 }

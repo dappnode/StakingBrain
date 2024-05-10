@@ -2,7 +2,7 @@ import { StandardApi } from "./index.js";
 import path from "path";
 import {
   Network,
-  Web3signerPostSignDappnodeResponse,
+  DappnodeSigningProoverPostRequest,
 } from "@stakingbrain/common";
 
 export class DappnodeSigningProover extends StandardApi {
@@ -18,12 +18,12 @@ export class DappnodeSigningProover extends StandardApi {
   }
 
   public async sendProofOfAttestation(
-    proofOfAttestation: Web3signerPostSignDappnodeResponse
+    proofOfAttestations: DappnodeSigningProoverPostRequest[]
   ): Promise<void> {
     await this.request({
       method: "POST",
       endpoint: path.join(this.dappnodeSignEndpoint),
-      body: { proofOfAttestation },
+      body: JSON.stringify(proofOfAttestations),
     });
   }
 }

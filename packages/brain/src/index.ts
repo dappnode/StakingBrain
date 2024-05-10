@@ -115,7 +115,8 @@ const proofOfAttestationCron = new CronJob(
   new ProofOfAttestation(
     signerApi,
     brainDb,
-    dappnodeSignerProoverApi
+    dappnodeSignerProoverApi,
+    network
   ).sendProofOfAttestation
 );
 if (shareDataWithDappnode) proofOfAttestationCron.start();
