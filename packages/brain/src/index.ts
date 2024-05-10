@@ -19,7 +19,7 @@ import { params } from "./params.js";
 import {
   CronJob,
   ReloadValidators,
-  ProofOfAttestation,
+  sendProofOfAttestation,
 } from "./modules/cron/index.js";
 
 logger.info(`Starting brain...`);
@@ -110,14 +110,8 @@ export const reloadValidatorsCron = new CronJob(
   ).reloadValidators
 );
 reloadValidatorsCron.start();
-const proofOfAttestationCron = new CronJob(
-  shareCronInterval,
-  new ProofOfAttestation(
-    signerApi,
-    brainDb,
-    dappnodeSignerProoverApi,
-    network
-  ).sendProofOfAttestation
+const proofOfAttestationCron = new CronJob(shareCronInterval, () =>
+  sendProofOfAttestation(signerApi, brainDb, dappnodeSignerProoverApi, network)
 );
 if (shareDataWithDappnode) proofOfAttestationCron.start();
 
