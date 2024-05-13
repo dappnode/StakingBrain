@@ -24,6 +24,9 @@ export class DappnodeSigningProover extends StandardApi {
       method: "POST",
       endpoint: path.join(this.dappnodeSignEndpoint),
       body: JSON.stringify(proofOfAttestations),
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   }
 }

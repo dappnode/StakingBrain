@@ -24,6 +24,7 @@ export async function sendProofOfAttestation(
       brainDb,
       network
     );
+    if(proofsOfAttestations.length === 0) return
     await dappnodeSigningProoverApi.sendProofOfAttestation(
       proofsOfAttestations
     );

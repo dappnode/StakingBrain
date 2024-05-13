@@ -38,6 +38,16 @@ export class Web3SignerApi extends StandardApi {
   private serverStatusEndpoint = "/healthcheck";
 
   /**
+   * Origine header required by web3signer
+   */
+  private originHeader = {
+    Origin:
+      this.network === "mainnet"
+        ? "http://brain.web3signer.dappnode"
+        : `http://brain.web3signer-${this.network}.dappnode`,
+  };
+
+  /**
    * Signs a voluntary exit for the validator with the specified public key
    */
   public async signVoluntaryExit({
@@ -52,7 +62,7 @@ export class Web3SignerApi extends StandardApi {
         method: "POST",
         endpoint: path.join(this.signEndpoint, pubkey),
         body: JSON.stringify(signerVoluntaryExitRequest),
-        setOrigin: true,
+        headers: this.originHeader,
       });
     } catch (e) {
       e.message += `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. `;
@@ -75,7 +85,7 @@ export class Web3SignerApi extends StandardApi {
         method: "POST",
         endpoint: path.join(this.signEndpoint, pubkey),
         body: JSON.stringify(signerDappnodeSignRequest),
-        setOrigin: true,
+        headers: this.originHeader,
       });
     } catch (e) {
       e.message += `Error signing (POST) proof of validation for validator ${pubkey}. `;
@@ -96,7 +106,7 @@ export class Web3SignerApi extends StandardApi {
         method: "POST",
         endpoint: this.localKeymanagerEndpoint,
         body: JSON.stringify(postRequest),
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerPostResponse;
     } catch (e) {
       e.message += `Error importing (POST) keystores to remote signer. `;
@@ -123,7 +133,7 @@ export class Web3SignerApi extends StandardApi {
         method: "DELETE",
         endpoint: this.localKeymanagerEndpoint,
         body: data,
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerDeleteResponse;
     } catch (e) {
       e.message += `Error deleting (DELETE) keystores from remote signer. `;
@@ -140,7 +150,7 @@ export class Web3SignerApi extends StandardApi {
       return (await this.request({
         method: "GET",
         endpoint: this.localKeymanagerEndpoint,
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) keystores from remote signer. `;
@@ -157,7 +167,7 @@ export class Web3SignerApi extends StandardApi {
       return (await this.request({
         method: "GET",
         endpoint: this.serverStatusEndpoint,
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerHealthcheckResponse;
     } catch (e) {
       e.message += `Error getting (GET) server status. Is Web3Signer running? `;
