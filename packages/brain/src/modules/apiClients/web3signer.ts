@@ -26,6 +26,12 @@ export class Web3SignerApi extends StandardApi {
   private signEndpoint = "/api/v1/eth2/sign";
 
   /**
+   * Signs proof of validation with timestamp and platform
+   * @see TODO: not in doc yet
+   */
+  private signExtEndpoint = "/api/v1/eth2/ext/sign";
+
+  /**
    * Local Key Manager endpoint
    * @see https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/
    */
@@ -83,9 +89,13 @@ export class Web3SignerApi extends StandardApi {
     try {
       return await this.request({
         method: "POST",
-        endpoint: path.join(this.signEndpoint, pubkey),
+        endpoint: path.join(this.signExtEndpoint, pubkey),
         body: JSON.stringify(signerDappnodeSignRequest),
-        headers: this.originHeader,
+        headers: {
+          ...this.originHeader,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
       });
     } catch (e) {
       e.message += `Error signing (POST) proof of validation for validator ${pubkey}. `;

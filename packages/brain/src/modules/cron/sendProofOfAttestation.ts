@@ -24,7 +24,7 @@ export async function sendProofOfAttestation(
       brainDb,
       network
     );
-    if(proofsOfAttestations.length === 0) return
+    if (proofsOfAttestations.length === 0) return;
     await dappnodeSigningProoverApi.sendProofOfAttestation(
       proofsOfAttestations
     );
@@ -45,7 +45,7 @@ async function getProofsOfAttestations(
   const signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest = {
     type: "PROOF_OF_VALIDATION",
     platform: "dappnode",
-    timestamp: new Date().toISOString(),
+    timestamp: Date.now().toString(),
   };
   // get pubkeys detauls from db
   const dbPubkeysDetails = brainDb.getData();
@@ -60,6 +60,7 @@ async function getProofsOfAttestations(
           });
         return {
           payload,
+          pubkey,
           signature,
           network: network,
           tag: dbPubkeysDetails[pubkey].tag,
