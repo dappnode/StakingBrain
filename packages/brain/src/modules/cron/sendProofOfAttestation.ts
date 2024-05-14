@@ -62,7 +62,7 @@ async function getProofsOfAttestations(
           payload,
           pubkey,
           signature,
-          network: network,
+          network,
           tag: dbPubkeysDetails[pubkey].tag,
         };
       } catch (e) {
