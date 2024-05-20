@@ -20,8 +20,6 @@ export class DappnodeSigningProover extends StandardApi {
   public async sendProofOfAttestation(
     proofOfAttestations: DappnodeSigningProoverPostRequest[]
   ): Promise<void> {
-    const endpoint = `${path.join(this.dappnodeSignEndpoint)}?network=${encodeURIComponent(this.network.toString())}`;
-    console.log(`Sending proof of attestation to ${endpoint}`);
     await this.request({
       method: "POST",
       endpoint: `${path.join(this.dappnodeSignEndpoint)}&network=${encodeURIComponent(this.network.toString())}`,
