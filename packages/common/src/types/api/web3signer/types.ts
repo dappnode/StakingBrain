@@ -1,5 +1,4 @@
 import { Tag } from "../../db/types.js";
-import { Network } from "../../network/types.js";
 
 export type Web3SignerStatus = "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
 
@@ -83,6 +82,5 @@ export interface DappnodeSigningProoverPostRequest {
   payload: string;
   pubkey: string;
   signature: string;
-  network: Network;
   tag: Tag;
 }

@@ -6,7 +6,7 @@ import {
 } from "@stakingbrain/common";
 
 export class DappnodeSigningProover extends StandardApi {
-  private dappnodeSignEndpoint = "/newSignature";
+  private dappnodeSignEndpoint = "/signatures";
 
   constructor(network: Network, validatorsMonitorUrl?: string) {
     super(
@@ -22,7 +22,7 @@ export class DappnodeSigningProover extends StandardApi {
   ): Promise<void> {
     await this.request({
       method: "POST",
-      endpoint: path.join(this.dappnodeSignEndpoint),
+      endpoint: `${path.join(this.dappnodeSignEndpoint)}?network=${encodeURIComponent(this.network.toString())}`,
       body: JSON.stringify(proofOfAttestations),
     });
   }

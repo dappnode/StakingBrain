@@ -111,7 +111,7 @@ export const reloadValidatorsCron = new CronJob(
 );
 reloadValidatorsCron.start();
 const proofOfAttestationCron = new CronJob(shareCronInterval, () =>
-  sendProofOfAttestation(signerApi, brainDb, dappnodeSignerProoverApi, network)
+  sendProofOfAttestation(signerApi, brainDb, dappnodeSignerProoverApi)
 );
 if (shareDataWithDappnode) proofOfAttestationCron.start();
 

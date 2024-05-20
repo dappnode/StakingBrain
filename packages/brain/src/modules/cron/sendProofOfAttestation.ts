@@ -1,6 +1,5 @@
 import {
   DappnodeSigningProoverPostRequest,
-  Network,
   Web3signerPostSignDappnodeRequest,
   Web3signerPostSignDappnodeResponse,
 } from "@stakingbrain/common";
@@ -15,14 +14,12 @@ export async function sendProofOfAttestation(
   signerApi: Web3SignerApi,
   brainDb: BrainDataBase,
   dappnodeSigningProoverApi: DappnodeSigningProover,
-  network: Network
 ): Promise<void> {
   try {
     // Get the proofs of attestation from the signer
     const proofsOfAttestations = await getProofsOfAttestations(
       signerApi,
       brainDb,
-      network
     );
     if (proofsOfAttestations.length === 0) return;
     await dappnodeSigningProoverApi.sendProofOfAttestation(
@@ -40,7 +37,6 @@ export async function sendProofOfAttestation(
 async function getProofsOfAttestations(
   signerApi: Web3SignerApi,
   brainDb: BrainDataBase,
-  network: Network
 ): Promise<DappnodeSigningProoverPostRequest[]> {
   const signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest = {
     type: "PROOF_OF_VALIDATION",
@@ -62,7 +58,6 @@ async function getProofsOfAttestations(
           payload,
           pubkey,
           signature,
-          network,
           tag: dbPubkeysDetails[pubkey].tag,
         };
       } catch (e) {
