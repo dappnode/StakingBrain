@@ -22,7 +22,7 @@ export class DappnodeSigningProover extends StandardApi {
   ): Promise<void> {
     await this.request({
       method: "POST",
-      endpoint: `${path.join(this.dappnodeSignEndpoint)}&network=${encodeURIComponent(this.network.toString())}`,
+      endpoint: `${path.join(this.dappnodeSignEndpoint)}?network=${encodeURIComponent(this.network.toString())}`,
       body: JSON.stringify(proofOfAttestations),
     });
   }
