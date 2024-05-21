@@ -17,13 +17,16 @@ export class DappnodeSigningProover extends StandardApi {
     );
   }
 
-  public async sendProofOfAttestation(
+  public async sendProofsOfValidation(
     proofOfAttestations: DappnodeSigningProoverPostRequest[]
   ): Promise<void> {
     await this.request({
       method: "POST",
-      endpoint: `${path.join(this.dappnodeSignEndpoint)}?network=${encodeURIComponent(this.network.toString())}`,
+      endpoint: `${path.join(
+        this.dappnodeSignEndpoint
+      )}?network=${encodeURIComponent(this.network.toString())}`,
       body: JSON.stringify(proofOfAttestations),
+      timeout: 10000,
     });
   }
 }

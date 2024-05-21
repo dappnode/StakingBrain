@@ -55,12 +55,14 @@ export class StandardApi {
     endpoint,
     body,
     headers,
+    timeout,
   }: {
     method: AllowedMethods;
     endpoint: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body?: any;
     headers?: Record<string, string>;
+    timeout?: number;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }): Promise<any> {
     let req: http.ClientRequest;
@@ -71,6 +73,21 @@ export class StandardApi {
       this.requestOptions.rejectUnauthorized = false;
       req = https.request(this.requestOptions);
     } else req = http.request(this.requestOptions);
+
+    if (timeout) {
+      req.setTimeout(timeout, () => {
+        const error = new ApiError({
+          name: "TimeoutError",
+          message: `Request to ${endpoint} timed out.`,
+          errno: -1,
+          code: "ETIMEDOUT",
+          path: endpoint,
+          syscall: method,
+          hostname: this.requestOptions.hostname || undefined,
+        });
+        req.destroy(error);
+      });
+    }
 
     if (headers) {
       for (const [key, value] of Object.entries(headers)) {

@@ -10,19 +10,22 @@ import logger from "../logger/index.js";
 /**
  * Send the proof of attestation to the dappnode-signatures.io domain
  */
-export async function sendProofOfAttestation(
+export async function sendProofsOfValidation(
   signerApi: Web3SignerApi,
   brainDb: BrainDataBase,
-  dappnodeSigningProoverApi: DappnodeSigningProover,
+  dappnodeSigningProoverApi: DappnodeSigningProover
 ): Promise<void> {
   try {
     // Get the proofs of attestation from the signer
-    const proofsOfAttestations = await getProofsOfAttestations(
+    const proofsOfAttestations = await getProofsOfValidation(
       signerApi,
-      brainDb,
+      brainDb
     );
     if (proofsOfAttestations.length === 0) return;
-    await dappnodeSigningProoverApi.sendProofOfAttestation(
+    logger.debug(
+      `Sending ${proofsOfAttestations.length} proofs of validations`
+    );
+    await dappnodeSigningProoverApi.sendProofsOfValidation(
       proofsOfAttestations
     );
   } catch (e) {
@@ -34,9 +37,9 @@ export async function sendProofOfAttestation(
  * Get the proofs of attestation from the signer
  * for all the pubkeys in the db
  */
-async function getProofsOfAttestations(
+async function getProofsOfValidation(
   signerApi: Web3SignerApi,
-  brainDb: BrainDataBase,
+  brainDb: BrainDataBase
 ): Promise<DappnodeSigningProoverPostRequest[]> {
   const signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest = {
     type: "PROOF_OF_VALIDATION",
