@@ -5,7 +5,6 @@ import { BeaconchaApi } from "../../../../src/modules/apiClients/index.js";
 describe.only("Test for fetching validator indexes in every available network", () => {
   const networks: Network[] = [
     "mainnet",
-    "prater",
     "gnosis",
     "lukso",
     "holesky",
@@ -61,16 +60,6 @@ const networkTestMap = new Map<
     },
   ],
   [
-    "prater",
-    {
-      pubkeys: [
-        "0x8000091c2ae64ee414a54c1cc1fc67dec663408bc636cb86756e0200e41a75c8f86603f104f02c856983d2783116be13",
-        "0x80003a1c67216514e4ab257738e59ef38063edf43bc4a2ef9d38633bdde117384401684c6cf81aa04cf18890e75ab52c",
-      ],
-      indexes: [55293, 351819],
-    },
-  ],
-  [
     "gnosis",
     {
       pubkeys: [
@@ -109,13 +98,6 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
     "mainnet",
     {
       baseUrl: "https://beaconcha.in",
-      apiPath: "/api/v1/",
-    },
-  ],
-  [
-    "prater",
-    {
-      baseUrl: "https://prater.beaconcha.in",
       apiPath: "/api/v1/",
     },
   ],
