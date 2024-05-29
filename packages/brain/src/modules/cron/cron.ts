@@ -9,7 +9,7 @@ export class CronJob {
     this.interval = interval;
   }
 
-  start(): void {
+  public start(): void {
     if (this.task === null) {
       logger.info(`Starting cron job with interval ${this.interval}ms`);
       this.task = setInterval(async () => {
@@ -19,7 +19,7 @@ export class CronJob {
       logger.warn("Task is already running. Use restart to restart the job.");
   }
 
-  stop(): void {
+  public stop(): void {
     if (this.task !== null) {
       logger.info("Stopping cron job.");
       clearInterval(this.task);
@@ -27,7 +27,7 @@ export class CronJob {
     } else logger.warn("Task is not running.");
   }
 
-  restart(): void {
+  public restart(): void {
     this.stop();
     this.start();
   }
