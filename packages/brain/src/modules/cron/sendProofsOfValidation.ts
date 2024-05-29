@@ -26,7 +26,10 @@ export async function sendProofsOfValidation(
       brainDb,
       shareDataWithDappnode
     );
-    if (proofsOfValidations.length === 0) return;
+    if (proofsOfValidations.length === 0) {
+      logger.debug(`No proofs of validation to send`);
+      return;
+    }
     logger.debug(`Sending ${proofsOfValidations.length} proofs of validations`);
     await DappnodeSignatureVerifier.sendProofsOfValidation(proofsOfValidations);
   } catch (e) {
