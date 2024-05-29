@@ -2,10 +2,10 @@ import { StandardApi } from "./index.js";
 import path from "path";
 import {
   Network,
-  DappnodeSigningProoverPostRequest,
+  DappnodeSignatureVerifierPostRequest,
 } from "@stakingbrain/common";
 
-export class DappnodeSigningProover extends StandardApi {
+export class DappnodeSignatureVerifier extends StandardApi {
   private dappnodeSignEndpoint = "/signatures";
 
   constructor(network: Network, validatorsMonitorUrl?: string) {
@@ -18,7 +18,7 @@ export class DappnodeSigningProover extends StandardApi {
   }
 
   public async sendProofsOfValidation(
-    proofOfValidations: DappnodeSigningProoverPostRequest[]
+    proofOfValidations: DappnodeSignatureVerifierPostRequest[]
   ): Promise<void> {
     await this.request({
       method: "POST",

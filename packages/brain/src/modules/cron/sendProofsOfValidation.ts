@@ -1,9 +1,12 @@
 import {
-  DappnodeSigningProoverPostRequest,
+  DappnodeSignatureVerifierPostRequest,
   Web3signerPostSignDappnodeRequest,
   Web3signerPostSignDappnodeResponse,
 } from "@stakingbrain/common";
-import { Web3SignerApi, DappnodeSigningProover } from "../apiClients/index.js";
+import {
+  Web3SignerApi,
+  DappnodeSignatureVerifier,
+} from "../apiClients/index.js";
 import { BrainDataBase } from "../db/index.js";
 import logger from "../logger/index.js";
 
@@ -13,7 +16,7 @@ import logger from "../logger/index.js";
 export async function sendProofsOfValidation(
   signerApi: Web3SignerApi,
   brainDb: BrainDataBase,
-  dappnodeSigningProoverApi: DappnodeSigningProover,
+  DappnodeSignatureVerifier: DappnodeSignatureVerifier,
   shareDataWithDappnode: boolean
 ): Promise<void> {
   try {
@@ -25,7 +28,7 @@ export async function sendProofsOfValidation(
     );
     if (proofsOfValidations.length === 0) return;
     logger.debug(`Sending ${proofsOfValidations.length} proofs of validations`);
-    await dappnodeSigningProoverApi.sendProofsOfValidation(proofsOfValidations);
+    await DappnodeSignatureVerifier.sendProofsOfValidation(proofsOfValidations);
   } catch (e) {
     logger.error(`Error sending proof of validation: ${e.message}`);
   }
@@ -39,7 +42,7 @@ async function getProofsOfValidation(
   signerApi: Web3SignerApi,
   brainDb: BrainDataBase,
   shareDataWithDappnode: boolean
-): Promise<DappnodeSigningProoverPostRequest[]> {
+): Promise<DappnodeSignatureVerifierPostRequest[]> {
   const signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest = {
     type: "PROOF_OF_VALIDATION",
     platform: "dappnode",

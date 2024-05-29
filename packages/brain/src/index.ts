@@ -7,7 +7,7 @@ import {
   Beaconchain,
   BeaconchaApi,
   ValidatorApi,
-  DappnodeSigningProover,
+  DappnodeSignatureVerifier,
 } from "./modules/apiClients/index.js";
 import {
   startUiServer,
@@ -77,7 +77,7 @@ export const beaconchainApi = new Beaconchain(
   { baseUrl: beaconchainUrl },
   network
 );
-export const dappnodeSignerProoverApi = new DappnodeSigningProover(
+export const dappnodeSignatureVerifierApi = new DappnodeSignatureVerifier(
   network,
   validatorsMonitorUrl
 );
@@ -114,7 +114,7 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
   sendProofsOfValidation(
     signerApi,
     brainDb,
-    dappnodeSignerProoverApi,
+    dappnodeSignatureVerifierApi,
     shareDataWithDappnode
   )
 );

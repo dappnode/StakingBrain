@@ -78,7 +78,7 @@ export interface Web3signerPostSignDappnodeResponse {
   payload: string;
 }
 
-export interface DappnodeSigningProoverPostRequest {
+export interface DappnodeSignatureVerifierPostRequest {
   payload: string;
   pubkey: string;
   signature: string;
