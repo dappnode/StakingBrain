@@ -18,7 +18,7 @@ import process from "node:process";
 import { params } from "./params.js";
 import {
   CronJob,
-  ReloadValidators,
+  reloadValidators,
   sendProofsOfValidation,
 } from "./modules/cron/index.js";
 
@@ -100,14 +100,8 @@ await brainDb.initialize(signerApi, validatorApi);
 logger.debug(brainDb.data);
 
 // CRON
-export const reloadValidatorsCron = new CronJob(
-  60 * 1000,
-  new ReloadValidators(
-    signerApi,
-    signerUrl,
-    validatorApi,
-    brainDb
-  ).reloadValidators
+export const reloadValidatorsCron = new CronJob(60 * 1000, () =>
+  reloadValidators(signerApi, signerUrl, validatorApi, brainDb)
 );
 reloadValidatorsCron.start();
 const proofOfValidationCron = new CronJob(shareCronInterval, () =>
