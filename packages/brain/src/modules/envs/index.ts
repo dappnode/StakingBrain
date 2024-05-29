@@ -73,13 +73,11 @@ export function loadStakerConfig(): {
     );
 
   const shareDataWithDappnode = process.env.SHARE_DATA_WITH_DAPPNODE === "true";
-  const validatorsMonitorUrl = process.env.VALIDATORS_MONITOR_URL || "";
-  const shareCronInterval = parseInt(process.env.SHARE_CRON_INTERVAL || "");
-  if (shareDataWithDappnode && (!validatorsMonitorUrl || !shareCronInterval)) {
-    throw Error(
-      "SHARE_DATA_WITH_DAPPNODE is true, but VALIDATORS_MONITOR_URL or SHARE_CRON_INTERVAL are not set"
-    );
-  }
+  const validatorsMonitorUrl =
+    process.env.VALIDATORS_MONITOR_URL || params.defaultValidatorsMonitorUrl;
+  const shareCronInterval = process.env.SHARE_CRON_INTERVAL
+    ? parseInt(process.env.SHARE_CRON_INTERVAL)
+    : params.defaultProofsOfValidationCron;
 
   const certDir = path.join(__dirname, params.certDirName);
 
