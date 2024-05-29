@@ -110,16 +110,21 @@ export const reloadValidatorsCron = new CronJob(
   ).reloadValidators
 );
 reloadValidatorsCron.start();
-const proofOfAttestationCron = new CronJob(shareCronInterval, () =>
-  sendProofsOfValidation(signerApi, brainDb, dappnodeSignerProoverApi)
+const proofOfValidationCron = new CronJob(shareCronInterval, () =>
+  sendProofsOfValidation(
+    signerApi,
+    brainDb,
+    dappnodeSignerProoverApi,
+    shareDataWithDappnode
+  )
 );
-if (shareDataWithDappnode) proofOfAttestationCron.start();
+proofOfValidationCron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCron.stop();
-  proofOfAttestationCron.stop();
+  proofOfValidationCron.stop();
   brainDb.close();
   uiServer.close();
   launchpadServer.close();

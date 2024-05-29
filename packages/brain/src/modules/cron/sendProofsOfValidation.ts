@@ -8,38 +8,37 @@ import { BrainDataBase } from "../db/index.js";
 import logger from "../logger/index.js";
 
 /**
- * Send the proof of attestation to the dappnode-signatures.io domain
+ * Send the proof of validation to the dappnode-signatures.io domain
  */
 export async function sendProofsOfValidation(
   signerApi: Web3SignerApi,
   brainDb: BrainDataBase,
-  dappnodeSigningProoverApi: DappnodeSigningProover
+  dappnodeSigningProoverApi: DappnodeSigningProover,
+  shareDataWithDappnode: boolean
 ): Promise<void> {
   try {
-    // Get the proofs of attestation from the signer
-    const proofsOfAttestations = await getProofsOfValidation(
+    // Get the proofs of validation from the signer
+    const proofsOfValidations = await getProofsOfValidation(
       signerApi,
-      brainDb
+      brainDb,
+      shareDataWithDappnode
     );
-    if (proofsOfAttestations.length === 0) return;
-    logger.debug(
-      `Sending ${proofsOfAttestations.length} proofs of validations`
-    );
-    await dappnodeSigningProoverApi.sendProofsOfValidation(
-      proofsOfAttestations
-    );
+    if (proofsOfValidations.length === 0) return;
+    logger.debug(`Sending ${proofsOfValidations.length} proofs of validations`);
+    await dappnodeSigningProoverApi.sendProofsOfValidation(proofsOfValidations);
   } catch (e) {
-    logger.error(`Error sending proof of attestation: ${e.message}`);
+    logger.error(`Error sending proof of validation: ${e.message}`);
   }
 }
 
 /**
- * Get the proofs of attestation from the signer
+ * Get the proofs of validation from the signer
  * for all the pubkeys in the db
  */
 async function getProofsOfValidation(
   signerApi: Web3SignerApi,
-  brainDb: BrainDataBase
+  brainDb: BrainDataBase,
+  shareDataWithDappnode: boolean
 ): Promise<DappnodeSigningProoverPostRequest[]> {
   const signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest = {
     type: "PROOF_OF_VALIDATION",
@@ -48,8 +47,16 @@ async function getProofsOfValidation(
   };
   // get pubkeys detauls from db
   const dbPubkeysDetails = brainDb.getData();
-  // For each pubkey, get the proof of attestation from the signer
-  const proofsOfAttestations = await Promise.all(
+
+  // only send proof of validation if the user has enabled it
+  // or if there is a stader pubkey
+  if (
+    !shareDataWithDappnode &&
+    !Object.values(dbPubkeysDetails).some((pubkey) => pubkey.tag === "stader")
+  )
+    return [];
+  // For each pubkey, get the proof of validation from the signer
+  const proofsOfValidations = await Promise.all(
     Object.keys(dbPubkeysDetails).map(async (pubkey) => {
       try {
         const { payload, signature }: Web3signerPostSignDappnodeResponse =
@@ -65,14 +72,14 @@ async function getProofsOfValidation(
         };
       } catch (e) {
         logger.error(
-          `Error getting proof of attestation for pubkey ${pubkey}. Error: ${e.message}`
+          `Error getting proof of validation for pubkey ${pubkey}. Error: ${e.message}`
         );
         return null;
       }
     })
   );
 
-  return filterNotNullishFromArray(proofsOfAttestations);
+  return filterNotNullishFromArray(proofsOfValidations);
 }
 
 /**
