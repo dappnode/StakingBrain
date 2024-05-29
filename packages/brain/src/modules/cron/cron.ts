@@ -6,6 +6,7 @@ export class CronJob {
   private interval: number;
 
   constructor(interval: number, private jobFunction: () => Promise<void>) {
+    if (interval <= 0) throw Error("Interval must be a positive number.");
     this.interval = interval;
   }
 
