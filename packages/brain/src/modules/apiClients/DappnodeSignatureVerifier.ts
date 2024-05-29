@@ -4,6 +4,7 @@ import {
   Network,
   DappnodeSignatureVerifierPostRequest,
 } from "@stakingbrain/common";
+import { params } from "../../params.js";
 
 export class DappnodeSignatureVerifier extends StandardApi {
   private dappnodeSignEndpoint = "/signatures";
@@ -11,7 +12,7 @@ export class DappnodeSignatureVerifier extends StandardApi {
   constructor(network: Network, validatorsMonitorUrl?: string) {
     super(
       {
-        baseUrl: validatorsMonitorUrl || "https://dappnode-signatures.io",
+        baseUrl: validatorsMonitorUrl || params.defaultValidatorsMonitorUrl,
       },
       network
     );
