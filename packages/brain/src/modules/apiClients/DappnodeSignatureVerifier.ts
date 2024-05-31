@@ -1,5 +1,4 @@
 import { StandardApi } from "./index.js";
-import path from "path";
 import {
   Network,
   DappnodeSignatureVerifierPostRequest,
@@ -22,9 +21,9 @@ export class DappnodeSignatureVerifier extends StandardApi {
   ): Promise<void> {
     await this.request({
       method: "POST",
-      endpoint: `${path.join(
-        this.dappnodeSignEndpoint
-      )}?network=${encodeURIComponent(this.network.toString())}`,
+      endpoint: `${this.dappnodeSignEndpoint}?network=${encodeURIComponent(
+        this.network.toString()
+      )}`,
       body: JSON.stringify(proofOfValidations),
       timeout: 10000,
     });
