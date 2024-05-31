@@ -9,6 +9,7 @@ import {
 } from "../apiClients/index.js";
 import { BrainDataBase } from "../db/index.js";
 import logger from "../logger/index.js";
+import { isEmpty } from "lodash-es";
 
 /**
  * Send the proof of validation to the dappnode-signatures.io domain
@@ -56,14 +57,15 @@ async function getProofsOfValidation(
 
   // only send proof of validation if the user has enabled it
   // or if there is a stader pubkey
-  if (
-    !shareDataWithDappnode &&
-    !Object.values(dbPubkeysDetails).some((pubkey) => pubkey.tag === "stader")
-  )
-    return [];
+  const dbPubkeysDetailsFiltered = Object.fromEntries(
+    Object.entries(dbPubkeysDetails).filter(
+      ([pubkey, details]) => shareDataWithDappnode || details.tag === "stader"
+    )
+  );
+  if (isEmpty(dbPubkeysDetailsFiltered)) return [];
   // For each pubkey, get the proof of validation from the signer
   const proofsOfValidations = await Promise.all(
-    Object.keys(dbPubkeysDetails).map(async (pubkey) => {
+    Object.keys(dbPubkeysDetailsFiltered).map(async (pubkey) => {
       try {
         const { payload, signature }: Web3signerPostSignDappnodeResponse =
           await signerApi.signDappnodeProofOfValidation({
@@ -74,7 +76,7 @@ async function getProofsOfValidation(
           payload,
           pubkey,
           signature,
-          tag: dbPubkeysDetails[pubkey].tag,
+          tag: dbPubkeysDetailsFiltered[pubkey].tag,
         };
       } catch (e) {
         logger.error(
