@@ -6,6 +6,7 @@
     "outDir": "dist",
     "skipLibCheck": true,
     "moduleResolution": "NodeNext",
+    "module": "NodeNext",
     "useUnknownInCatchVariables": false
   },
   "ts-node": {

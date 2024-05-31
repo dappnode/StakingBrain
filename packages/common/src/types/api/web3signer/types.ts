@@ -1,4 +1,8 @@
+import { Tag } from "../../db/types.js";
+
 export type Web3SignerStatus = "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
+
+// keymanager
 
 export interface Web3signerGetResponse {
   data: {
@@ -28,6 +32,9 @@ export interface Web3signerDeleteResponse {
   }[];
   slashing_protection?: string;
 }
+
+// healthcheck
+
 export interface Web3signerHealthcheckResponse {
   status: Web3SignerStatus;
   checks: {
@@ -36,6 +43,8 @@ export interface Web3signerHealthcheckResponse {
   }[];
   outcome: string;
 }
+
+// Signing
 
 export interface Web3SignerPostSignvoluntaryexitRequest {
   type: "VOLUNTARY_EXIT";
@@ -56,4 +65,22 @@ export interface Web3SignerPostSignvoluntaryexitRequest {
 
 export interface Web3SignerPostSignvoluntaryexitResponse {
   signature: string;
+}
+
+export interface Web3signerPostSignDappnodeRequest {
+  type: "PROOF_OF_VALIDATION";
+  platform: "dappnode";
+  timestamp: string;
+}
+
+export interface Web3signerPostSignDappnodeResponse {
+  signature: string;
+  payload: string;
+}
+
+export interface DappnodeSignatureVerifierPostRequest {
+  payload: string;
+  pubkey: string;
+  signature: string;
+  tag: Tag;
 }

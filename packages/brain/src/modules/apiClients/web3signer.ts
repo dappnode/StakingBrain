@@ -5,9 +5,11 @@ import {
   Web3signerDeleteResponse,
   Web3signerGetResponse,
   Web3signerHealthcheckResponse,
+  Web3signerPostSignDappnodeRequest,
   prefix0xPubkey,
   Web3SignerPostSignvoluntaryexitRequest,
   Web3SignerPostSignvoluntaryexitResponse,
+  Web3signerPostSignDappnodeResponse,
 } from "@stakingbrain/common";
 import { StandardApi } from "./standard.js";
 import path from "node:path";
@@ -24,6 +26,12 @@ export class Web3SignerApi extends StandardApi {
   private signEndpoint = "/api/v1/eth2/sign";
 
   /**
+   * Signs proof of validation with timestamp and platform
+   * @see TODO: not in doc yet
+   */
+  private signExtEndpoint = "/api/v1/eth2/ext/sign";
+
+  /**
    * Local Key Manager endpoint
    * @see https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/
    */
@@ -36,7 +44,17 @@ export class Web3SignerApi extends StandardApi {
   private serverStatusEndpoint = "/healthcheck";
 
   /**
-   *
+   * Origine header required by web3signer
+   */
+  private originHeader = {
+    Origin:
+      this.network === "mainnet"
+        ? "http://brain.web3signer.dappnode"
+        : `http://brain.web3signer-${this.network}.dappnode`,
+  };
+
+  /**
+   * Signs a voluntary exit for the validator with the specified public key
    */
   public async signVoluntaryExit({
     signerVoluntaryExitRequest,
@@ -50,10 +68,37 @@ export class Web3SignerApi extends StandardApi {
         method: "POST",
         endpoint: path.join(this.signEndpoint, pubkey),
         body: JSON.stringify(signerVoluntaryExitRequest),
-        setOrigin: true,
+        headers: this.originHeader,
       });
     } catch (e) {
       e.message += `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Signs a proof of validation for the validator with the specified public key
+   */
+  public async signDappnodeProofOfValidation({
+    signerDappnodeSignRequest,
+    pubkey,
+  }: {
+    signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest;
+    pubkey: string;
+  }): Promise<Web3signerPostSignDappnodeResponse> {
+    try {
+      return await this.request({
+        method: "POST",
+        endpoint: path.join(this.signExtEndpoint, pubkey),
+        body: JSON.stringify(signerDappnodeSignRequest),
+        headers: {
+          ...this.originHeader,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+    } catch (e) {
+      e.message += `Error signing (POST) proof of validation for validator ${pubkey}. `;
       throw e;
     }
   }
@@ -71,7 +116,7 @@ export class Web3SignerApi extends StandardApi {
         method: "POST",
         endpoint: this.localKeymanagerEndpoint,
         body: JSON.stringify(postRequest),
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerPostResponse;
     } catch (e) {
       e.message += `Error importing (POST) keystores to remote signer. `;
@@ -98,7 +143,7 @@ export class Web3SignerApi extends StandardApi {
         method: "DELETE",
         endpoint: this.localKeymanagerEndpoint,
         body: data,
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerDeleteResponse;
     } catch (e) {
       e.message += `Error deleting (DELETE) keystores from remote signer. `;
@@ -115,7 +160,7 @@ export class Web3SignerApi extends StandardApi {
       return (await this.request({
         method: "GET",
         endpoint: this.localKeymanagerEndpoint,
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) keystores from remote signer. `;
@@ -132,7 +177,7 @@ export class Web3SignerApi extends StandardApi {
       return (await this.request({
         method: "GET",
         endpoint: this.serverStatusEndpoint,
-        setOrigin: true,
+        headers: this.originHeader,
       })) as Web3signerHealthcheckResponse;
     } catch (e) {
       e.message += `Error getting (GET) server status. Is Web3Signer running? `;
