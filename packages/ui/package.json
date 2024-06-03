@@ -30,7 +30,8 @@
     "pretty": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'src/tests/*/*.ts'",
     "start:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\"",
-    "start:webpack:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\""
+    "start:webpack:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\"",
+    "build:webpack": "yarn build"
   },
   "eslintConfig": {
     "extends": [
