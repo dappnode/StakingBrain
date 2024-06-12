@@ -8,6 +8,6 @@ export const params = {
   defaultTag: "solo" as Tag,
   uiPort: 80,
   launchpadPort: 3000,
-  defaultValidatorsMonitorUrl: "https://dappnode-signatures.io",
+  defaultValidatorsMonitorUrl: "https://validators-proofs.dappnode.io",
   defaultProofsOfValidationCron: 24 * 60 * 60 * 1000, // 1 day in ms
 };
