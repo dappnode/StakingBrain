@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
 import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
@@ -39,8 +39,10 @@ import { extractPubkey } from "./utils/dataUtils";
 
 export default function ImportScreen({
   network,
+  isMevBoostSet
 }: {
   network: Network;
+  isMevBoostSet: boolean;
 }): JSX.Element {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
@@ -54,6 +56,16 @@ export default function ImportScreen({
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
+  const [showMevWarning, setShowMevWarning] = useState(false);
+
+  // This use effect sets the Lido warning when one of the keystores has the 'lido' tag and MEV-Boost is not set
+  useEffect(() => {
+    // Check if any of the selected tags is 'lido' and MEV-Boost is not set
+    const lidoSelected = tags.includes('lido');
+
+    setShowMevWarning(lidoSelected && !isMevBoostSet);
+  }, [tags, isMevBoostSet]);
+
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
@@ -155,17 +167,19 @@ export default function ImportScreen({
   )
     ? [{ value: "solo", label: "Solo" }]
     : ["holesky"].includes(network)
-    ? [
+      ? [
         { value: "solo", label: "Solo" },
         { value: "rocketpool", label: "Rocketpool" },
         { value: "stakehouse", label: "StakeHouse" },
+        { value: "lido", label: "Lido" }
       ]
-    : [
+      : [
         { value: "solo", label: "Solo" },
         { value: "rocketpool", label: "Rocketpool" },
         { value: "stakehouse", label: "StakeHouse" },
         { value: "stakewise", label: "Stakewise" },
         { value: "stader", label: "Stader" },
+        { value: "lido", label: "Lido" }
       ];
 
   return (
@@ -267,6 +281,8 @@ export default function ImportScreen({
                             Array(acceptedFiles.length).fill(e.target.value)
                           );
 
+                          setShowMevWarning(e.target.value === 'lido' && !isMevBoostSet);
+
                           if (!isFeeRecipientEditable(tags[0])) {
                             setFeeRecipients(
                               Array(acceptedFiles.length).fill("")
@@ -282,6 +298,14 @@ export default function ImportScreen({
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
                     </>
+                  )}
+                  {showMevWarning && (
+                    <Alert severity="warning">
+                      To have a Lido validator, you must have the MEV-Boost package installed. Visit
+                      <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
+                        this link
+                      </Link> for more details.
+                    </Alert>
                   )}
                   {useSameFeerecipient && (
                     <>
@@ -332,7 +356,7 @@ export default function ImportScreen({
             useSameFeerecipient,
             getFeeRecipientFieldHelperText,
             isFeeRecipientFieldWrong,
-            tagSelectOptions
+            tagSelectOptions,
           )}
 
           <Box
@@ -415,6 +439,15 @@ export default function ImportScreen({
               Back to Accounts
             </Button>
           </Link>
+          {showMevWarning && (
+            <Alert severity="warning">
+              To have a Lido validator, you must have the MEV-Boost package installed. Visit
+              <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
+                this link
+              </Link> for more details.
+            </Alert>
+          )}
+
           <Button
             variant="contained"
             size="large"
@@ -425,13 +458,13 @@ export default function ImportScreen({
               passwords.some((password) => password.length === 0) ||
               tags.some((tag, index) => {
                 if (tag.length === 0) return true;
-
-                //If tag is editable, check if fee recipient is valid
+                // If tag is editable, check if fee recipient is valid
                 if (isFeeRecipientEditable(tag)) {
                   return !isValidEcdsaPubkey(feeRecipients[index]);
                 }
                 return false;
-              })
+              }) ||
+              showMevWarning  // Disable button if Mev warning is shown
             }
             onClick={importKeystores}
             sx={{ borderRadius: 3 }}

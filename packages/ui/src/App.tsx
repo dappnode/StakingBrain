@@ -123,8 +123,10 @@ function App(): JSX.Element {
               />
               <Route
                 path="import"
-                element={<ImportScreen network={stakerConfig.network} />}
-              />            
+                element={
+                  <ImportScreen 
+                  network={stakerConfig.network}
+                  isMevBoostSet={stakerConfig.isMevBoostSet} />}              />            
               </Routes>
           </BrowserRouter>
         )
