@@ -11,6 +11,8 @@ import {
   ROCKET_POOL_FEE_RECIPIENT,
   STADER_POOL_FEE_RECIPIENT_MAINNET,
   STADER_POOL_FEE_RECIPIENT_PRATER,
+  LIDO_FEE_RECIPIENT_HOLESKY,
+  LIDO_FEE_RECIPIENT_MAINNET,
 } from "@stakingbrain/common";
 import {
   reloadValidatorsCron,
@@ -222,18 +224,17 @@ async function getNonEditableFeeRecipient(
     case "stakehouse":
       return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
 
+    case "lido":
+      if (network === "mainnet") return LIDO_FEE_RECIPIENT_MAINNET;
+      else if (network === "holesky") return LIDO_FEE_RECIPIENT_HOLESKY;
+
     // Stader FR cannot be known in advance
     case "stader":
-      if (suggestedFeeRecipient) {
-        return suggestedFeeRecipient;
-
-        // Set fee recipient to socializing pool adddress if it is not defined
-      } else {
-        if (network === "mainnet") {
-          return STADER_POOL_FEE_RECIPIENT_MAINNET;
-        } else if (network === "prater") {
-          return STADER_POOL_FEE_RECIPIENT_PRATER;
-        }
+      if (suggestedFeeRecipient) return suggestedFeeRecipient;
+      // Set fee recipient to socializing pool adddress if it is not defined
+      else {
+        if (network === "mainnet") return STADER_POOL_FEE_RECIPIENT_MAINNET;
+        else if (network === "prater") return STADER_POOL_FEE_RECIPIENT_PRATER;
       }
     default:
       throw new Error("Fee recipient not found for tag: " + tag);
