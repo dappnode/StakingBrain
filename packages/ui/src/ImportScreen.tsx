@@ -57,13 +57,13 @@ export default function ImportScreen({
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
   const [showMevWarning, setShowMevWarning] = useState(false);
-
+  
   // This use effect sets the Lido warning when one of the keystores has the 'lido' tag and MEV-Boost is not set
   useEffect(() => {
-    // Check if any of the selected tags is 'lido' and MEV-Boost is not set
-    const lidoSelected = tags.includes('lido');
+      // Check if any of the selected tags is 'lido' and MEV-Boost is not set
+      const lidoSelected = tags.includes('lido');
 
-    setShowMevWarning(lidoSelected && !isMevBoostSet);
+      setShowMevWarning(lidoSelected && !isMevBoostSet);
   }, [tags, isMevBoostSet]);
 
 
@@ -280,9 +280,6 @@ export default function ImportScreen({
                           setTags(
                             Array(acceptedFiles.length).fill(e.target.value)
                           );
-
-                          setShowMevWarning(e.target.value === 'lido' && !isMevBoostSet);
-
                           if (!isFeeRecipientEditable(tags[0])) {
                             setFeeRecipients(
                               Array(acceptedFiles.length).fill("")
@@ -298,14 +295,6 @@ export default function ImportScreen({
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
                     </>
-                  )}
-                  {showMevWarning && (
-                    <Alert severity="warning">
-                      To have a Lido validator, you must have the MEV-Boost package installed. Visit
-                      <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
-                        this link
-                      </Link> for more details.
-                    </Alert>
                   )}
                   {useSameFeerecipient && (
                     <>
@@ -418,7 +407,22 @@ export default function ImportScreen({
             </div>
           ) : null}
         </Card>
-
+        {showMevWarning && (
+          <Alert severity="warning" sx={{
+            marginTop: 4,
+            display: "flex",
+          }}>
+            You are importing one or more "Lido" validators, but don't have the MEV Boost package up & running.
+            As a Lido Node Operator, it is your responsibility to ensure that your validators use MEV boost. <br/> Please install the MEV Boost package from{' '}
+            <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
+              your stakers tab
+            </Link> before importing your Lido validator. Visit{' '}
+            <Link to="http://docs.dappnode.io">
+              our docs
+            </Link> for more details.
+          </Alert>
+        
+          )}
         <Box
           sx={{
             marginTop: 4,
@@ -439,14 +443,6 @@ export default function ImportScreen({
               Back to Accounts
             </Button>
           </Link>
-          {showMevWarning && (
-            <Alert severity="warning">
-              To have a Lido validator, you must have the MEV-Boost package installed. Visit
-              <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
-                this link
-              </Link> for more details.
-            </Alert>
-          )}
 
           <Button
             variant="contained"
