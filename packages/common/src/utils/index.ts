@@ -23,7 +23,7 @@ export function isValidTag(tag: Tag): boolean {
 
 export function isFeeRecipientEditable(tag: Tag, requestOrigin?: ActionRequestOrigin): boolean {
 
-  if (requestOrigin === "api" && (tag === "stader" || tag === "rocketpool")) return true;
+  if (requestOrigin === "api") return true;
 
   return !nonEditableFeeRecipientTags.some((t) => t === tag);
 }
