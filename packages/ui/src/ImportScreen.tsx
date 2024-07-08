@@ -473,7 +473,7 @@ export default function ImportScreen({
             <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
               your stakers tab
             </Link> before importing your Lido validator. Visit{' '}
-            <Link to="http://docs.dappnode.io">
+            <Link to="https://docs.dappnode.io/docs/user/staking/ethereum/lsd-pools/lido">
               our docs
             </Link> for more details.
           </Alert>
