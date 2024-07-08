@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
 import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
@@ -39,8 +39,10 @@ import { extractPubkey } from "./utils/dataUtils";
 
 export default function ImportScreen({
   network,
+  isMevBoostSet
 }: {
   network: Network;
+  isMevBoostSet: boolean;
 }): JSX.Element {
   const [keystoresPostResponse, setKeystoresPostResponse] =
     useState<Web3signerPostResponse>();
@@ -54,7 +56,45 @@ export default function ImportScreen({
   const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
+  const [slashingFile, setSlashingFile] = useState<File>();
+  const [showMevWarning, setShowMevWarning] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
+  // If the user has selected the 'lido' tag and MEV-Boost is not set, show the warning
+  useEffect(() => {
+    const lidoSelected = tags.includes('lido');
+    setShowMevWarning(lidoSelected && !isMevBoostSet);
+  }, [tags, isMevBoostSet]);
+
+
+  // Function to handle "use same password/fee recipient/tag" switches toggling
+  const handleSwitchToggle = (switchType: 'password' | 'tag' | 'feerecipient') => {
+    switch (switchType) {
+      case 'password':
+        setUseSamePassword(!useSamePassword);  // Directly toggle the boolean state
+        setPasswords([]);  // Reset passwords to empty
+        break;
+      case 'tag':
+        setUseSameTag(!useSameTag);  // Directly toggle the boolean state
+        setTags([]);  // Reset tags to empty
+        break;
+      case 'feerecipient':
+        setUseSameFeerecipient(!useSameFeerecipient);  // Directly toggle the boolean state
+        setFeeRecipients([]);  // Reset fee recipients to empty
+        break;
+    }
+  };
+  
+  
+  // This use effect sets the Lido warning when one of the keystores has the 'lido' tag and MEV-Boost is not set
+  useEffect(() => {
+      // Check if any of the selected tags is 'lido' and MEV-Boost is not set
+      const lidoSelected = tags.includes('lido');
+
+      setShowMevWarning(lidoSelected && !isMevBoostSet);
+  }, [tags, isMevBoostSet]);
+
+  
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
     const keystoresToAdd: KeystoreInfo[] = [];
@@ -72,7 +112,6 @@ export default function ImportScreen({
     setPasswords([...passwords].concat(passwordsToAdd));
   };
 
-  const [slashingFile, setSlashingFile] = useState<File>();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const slashingFilesCallback = (files: File[], event: DropEvent) => {
     setSlashingFile(files[0]);
@@ -91,6 +130,37 @@ export default function ImportScreen({
   const handleClickOpenDialog = () => {
     setOpenDialog(true);
   };
+
+  // This useEffect updates the "submit keystores" button state based on various conditions,
+  // such as if any password is empty, if any tag is empty, if any fee recipient is invalid, etc.
+  useEffect(() => {
+    const isAnyPasswordEmpty = () => {
+      return passwords.some(password => password === "") || passwords.length === 0;
+    };
+
+    const hasInvalidTagOrFeeRecipient = () => {
+      if (tags.length !== acceptedFiles.length) return true;
+      return tags.some((tag, index) => {
+        if (tag.length === 0) return true;
+        if (isFeeRecipientEditable(tag)) {
+          return !isValidEcdsaPubkey(feeRecipients[index]);
+        }
+        return false;
+      });
+    };
+
+    const hasInvalidKeystoreData = () => {
+      return isAnyPasswordEmpty() || hasInvalidTagOrFeeRecipient();
+    };
+
+    const disable = acceptedFiles.length === 0 ||
+                    (!slashingFile && slashingProtectionIncluded) ||
+                    hasInvalidKeystoreData() ||
+                    showMevWarning;
+
+    setIsButtonDisabled(disable);  // Set the state based on the conditions
+  }, [passwords, tags, feeRecipients, acceptedFiles, slashingFile, slashingProtectionIncluded, showMevWarning]);
+
 
   async function importKeystores() {
     try {
@@ -155,17 +225,19 @@ export default function ImportScreen({
   )
     ? [{ value: "solo", label: "Solo" }]
     : ["holesky"].includes(network)
-    ? [
+      ? [
         { value: "solo", label: "Solo" },
         { value: "rocketpool", label: "Rocketpool" },
         { value: "stakehouse", label: "StakeHouse" },
+        { value: "lido", label: "Lido" }
       ]
-    : [
+      : [
         { value: "solo", label: "Solo" },
         { value: "rocketpool", label: "Rocketpool" },
         { value: "stakehouse", label: "StakeHouse" },
         { value: "stakewise", label: "Stakewise" },
         { value: "stader", label: "Stader" },
+        { value: "lido", label: "Lido" }
       ];
 
   return (
@@ -214,7 +286,7 @@ export default function ImportScreen({
                 <FormControlLabel
                   control={
                     <Switch
-                      onChange={() => setUseSamePassword(!useSamePassword)}
+                      onChange={() => handleSwitchToggle('password')}
                     />
                   }
                   label="Use same password for every file"
@@ -222,16 +294,14 @@ export default function ImportScreen({
                 <FormControlLabel
                   control={
                     <Switch
-                      onChange={() =>
-                        setUseSameFeerecipient(!useSameFeerecipient)
-                      }
+                      onChange={() => handleSwitchToggle('feerecipient')}
                     />
                   }
                   label="Use same fee recipient for every file"
                 />
                 <FormControlLabel
                   control={
-                    <Switch onChange={() => setUseSameTag(!useSameTag)} />
+                    <Switch onChange={() => handleSwitchToggle('tag')} />
                   }
                   label="Use same tag for every file"
                 />
@@ -266,7 +336,6 @@ export default function ImportScreen({
                           setTags(
                             Array(acceptedFiles.length).fill(e.target.value)
                           );
-
                           if (!isFeeRecipientEditable(tags[0])) {
                             setFeeRecipients(
                               Array(acceptedFiles.length).fill("")
@@ -332,7 +401,7 @@ export default function ImportScreen({
             useSameFeerecipient,
             getFeeRecipientFieldHelperText,
             isFeeRecipientFieldWrong,
-            tagSelectOptions
+            tagSelectOptions,
           )}
 
           <Box
@@ -394,7 +463,22 @@ export default function ImportScreen({
             </div>
           ) : null}
         </Card>
-
+        {showMevWarning && (
+          <Alert severity="warning" sx={{
+            marginTop: 4,
+            display: "flex",
+          }}>
+            You are importing one or more "Lido" validators, but don't have the MEV Boost package up & running.
+            As a Lido Node Operator, it is your responsibility to ensure that your validators use MEV boost. <br/> Please install the MEV Boost package from{' '}
+            <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
+              your stakers tab
+            </Link> before importing your Lido validator. Visit{' '}
+            <Link to="https://docs.dappnode.io/docs/user/staking/ethereum/lsd-pools/lido">
+              our docs
+            </Link> for more details.
+          </Alert>
+        
+          )}
         <Box
           sx={{
             marginTop: 4,
@@ -415,24 +499,12 @@ export default function ImportScreen({
               Back to Accounts
             </Button>
           </Link>
+
           <Button
             variant="contained"
             size="large"
             endIcon={<BackupIcon />}
-            disabled={
-              acceptedFiles.length === 0 ||
-              (!slashingFile && slashingProtectionIncluded) ||
-              passwords.some((password) => password.length === 0) ||
-              tags.some((tag, index) => {
-                if (tag.length === 0) return true;
-
-                //If tag is editable, check if fee recipient is valid
-                if (isFeeRecipientEditable(tag)) {
-                  return !isValidEcdsaPubkey(feeRecipients[index]);
-                }
-                return false;
-              })
-            }
+            disabled={isButtonDisabled}
             onClick={importKeystores}
             sx={{ borderRadius: 3 }}
           >
