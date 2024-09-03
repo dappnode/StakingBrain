@@ -1,14 +1,12 @@
 {
   "extends": "../../tsconfig.json",
-  "include": [
-    "src",
-    "../brain/tests/unit/modules/apis/beaconchaApi/testFetchValidatorIndex.ts"
-  ],
-  "exclude": ["./tests/", "./node_modules/", "./dist/"],
+  "include": ["src"],
+  "exclude": ["./test/", "./node_modules/", "./dist/"],
   "compilerOptions": {
     "outDir": "dist",
-    "target": "es5",
+    "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["vite/client"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
