@@ -3313,7 +3313,7 @@ __metadata:
     "@ethersproject/abi": "npm:^5.7.0"
     "@ethersproject/bytes": "npm:^5.7.0"
     "@ethersproject/providers": "npm:^5.7.2"
-    "@stakingbrain/common": "npm:^0.1.0"
+    "@stakingbrain/common": "workspace:^0.1.0"
     "@types/chai": "npm:^4.3.4"
     "@types/cors": "npm:^2.8.13"
     "@types/express": "npm:^4.17.15"
@@ -3342,7 +3342,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@stakingbrain/common@npm:^0.1.0, @stakingbrain/common@workspace:packages/common":
+"@stakingbrain/common@workspace:^0.1.0, @stakingbrain/common@workspace:packages/common":
   version: 0.0.0-use.local
   resolution: "@stakingbrain/common@workspace:packages/common"
   dependencies:
@@ -3373,7 +3373,7 @@ __metadata:
     "@mui/material": "npm:^5.2.3"
     "@mui/system": "npm:^5.4.1"
     "@mui/x-data-grid": "npm:^5.1.0"
-    "@stakingbrain/common": "npm:^0.1.0"
+    "@stakingbrain/common": "workspace:^0.1.0"
     "@types/chai": "npm:^4.3.3"
     "@types/lodash-es": "npm:^4.17.6"
     "@types/mocha": "npm:^10.0.7"
