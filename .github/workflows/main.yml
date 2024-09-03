@@ -32,7 +32,7 @@ jobs:
         run: yarn lint
 
       - name: Prettier
-        run: yarn pretty
+        run: yarn format
 
       # Build
 
