@@ -23,7 +23,6 @@ import {
   brainDb,
 } from "../index.js";
 import logger from "../modules/logger/index.js";
-import { StakeHouseSDK } from "../modules/stakingProtocols/stakehouse/index.js";
 
 type ValidatorImportRequest = {
   keystore: string;
@@ -221,8 +220,6 @@ async function getNonEditableFeeRecipient(
   switch (tag) {
     case "rocketpool":
       return ROCKET_POOL_FEE_RECIPIENT;
-    case "stakehouse":
-      return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
 
     case "lido":
       if (network === "mainnet") return LIDO_FEE_RECIPIENT_MAINNET;

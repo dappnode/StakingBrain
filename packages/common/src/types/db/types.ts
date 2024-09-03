@@ -38,7 +38,6 @@ export const tags = [
 
 export const nonEditableFeeRecipientTags = [
   "rocketpool",
-  "stakehouse",
   "stader",
   "stakewise",
   "lido",
