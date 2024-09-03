@@ -16,9 +16,6 @@
     "start:dev": "nodemon -w src -e js,ts,json --require dotenv/config -x node --loader ts-node/esm src/index.ts",
     "build": "tsc -p tsconfig.json",
     "build:webpack": "tsc -p tsconfig.json",
-    "lint": "eslint src/**/*.ts",
-    "format": "eslint src/**/*.ts --fix",
-    "pretty": "prettier --write \"src/**/*.ts\"",
     "dev": "tsc -w",
     "test": "yarn run test:unit",
     "test:unit": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'tests/**/*.unit.test.ts'"
@@ -27,20 +24,16 @@
     "typescript-json-schema": "^0.55.0"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
+    "@types/node": "^18.11.18",
     "@types/sinon": "^10.0.13",
-    "eslint": "^8.33.0",
-    "nodemon": "^2.0.20",
-    "prettier": "^2.8.3",
-    "typescript": "^4.9.4",
-    "typescript-json-schema": "^0.55.0",
     "chai": "^4.3.7",
     "mocha": "^10.2.0",
+    "nodemon": "^2.0.20",
     "rimraf": "^4.1.1",
-    "sinon": "^15.0.1"
+    "sinon": "^15.0.1",
+    "typescript": "^4.9.4",
+    "typescript-json-schema": "^0.55.0"
   }
 }
