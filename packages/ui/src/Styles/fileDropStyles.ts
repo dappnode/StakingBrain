@@ -11,17 +11,17 @@ export const baseStyle = {
   backgroundColor: "rgba(0,0,0,0.3)",
   color: "#f0f0f0",
   outline: "none",
-  transition: "border .24s ease-in-out",
+  transition: "border .24s ease-in-out"
 };
 
 export const activeStyle = {
-  borderColor: "#2196f3",
+  borderColor: "#2196f3"
 };
 
 export const acceptStyle = {
-  borderColor: "#00e676",
+  borderColor: "#00e676"
 };
 
 export const rejectStyle = {
-  borderColor: "#ff1744",
+  borderColor: "#ff1744"
 };

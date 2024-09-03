@@ -7,7 +7,7 @@ import {
   executionClientUrl,
   validatorUrl,
   beaconchainUrl,
-  signerUrl,
+  signerUrl
 } from "../index.js";
 
 export async function getStakerConfig(): Promise<StakerConfig<Network>> {
@@ -19,6 +19,6 @@ export async function getStakerConfig(): Promise<StakerConfig<Network>> {
     executionClientUrl,
     validatorUrl,
     beaconchainUrl,
-    signerUrl,
+    signerUrl
   };
 }

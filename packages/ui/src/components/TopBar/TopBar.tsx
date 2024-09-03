@@ -7,7 +7,7 @@ export default function TopBar({
   setMode,
   userMode,
   setUserMode,
-  network,
+  network
 }: {
   mode: "light" | "dark";
   setMode: React.Dispatch<React.SetStateAction<"light" | "dark">>;
@@ -17,13 +17,7 @@ export default function TopBar({
 }): JSX.Element {
   return (
     <AppBar position="sticky">
-      <ToolBar
-        network={network}
-        mode={mode}
-        setMode={setMode}
-        userMode={userMode}
-        setUserMode={setUserMode}
-      />
+      <ToolBar network={network} mode={mode} setMode={setMode} userMode={userMode} setUserMode={setUserMode} />
     </AppBar>
   );
 }

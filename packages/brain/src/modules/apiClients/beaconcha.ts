@@ -7,11 +7,7 @@ export class BeaconchaApi extends StandardApi {
   /*
    * Fetch info for every validator PK
    */
-  public async fetchAllValidatorsInfo({
-    pubkeys,
-  }: {
-    pubkeys: string[];
-  }): Promise<BeaconchaGetResponse[]> {
+  public async fetchAllValidatorsInfo({ pubkeys }: { pubkeys: string[] }): Promise<BeaconchaGetResponse[]> {
     const validatorsInfo = new Array<BeaconchaGetResponse>();
 
     const chunkSize = maxValidatorsPerRequest;
@@ -38,15 +34,13 @@ export class BeaconchaApi extends StandardApi {
    * Get validator indexes for a list of public keys
    * https://beaconcha.in/api/v1/docs/index.html#/Validator/get_api_v1_validator__indexOrPubkey_
    */
-  public async fetchValidatorsInfo(
-    pubkeys: string[]
-  ): Promise<BeaconchaGetResponse> {
+  public async fetchValidatorsInfo(pubkeys: string[]): Promise<BeaconchaGetResponse> {
     const endpoint = `/api/v1/validator/${pubkeys.join(",")}`;
 
     try {
       return (await this.request({
         method: "GET",
-        endpoint,
+        endpoint
       })) as BeaconchaGetResponse;
     } catch (e) {
       e.message += "Error on getting indexes for validator public keys";

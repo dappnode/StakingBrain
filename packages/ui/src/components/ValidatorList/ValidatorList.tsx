@@ -3,11 +3,7 @@ import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
 import { Alert, Box, CircularProgress, Card } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import {
-  Network,
-  CustomValidatorGetResponse,
-  StakerConfig as StakerConfigType,
-} from "@stakingbrain/common";
+import { Network, CustomValidatorGetResponse, StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
@@ -17,7 +13,7 @@ import { getSmoothAddressByNetwork } from "../../utils/addresses";
 
 export default function ValidatorList({
   stakerConfig,
-  userMode,
+  userMode
 }: {
   stakerConfig: StakerConfigType<Network>;
   userMode: "basic" | "advanced";
@@ -27,14 +23,11 @@ export default function ValidatorList({
   const [editFeesOpen, setEditFeesOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [validatorsGet, setValidatorsGet] =
-    useState<CustomValidatorGetResponse[]>();
+  const [validatorsGet, setValidatorsGet] = useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
-  const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
-    BeaconchaUrlBuildingStatus.NotStarted
-  );
+  const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(BeaconchaUrlBuildingStatus.NotStarted);
 
-  const { network, isMevBoostSet } = stakerConfig
+  const { network, isMevBoostSet } = stakerConfig;
   const smoothAddress = getSmoothAddressByNetwork(network);
   useEffect(() => {
     getValidators();
@@ -65,13 +58,17 @@ export default function ValidatorList({
     return (
       <Box sx={{ marginBottom: 3 }}>
         <Alert severity="info" variant="filled">
-          🎉 Calling all solo stakers: Smooth has arrived! To join, select your validators and click on the edit fee recipient button.  Learn more{" "}
-          <strong><a href="https://smooth.dappnode.io/" target="_blank" rel="noopener noreferrer">here!</a></strong>
+          🎉 Calling all solo stakers: Smooth has arrived! To join, select your validators and click on the edit fee
+          recipient button. Learn more{" "}
+          <strong>
+            <a href="https://smooth.dappnode.io/" target="_blank" rel="noopener noreferrer">
+              here!
+            </a>
+          </strong>
         </Alert>
       </Box>
     );
   };
-  
 
   return (
     <div>
@@ -81,7 +78,7 @@ export default function ValidatorList({
           margin: 8,
           display: "flex",
           flexDirection: "column",
-          alignItems: "left",
+          alignItems: "left"
         }}
       >
         {(network === "prater" || network === "mainnet") && <SmoothBanner />}
@@ -89,7 +86,7 @@ export default function ValidatorList({
         <Card
           sx={{
             padding: 4,
-            borderRadius: 2,
+            borderRadius: 2
           }}
         >
           {validatorsGetError ? (
@@ -99,7 +96,7 @@ export default function ValidatorList({
           ) : loading ? (
             <CircularProgress
               sx={{
-                marginBottom: 4,
+                marginBottom: 4
               }}
             />
           ) : validatorsGet ? (
@@ -119,30 +116,17 @@ export default function ValidatorList({
                 mevSpFeeRecipient={smoothAddress}
               />
 
-              {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.Error && (
-                <Alert
-                  severity="warning"
-                  sx={{ marginTop: 2 }}
-                  variant="filled"
-                >
-                  There was an error loading the dashboard. The number of API
-                  calls allowed by the explorer might have been exceeded or the
-                  network might be invalid. Please wait for a minute and refresh
-                  the page.
+              {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Error && (
+                <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+                  There was an error loading the dashboard. The number of API calls allowed by the explorer might have
+                  been exceeded or the network might be invalid. Please wait for a minute and refresh the page.
                 </Alert>
               )}
 
-              {summaryUrlBuildingStatus ===
-                BeaconchaUrlBuildingStatus.NoIndexes && (
-                <Alert
-                  severity="warning"
-                  sx={{ marginTop: 2 }}
-                  variant="filled"
-                >
-                  There was an error loading the dashboard. The explorer may not
-                  be able to show a dashboard for all your validators or some of
-                  them might not have been indexed yet. Have you done a deposit?
+              {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NoIndexes && (
+                <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+                  There was an error loading the dashboard. The explorer may not be able to show a dashboard for all
+                  your validators or some of them might not have been indexed yet. Have you done a deposit?
                 </Alert>
               )}
 

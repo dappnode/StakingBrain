@@ -32,8 +32,5 @@ export function prettyClientDnpName(dnpName: string): string {
     );
   if (!clientName) return dnpName;
 
-  return (
-    clientName.split(".")[0].charAt(0).toUpperCase() +
-    clientName.split(".")[0].slice(1)
-  );
+  return clientName.split(".")[0].charAt(0).toUpperCase() + clientName.split(".")[0].slice(1);
 }

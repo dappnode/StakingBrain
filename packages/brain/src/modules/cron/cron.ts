@@ -5,7 +5,10 @@ export class CronJob {
   private task: NodeJS.Timeout | null = null;
   private interval: number;
 
-  constructor(interval: number, private jobFunction: () => Promise<void>) {
+  constructor(
+    interval: number,
+    private jobFunction: () => Promise<void>
+  ) {
     if (interval <= 0) throw Error("Interval must be a positive number.");
     this.interval = interval;
   }
@@ -16,8 +19,7 @@ export class CronJob {
       this.task = setInterval(async () => {
         await this.jobFunction();
       }, this.interval);
-    } else
-      logger.warn("Task is already running. Use restart to restart the job.");
+    } else logger.warn("Task is already running. Use restart to restart the job.");
   }
 
   public stop(): void {

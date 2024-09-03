@@ -1,21 +1,8 @@
-import {
-  Card,
-  Box,
-  Typography,
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  FormHelperText,
-} from "@mui/material";
+import { Card, Box, Typography, TextField, MenuItem, Select, FormControl, FormHelperText } from "@mui/material";
 import { KeystoreInfo, TagSelectOption } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
 import "./FileCardList.css";
-import {
-  Tag,
-  shortenPubkey,
-  isFeeRecipientEditable,
-} from "@stakingbrain/common";
+import { Tag, shortenPubkey, isFeeRecipientEditable } from "@stakingbrain/common";
 
 export default function FileCardList(
   fileInfos: KeystoreInfo[],
@@ -47,9 +34,7 @@ export default function FileCardList(
     const indexToRemove = fileInfos.indexOf(fileInfo);
     setAcceptedFiles(fileInfos.filter((f, index) => index !== indexToRemove));
     setPasswords(passwords.filter((f, index) => index !== indexToRemove));
-    setFeeRecipients(
-      feeRecipients.filter((f, index) => index !== indexToRemove)
-    );
+    setFeeRecipients(feeRecipients.filter((f, index) => index !== indexToRemove));
     setTags(tags.filter((f, index) => index !== indexToRemove));
   };
 
@@ -59,7 +44,7 @@ export default function FileCardList(
         sx={{
           display: "flex",
           flexDirection: "row",
-          alignItems: "left",
+          alignItems: "left"
         }}
       >
         <Typography variant="h6" sx={{ flex: 1 }}>

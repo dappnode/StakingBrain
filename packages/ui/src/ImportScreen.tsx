@@ -13,7 +13,7 @@ import {
   MenuItem,
   FormControl,
   FormHelperText,
-  Alert,
+  Alert
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
@@ -30,7 +30,7 @@ import {
   CustomImportRequest,
   isFeeRecipientEditable,
   areAllFeeRecipientsEditable,
-  Network,
+  Network
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { api } from "./api";
@@ -44,8 +44,7 @@ export default function ImportScreen({
   network: Network;
   isMevBoostSet: boolean;
 }): JSX.Element {
-  const [keystoresPostResponse, setKeystoresPostResponse] =
-    useState<Web3signerPostResponse>();
+  const [keystoresPostResponse, setKeystoresPostResponse] = useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
   const [openDialog, setOpenDialog] = useState(false);
   const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
@@ -62,39 +61,36 @@ export default function ImportScreen({
 
   // If the user has selected the 'lido' tag and MEV-Boost is not set, show the warning
   useEffect(() => {
-    const lidoSelected = tags.includes('lido');
+    const lidoSelected = tags.includes("lido");
     setShowMevWarning(lidoSelected && !isMevBoostSet);
   }, [tags, isMevBoostSet]);
 
-
   // Function to handle "use same password/fee recipient/tag" switches toggling
-  const handleSwitchToggle = (switchType: 'password' | 'tag' | 'feerecipient') => {
+  const handleSwitchToggle = (switchType: "password" | "tag" | "feerecipient") => {
     switch (switchType) {
-      case 'password':
-        setUseSamePassword(!useSamePassword);  // Directly toggle the boolean state
-        setPasswords([]);  // Reset passwords to empty
+      case "password":
+        setUseSamePassword(!useSamePassword); // Directly toggle the boolean state
+        setPasswords([]); // Reset passwords to empty
         break;
-      case 'tag':
-        setUseSameTag(!useSameTag);  // Directly toggle the boolean state
-        setTags([]);  // Reset tags to empty
+      case "tag":
+        setUseSameTag(!useSameTag); // Directly toggle the boolean state
+        setTags([]); // Reset tags to empty
         break;
-      case 'feerecipient':
-        setUseSameFeerecipient(!useSameFeerecipient);  // Directly toggle the boolean state
-        setFeeRecipients([]);  // Reset fee recipients to empty
+      case "feerecipient":
+        setUseSameFeerecipient(!useSameFeerecipient); // Directly toggle the boolean state
+        setFeeRecipients([]); // Reset fee recipients to empty
         break;
     }
   };
-  
-  
+
   // This use effect sets the Lido warning when one of the keystores has the 'lido' tag and MEV-Boost is not set
   useEffect(() => {
-      // Check if any of the selected tags is 'lido' and MEV-Boost is not set
-      const lidoSelected = tags.includes('lido');
+    // Check if any of the selected tags is 'lido' and MEV-Boost is not set
+    const lidoSelected = tags.includes("lido");
 
-      setShowMevWarning(lidoSelected && !isMevBoostSet);
+    setShowMevWarning(lidoSelected && !isMevBoostSet);
   }, [tags, isMevBoostSet]);
 
-  
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
     const keystoresToAdd: KeystoreInfo[] = [];
@@ -118,12 +114,8 @@ export default function ImportScreen({
   };
 
   // SLASHING PROTECTION SWITCH
-  const [slashingProtectionIncluded, setSlashingProtectionIncluded] =
-    useState(true);
-  const onSlashingChecked = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    checked: boolean
-  ) => {
+  const [slashingProtectionIncluded, setSlashingProtectionIncluded] = useState(true);
+  const onSlashingChecked = (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
     setSlashingProtectionIncluded(checked);
   };
 
@@ -135,7 +127,7 @@ export default function ImportScreen({
   // such as if any password is empty, if any tag is empty, if any fee recipient is invalid, etc.
   useEffect(() => {
     const isAnyPasswordEmpty = () => {
-      return passwords.some(password => password === "") || passwords.length === 0;
+      return passwords.some((password) => password === "") || passwords.length === 0;
     };
 
     const hasInvalidTagOrFeeRecipient = () => {
@@ -153,14 +145,14 @@ export default function ImportScreen({
       return isAnyPasswordEmpty() || hasInvalidTagOrFeeRecipient();
     };
 
-    const disable = acceptedFiles.length === 0 ||
-                    (!slashingFile && slashingProtectionIncluded) ||
-                    hasInvalidKeystoreData() ||
-                    showMevWarning;
+    const disable =
+      acceptedFiles.length === 0 ||
+      (!slashingFile && slashingProtectionIncluded) ||
+      hasInvalidKeystoreData() ||
+      showMevWarning;
 
-    setIsButtonDisabled(disable);  // Set the state based on the conditions
+    setIsButtonDisabled(disable); // Set the state based on the conditions
   }, [passwords, tags, feeRecipients, acceptedFiles, slashingFile, slashingProtectionIncluded, showMevWarning]);
-
 
   async function importKeystores() {
     try {
@@ -175,9 +167,9 @@ export default function ImportScreen({
             keystore: f.file,
             password: passwords[i],
             tag: tags[i],
-            feeRecipient: feeRecipients[i],
+            feeRecipient: feeRecipients[i]
           };
-        }),
+        })
       };
 
       const response = await api.importValidators(importRequest);
@@ -220,25 +212,23 @@ export default function ImportScreen({
     return false;
   }
 
-  const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(
-    network
-  )
+  const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(network)
     ? [{ value: "solo", label: "Solo" }]
     : ["holesky"].includes(network)
       ? [
-        { value: "solo", label: "Solo" },
-        { value: "rocketpool", label: "Rocketpool" },
-        { value: "stakehouse", label: "StakeHouse" },
-        { value: "lido", label: "Lido" }
-      ]
+          { value: "solo", label: "Solo" },
+          { value: "rocketpool", label: "Rocketpool" },
+          { value: "stakehouse", label: "StakeHouse" },
+          { value: "lido", label: "Lido" }
+        ]
       : [
-        { value: "solo", label: "Solo" },
-        { value: "rocketpool", label: "Rocketpool" },
-        { value: "stakehouse", label: "StakeHouse" },
-        { value: "stakewise", label: "Stakewise" },
-        { value: "stader", label: "Stader" },
-        { value: "lido", label: "Lido" }
-      ];
+          { value: "solo", label: "Solo" },
+          { value: "rocketpool", label: "Rocketpool" },
+          { value: "stakehouse", label: "StakeHouse" },
+          { value: "stakewise", label: "Stakewise" },
+          { value: "stader", label: "Stader" },
+          { value: "lido", label: "Lido" }
+        ];
 
   return (
     <div>
@@ -247,19 +237,19 @@ export default function ImportScreen({
           margin: 8,
           display: "flex",
           flexDirection: "column",
-          alignItems: "left",
+          alignItems: "left"
         }}
       >
         <Card
           sx={{
             padding: 4,
-            borderRadius: 2,
+            borderRadius: 2
           }}
         >
           <Typography
             variant="h5"
             sx={{
-              marginBottom: 4,
+              marginBottom: 4
             }}
           >
             <b>Import Validator Keystore(s)</b>
@@ -284,25 +274,15 @@ export default function ImportScreen({
             <>
               <FormGroup sx={{ marginTop: "6px" }}>
                 <FormControlLabel
-                  control={
-                    <Switch
-                      onChange={() => handleSwitchToggle('password')}
-                    />
-                  }
+                  control={<Switch onChange={() => handleSwitchToggle("password")} />}
                   label="Use same password for every file"
                 />
                 <FormControlLabel
-                  control={
-                    <Switch
-                      onChange={() => handleSwitchToggle('feerecipient')}
-                    />
-                  }
+                  control={<Switch onChange={() => handleSwitchToggle("feerecipient")} />}
                   label="Use same fee recipient for every file"
                 />
                 <FormControlLabel
-                  control={
-                    <Switch onChange={() => handleSwitchToggle('tag')} />
-                  }
+                  control={<Switch onChange={() => handleSwitchToggle("tag")} />}
                   label="Use same tag for every file"
                 />
               </FormGroup>
@@ -315,11 +295,7 @@ export default function ImportScreen({
                         label="Keystore Password"
                         type="password"
                         sx={{ marginTop: 2 }}
-                        onChange={(e) =>
-                          setPasswords(
-                            Array(acceptedFiles.length).fill(e.target.value)
-                          )
-                        }
+                        onChange={(e) => setPasswords(Array(acceptedFiles.length).fill(e.target.value))}
                         helperText={"Password to decrypt the keystore(s)"}
                       />
                     </>
@@ -333,20 +309,14 @@ export default function ImportScreen({
                         type="text"
                         sx={{ marginTop: 2 }}
                         onChange={(e) => {
-                          setTags(
-                            Array(acceptedFiles.length).fill(e.target.value)
-                          );
+                          setTags(Array(acceptedFiles.length).fill(e.target.value));
                           if (!isFeeRecipientEditable(tags[0])) {
-                            setFeeRecipients(
-                              Array(acceptedFiles.length).fill("")
-                            );
+                            setFeeRecipients(Array(acceptedFiles.length).fill(""));
                           }
                         }}
                       >
                         {tagSelectOptions.map((option) => (
-                          <MenuItem value={option.value}>
-                            {option.label}
-                          </MenuItem>
+                          <MenuItem value={option.value}>{option.label}</MenuItem>
                         ))}
                       </Select>
                       <FormHelperText>Staking protocol</FormHelperText>
@@ -357,17 +327,14 @@ export default function ImportScreen({
                       <TextField
                         id={`outlined-fee-recipient-input`}
                         label={
-                          tags[0] === undefined ||
-                          isFeeRecipientEditable(tags[0])
+                          tags[0] === undefined || isFeeRecipientEditable(tags[0])
                             ? "Fee Recipient"
                             : "For this protocol, fee recipient will be set automatically"
                         }
                         type="text"
                         sx={{ marginTop: 2 }}
                         onChange={(e) => {
-                          setFeeRecipients(
-                            Array(acceptedFiles.length).fill(e.target.value)
-                          );
+                          setFeeRecipients(Array(acceptedFiles.length).fill(e.target.value));
                         }}
                         error={isFeeRecipientFieldWrong(0)}
                         helperText={getFeeRecipientFieldHelperText(0)}
@@ -375,10 +342,7 @@ export default function ImportScreen({
                         disabled={!isFeeRecipientEditable(tags[0])}
                       />
                       {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
-                        <Alert severity="info">
-                          This field will only apply to the editable fee
-                          recipients
-                        </Alert>
+                        <Alert severity="info">This field will only apply to the editable fee recipients</Alert>
                       )}
                     </>
                   )}
@@ -401,7 +365,7 @@ export default function ImportScreen({
             useSameFeerecipient,
             getFeeRecipientFieldHelperText,
             isFeeRecipientFieldWrong,
-            tagSelectOptions,
+            tagSelectOptions
           )}
 
           <Box
@@ -410,7 +374,7 @@ export default function ImportScreen({
               marginBottom: 2,
               display: "flex",
               flexDirection: "row",
-              alignItems: "left",
+              alignItems: "left"
             }}
           >
             <Typography variant="h5" sx={{ marginRight: 2 }}>
@@ -420,15 +384,9 @@ export default function ImportScreen({
           </Box>
           {slashingProtectionIncluded ? (
             <div>
-              <Typography>
-                Upload your slashing protection file to protect your
-                keystore(s).
-              </Typography>
+              <Typography>Upload your slashing protection file to protect your keystore(s).</Typography>
 
-              <SecondaryInfoTypography
-                sx={{ marginBottom: 4 }}
-                text="Only for previously-used keystores"
-              />
+              <SecondaryInfoTypography sx={{ marginBottom: 4 }} text="Only for previously-used keystores" />
               {slashingFile ? (
                 <Card
                   key={slashingFile.name}
@@ -436,7 +394,7 @@ export default function ImportScreen({
                   sx={{
                     padding: 2,
                     marginTop: 4,
-                    borderRadius: 2,
+                    borderRadius: 2
                   }}
                 >
                   <Box
@@ -444,7 +402,7 @@ export default function ImportScreen({
                       display: "flex",
                       flexDirection: "row",
                       alignItems: "left",
-                      justifyContent: "space-between",
+                      justifyContent: "space-between"
                     }}
                   >
                     <Typography variant="h6">
@@ -464,32 +422,34 @@ export default function ImportScreen({
           ) : null}
         </Card>
         {showMevWarning && (
-          <Alert severity="warning" sx={{
-            marginTop: 4,
-            display: "flex",
-          }}>
-            You are importing one or more "Lido" validators, but don't have the MEV Boost package up & running.
-            As a Lido Node Operator, it is your responsibility to ensure that your validators use MEV boost. <br/> Please install the MEV Boost package from{' '}
-            <Link to={network === 'holesky' ? 'http://my.dappnode/stakers/holesky' : 'http://my.dappnode/stakers/ethereum'}>
+          <Alert
+            severity="warning"
+            sx={{
+              marginTop: 4,
+              display: "flex"
+            }}
+          >
+            You are importing one or more "Lido" validators, but don't have the MEV Boost package up & running. As a
+            Lido Node Operator, it is your responsibility to ensure that your validators use MEV boost. <br /> Please
+            install the MEV Boost package from{" "}
+            <Link
+              to={network === "holesky" ? "http://my.dappnode/stakers/holesky" : "http://my.dappnode/stakers/ethereum"}
+            >
               your stakers tab
-            </Link> before importing your Lido validator. Visit{' '}
-            <Link to="https://docs.dappnode.io/docs/user/staking/ethereum/lsd-pools/lido">
-              our docs
-            </Link> for more details.
+            </Link>{" "}
+            before importing your Lido validator. Visit{" "}
+            <Link to="https://docs.dappnode.io/docs/user/staking/ethereum/lsd-pools/lido">our docs</Link> for more
+            details.
           </Alert>
-        
-          )}
+        )}
         <Box
           sx={{
             marginTop: 4,
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "space-between"
           }}
         >
-          <Link
-            to={{ pathname: "/", search: window.location.search }}
-            style={{ textDecoration: "none" }}
-          >
+          <Link to={{ pathname: "/", search: window.location.search }} style={{ textDecoration: "none" }}>
             <Button
               variant="outlined"
               size="large"

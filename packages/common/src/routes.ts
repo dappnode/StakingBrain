@@ -10,39 +10,21 @@ import {
   Web3signerPostResponse,
   CustomValidatorUpdateRequest,
   ValidatorExitExecute,
-  BeaconchainPoolVoluntaryExitsPostRequest,
+  BeaconchainPoolVoluntaryExitsPostRequest
 } from "./index.js";
 
 export interface Routes {
   // BeaconchaApi
-  beaconchaFetchAllValidatorsInfo: (
-    pubkeys: string[]
-  ) => Promise<BeaconchaGetResponse[]>;
-  beaconchaFetchValidatorsInfo: (
-    pubkeys: string[]
-  ) => Promise<BeaconchaGetResponse>;
+  beaconchaFetchAllValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse[]>;
+  beaconchaFetchValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse>;
   // Validators
-  importValidators: (
-    postRequest: CustomImportRequest
-  ) => Promise<Web3signerPostResponse>;
-  updateValidators: (
-    updateRequest: CustomValidatorUpdateRequest[]
-  ) => Promise<void>;
-  deleteValidators: (
-    deleteRequest: Web3signerDeleteRequest
-  ) => Promise<Web3signerDeleteResponse>;
+  importValidators: (postRequest: CustomImportRequest) => Promise<Web3signerPostResponse>;
+  updateValidators: (updateRequest: CustomValidatorUpdateRequest[]) => Promise<void>;
+  deleteValidators: (deleteRequest: Web3signerDeleteRequest) => Promise<Web3signerDeleteResponse>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
-  getExitValidators: ({
-    pubkeys,
-  }: {
-    pubkeys: string[];
-  }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
-  exitValidators: ({
-    pubkeys,
-  }: {
-    pubkeys: string[];
-  }) => Promise<ValidatorExitExecute[]>;
+  getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
+  exitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<ValidatorExitExecute[]>;
   // Network
   getStakerConfig: () => Promise<StakerConfig<Network>>;
 }
@@ -61,5 +43,5 @@ export const routesData: { [P in keyof Routes]: RouteData } = {
   exitValidators: { log: true },
   getExitValidators: { log: true },
   signerGetStatus: { log: true },
-  getStakerConfig: { log: true },
+  getStakerConfig: { log: true }
 };

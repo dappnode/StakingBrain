@@ -1,12 +1,4 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Box,
-  Typography,
-  Button,
-  DialogActions,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, Box, Typography, Button, DialogActions } from "@mui/material";
 import { Link } from "react-router-dom";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import { KeystoreInfo } from "../../types";
@@ -21,7 +13,7 @@ export default function ImportDialog({
   keystoresPostResponse,
   keystoresPostError,
   importStatus,
-  acceptedFiles,
+  acceptedFiles
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -81,11 +73,7 @@ export default function ImportDialog({
 
       <DialogActions>
         <Link to={{ pathname: "/", search: window.location.search }}>
-          <Button
-            onClick={handleClose}
-            variant="contained"
-            sx={{ borderRadius: 2 }}
-          >
+          <Button onClick={handleClose} variant="contained" sx={{ borderRadius: 2 }}>
             Close
           </Button>
         </Link>

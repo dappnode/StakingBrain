@@ -24,27 +24,11 @@ export interface PubkeyDetails {
   automaticImport: boolean;
 }
 
-export const tags = [
-  "obol",
-  "diva",
-  "ssv",
-  "rocketpool",
-  "stakewise",
-  "stakehouse",
-  "solo",
-  "stader",
-  "lido",
-] as const;
+export const tags = ["obol", "diva", "ssv", "rocketpool", "stakewise", "stakehouse", "solo", "stader", "lido"] as const;
 
-export const nonEditableFeeRecipientTags = [
-  "rocketpool",
-  "stader",
-  "stakewise",
-  "lido",
-] as const;
+export const nonEditableFeeRecipientTags = ["rocketpool", "stader", "stakewise", "lido"] as const;
 
-export type NonEditableFeeRecipientTag =
-  (typeof nonEditableFeeRecipientTags)[number];
+export type NonEditableFeeRecipientTag = (typeof nonEditableFeeRecipientTags)[number];
 
 /**
  * Tag describes the protocol of the public key imported

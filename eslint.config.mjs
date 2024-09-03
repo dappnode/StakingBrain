@@ -26,12 +26,7 @@ export default [
         sourceType: "module"
       }
     },
-    ignores: [
-      "node_modules",
-      "packages/*/dist",
-      "packages/*/node_modules",
-      "packages/*/build"
-    ]
+    ignores: ["node_modules", "packages/*/dist", "packages/*/node_modules", "packages/*/build"]
   },
 
   // Optionally, add compatibility with old configs

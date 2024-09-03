@@ -1,8 +1,4 @@
-import {
-  BeaconchainPoolVoluntaryExitsPostRequest,
-  ValidatorExitExecute,
-  ValidatorExitGet,
-} from "@stakingbrain/common";
+import { BeaconchainPoolVoluntaryExitsPostRequest, ValidatorExitExecute, ValidatorExitGet } from "@stakingbrain/common";
 import { beaconchainApi, signerApi } from "../index.js";
 import logger from "../modules/logger/index.js";
 
@@ -12,7 +8,7 @@ import logger from "../modules/logger/index.js";
  * @returns The exit data signed of each validator
  */
 export async function getExitValidators({
-  pubkeys,
+  pubkeys
 }: {
   pubkeys: string[];
 }): Promise<BeaconchainPoolVoluntaryExitsPostRequest[]> {
@@ -26,11 +22,7 @@ export async function getExitValidators({
  * @param pubkeys The public keys of the validators to exit
  * @returns The exit status of each validator
  */
-export async function exitValidators({
-  pubkeys,
-}: {
-  pubkeys: string[];
-}): Promise<ValidatorExitExecute[]> {
+export async function exitValidators({ pubkeys }: { pubkeys: string[] }): Promise<ValidatorExitExecute[]> {
   const validatorsToExit = await _getExitValidators(pubkeys);
   const exitValidatorsResponses: ValidatorExitExecute[] = [];
   for (const validatorToExit of validatorsToExit) {
@@ -39,25 +31,25 @@ export async function exitValidators({
         postVoluntaryExitsRequest: {
           message: {
             epoch: validatorToExit.message.epoch,
-            validator_index: validatorToExit.message.validator_index,
+            validator_index: validatorToExit.message.validator_index
           },
-          signature: validatorToExit.signature,
-        },
+          signature: validatorToExit.signature
+        }
       });
       exitValidatorsResponses.push({
         pubkey: validatorToExit.pubkey,
         status: {
           exited: true,
-          message: "Successfully exited validator",
-        },
+          message: "Successfully exited validator"
+        }
       });
     } catch (e) {
       exitValidatorsResponses.push({
         pubkey: validatorToExit.pubkey,
         status: {
           exited: false,
-          message: `Error exiting validator ${e.message}`,
-        },
+          message: `Error exiting validator ${e.message}`
+        }
       });
     }
   }
@@ -70,9 +62,7 @@ export async function exitValidators({
  * @param pubkeys The public keys of the validators to exit
  * @returns The exit validators info signed
  */
-async function _getExitValidators(
-  pubkeys: string[]
-): Promise<ValidatorExitGet[]> {
+async function _getExitValidators(pubkeys: string[]): Promise<ValidatorExitGet[]> {
   // Get the current epoch from the beaconchain API to exit the validators
   const currentEpoch = await beaconchainApi.getCurrentEpoch();
 
@@ -84,15 +74,11 @@ async function _getExitValidators(
 
   // Get the validators indexes from the validator API
   const validatorPubkeysIndexes = (
-    await Promise.all(
-      pubkeys.map((pubkey) =>
-        beaconchainApi.getValidatorFromState({ state: "head", pubkey })
-      )
-    )
+    await Promise.all(pubkeys.map((pubkey) => beaconchainApi.getValidatorFromState({ state: "head", pubkey })))
   ).map((validator) => {
     return {
       pubkey: validator.data.validator.pubkey,
-      index: validator.data.index,
+      index: validator.data.index
     };
   });
 
@@ -105,24 +91,24 @@ async function _getExitValidators(
           fork: {
             previous_version: fork.data.previous_version,
             current_version: fork.data.current_version,
-            epoch: fork.data.epoch,
+            epoch: fork.data.epoch
           },
-          genesis_validators_root: genesis.data.genesis_validators_root,
+          genesis_validators_root: genesis.data.genesis_validators_root
         },
         voluntary_exit: {
           epoch: currentEpoch.toString(),
-          validator_index: validatorIndex.index,
-        },
+          validator_index: validatorIndex.index
+        }
       },
-      pubkey: validatorIndex.pubkey,
+      pubkey: validatorIndex.pubkey
     });
     validatorsExit.push({
       pubkey: validatorIndex.pubkey,
       message: {
         epoch: currentEpoch.toString(),
-        validator_index: validatorIndex.index,
+        validator_index: validatorIndex.index
       },
-      signature: validatorSignature.signature,
+      signature: validatorSignature.signature
     });
   }
 

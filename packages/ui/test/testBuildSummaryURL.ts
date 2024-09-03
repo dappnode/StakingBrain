@@ -7,12 +7,12 @@ describe("Test the building of a unique URL for all the validators", () => {
     const allValidatorsInfo: BeaconchaGetResponse[] = [
       {
         status: "ok",
-        data: [],
+        data: []
       },
       {
         status: "ok",
-        data: [],
-      },
+        data: []
+      }
     ];
 
     for (let i = 1; i <= 100; i++) {
@@ -26,12 +26,10 @@ describe("Test the building of a unique URL for all the validators", () => {
     const network = "mainnet";
     const summaryValidatorURL = buildValidatorSummaryURL({
       allValidatorsInfo,
-      network,
+      network
     });
     expect(summaryValidatorURL).to.equal(
-      "https://beaconcha.in/dashboard?validators=" +
-        "1,".repeat(100) +
-        "101,102,103"
+      "https://beaconcha.in/dashboard?validators=" + "1,".repeat(100) + "101,102,103"
     );
   });
 });

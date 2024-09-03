@@ -7,17 +7,15 @@ export default function WaitBox(): JSX.Element {
         margin: 8,
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: "center"
       }}
     >
       <CircularProgress
         sx={{
-          marginBottom: 4,
+          marginBottom: 4
         }}
       />
-      <DialogContentText id="alert-dialog-description">
-        Please wait
-      </DialogContentText>
+      <DialogContentText id="alert-dialog-description">Please wait</DialogContentText>
     </Box>
   );
 }

@@ -1,12 +1,9 @@
 import {
   DappnodeSignatureVerifierPostRequest,
   Web3signerPostSignDappnodeRequest,
-  Web3signerPostSignDappnodeResponse,
+  Web3signerPostSignDappnodeResponse
 } from "@stakingbrain/common";
-import {
-  Web3SignerApi,
-  DappnodeSignatureVerifier,
-} from "../apiClients/index.js";
+import { Web3SignerApi, DappnodeSignatureVerifier } from "../apiClients/index.js";
 import { BrainDataBase } from "../db/index.js";
 import logger from "../logger/index.js";
 import { isEmpty } from "lodash-es";
@@ -22,11 +19,7 @@ export async function sendProofsOfValidation(
 ): Promise<void> {
   try {
     // Get the proofs of validation from the signer
-    const proofsOfValidations = await getProofsOfValidation(
-      signerApi,
-      brainDb,
-      shareDataWithDappnode
-    );
+    const proofsOfValidations = await getProofsOfValidation(signerApi, brainDb, shareDataWithDappnode);
     if (proofsOfValidations.length === 0) {
       logger.debug(`No proofs of validation to send`);
       return;
@@ -50,7 +43,7 @@ async function getProofsOfValidation(
   const signerDappnodeSignRequest: Web3signerPostSignDappnodeRequest = {
     type: "PROOF_OF_VALIDATION",
     platform: "dappnode",
-    timestamp: Date.now().toString(),
+    timestamp: Date.now().toString()
   };
   // get pubkeys detauls from db
   const dbPubkeysDetails = brainDb.getData();
@@ -58,9 +51,7 @@ async function getProofsOfValidation(
   // only send proof of validation if the user has enabled it
   // or if there is a stader pubkey
   const dbPubkeysDetailsFiltered = Object.fromEntries(
-    Object.entries(dbPubkeysDetails).filter(
-      ([pubkey, details]) => shareDataWithDappnode || details.tag === "stader"
-    )
+    Object.entries(dbPubkeysDetails).filter(([, details]) => shareDataWithDappnode || details.tag === "stader")
   );
   if (isEmpty(dbPubkeysDetailsFiltered)) return [];
   // For each pubkey, get the proof of validation from the signer
@@ -70,18 +61,16 @@ async function getProofsOfValidation(
         const { payload, signature }: Web3signerPostSignDappnodeResponse =
           await signerApi.signDappnodeProofOfValidation({
             signerDappnodeSignRequest,
-            pubkey,
+            pubkey
           });
         return {
           payload,
           pubkey,
           signature,
-          tag: dbPubkeysDetailsFiltered[pubkey].tag,
+          tag: dbPubkeysDetailsFiltered[pubkey].tag
         };
       } catch (e) {
-        logger.error(
-          `Error getting proof of validation for pubkey ${pubkey}. Error: ${e.message}`
-        );
+        logger.error(`Error getting proof of validation for pubkey ${pubkey}. Error: ${e.message}`);
         return null;
       }
     })

@@ -2,7 +2,7 @@ import {
   CustomValidatorUpdateRequest,
   prefix0xPubkey,
   isFeeRecipientEditable,
-  PubkeyDetails,
+  PubkeyDetails
 } from "@stakingbrain/common";
 import { reloadValidatorsCron, brainDb, validatorApi } from "../index.js";
 import logger from "../modules/logger/index.js";
@@ -26,29 +26,26 @@ export async function updateValidators(
     const dbData = brainDb.getData();
 
     // Only update validators with editable fee recipient
-    const editableValidators: CustomValidatorUpdateRequest[] =
-      customValidatorUpdateRequest.filter(
-        (validator) =>
-          dbData[prefix0xPubkey(validator.pubkey)] &&
-          isFeeRecipientEditable(
-            dbData[prefix0xPubkey(validator.pubkey)].tag,
-            requestFrom
-          )
-      );
+    const editableValidators: CustomValidatorUpdateRequest[] = customValidatorUpdateRequest.filter(
+      (validator) =>
+        dbData[prefix0xPubkey(validator.pubkey)] &&
+        isFeeRecipientEditable(dbData[prefix0xPubkey(validator.pubkey)].tag, requestFrom)
+    );
 
     if (editableValidators.length === 0) {
-      throw new Error(
-        "The fee recipient can't be updated for these validators"
-      );
+      throw new Error("The fee recipient can't be updated for these validators");
     }
 
     brainDb.updateValidators({
-      validators: editableValidators.reduce((acc, validator) => {
-        acc[validator.pubkey] = {
-          feeRecipient: validator.feeRecipient,
-        };
-        return acc;
-      }, {} as { [pubkey: string]: Omit<PubkeyDetails, "automaticImport" | "tag"> }),
+      validators: editableValidators.reduce(
+        (acc, validator) => {
+          acc[validator.pubkey] = {
+            feeRecipient: validator.feeRecipient
+          };
+          return acc;
+        },
+        {} as { [pubkey: string]: Omit<PubkeyDetails, "automaticImport" | "tag"> }
+      )
     });
 
     // Import feeRecipient on Validator API
@@ -56,9 +53,7 @@ export async function updateValidators(
       await validatorApi
         .setFeeRecipient(validator.feeRecipient, validator.pubkey)
         .then(() => logger.debug(`Added feeRecipient to validator API`))
-        .catch((err) =>
-          logger.error(`Error setting validator feeRecipient`, err)
-        );
+        .catch((err) => logger.error(`Error setting validator feeRecipient`, err));
 
     // IMPORTANT: start the cron
     reloadValidatorsCron.start();

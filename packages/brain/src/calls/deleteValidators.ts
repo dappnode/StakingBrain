@@ -1,13 +1,5 @@
-import {
-  Web3signerDeleteRequest,
-  Web3signerDeleteResponse,
-} from "@stakingbrain/common";
-import {
-  reloadValidatorsCron,
-  validatorApi,
-  signerApi,
-  brainDb,
-} from "../index.js";
+import { Web3signerDeleteRequest, Web3signerDeleteResponse } from "@stakingbrain/common";
+import { reloadValidatorsCron, validatorApi, signerApi, brainDb } from "../index.js";
 import logger from "../modules/logger/index.js";
 
 /**
@@ -19,9 +11,7 @@ import logger from "../modules/logger/index.js";
  * @param deleteRequest
  * @returns
  */
-export async function deleteValidators(
-  deleteRequest: Web3signerDeleteRequest
-): Promise<Web3signerDeleteResponse> {
+export async function deleteValidators(deleteRequest: Web3signerDeleteRequest): Promise<Web3signerDeleteResponse> {
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are deleting validators
@@ -32,9 +22,7 @@ export async function deleteValidators(
       await validatorApi
         .deleteFeeRecipient(pubkey)
         .then(() => logger.debug(`Deleted fee recipient in validator API`))
-        .catch((err) =>
-          logger.error(`Error deleting validator feeRecipient`, err)
-        );
+        .catch((err) => logger.error(`Error deleting validator feeRecipient`, err));
     // Delete pubkeys on validator API
     await validatorApi
       .deleteRemoteKeys(deleteRequest)
@@ -42,9 +30,7 @@ export async function deleteValidators(
       .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
 
     // Delete keystores on web3signer API
-    const web3signerDeleteResponse = await signerApi.deleteKeystores(
-      deleteRequest
-    );
+    const web3signerDeleteResponse = await signerApi.deleteKeystores(deleteRequest);
 
     // Write on db
     brainDb.deleteValidators(deleteRequest.pubkeys);

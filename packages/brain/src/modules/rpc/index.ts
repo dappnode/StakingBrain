@@ -34,13 +34,11 @@ function parseRpcRequest(body: RpcPayload): {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any[];
 } {
-  if (typeof body !== "object")
-    throw Error(`body request must be an object, ${typeof body}`);
+  if (typeof body !== "object") throw Error(`body request must be an object, ${typeof body}`);
   const { method, params } = body;
   if (!method) throw new JsonRpcReqError("request body missing method");
   if (!params) throw new JsonRpcReqError("request body missing params");
-  if (!Array.isArray(params))
-    throw new JsonRpcReqError("request body params must be an array");
+  if (!Array.isArray(params)) throw new JsonRpcReqError("request body params must be an array");
   return { method: method as keyof Routes, params };
 }
 

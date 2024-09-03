@@ -22,7 +22,7 @@ import {
   ConsensusClientLukso,
   ConsensusClientHolesky,
   ExecutionClient,
-  ConsensusClient,
+  ConsensusClient
 } from "@stakingbrain/common";
 import path from "path";
 import fs from "fs";
@@ -66,15 +66,10 @@ export function loadStakerConfig(): {
   const network = process.env.NETWORK as Network;
   if (!network) throw Error("NETWORK environment variable is not set");
   if (!networks.includes(network))
-    throw Error(
-      `NETWORK environment variable is not valid: ${network}. Valid NETWORK values: ${networks.join(
-        ", "
-      )}`
-    );
+    throw Error(`NETWORK environment variable is not valid: ${network}. Valid NETWORK values: ${networks.join(", ")}`);
 
   const shareDataWithDappnode = process.env.SHARE_DATA_WITH_DAPPNODE === "true";
-  const validatorsMonitorUrl =
-    process.env.VALIDATORS_MONITOR_URL || params.defaultValidatorsMonitorUrl;
+  const validatorsMonitorUrl = process.env.VALIDATORS_MONITOR_URL || params.defaultValidatorsMonitorUrl;
   const shareCronInterval = process.env.SHARE_CRON_INTERVAL
     ? parseInt(process.env.SHARE_CRON_INTERVAL)
     : params.defaultProofsOfValidationCron;
@@ -88,8 +83,7 @@ export function loadStakerConfig(): {
     tlsCert: Buffer | undefined;
 
   if (network === "mainnet") {
-    const { executionClient, consensusClient, isMevBoostSet } =
-      loadEnvs("mainnet");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("mainnet");
     switch (executionClient) {
       case "geth.dnp.dappnode.eth":
         executionClientUrl = `http://geth.dappnode:8545`;
@@ -104,9 +98,7 @@ export function loadStakerConfig(): {
         executionClientUrl = `http://erigon.dappnode:8545`;
         break;
       default:
-        throw Error(
-          `Unknown execution client for network ${network}: ${executionClient}`
-        );
+        throw Error(`Unknown execution client for network ${network}: ${executionClient}`);
     }
     switch (consensusClient) {
       case "prysm.dnp.dappnode.eth":
@@ -123,9 +115,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         validatorUrl = `https://validator.teku.dappnode:3500`;
         beaconchainUrl = `http://beacon-chain.teku.dappnode:3500`;
-        tlsCert = fs.readFileSync(
-          path.join(certDir, "mainnet", "teku_client_keystore.p12")
-        );
+        tlsCert = fs.readFileSync(path.join(certDir, "mainnet", "teku_client_keystore.p12"));
         break;
       case "lodestar.dnp.dappnode.eth":
         token = `api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d`;
@@ -138,9 +128,7 @@ export function loadStakerConfig(): {
         beaconchainUrl = `http://beacon-validator.nimbus.dappnode:4500`;
         break;
       default:
-        throw Error(
-          `Unknown consensus client for network ${network}: ${consensusClient}`
-        );
+        throw Error(`Unknown consensus client for network ${network}: ${consensusClient}`);
     }
     return {
       network,
@@ -157,11 +145,10 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
-      tlsCert,
+      tlsCert
     };
   } else if (network === "gnosis") {
-    const { executionClient, consensusClient, isMevBoostSet } =
-      loadEnvs("gnosis");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("gnosis");
     switch (executionClient) {
       case "nethermind-xdai.dnp.dappnode.eth":
         executionClientUrl = `http://nethermind-xdai.dappnode:8545`;
@@ -170,9 +157,7 @@ export function loadStakerConfig(): {
         executionClientUrl = `http://gnosis-erigon.dappnode:8545`;
         break;
       default:
-        throw Error(
-          `Unknown execution client for network ${network}: ${executionClient}`
-        );
+        throw Error(`Unknown execution client for network ${network}: ${executionClient}`);
     }
     switch (consensusClient) {
       case "gnosis-beacon-chain-prysm.dnp.dappnode.eth":
@@ -189,9 +174,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-gnosis.dappnode:3500`;
         validatorUrl = `https://validator.teku-gnosis.dappnode:3500`;
-        tlsCert = fs.readFileSync(
-          path.join(certDir, "gnosis", "teku_client_keystore.p12")
-        );
+        tlsCert = fs.readFileSync(path.join(certDir, "gnosis", "teku_client_keystore.p12"));
         break;
       case "lighthouse-gnosis.dnp.dappnode.eth":
         token = `api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d`;
@@ -204,9 +187,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://validator.lodestar-gnosis.dappnode:3500`;
         break;
       default:
-        throw Error(
-          `Unknown consensus client for network ${network}: ${consensusClient}`
-        );
+        throw Error(`Unknown consensus client for network ${network}: ${consensusClient}`);
     }
     return {
       network,
@@ -223,11 +204,10 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
-      tlsCert,
+      tlsCert
     };
   } else if (network === "prater") {
-    const { executionClient, consensusClient, isMevBoostSet } =
-      loadEnvs("prater");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("prater");
     switch (executionClient) {
       case "goerli-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://goerli-nethermind.dappnode:8545`;
@@ -237,13 +217,12 @@ export function loadStakerConfig(): {
         break;
       case "goerli-erigon.dnp.dappnode.eth":
         executionClientUrl = `http://goerli-erigon.dappnode:8545`;
+        break;
       case "goerli-geth.dnp.dappnode.eth":
         executionClientUrl = `http://goerli-geth.dappnode:8545`;
         break;
       default:
-        throw Error(
-          `Unknown execution client for network ${network}: ${executionClient}`
-        );
+        throw Error(`Unknown execution client for network ${network}: ${executionClient}`);
     }
     switch (consensusClient) {
       case "prysm-prater.dnp.dappnode.eth":
@@ -255,9 +234,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-prater.dappnode:3500`;
         validatorUrl = `https://validator.teku-prater.dappnode:3500`;
-        tlsCert = fs.readFileSync(
-          path.join(certDir, "prater", "teku_client_keystore.p12")
-        );
+        tlsCert = fs.readFileSync(path.join(certDir, "prater", "teku_client_keystore.p12"));
         break;
       case "lighthouse-prater.dnp.dappnode.eth":
         token = `api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d`;
@@ -275,9 +252,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://beacon-validator.nimbus-prater.dappnode:3500`;
         break;
       default:
-        throw Error(
-          `Unknown consensus client for network ${network}: ${consensusClient}`
-        );
+        throw Error(`Unknown consensus client for network ${network}: ${consensusClient}`);
     }
 
     return {
@@ -295,21 +270,19 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
-      tlsCert,
+      tlsCert
     };
   } else if (network === "lukso") {
-    const { executionClient, consensusClient, isMevBoostSet } =
-      loadEnvs("lukso");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("lukso");
     switch (executionClient) {
       case "lukso-erigon.dnp.dappnode.eth":
         executionClientUrl = `http://lukso-erigon.dappnode:8545`;
+        break;
       case "lukso-geth.dnp.dappnode.eth":
         executionClientUrl = `http://lukso-geth.dappnode:8545`;
         break;
       default:
-        throw Error(
-          `Unknown execution client for network ${network}: ${executionClient}`
-        );
+        throw Error(`Unknown execution client for network ${network}: ${executionClient}`);
     }
     switch (consensusClient) {
       case "prysm-lukso.dnp.dappnode.eth":
@@ -326,9 +299,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-lukso.dappnode:3500`;
         validatorUrl = `https://validator.teku-lukso.dappnode:3500`;
-        tlsCert = fs.readFileSync(
-          path.join(certDir, "lukso", "teku_client_keystore.p12")
-        );
+        tlsCert = fs.readFileSync(path.join(certDir, "lukso", "teku_client_keystore.p12"));
         break;
       case "lodestar-lukso.dnp.dappnode.eth":
         token = `api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d`;
@@ -341,9 +312,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://beacon-validator.nimbus-lukso.dappnode:3500`;
         break;
       default:
-        throw Error(
-          `Unknown consensus client for network ${network}: ${consensusClient}`
-        );
+        throw Error(`Unknown consensus client for network ${network}: ${consensusClient}`);
     }
 
     return {
@@ -361,11 +330,10 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
-      tlsCert,
+      tlsCert
     };
   } else if (network === "holesky") {
-    const { executionClient, consensusClient, isMevBoostSet } =
-      loadEnvs("holesky");
+    const { executionClient, consensusClient, isMevBoostSet } = loadEnvs("holesky");
     switch (executionClient) {
       case "holesky-nethermind.dnp.dappnode.eth":
         executionClientUrl = `http://holesky-nethermind.dappnode:8545`;
@@ -375,13 +343,12 @@ export function loadStakerConfig(): {
         break;
       case "holesky-erigon.dnp.dappnode.eth":
         executionClientUrl = `http://holesky-erigon.dappnode:8545`;
+        break;
       case "holesky-geth.dnp.dappnode.eth":
         executionClientUrl = `http://holesky-geth.dappnode:8545`;
         break;
       default:
-        throw Error(
-          `Unknown execution client for network ${network}: ${executionClient}`
-        );
+        throw Error(`Unknown execution client for network ${network}: ${executionClient}`);
     }
     switch (consensusClient) {
       case "prysm-holesky.dnp.dappnode.eth":
@@ -393,9 +360,7 @@ export function loadStakerConfig(): {
         token = `cd4892ca35d2f5d3e2301a65fc7aa660`;
         beaconchainUrl = `http://beacon-chain.teku-holesky.dappnode:3500`;
         validatorUrl = `https://validator.teku-holesky.dappnode:3500`;
-        tlsCert = fs.readFileSync(
-          path.join(certDir, "holesky", "teku_client_keystore.p12")
-        );
+        tlsCert = fs.readFileSync(path.join(certDir, "holesky", "teku_client_keystore.p12"));
         break;
       case "lighthouse-holesky.dnp.dappnode.eth":
         token = `api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d`;
@@ -413,9 +378,7 @@ export function loadStakerConfig(): {
         validatorUrl = `http://beacon-validator.nimbus-holesky.dappnode:3500`;
         break;
       default:
-        throw Error(
-          `Unknown consensus client for network ${network}: ${consensusClient}`
-        );
+        throw Error(`Unknown consensus client for network ${network}: ${consensusClient}`);
     }
 
     return {
@@ -433,7 +396,7 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
-      tlsCert,
+      tlsCert
     };
   } else {
     throw Error(`Unknown network ${network}`);
@@ -453,31 +416,19 @@ function loadEnvs<T extends Network>(
 } {
   const errors = [];
 
-  const executionClient =
-    process.env[`_DAPPNODE_GLOBAL_EXECUTION_CLIENT_${network.toUpperCase()}`];
-  const consensusClient =
-    process.env[`_DAPPNODE_GLOBAL_CONSENSUS_CLIENT_${network.toUpperCase()}`];
-  const isMevBoostSet =
-    process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`] ===
-    "true";
+  const executionClient = process.env[`_DAPPNODE_GLOBAL_EXECUTION_CLIENT_${network.toUpperCase()}`];
+  const consensusClient = process.env[`_DAPPNODE_GLOBAL_CONSENSUS_CLIENT_${network.toUpperCase()}`];
+  const isMevBoostSet = process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`] === "true";
 
   switch (network) {
     case "mainnet":
-      if (
-        !executionClientsMainnet.includes(
-          executionClient as ExecutionClientMainnet
-        )
-      )
+      if (!executionClientsMainnet.includes(executionClient as ExecutionClientMainnet))
         errors.push(
           `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsMainnet.join(
             ", "
           )}`
         );
-      if (
-        !consensusClientsMainnet.includes(
-          consensusClient as ConsensusClientMainnet
-        )
-      )
+      if (!consensusClientsMainnet.includes(consensusClient as ConsensusClientMainnet))
         errors.push(
           `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsMainnet.join(
             ", "
@@ -486,21 +437,13 @@ function loadEnvs<T extends Network>(
 
       break;
     case "prater":
-      if (
-        !executionClientsPrater.includes(
-          executionClient as ExecutionClientPrater
-        )
-      )
+      if (!executionClientsPrater.includes(executionClient as ExecutionClientPrater))
         errors.push(
           `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsPrater.join(
             ", "
           )}`
         );
-      if (
-        !consensusClientsPrater.includes(
-          consensusClient as ConsensusClientPrater
-        )
-      )
+      if (!consensusClientsPrater.includes(consensusClient as ConsensusClientPrater))
         errors.push(
           `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsPrater.join(
             ", "
@@ -508,21 +451,13 @@ function loadEnvs<T extends Network>(
         );
       break;
     case "gnosis":
-      if (
-        !executionClientsGnosis.includes(
-          executionClient as ExecutionClientGnosis
-        )
-      )
+      if (!executionClientsGnosis.includes(executionClient as ExecutionClientGnosis))
         errors.push(
           `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsGnosis.join(
             ", "
           )}`
         );
-      if (
-        !consensusClientsGnosis.includes(
-          consensusClient as ConsensusClientGnosis
-        )
-      )
+      if (!consensusClientsGnosis.includes(consensusClient as ConsensusClientGnosis))
         errors.push(
           `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsGnosis.join(
             ", "
@@ -530,17 +465,13 @@ function loadEnvs<T extends Network>(
         );
       break;
     case "lukso":
-      if (
-        !executionClientsLukso.includes(executionClient as ExecutionClientLukso)
-      )
+      if (!executionClientsLukso.includes(executionClient as ExecutionClientLukso))
         errors.push(
           `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsLukso.join(
             ", "
           )}`
         );
-      if (
-        !consensusClientsLukso.includes(consensusClient as ConsensusClientLukso)
-      )
+      if (!consensusClientsLukso.includes(consensusClient as ConsensusClientLukso))
         errors.push(
           `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsLukso.join(
             ", "
@@ -548,21 +479,13 @@ function loadEnvs<T extends Network>(
         );
       break;
     case "holesky":
-      if (
-        !executionClientsHolesky.includes(
-          executionClient as ExecutionClientHolesky
-        )
-      )
+      if (!executionClientsHolesky.includes(executionClient as ExecutionClientHolesky))
         errors.push(
           `Execution client is not valid for network ${network}: ${executionClient}. Valid execution clients for ${network}: ${executionClientsHolesky.join(
             ", "
           )}`
         );
-      if (
-        !consensusClientsHolesky.includes(
-          consensusClient as ConsensusClientHolesky
-        )
-      )
+      if (!consensusClientsHolesky.includes(consensusClient as ConsensusClientHolesky))
         errors.push(
           `Consensus client is not valid for network ${network}: ${consensusClient}. Valid consensus clients for ${network}: ${consensusClientsHolesky.join(
             ", "
@@ -571,9 +494,7 @@ function loadEnvs<T extends Network>(
       break;
     default:
       errors.push(
-        `NETWORK environment variable is not valid: ${network}. Valid NETWORK values: ${networks.join(
-          ", "
-        )}`
+        `NETWORK environment variable is not valid: ${network}. Valid NETWORK values: ${networks.join(", ")}`
       );
   }
 
@@ -582,6 +503,6 @@ function loadEnvs<T extends Network>(
   return {
     executionClient: executionClient as ExecutionClient<T>,
     consensusClient: consensusClient as ConsensusClient<T>,
-    isMevBoostSet: isMevBoostSet,
+    isMevBoostSet: isMevBoostSet
   };
 }

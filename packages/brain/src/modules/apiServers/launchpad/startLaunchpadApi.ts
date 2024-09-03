@@ -21,4 +21,3 @@ export function startLaunchpadApi(): http.Server {
 
   return server;
 }
-
