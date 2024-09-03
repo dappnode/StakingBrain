@@ -26,7 +26,7 @@
     "start": "vite",
     "build": "tsc -b && vite build",
     "serve": "vite preview",
-    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/**/*.test.ts'",
+    "test": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'test/**/*.test.ts'",
     "start:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\"",
     "start:webpack:dev": "nodemon --ignore \"*.json\" -e ts,tsx --watch src/ --exec \"yarn build\""
   },

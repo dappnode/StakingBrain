@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "include": ["src"],
-  "exclude": ["./tests/", "./node_modules/", "./dist/"],
+  "exclude": ["test", "./node_modules/", "./dist/"],
   "compilerOptions": {
     "outDir": "dist",
     "skipLibCheck": true

@@ -6,8 +6,8 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "yarn run test:unit",
-    "test:unit": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'tests/**/*.unit.test.ts'",
-    "start:dev": "nodemon -w src -e js,ts,json --require dotenv/config -x node --loader ts-node/esm src/index.ts",
+    "test:unit": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'test/**/*.unit.test.ts'",
+    "start:dev": "nodemon -w src -e js,ts,json --require dotenv/config -x node --loader tsx/esm src/index.ts",
     "start:webpack:dev": "yarn build:webpack && yarn run link:ui && webpack --watch --mode development & nodemon -w dist -e js,json --require dotenv/config -x node dist/index.js",
     "start:webpack": "yarn run build:webpack && yarn run link:ui && node ./dist/index.js",
     "link:ui": "ln -s ../ui/build/ ./uiBuild",

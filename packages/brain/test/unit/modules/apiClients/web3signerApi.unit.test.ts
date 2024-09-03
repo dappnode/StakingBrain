@@ -13,10 +13,9 @@ describe.skip("Signer API: Prater", () => {
     "0x86d25af52627204ab822a20ac70da6767952841edbcb0b83c84a395205313661de5f7f76efa475a46f45fa89d95c1dd7",
     "0x821a80380122281580ba8a56cd21956933d43c62fdc8f5b4ec31b2c620e8534e80b6b816c9a2cc8d25568dc4ebcfd47a",
     "0x8f2b698583d69c7a78b4482871282602adb7fb47a1aab66c63feb48e7b9245dad77b82346e0201328d66a8b4d483b716",
-    "0xa1735a0dd72205dae313c36d7d17f5b06685944c8886ddac530e5aedbe1fca0c8003e7e274ec1b4ddd08b884f5b9a830",
+    "0xa1735a0dd72205dae313c36d7d17f5b06685944c8886ddac530e5aedbe1fca0c8003e7e274ec1b4ddd08b884f5b9a830"
   ];
-  const signerContainerName =
-    "DAppNodePackage-web3signer.web3signer-prater.dnp.dappnode.eth";
+  const signerContainerName = "DAppNodePackage-web3signer.web3signer-prater.dnp.dappnode.eth";
   const host = "web3signer.web3signer-prater.dappnode";
   let signerApi: Web3SignerApi;
 
@@ -30,24 +29,20 @@ describe.skip("Signer API: Prater", () => {
     signerApi = new Web3SignerApi(
       {
         baseUrl: `http://${signerIp}:9000`,
-        host,
+        host
       },
       "prater"
     );
   });
 
   it("Should post validators", async () => {
-    const keystoresPaths = fs
-      .readdirSync(keystoresPath)
-      .filter((file) => file.endsWith(".json"));
-    const keystores = keystoresPaths.map((file) =>
-      fs.readFileSync(path.join(keystoresPath, file)).toString()
-    );
+    const keystoresPaths = fs.readdirSync(keystoresPath).filter((file) => file.endsWith(".json"));
+    const keystores = keystoresPaths.map((file) => fs.readFileSync(path.join(keystoresPath, file)).toString());
     const passwords = Array(keystores.length).fill("stakingbrain");
 
     const response = await signerApi.importKeystores({
       keystores,
-      passwords,
+      passwords
     });
 
     expect(response.data).to.be.an("array");
@@ -55,14 +50,12 @@ describe.skip("Signer API: Prater", () => {
 
   it("Should get validators", async () => {
     const response = await signerApi.getKeystores();
-    expect(response.data.map((item) => item.validating_pubkey)).to.have.members(
-      pubkeys
-    );
+    expect(response.data.map((item) => item.validating_pubkey)).to.have.members(pubkeys);
   });
 
   it("Should delete validators", async () => {
     const response = await signerApi.deleteKeystores({
-      pubkeys,
+      pubkeys
     });
     expect(response.data).to.be.ok;
 

@@ -1,6 +1,6 @@
 import { BeaconchaGetResponse } from "@stakingbrain/common";
 import { expect } from "chai";
-import buildValidatorSummaryURL from "../src/utils/buildValidatorSummaryURL";
+import buildValidatorSummaryURL from "../src/utils/buildValidatorSummaryURL.js";
 
 describe("Test the building of a unique URL for all the validators", () => {
   it("should return a valid URL", () => {
