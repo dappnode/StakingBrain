@@ -1,13 +1,16 @@
-ARG NODE_VERSION=20.3.0
+ARG DOCKER_IMAGE=20.17.0-alpine.3.20
 
 # Build
-FROM node:${NODE_VERSION}-alpine as build-stage
+FROM ${DOCKER_IMAGE} as build-stage
 
 WORKDIR /app
 COPY package.json yarn.lock lerna.json tsconfig.json ./
 COPY packages/ui/ packages/ui/
 COPY packages/brain/ packages/brain/
 COPY packages/common/ packages/common/
+
+# Required to build with vite
+RUN apk update && apk add --no-cache python3 py3-pip build-base
 
 # Build but keep only production dependencies
 RUN yarn --frozen-lockfile --non-interactive --ignore-optional && \
@@ -16,7 +19,7 @@ RUN yarn --frozen-lockfile --non-interactive --ignore-optional && \
   yarn --frozen-lockfile --non-interactive --ignore-optional --production
 
 # Production
-FROM node:${NODE_VERSION}-alpine
+FROM ${DOCKER_IMAGE}
 ENV NODE_ENV=production
 WORKDIR /app
 

@@ -1,9 +1,9 @@
-ARG NODE_VERSION=20.3.0
+ARG DOCKER_IMAGE=20.17.0-alpine.3.20
 
 ###############
 # BUILD stage #
 ###############
-FROM node:${NODE_VERSION}-alpine as build-stage
+FROM ${DOCKER_IMAGE} as build-stage
 
 # Fixes error on `react-scripts-build`
 # error:0308010C:digital envelope routines::unsupported https://stackoverflow.com/questions/69692842/error-message-error0308010cdigital-envelope-routinesunsupported

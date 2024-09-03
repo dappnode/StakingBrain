@@ -14,3 +14,6 @@ packages/brain/brain-db.json
 # Keystores
 packages/brain/keystores
 packages/brain/testDb.json
+
+# yarn
+.yarn
