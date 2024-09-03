@@ -11,7 +11,7 @@
     "@mui/material": "^5.2.3",
     "@mui/system": "^5.4.1",
     "@mui/x-data-grid": "^5.1.0",
-    "@stakingbrain/common": "^0.1.0",
+    "@stakingbrain/common": "workspace:^0.1.0",
     "history": "5",
     "lodash-es": "^4.17.21",
     "react": "^18.3.1",
