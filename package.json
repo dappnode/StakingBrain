@@ -30,7 +30,7 @@
   "scripts": {
     "build": "yarn workspaces foreach --all -pt run build",
     "test": "yarn workspaces foreach --all -pt run test",
-    "start:dev": "yarn workspaces foreach --all -pt run start:dev",
+    "dev": "yarn workspaces foreach --all -pi -j unlimited run dev",
     "lint": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
     "lint:fix": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --fix --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
     "format": "prettier --write 'packages/**/src/**/*.{js,ts,tsx,json,md}' 'packages/**/test/**/*.{js,ts,tsx,json,md}'",

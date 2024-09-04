@@ -4,6 +4,6 @@
 
 corepack enable && yarn set version berry
 
-cd /app && yarn && yarn build && yarn start:dev &
+cd /app && yarn && yarn build && yarn run dev &
 
 wait

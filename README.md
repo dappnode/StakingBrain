@@ -49,7 +49,7 @@ _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_PRATER="prysm-prater.dnp.dappnode.eth"
 ```
 yarn
 yarn build
-yarn start:dev
+yarn dev
 ```
 
 5.Access the KeyManager UI (e.g. Prater)
