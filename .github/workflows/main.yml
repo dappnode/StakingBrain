@@ -27,7 +27,6 @@ jobs:
         run: yarn install
 
       # Lint and format and prettier
-
       - name: Lint
         run: yarn lint
 
@@ -35,11 +34,15 @@ jobs:
         run: yarn format
 
       # Build
-
       - name: Build
         run: yarn build
 
       # Test
-
       - name: Test
         run: yarn test
+      # Docker
+      - name: Docker production
+        run: docker build .
+      # Docker development
+      - name: Docker development
+        run: docker build -f Dockerfile.brain.dev .
