@@ -19,7 +19,6 @@
     "react-dropzone": "^11.4.2",
     "react-router-dom": "^6.26.1",
     "socket.io-client": "^4.5.4",
-    "typescript": "^4.1.2",
     "vite-tsconfig-paths": "^5.0.1"
   },
   "scripts": {
@@ -50,15 +49,10 @@
   "devDependencies": {
     "@babel/plugin-syntax-flow": "^7.23.3",
     "@babel/plugin-transform-react-jsx": "^7.22.15",
-    "@types/chai": "^4.3.3",
     "@types/lodash-es": "^4.17.6",
-    "@types/mocha": "^10.0.7",
-    "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "chai": "^4.3.6",
-    "mocha": "^10.0.0",
     "vite": "^5.4.2"
   }
 }
