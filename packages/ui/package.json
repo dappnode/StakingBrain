@@ -27,7 +27,7 @@
     "build": "tsc -b && vite build",
     "serve": "vite preview",
     "test": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'test/**/*.test.ts'",
-    "dev": "NODE_ENV=development vite build --mode development"
+    "dev": "vite build --watch --mode=development"
   },
   "eslintConfig": {
     "extends": [
