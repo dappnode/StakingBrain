@@ -9,6 +9,17 @@ on:
       - main
 
 jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Docker
+      - name: Docker production
+        run: docker build .
+      # Docker development
+      - name: Docker development
+        run: docker build -f Dockerfile.brain.dev .
   build:
     runs-on: ubuntu-latest
     steps:
@@ -40,9 +51,3 @@ jobs:
       # Test
       - name: Test
         run: yarn test
-      # Docker
-      - name: Docker production
-        run: docker build .
-      # Docker development
-      - name: Docker development
-        run: docker build -f Dockerfile.brain.dev .
