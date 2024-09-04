@@ -28,12 +28,6 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/staking-brain:${{ github.event.inputs.tag }}
 
-      - name: Build and push Staking brain docker webpack
-        uses: docker/build-push-action@v3
-        with:
-          file: Dockerfile.webpack
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/staking-brain-webpack:${{ github.event.inputs.tag }}
   gh-release:
     runs-on: ubuntu-latest
     needs: push-to-ghcr

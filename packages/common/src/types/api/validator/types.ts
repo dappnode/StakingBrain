@@ -41,8 +41,7 @@ export interface ValidatorDeleteRemoteKeysResponse {
   }[];
 }
 
-export interface ValidatorExitGet
-  extends BeaconchainPoolVoluntaryExitsPostRequest {
+export interface ValidatorExitGet extends BeaconchainPoolVoluntaryExitsPostRequest {
   pubkey: string;
 }
 

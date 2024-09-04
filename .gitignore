@@ -6,7 +6,6 @@ packages/*/node_modules
 packages/*/dist
 packages/*/build
 packages/brain/uiBuild
-packages/brain/webpack
 
 # Brain db
 packages/brain/brain-db.json
@@ -14,3 +13,6 @@ packages/brain/brain-db.json
 # Keystores
 packages/brain/keystores
 packages/brain/testDb.json
+
+# yarn
+.yarn

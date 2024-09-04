@@ -8,10 +8,10 @@ export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
     "lukso",
     {
       baseUrl: "https://explorer.consensus.mainnet.lukso.network",
-      apiPath: "/api/v1/",
-    },
+      apiPath: "/api/v1/"
+    }
   ],
-  ["holesky", { baseUrl: "https://holesky.beaconcha.in", apiPath: "/api/v1/" }],
+  ["holesky", { baseUrl: "https://holesky.beaconcha.in", apiPath: "/api/v1/" }]
 ]);
 
 export interface AppParams {
@@ -33,7 +33,5 @@ export const getSmoothUrlByNetwork = (network: Network): string => {
 };
 
 export const getStakersLink = (network: Network): string => {
-  return network === "prater"
-    ? "http://my.dappnode/stakers/prater"
-    : "http://my.dappnode/stakers/ethereum";
+  return network === "prater" ? "http://my.dappnode/stakers/prater" : "http://my.dappnode/stakers/ethereum";
 };

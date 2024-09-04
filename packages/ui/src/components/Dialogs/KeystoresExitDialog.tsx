@@ -8,17 +8,13 @@ import {
   Button,
   DialogContentText,
   DialogActions,
-  TextField,
+  TextField
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import ExitWarning from "./ExitWarning";
-import {
-  CustomValidatorGetResponse,
-  ValidatorExitExecute,
-  shortenPubkey,
-} from "@stakingbrain/common";
+import { CustomValidatorGetResponse, ValidatorExitExecute, shortenPubkey } from "@stakingbrain/common";
 import { api } from "../../api";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
@@ -28,7 +24,7 @@ export default function KeystoresExitDialog({
   selectedRows,
   setSelectedRows,
   open,
-  setOpen,
+  setOpen
 }: {
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
@@ -36,8 +32,7 @@ export default function KeystoresExitDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
 }): JSX.Element {
-  const [validatorsExitResponse, setValidatorsExitResponse] =
-    useState<ValidatorExitExecute[]>();
+  const [validatorsExitResponse, setValidatorsExitResponse] = useState<ValidatorExitExecute[]>();
   const [validatorsExitError, setValidatorsExitError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [userConfirmText, setUserConfirmText] = useState("");
@@ -48,15 +43,13 @@ export default function KeystoresExitDialog({
     try {
       setLoading(true);
       const exitKeysores = await api.getExitValidators({
-        pubkeys: selectedRows.map(
-          (row) => rows[parseInt(row.toString())].pubkey
-        ),
+        pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
       });
 
       exitKeysores.forEach((validator) => {
         const element = document.createElement("a");
         const file = new Blob([JSON.stringify(validator)], {
-          type: "application/json",
+          type: "application/json"
         });
         element.href = URL.createObjectURL(file);
         element.download = `${validator.message.validator_index}.json`;
@@ -76,9 +69,7 @@ export default function KeystoresExitDialog({
       setLoading(true);
       setValidatorsExitResponse(
         await api.exitValidators({
-          pubkeys: selectedRows.map(
-            (row) => rows[parseInt(row.toString())].pubkey
-          ),
+          pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
         })
       );
       setLoading(false);
@@ -107,9 +98,7 @@ export default function KeystoresExitDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle id="alert-dialog-title">
-        {validatorsExitResponse ? "Done" : "Exit Validators?"}
-      </DialogTitle>
+      <DialogTitle id="alert-dialog-title">{validatorsExitResponse ? "Done" : "Exit Validators?"}</DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {validatorsExitError ? (
@@ -122,8 +111,7 @@ export default function KeystoresExitDialog({
                     {shortenPubkey(rows[index]?.pubkey)}
                   </Typography>
                   <Typography variant="h6">
-                    <b>Status:</b>{" "}
-                    {result.status.exited ? <>Exited</> : <>Not exited</>}{" "}
+                    <b>Status:</b> {result.status.exited ? <>Exited</> : <>Not exited</>}{" "}
                     {getEmoji(result.status.exited)}
                   </Typography>
                   {result.status.message ? (
@@ -140,10 +128,7 @@ export default function KeystoresExitDialog({
                 <WaitBox />
               ) : (
                 <>
-                  <DialogContentText
-                    id="alert-dialog-description"
-                    component={"span"}
-                  >
+                  <DialogContentText id="alert-dialog-description" component={"span"}>
                     <ExitWarning rows={rows} selectedRows={selectedRows} />
                   </DialogContentText>
 
@@ -184,11 +169,7 @@ export default function KeystoresExitDialog({
             </Button>
           </>
         ) : null}
-        <Button
-          onClick={handleClose}
-          variant="outlined"
-          sx={{ borderRadius: 2 }}
-        >
+        <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
           Close
         </Button>
       </DialogActions>

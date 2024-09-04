@@ -1,13 +1,5 @@
 import Tooltip from "@mui/material/Tooltip";
-import {
-  HourglassTop,
-  CrisisAlert,
-  CheckCircle,
-  Warning,
-  Close,
-  Help,
-  Block,
-} from "@mui/icons-material";
+import { HourglassTop, CrisisAlert, CheckCircle, Warning, Close, Help, Block } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
 import { MevSpSubscriptionStatus } from "@stakingbrain/common";
 import { SmoothStatusProps } from "../../types";
@@ -18,7 +10,6 @@ export default function SmoothStatus({
   mevSpFeeRecipient,
   oracleCallError
 }: SmoothStatusProps): JSX.Element {
-
   const feeRecipient = rowData.row.feeRecipient;
   const withdrawalFormat = rowData.row.withdrawalCredentials.format;
   const mevSpAddress = mevSpFeeRecipient;
@@ -53,11 +44,13 @@ export default function SmoothStatus({
         break;
       case MevSpSubscriptionStatus.YELLOW_CARD:
         icon = <Warning style={{ color: "yellow" }} />;
-        tooltipText = "Yellow Card Subscription. This validator missed it's last proposal. Propose successfully next block to get back to active.";
+        tooltipText =
+          "Yellow Card Subscription. This validator missed it's last proposal. Propose successfully next block to get back to active.";
         break;
       case MevSpSubscriptionStatus.RED_CARD:
         icon = <Warning style={{ color: "red" }} />;
-        tooltipText = "Red Card Subscription. This validator missed it's two last proposals in a row. Propose successfully next block to get back to yellow card.";
+        tooltipText =
+          "Red Card Subscription. This validator missed it's two last proposals in a row. Propose successfully next block to get back to yellow card.";
         break;
       case MevSpSubscriptionStatus.BANNED:
         icon = <Block style={{ color: "red" }} />;
@@ -73,13 +66,8 @@ export default function SmoothStatus({
         break;
     }
 
-    return (
-      <Tooltip title={tooltipText}>
-        {icon}
-      </Tooltip>
-    );
+    return <Tooltip title={tooltipText}>{icon}</Tooltip>;
   };
-
 
   // RENDERING LOGIC
 

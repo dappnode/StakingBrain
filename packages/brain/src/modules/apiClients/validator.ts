@@ -5,7 +5,7 @@ import {
   ValidatorGetRemoteKeysResponse,
   ValidatorPostRemoteKeysRequest,
   ValidatorPostRemoteKeysResponse,
-  prefix0xPubkey,
+  prefix0xPubkey
 } from "@stakingbrain/common";
 import { StandardApi } from "./standard.js";
 import path from "path";
@@ -27,17 +27,11 @@ export class ValidatorApi extends StandardApi {
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * @see https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
-  public async getFeeRecipient(
-    publicKey: string
-  ): Promise<ValidatorGetFeeResponse> {
+  public async getFeeRecipient(publicKey: string): Promise<ValidatorGetFeeResponse> {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(
-          this.feeRecipientEndpoint,
-          prefix0xPubkey(publicKey),
-          "feerecipient"
-        ),
+        endpoint: path.join(this.feeRecipientEndpoint, prefix0xPubkey(publicKey), "feerecipient")
       })) as ValidatorGetFeeResponse;
     } catch (e) {
       e.message += `Error getting (GET) fee recipient for pubkey ${publicKey} from validator. `;
@@ -49,19 +43,12 @@ export class ValidatorApi extends StandardApi {
    * Sets the validator client fee recipient mapping which will then update the beacon node..
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/setFeeRecipient
    */
-  public async setFeeRecipient(
-    newFeeRecipient: string,
-    publicKey: string
-  ): Promise<void> {
+  public async setFeeRecipient(newFeeRecipient: string, publicKey: string): Promise<void> {
     try {
       await this.request({
         method: "POST",
-        endpoint: path.join(
-          this.feeRecipientEndpoint,
-          prefix0xPubkey(publicKey),
-          "feerecipient"
-        ),
-        body: JSON.stringify({ ethaddress: newFeeRecipient }),
+        endpoint: path.join(this.feeRecipientEndpoint, prefix0xPubkey(publicKey), "feerecipient"),
+        body: JSON.stringify({ ethaddress: newFeeRecipient })
       });
     } catch (e) {
       e.message += `Error setting (POST) fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. `;
@@ -77,11 +64,7 @@ export class ValidatorApi extends StandardApi {
     try {
       await this.request({
         method: "DELETE",
-        endpoint: path.join(
-          this.feeRecipientEndpoint,
-          prefix0xPubkey(publicKey),
-          "feerecipient"
-        ),
+        endpoint: path.join(this.feeRecipientEndpoint, prefix0xPubkey(publicKey), "feerecipient")
       });
     } catch (e) {
       e.message += `Error deleting (DELETE) fee recipient for pubkey ${publicKey} from validator. `;
@@ -97,7 +80,7 @@ export class ValidatorApi extends StandardApi {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: this.remoteKeymanagerEndpoint,
+        endpoint: this.remoteKeymanagerEndpoint
       })) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
       e.message += `Error getting (GET) remote keys from validator. `;
@@ -108,9 +91,7 @@ export class ValidatorApi extends StandardApi {
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
-  public async postRemoteKeys(
-    remoteKeys: ValidatorPostRemoteKeysRequest
-  ): Promise<ValidatorPostRemoteKeysResponse> {
+  public async postRemoteKeys(remoteKeys: ValidatorPostRemoteKeysRequest): Promise<ValidatorPostRemoteKeysResponse> {
     try {
       // Make sure all pubkeys are prefixed with 0x
       remoteKeys.remote_keys = remoteKeys.remote_keys.map((k) => {
@@ -119,7 +100,7 @@ export class ValidatorApi extends StandardApi {
       const response = (await this.request({
         method: "POST",
         endpoint: this.remoteKeymanagerEndpoint,
-        body: JSON.stringify(remoteKeys),
+        body: JSON.stringify(remoteKeys)
       })) as ValidatorPostRemoteKeysResponse;
 
       return this.toLowerCaseStatus(response);
@@ -133,16 +114,14 @@ export class ValidatorApi extends StandardApi {
    * Delete the selected keys from the remote keystore in the validator client.
    * https://ethereum.github.io/keymanager-APIs/#/Remote%20Keystore/deleteRemoteKeys
    */
-  public async deleteRemoteKeys(
-    pubkeys: ValidatorDeleteRemoteKeysRequest
-  ): Promise<ValidatorDeleteRemoteKeysResponse> {
+  public async deleteRemoteKeys(pubkeys: ValidatorDeleteRemoteKeysRequest): Promise<ValidatorDeleteRemoteKeysResponse> {
     try {
       // Make sure all pubkeys are prefixed with 0x
       pubkeys.pubkeys = pubkeys.pubkeys.map((k) => prefix0xPubkey(k));
       const response = (await this.request({
         method: "DELETE",
         endpoint: this.remoteKeymanagerEndpoint,
-        body: JSON.stringify(pubkeys),
+        body: JSON.stringify(pubkeys)
       })) as ValidatorDeleteRemoteKeysResponse;
 
       return this.toLowerCaseStatus(response);
@@ -155,17 +134,15 @@ export class ValidatorApi extends StandardApi {
   /**
    * Converts the status to lowercase for Web3SignerPostResponse and Web3SignerDeleteResponse
    */
-  private toLowerCaseStatus<
-    T extends
-      | ValidatorPostRemoteKeysResponse
-      | ValidatorDeleteRemoteKeysResponse
-  >(validatorResponse: T): T {
+  private toLowerCaseStatus<T extends ValidatorPostRemoteKeysResponse | ValidatorDeleteRemoteKeysResponse>(
+    validatorResponse: T
+  ): T {
     return {
       ...validatorResponse,
       data: validatorResponse.data.map((item) => ({
         ...item,
-        status: item.status.toLowerCase(),
-      })),
+        status: item.status.toLowerCase()
+      }))
     } as T;
   }
 }

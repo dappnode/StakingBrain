@@ -8,6 +8,7 @@
       "es2020.symbol.wellknown",
       "dom"
     ],
+    "types": ["node", "mocha", "chai"],
 
     "module": "esnext",
     "moduleResolution": "node",

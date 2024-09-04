@@ -1,18 +1,11 @@
 import React from "react";
-import {
-  Network,
-  StakerConfig as StakerConfigType,
-} from "@stakingbrain/common";
+import { Network, StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { Card, Box, Container, Typography } from "@mui/material";
 import TrendingFlatRoundedIcon from "@mui/icons-material/TrendingFlatRounded";
 import SyncAltRoundedIcon from "@mui/icons-material/SyncAltRounded";
 import { prettyClientDnpName } from "../../utils/dataUtils";
 
-export default function StakerConfig({
-  stakerConfig,
-}: {
-  stakerConfig: StakerConfigType<Network>;
-}): JSX.Element {
+export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerConfigType<Network> }): JSX.Element {
   const images = {
     // Mainnet
     "erigon.dnp.dappnode.eth": "/assets/erigon.png",
@@ -69,7 +62,7 @@ export default function StakerConfig({
     "lodestar-holesky.dnp.dappnode.eth": "/assets/lodestar.png",
 
     // Default logo until we have a package for them
-    default: "/assets/dappnode_logo_clean.png",
+    default: "/assets/dappnode_logo_clean.png"
   };
 
   return (
@@ -81,7 +74,7 @@ export default function StakerConfig({
         alignItems: "center",
         justifyContent: "center",
         gap: 2,
-        backgroundColor: "transparent",
+        backgroundColor: "transparent"
       }}
     >
       <Card
@@ -93,7 +86,7 @@ export default function StakerConfig({
           border: "none",
           boxShadow: "none",
           backgroundColor: "transparent",
-          backgroundImage: "none",
+          backgroundImage: "none"
         }}
       >
         <Box
@@ -101,14 +94,14 @@ export default function StakerConfig({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-evenly",
-            gap: 2,
+            gap: 2
           }}
         >
           <Box
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              alignItems: "center"
             }}
           >
             <Card sx={{ borderRadius: 2 }}>
@@ -117,7 +110,7 @@ export default function StakerConfig({
                 sx={{
                   height: 80,
                   width: 80,
-                  padding: 1,
+                  padding: 1
                 }}
                 alt="erigon-goerli"
                 src={images[stakerConfig.executionClient]}
@@ -131,7 +124,7 @@ export default function StakerConfig({
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              alignItems: "center"
             }}
           >
             <SyncAltRoundedIcon sx={{ mb: 4, fontSize: 48 }} />
@@ -141,7 +134,7 @@ export default function StakerConfig({
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              alignItems: "center"
             }}
           >
             <Card sx={{ borderRadius: 2 }}>
@@ -150,7 +143,7 @@ export default function StakerConfig({
                 sx={{
                   height: 80,
                   width: 80,
-                  padding: 1,
+                  padding: 1
                 }}
                 alt="erigon-goerli"
                 src={images[stakerConfig.consensusClient]}
@@ -165,7 +158,7 @@ export default function StakerConfig({
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              alignItems: "center"
             }}
           >
             <TrendingFlatRoundedIcon sx={{ mb: 4, fontSize: 48 }} />
@@ -175,7 +168,7 @@ export default function StakerConfig({
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              alignItems: "center"
             }}
           >
             <Card sx={{ borderRadius: 2 }}>
@@ -184,7 +177,7 @@ export default function StakerConfig({
                 sx={{
                   height: 80,
                   width: 80,
-                  padding: 1,
+                  padding: 1
                 }}
                 alt="signer"
                 src={images["default"]}

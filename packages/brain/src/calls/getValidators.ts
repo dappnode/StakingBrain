@@ -2,7 +2,7 @@ import {
   CustomValidatorGetResponse,
   WithdrawalCredentialsFormat,
   isValidWithdrawableBlsAddress,
-  isValidNonWithdrawableBlsAddress,
+  isValidNonWithdrawableBlsAddress
 } from "@stakingbrain/common";
 import { brainDb, validatorApi, signerApi, beaconchainApi } from "../index.js";
 import logger from "../modules/logger/index.js";
@@ -46,11 +46,11 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
     try {
       const validatorStateResponse = await beaconchainApi.getValidatorFromState({
         state: "head",
-        pubkey,
+        pubkey
       });
 
       withdrawalAddress = validatorStateResponse.data.validator.withdrawal_credentials;
-      index = validatorStateResponse.data.index; 
+      index = validatorStateResponse.data.index;
 
       format = isValidWithdrawableBlsAddress(withdrawalAddress)
         ? "ecdsa"
@@ -69,13 +69,11 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
       feeRecipient,
       withdrawalCredentials: {
         address: withdrawalAddress,
-        format,
+        format
       },
       validatorImported: validatorPubkeys.includes(pubkey),
       signerImported: signerPubkeys.includes(pubkey),
-      validatorFeeRecipientCorrect: validatorsFeeRecipients.some(
-        (feeRecipient) => feeRecipient === feeRecipient
-      ),
+      validatorFeeRecipientCorrect: validatorsFeeRecipients.some((feeRecipient) => feeRecipient === feeRecipient)
     });
   }
 

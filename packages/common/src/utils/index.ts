@@ -22,7 +22,6 @@ export function isValidTag(tag: Tag): boolean {
 }
 
 export function isFeeRecipientEditable(tag: Tag, requestOrigin?: ActionRequestOrigin): boolean {
-
   if (requestOrigin === "api") return true;
 
   return !nonEditableFeeRecipientTags.some((t) => t === tag);
@@ -55,8 +54,5 @@ export const shortenPubkey = (key: string | undefined): string => {
   } else {
     end = 6;
   }
-  return `${prefix}${key.substring(0, end)}...${key.substring(
-    key.length - 4,
-    key.length
-  )}`;
+  return `${prefix}${key.substring(0, end)}...${key.substring(key.length - 4, key.length)}`;
 };

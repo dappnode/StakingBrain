@@ -13,20 +13,34 @@
   "author": "DappNode Association",
   "license": "MIT",
   "devDependencies": {
-    "lerna": "^6.4.1",
-    "rimraf": "^4.1.1"
+    "@types/chai": "^4.3.19",
+    "@types/mocha": "^10.0.7",
+    "@types/node": "^22.5.3",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "chai": "^5.1.1",
+    "eslint": "^9.9.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "mocha": "^10.7.3",
+    "prettier": "^3.3.3",
+    "rimraf": "^4.1.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
   },
   "scripts": {
-    "build": "lerna run build --include-dependencies --stream",
-    "build:webpack": "lerna run build:webpack --include-dependencies --stream",
-    "start:dev": "lerna run start:dev --include-dependencies --stream",
-    "start:webpack:dev": "lerna run start:webpack:dev --include-dependencies --stream",
-    "test": "lerna run test --include-dependencies --stream",
-    "lint": "lerna run lint --include-dependencies --stream",
-    "format": "lerna run format --include-dependencies --stream",
-    "pretty": "lerna run pretty --include-dependencies --stream",
+    "build": "yarn workspaces foreach --all -pt run build",
+    "test": "yarn workspaces foreach --all -pt run test",
+    "dev": "yarn workspaces foreach --all -pi -j unlimited run dev",
+    "lint": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
+    "lint:fix": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --fix --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
+    "format": "prettier --write 'packages/**/src/**/*.{js,ts,tsx,json,md}' 'packages/**/test/**/*.{js,ts,tsx,json,md}'",
     "clean": "yarn run clean:build && yarn run clean:libraries",
     "clean:libraries": "rimraf packages/**/node_modules && rimraf node_modules",
     "clean:build": "rimraf packages/**/dist && rimraf packages/**/build"
-  }
+  },
+  "packageManager": "yarn@4.4.1"
 }

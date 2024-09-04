@@ -4,7 +4,7 @@ import { MevSpSubscriptionStatus } from "@stakingbrain/common";
 export enum ImportStatus {
   Imported = "Imported",
   NotImported = "Not imported",
-  Importing = "Importing...",
+  Importing = "Importing..."
 }
 
 export enum BeaconchaUrlBuildingStatus {
@@ -12,7 +12,7 @@ export enum BeaconchaUrlBuildingStatus {
   Success,
   Error,
   InProgress,
-  NoIndexes,
+  NoIndexes
 }
 
 export type KeystoreInfo = {
@@ -36,7 +36,7 @@ export const alertTypes = [
   "blsFormatAlert",
   "errorFormatAlert",
   "alreadySmoothAlert",
-  "noMevBoostSetAlert",
+  "noMevBoostSetAlert"
 ] as const;
 
 export type AlertType = (typeof alertTypes)[number];

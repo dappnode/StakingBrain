@@ -5,7 +5,7 @@ import {
   isValidBlsPubkey,
   shortenPubkey,
   StakingBrainDbUpdate,
-  PubkeyDetails,
+  PubkeyDetails
 } from "@stakingbrain/common";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
@@ -56,16 +56,12 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * - If the migration fails, it will create a new empty database
    * - If the database file exists, it will validate it
    */
-  public async initialize(
-    signerApi: Web3SignerApi,
-    validatorApi: ValidatorApi
-  ): Promise<void> {
+  public async initialize(signerApi: Web3SignerApi, validatorApi: ValidatorApi): Promise<void> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
       this.read();
       // If db.json doesn't exist, db.data will be null
-      if (this.data === null)
-        await this.databaseMigration(signerApi, validatorApi);
+      if (this.data === null) await this.databaseMigration(signerApi, validatorApi);
       else this.setOwnerWriteRead();
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
@@ -99,9 +95,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.data = { ...this.data, ...validators };
       this.write();
     } catch (e) {
-      e.message += `Unable to add pubkeys ${Object.keys(validators).join(
-        ", "
-      )}. `;
+      e.message += `Unable to add pubkeys ${Object.keys(validators).join(", ")}. `;
       throw e;
     }
   }
@@ -109,11 +103,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   /**
    * Updates 1 or more public keys details from the database
    */
-  public updateValidators({
-    validators,
-  }: {
-    validators: StakingBrainDbUpdate;
-  }): void {
+  public updateValidators({ validators }: { validators: StakingBrainDbUpdate }): void {
     try {
       this.validateDb();
       this.validateUpdateValidators(validators);
@@ -123,15 +113,12 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             // Remove pubkeys that don't exist
             logger.warn(`Pubkey ${pubkey} not found in the database`);
             delete validators[pubkey];
-          } else
-            this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
+          } else this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
         }
 
       this.write();
     } catch (e) {
-      e.message += `Unable to update pubkeys ${Object.keys(validators).join(
-        ", "
-      )}`;
+      e.message += `Unable to update pubkeys ${Object.keys(validators).join(", ")}`;
       throw e;
     }
   }
@@ -151,9 +138,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         this.write();
       }
     } catch (e) {
-      e.message += `Unable to delete pubkeys ${Object.keys(pubkeys).join(
-        ", "
-      )}`;
+      e.message += `Unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}`;
       throw e;
     }
   }
@@ -242,22 +227,15 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * @param signerApi - The signer API
    * @param validatorApi - The validator API
    */
-  private async databaseMigration(
-    signerApi: Web3SignerApi,
-    validatorApi: ValidatorApi
-  ): Promise<void> {
+  private async databaseMigration(signerApi: Web3SignerApi, validatorApi: ValidatorApi): Promise<void> {
     let retries = 0;
     while (retries < 10) {
       try {
-        logger.info(
-          `Database file ${this.dbName} not found. Attemping to perform migration...`
-        );
+        logger.info(`Database file ${this.dbName} not found. Attemping to perform migration...`);
         // Create json file
         this.createJsonFileAndPermissions();
         // Fetch public keys from signer API
-        const pubkeys = (await signerApi.getKeystores()).data.map(
-          (keystore) => keystore.validating_pubkey
-        );
+        const pubkeys = (await signerApi.getKeystores()).data.map((keystore) => keystore.validating_pubkey);
         if (pubkeys.length === 0) {
           logger.info(`No public keys found in the signer API`);
           return;
@@ -270,27 +248,25 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             feeRecipient = response.data.ethaddress;
           })
           .catch((e) => {
-            logger.error(
-              `Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${params.burnAddress}}`,
-              e
-            );
+            logger.error(`Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${params.burnAddress}}`, e);
             // TODO: consider setting MEV fee recipient.
             feeRecipient = params.burnAddress;
           });
 
-        logger.info(
-          `The fee recipient to be used in the migration is ${feeRecipient}`
-        );
+        logger.info(`The fee recipient to be used in the migration is ${feeRecipient}`);
 
         this.addValidators({
-          validators: pubkeys.reduce((acc, pubkey) => {
-            acc[pubkey] = {
-              tag: params.defaultTag,
-              feeRecipient,
-              automaticImport: false,
-            };
-            return acc;
-          }, {} as { [pubkey: string]: PubkeyDetails }),
+          validators: pubkeys.reduce(
+            (acc, pubkey) => {
+              acc[pubkey] = {
+                tag: params.defaultTag,
+                feeRecipient,
+                automaticImport: false
+              };
+              return acc;
+            },
+            {} as { [pubkey: string]: PubkeyDetails }
+          )
         });
 
         logger.info(`Database migration completed`);
@@ -298,16 +274,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       } catch (e) {
         if (retries < 30) {
           retries++;
-          logger.error(
-            `Unable to perform database migration. Retrying in 6 seconds...`,
-            e
-          );
+          logger.error(`Unable to perform database migration. Retrying in 6 seconds...`, e);
           await new Promise((resolve) => {
-            logger.info(
-              `Retrying database migration for ${(
-                retries + 1
-              ).toString()} time...`
-            );
+            logger.info(`Retrying database migration for ${(retries + 1).toString()} time...`);
             setTimeout(resolve, 6 * 1000);
           });
         } else {
@@ -336,8 +305,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       const pubkeySubstr = shortenPubkey(pubkey);
 
       // Validate Ethereum address
-      if (!isValidBlsPubkey(pubkey))
-        errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
+      if (!isValidBlsPubkey(pubkey)) errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
 
       if (!pubkeyDetails) {
         errors.push(`\n  pubkey ${pubkeySubstr}: pubkey details are missing`);
@@ -346,14 +314,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
       // FeeRecipient
       if (!pubkeyDetails.feeRecipient) {
-        errors.push(
-          `\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`
-        );
+        errors.push(`\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`);
       } else {
         if (typeof pubkeyDetails.feeRecipient !== "string")
-          errors.push(
-            `\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`
-          );
+          errors.push(`\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`);
         if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
           errors.push(`\n  pubkey ${pubkeySubstr}: fee recipient is invalid`);
       }
@@ -369,8 +333,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       const pubkeySubstr = shortenPubkey(pubkey);
 
       // Validate Ethereum address
-      if (!isValidBlsPubkey(pubkey))
-        errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
+      if (!isValidBlsPubkey(pubkey)) errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
 
       if (!pubkeyDetails) {
         errors.push(`\n  pubkey ${pubkeySubstr}: pubkey details are missing`);
@@ -382,23 +345,16 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         errors.push(`\n  pubkey ${pubkeySubstr}: tag is missing`);
       } else {
         if (typeof pubkeyDetails.tag !== "string")
-          errors.push(
-            `\n  pubkey ${pubkeySubstr}: tag is invalid, must be in string format`
-          );
-        if (!isValidTag(pubkeyDetails.tag))
-          errors.push(`\n  pubkey ${pubkeySubstr}: tag is invalid`);
+          errors.push(`\n  pubkey ${pubkeySubstr}: tag is invalid, must be in string format`);
+        if (!isValidTag(pubkeyDetails.tag)) errors.push(`\n  pubkey ${pubkeySubstr}: tag is invalid`);
       }
 
       // FeeRecipient
       if (!pubkeyDetails.feeRecipient) {
-        errors.push(
-          `\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`
-        );
+        errors.push(`\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`);
       } else {
         if (typeof pubkeyDetails.feeRecipient !== "string")
-          errors.push(
-            `\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`
-          );
+          errors.push(`\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`);
         if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
           errors.push(`\n  pubkey ${pubkeySubstr}: fee recipient is invalid`);
       }
@@ -408,9 +364,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         errors.push(`\n  pubkey ${pubkeySubstr}: automaticImport is missing`);
       } else {
         if (typeof validators[pubkey].automaticImport !== "boolean")
-          errors.push(
-            `\n  pubkey ${pubkeySubstr}: automaticImport is invalid, must be in boolean format`
-          );
+          errors.push(`\n  pubkey ${pubkeySubstr}: automaticImport is invalid, must be in boolean format`);
       }
     });
 

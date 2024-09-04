@@ -5,7 +5,7 @@ import {
   BeaconchainForkFromStateGetResponse,
   BeaconchainGenesisGetResponse,
   Network,
-  ApiParams,
+  ApiParams
 } from "@stakingbrain/common";
 import { StandardApi } from "./standard.js";
 import path from "path";
@@ -25,19 +25,15 @@ export class Beaconchain extends StandardApi {
    * @param pubkeys - The public keys of the validators to exit.
    */
   public async postVoluntaryExits({
-    postVoluntaryExitsRequest,
+    postVoluntaryExitsRequest
   }: {
     postVoluntaryExitsRequest: BeaconchainPoolVoluntaryExitsPostRequest;
   }): Promise<void> {
     try {
       await this.request({
         method: "POST",
-        endpoint: path.join(
-          this.beaconchainEndpoint,
-          "pool",
-          "voluntary_exits"
-        ),
-        body: JSON.stringify(postVoluntaryExitsRequest),
+        endpoint: path.join(this.beaconchainEndpoint, "pool", "voluntary_exits"),
+        body: JSON.stringify(postVoluntaryExitsRequest)
       });
     } catch (e) {
       e.message += `Error posting (POST) voluntary exits to beaconchain. `;
@@ -53,7 +49,7 @@ export class Beaconchain extends StandardApi {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "genesis"),
+        endpoint: path.join(this.beaconchainEndpoint, "genesis")
       })) as BeaconchainGenesisGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) genesis from beaconchain. `;
@@ -66,20 +62,11 @@ export class Beaconchain extends StandardApi {
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFork
    * @param state_id - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
    */
-  public async getForkFromState({
-    state_id,
-  }: {
-    state_id: string;
-  }): Promise<BeaconchainForkFromStateGetResponse> {
+  public async getForkFromState({ state_id }: { state_id: string }): Promise<BeaconchainForkFromStateGetResponse> {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(
-          this.beaconchainEndpoint,
-          "states",
-          state_id,
-          "fork"
-        ),
+        endpoint: path.join(this.beaconchainEndpoint, "states", state_id, "fork")
       })) as BeaconchainForkFromStateGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) fork from beaconchain. `;
@@ -95,7 +82,7 @@ export class Beaconchain extends StandardApi {
    */
   public async getValidatorFromState({
     state,
-    pubkey,
+    pubkey
   }: {
     state: string;
     pubkey: string;
@@ -103,13 +90,7 @@ export class Beaconchain extends StandardApi {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(
-          this.beaconchainEndpoint,
-          "states",
-          state,
-          "validators",
-          pubkey
-        ),
+        endpoint: path.join(this.beaconchainEndpoint, "states", state, "validators", pubkey)
       })) as BeaconchainValidatorFromStateGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) validator from beaconchain. `;
@@ -131,15 +112,11 @@ export class Beaconchain extends StandardApi {
    * @params block_id Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
    * @example head
    */
-  private async getBlockHeader({
-    block_id,
-  }: {
-    block_id: string;
-  }): Promise<BeaconchainBlockHeaderGetResponse> {
+  private async getBlockHeader({ block_id }: { block_id: string }): Promise<BeaconchainBlockHeaderGetResponse> {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "headers", block_id),
+        endpoint: path.join(this.beaconchainEndpoint, "headers", block_id)
       })) as BeaconchainBlockHeaderGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) block header from beaconchain. `;

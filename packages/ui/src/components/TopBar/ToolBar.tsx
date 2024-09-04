@@ -13,7 +13,7 @@ export default function ToolBar({
   setMode,
   userMode,
   setUserMode,
-  network,
+  network
 }: {
   mode: "light" | "dark";
   setMode: React.Dispatch<React.SetStateAction<"light" | "dark">>;
@@ -28,14 +28,11 @@ export default function ToolBar({
           alignItems: "center",
           display: "flex",
           justifyContent: "center",
-          lineHeight: "50px",
+          lineHeight: "50px"
         }}
       >
         <img src="/assets/dappnode_logo.png" alt="logo" height={50} />
-        <HeaderTypography
-          sx={{ flexGrow: 1, fontWeight: "bold" }}
-          text={"Staking Brain"}
-        />
+        <HeaderTypography sx={{ flexGrow: 1, fontWeight: "bold" }} text={"Staking Brain"} />
         {network && (
           <>
             &nbsp;&nbsp;
@@ -49,14 +46,10 @@ export default function ToolBar({
             padding: 0.5,
             display: "flex",
             justifyContent: "center",
-            alignItems: "center",
+            alignItems: "center"
           }}
         >
-          <IconButton
-            sx={{ ml: 1 }}
-            onClick={() => setMode(mode === "dark" ? "light" : "dark")}
-            color="inherit"
-          >
+          <IconButton sx={{ ml: 1 }} onClick={() => setMode(mode === "dark" ? "light" : "dark")} color="inherit">
             {mode === "dark" ? (
               <LightModeIcon titleAccess="Set Light Mode" />
             ) : (
@@ -65,9 +58,7 @@ export default function ToolBar({
           </IconButton>
           <IconButton
             sx={{ ml: 1 }}
-            onClick={() =>
-              setUserMode(userMode === "basic" ? "advanced" : "basic")
-            }
+            onClick={() => setUserMode(userMode === "basic" ? "advanced" : "basic")}
             color="inherit"
           >
             {userMode === "basic" ? (

@@ -9,10 +9,7 @@ import * as routes from "../../../calls/index.js";
 import http from "http";
 import { params } from "../../../params.js";
 
-export function startUiServer(
-  uiBuildPath: string,
-  network: Network
-): http.Server {
+export function startUiServer(uiBuildPath: string, network: Network): http.Server {
   const app = express();
   const server = http.createServer(app);
 
@@ -20,33 +17,29 @@ export function startUiServer(
 
   // Socket io
   const io = new Server(server, {
-    serveClient: false,
+    serveClient: false
   });
   io.on("connection", (socket) => {
     logger.debug("A user connected");
-    socket.on(
-      "rpc",
-      async (rpcPayload: RpcPayload, callback: (res: RpcResponse) => void) => {
-        logger.debug(`Received rpc call`);
+    socket.on("rpc", async (rpcPayload: RpcPayload, callback: (res: RpcResponse) => void) => {
+      logger.debug(`Received rpc call`);
 
-        // Silent logger for importValidators call (safety reasons and too much noise)
-        if (rpcPayload.method === "importValidators") {
-          logger.debug(`Call to ${rpcPayload.method} (silent logger)`);
-        } else {
-          logger.debug(rpcPayload);
-        }
-
-        if (typeof callback !== "function")
-          return logger.error("JSON RPC over WS req without cb");
-
-        rpcHandler(rpcPayload)
-          .then(callback)
-          .catch((error) => callback({ error }))
-          .catch((error) => {
-            logger.error(`on JSON RPC over WS cb`, error);
-          });
+      // Silent logger for importValidators call (safety reasons and too much noise)
+      if (rpcPayload.method === "importValidators") {
+        logger.debug(`Call to ${rpcPayload.method} (silent logger)`);
+      } else {
+        logger.debug(rpcPayload);
       }
-    );
+
+      if (typeof callback !== "function") return logger.error("JSON RPC over WS req without cb");
+
+      rpcHandler(rpcPayload)
+        .then(callback)
+        .catch((error) => callback({ error }))
+        .catch((error) => {
+          logger.error(`on JSON RPC over WS cb`, error);
+        });
+    });
     socket.on("disconnect", () => {
       logger.debug("A user disconnected");
     });
@@ -55,13 +48,11 @@ export function startUiServer(
   // Express
   const allowedOrigins = [
     "http://my.dappnode",
-    `http://brain.web3signer${
-      network === "mainnet" ? "" : "-" + network
-    }.dappnode`,
+    `http://brain.web3signer${network === "mainnet" ? "" : "-" + network}.dappnode`
   ];
   app.use(
     cors({
-      origin: allowedOrigins,
+      origin: allowedOrigins
     })
   );
   app.use(express.json());

@@ -3,7 +3,7 @@ import { beaconchaApiParamsMap } from "../params";
 
 export default function buildValidatorSummaryURL({
   allValidatorsInfo,
-  network,
+  network
 }: {
   allValidatorsInfo: BeaconchaGetResponse[];
   network: string;
@@ -18,9 +18,7 @@ export default function buildValidatorSummaryURL({
   let summaryValidatorURL = baseUrl + "/dashboard?validators=";
 
   allValidatorsInfo.forEach((validatorChunk) => {
-    const chunkIndexes = validatorChunk.data.map(
-      (validator) => validator.validatorindex
-    );
+    const chunkIndexes = validatorChunk.data.map((validator) => validator.validatorindex);
     summaryValidatorURL += chunkIndexes.join(",");
   });
 

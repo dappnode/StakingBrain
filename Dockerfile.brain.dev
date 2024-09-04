@@ -1,14 +1,8 @@
-ARG NODE_VERSION=20.3.0
+ARG DOCKER_IMAGE=node:20.17.0-alpine3.20
+FROM ${DOCKER_IMAGE} as build-stage
 
-###############
-# BUILD stage #
-###############
-FROM node:${NODE_VERSION}-alpine as build-stage
-
-# Fixes error on `react-scripts-build`
-# error:0308010C:digital envelope routines::unsupported https://stackoverflow.com/questions/69692842/error-message-error0308010cdigital-envelope-routinesunsupported
-ENV NODE_OPTIONS=--openssl-legacy-provider
 ENV NODE_ENV=development
+WORKDIR /app
 
 RUN apk add --no-cache --virtual .build-deps \
   build-base \
@@ -19,6 +13,6 @@ RUN apk add --no-cache --virtual .build-deps \
   curl \
   && rm -rf /var/cache/apk/*
 
-COPY entrypoint-dev.sh /usr/local/bin/entrypoint-dev.sh
+RUN corepack enable && yarn set version berry
 
-ENTRYPOINT [ "/usr/local/bin/entrypoint-dev.sh" ]
+ENTRYPOINT ["/bin/bash", "-c", "yarn && yarn build && yarn run dev"]

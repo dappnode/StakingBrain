@@ -8,17 +8,13 @@ import {
   Button,
   DialogContentText,
   DialogActions,
-  Alert,
+  Alert
 } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
-import {
-  CustomValidatorGetResponse,
-  Web3signerDeleteResponse,
-  shortenPubkey,
-} from "@stakingbrain/common";
+import { CustomValidatorGetResponse, Web3signerDeleteResponse, shortenPubkey } from "@stakingbrain/common";
 import { api } from "../../api";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
@@ -28,7 +24,7 @@ export default function KeystoresDeleteDialog({
   selectedRows,
   setSelectedRows,
   open,
-  setOpen,
+  setOpen
 }: {
   rows: CustomValidatorGetResponse[];
   selectedRows: GridSelectionModel;
@@ -36,8 +32,7 @@ export default function KeystoresDeleteDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
 }): JSX.Element {
-  const [keystoresDelete, setKeystoresDelete] =
-    useState<Web3signerDeleteResponse>();
+  const [keystoresDelete, setKeystoresDelete] = useState<Web3signerDeleteResponse>();
   const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
   const [loading, setLoading] = useState(false);
 
@@ -47,9 +42,7 @@ export default function KeystoresDeleteDialog({
       setLoading(true);
       setKeystoresDelete(
         await api.deleteValidators({
-          pubkeys: selectedRows.map(
-            (row) => rows[parseInt(row.toString())].pubkey
-          ),
+          pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
         })
       );
       setLoading(false);
@@ -78,9 +71,7 @@ export default function KeystoresDeleteDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle id="alert-dialog-title">
-        {keystoresDelete ? "Done" : "Delete Keystores?"}
-      </DialogTitle>
+      <DialogTitle id="alert-dialog-title">{keystoresDelete ? "Done" : "Delete Keystores?"}</DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {keystoresDeleteError ? (
@@ -104,21 +95,14 @@ export default function KeystoresDeleteDialog({
               ))}
               {keystoresDelete.slashing_protection ? (
                 <div>
-                  <Alert
-                    severity="warning"
-                    sx={{ marginTop: 2, marginBottom: 2 }}
-                    variant="filled"
-                  >
-                    It is strongly recommended to stop the validator and watch
-                    at least 3 missed attestations in the explorer before
-                    uploading the keys to another machine.
+                  <Alert severity="warning" sx={{ marginTop: 2, marginBottom: 2 }} variant="filled">
+                    It is strongly recommended to stop the validator and watch at least 3 missed attestations in the
+                    explorer before uploading the keys to another machine.
                   </Alert>
 
                   <Button
                     variant="contained"
-                    href={`data:text/json;charset=utf-8,${encodeURIComponent(
-                      keystoresDelete.slashing_protection
-                    )}`}
+                    href={`data:text/json;charset=utf-8,${encodeURIComponent(keystoresDelete.slashing_protection)}`}
                     download="slashing_protection.json"
                     sx={{ borderRadius: 2 }}
                   >
@@ -132,10 +116,7 @@ export default function KeystoresDeleteDialog({
               {loading ? (
                 <WaitBox />
               ) : (
-                <DialogContentText
-                  id="alert-dialog-description"
-                  component={"span"}
-                >
+                <DialogContentText id="alert-dialog-description" component={"span"}>
                   <DeletionWarning rows={rows} selectedRows={selectedRows} />
                 </DialogContentText>
               )}
@@ -154,11 +135,7 @@ export default function KeystoresDeleteDialog({
             Delete
           </Button>
         ) : null}
-        <Button
-          onClick={handleClose}
-          variant="outlined"
-          sx={{ borderRadius: 2 }}
-        >
+        <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
           Close
         </Button>
       </DialogActions>

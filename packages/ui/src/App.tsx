@@ -13,10 +13,8 @@ function App(): JSX.Element {
   const [mode, setMode] = React.useState<"dark" | "light">("light");
   const [userMode, setUserMode] = React.useState<"basic" | "advanced">("basic");
 
-  const [signerStatus, setSignerStatus] =
-    React.useState<Web3SignerStatus>("LOADING");
-  const [stakerConfig, setStakerConfig] =
-    React.useState<StakerConfig<Network>>();
+  const [signerStatus, setSignerStatus] = React.useState<Web3SignerStatus>("LOADING");
+  const [stakerConfig, setStakerConfig] = React.useState<StakerConfig<Network>>();
 
   useEffect(() => {
     // Start API and Socket.io once user has logged in
@@ -59,8 +57,8 @@ function App(): JSX.Element {
     <ThemeProvider
       theme={createTheme({
         palette: {
-          mode,
-        },
+          mode
+        }
       })}
     >
       <CssBaseline />
@@ -79,7 +77,7 @@ function App(): JSX.Element {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              height: "100vh",
+              height: "100vh"
             }}
           >
             <CircularProgress />
@@ -91,20 +89,15 @@ function App(): JSX.Element {
               {signerStatus === "DOWN" ? (
                 <> Its API is responsive, but signer is down. </>
               ) : (
-                <>
-                  {" "}
-                  Its API is not responsive. Check if the Web3Signer package is
-                  running.{" "}
-                </>
+                <> Its API is not responsive. Check if the Web3Signer package is running. </>
               )}
               To avoid slashing, <b>do not upload </b>
               your validator <b>keystores to another machine</b>.
             </Alert>
             <Alert severity="info" sx={{ m: 2 }} variant="filled">
-              To safely migrate your keystores, remove the Web3Signer package
-              (or its volumes) after you make sure you have a backup of your
-              keystores. Then, wait for at least 2 epochs before you upload your
-              keystores to another machine.
+              To safely migrate your keystores, remove the Web3Signer package (or its volumes) after you make sure you
+              have a backup of your keystores. Then, wait for at least 2 epochs before you upload your keystores to
+              another machine.
             </Alert>
           </>
         )
@@ -112,22 +105,12 @@ function App(): JSX.Element {
         stakerConfig && (
           <BrowserRouter>
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <ValidatorList
-                    stakerConfig={stakerConfig}
-                    userMode={userMode}
-                  />
-                }
-              />
+              <Route path="/" element={<ValidatorList stakerConfig={stakerConfig} userMode={userMode} />} />
               <Route
                 path="import"
-                element={
-                  <ImportScreen 
-                  network={stakerConfig.network}
-                  isMevBoostSet={stakerConfig.isMevBoostSet} />}              />            
-              </Routes>
+                element={<ImportScreen network={stakerConfig.network} isMevBoostSet={stakerConfig.isMevBoostSet} />}
+              />
+            </Routes>
           </BrowserRouter>
         )
       )}

@@ -29,5 +29,5 @@ export const apiRpc: IApiRpc = {
 
     // Handles individual socket errors
     socket.on("disconnect", handleConnectionError);
-  },
+  }
 };

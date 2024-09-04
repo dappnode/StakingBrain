@@ -1,11 +1,6 @@
 import https from "node:https";
 import http from "node:http";
-import {
-  ApiParams,
-  AllowedMethods,
-  ErrnoException,
-  Network,
-} from "@stakingbrain/common";
+import { ApiParams, AllowedMethods, ErrnoException, Network } from "@stakingbrain/common";
 import { ApiError } from "./error.js";
 import logger from "../logger/index.js";
 
@@ -23,14 +18,14 @@ export class StandardApi {
       hostname: urlOptions.hostname,
       port: urlOptions.port,
       path: urlOptions.pathname,
-      protocol: urlOptions.protocol,
+      protocol: urlOptions.protocol
     };
 
     this.requestOptions.headers = {
       "Content-Type": "application/json",
       Accept: "application/json",
       Authorization: "Bearer " + apiParams.authToken,
-      ...(apiParams.host && { Host: apiParams.host }),
+      ...(apiParams.host && { Host: apiParams.host })
     };
 
     if (apiParams.tlsCert) {
@@ -55,7 +50,7 @@ export class StandardApi {
     endpoint,
     body,
     headers,
-    timeout,
+    timeout
   }: {
     method: AllowedMethods;
     endpoint: string;
@@ -83,7 +78,7 @@ export class StandardApi {
           code: "ETIMEDOUT",
           path: endpoint,
           syscall: method,
-          hostname: this.requestOptions.hostname || undefined,
+          hostname: this.requestOptions.hostname || undefined
         });
         req.destroy(error);
       });
@@ -113,14 +108,14 @@ export class StandardApi {
           reject(
             new ApiError({
               name: e.name || "Standard ApiError",
-              message: `${e.message}. ` || "",
+              message: `${e.message}. `,
               errno: e.errno || -1,
               code: e.code || "UNKNOWN",
               path: endpoint,
               syscall: method,
               hostname: this.requestOptions.hostname || undefined,
               address: e.address,
-              port: e.port,
+              port: e.port
             })
           );
         });
@@ -134,17 +129,10 @@ export class StandardApi {
           });
 
           res.on("end", () => {
-            if (
-              res.statusCode &&
-              res.statusCode >= 200 &&
-              res.statusCode < 300
-            ) {
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
               if (data.length > 0) {
                 try {
-                  if (
-                    res.headers["content-type"] &&
-                    res.headers["content-type"].includes("application/json")
-                  )
+                  if (res.headers["content-type"] && res.headers["content-type"].includes("application/json"))
                     resolve(JSON.parse(Buffer.concat(data).toString()));
                   else resolve(Buffer.concat(data).toString());
                 } catch (e) {
@@ -159,14 +147,9 @@ export class StandardApi {
               }
             } else {
               let errorMessage = "";
-              if (
-                res.headers["content-type"] &&
-                res.headers["content-type"].includes("application/json")
-              ) {
+              if (res.headers["content-type"] && res.headers["content-type"].includes("application/json")) {
                 try {
-                  errorMessage = JSON.parse(
-                    Buffer.concat(data).toString()
-                  )?.message;
+                  errorMessage = JSON.parse(Buffer.concat(data).toString())?.message;
                 } catch (e) {
                   logger.error(
                     `Error parsing response from ${this.requestOptions.hostname} ${endpoint} ${e.message}`,
@@ -183,7 +166,7 @@ export class StandardApi {
                   code: "ERR_HTTP",
                   path: endpoint,
                   syscall: method,
-                  hostname: this.requestOptions.hostname || undefined,
+                  hostname: this.requestOptions.hostname || undefined
                 })
               );
             }
@@ -192,14 +175,14 @@ export class StandardApi {
             reject(
               new ApiError({
                 name: e.name || "Standard ApiError",
-                message: `${e.message}. ` || "",
+                message: `${e.message}. `,
                 errno: e.errno || -1,
                 code: e.code || "UNKNOWN",
                 path: endpoint,
                 syscall: method,
                 hostname: this.requestOptions.hostname || undefined,
                 address: e.address,
-                port: e.port,
+                port: e.port
               })
             );
           });

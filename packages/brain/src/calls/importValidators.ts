@@ -12,18 +12,10 @@ import {
   STADER_POOL_FEE_RECIPIENT_MAINNET,
   STADER_POOL_FEE_RECIPIENT_PRATER,
   LIDO_FEE_RECIPIENT_HOLESKY,
-  LIDO_FEE_RECIPIENT_MAINNET,
+  LIDO_FEE_RECIPIENT_MAINNET
 } from "@stakingbrain/common";
-import {
-  reloadValidatorsCron,
-  network,
-  signerApi,
-  validatorApi,
-  signerUrl,
-  brainDb,
-} from "../index.js";
+import { reloadValidatorsCron, network, signerApi, validatorApi, signerUrl, brainDb } from "../index.js";
 import logger from "../modules/logger/index.js";
-import { StakeHouseSDK } from "../modules/stakingProtocols/stakehouse/index.js";
 
 type ValidatorImportRequest = {
   keystore: string;
@@ -42,9 +34,7 @@ type ValidatorImportRequest = {
  * @param postRequest
  * @returns Web3signerPostResponse
  */
-export async function importValidators(
-  postRequest: CustomImportRequest
-): Promise<Web3signerPostResponse> {
+export async function importValidators(postRequest: CustomImportRequest): Promise<Web3signerPostResponse> {
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
@@ -63,14 +53,8 @@ export async function importValidators(
 
       try {
         const feeRecipient =
-          !["gnosis", "lukso"].includes(network) &&
-          !isFeeRecipientEditable(validator.tag, postRequest.importFrom)
-            ? await getNonEditableFeeRecipient(
-                pubkey,
-                validator.tag as NonEditableFeeRecipientTag,
-                network,
-                validator.feeRecipient
-              )
+          !["gnosis", "lukso"].includes(network) && !isFeeRecipientEditable(validator.tag, postRequest.importFrom)
+            ? getNonEditableFeeRecipient(validator.tag as NonEditableFeeRecipientTag, network, validator.feeRecipient)
             : validator.feeRecipient;
 
         logger.info(`Setting ${feeRecipient} as fee recipient for ${pubkey}`);
@@ -80,21 +64,17 @@ export async function importValidators(
           password: validator.password,
           tag: validator.tag,
           feeRecipient: feeRecipient,
-          pubkey,
+          pubkey
         });
       } catch (e) {
         wrongFeeRecipientResponse.push({
           status: "error",
           message: `Could not obtain fee recipient for pubkey ${shortenPubkey(
             pubkey
-          )}. ${e} You can force a specific fee recipient by selecting tag "solo", but for some protocols this might cause you to lose rewards if you set a wrong address.`,
+          )}. ${e} You can force a specific fee recipient by selecting tag "solo", but for some protocols this might cause you to lose rewards if you set a wrong address.`
         });
 
-        logger.error(
-          `Error obtaining fee recipient for pubkey ${shortenPubkey(
-            pubkey
-          )}: ${e}`
-        );
+        logger.error(`Error obtaining fee recipient for pubkey ${shortenPubkey(pubkey)}: ${e}`);
       }
     }
 
@@ -102,23 +82,15 @@ export async function importValidators(
     const web3signerPostResponse = await signerApi.importKeystores({
       keystores: validators.map((validator) => validator.keystore),
       passwords: validators.map((validator) => validator.password),
-      slashing_protection: postRequest.slashing_protection
-        ? postRequest.slashing_protection.toString()
-        : undefined,
+      slashing_protection: postRequest.slashing_protection ? postRequest.slashing_protection.toString() : undefined
     });
 
-    logger.debug(
-      `Imported keystores into web3signer API: ${JSON.stringify(
-        web3signerPostResponse.data
-      )}`
-    );
+    logger.debug(`Imported keystores into web3signer API: ${JSON.stringify(web3signerPostResponse.data)}`);
 
     // Signer API import keystore may fail for some keystores, but not all
     // @see https://github.com/ConsenSys/web3signer/issues/713
     // Remove the pubkeys to avoid adding them to the db
-    const pubkeysToPostIterator = validators
-      .map((validator) => validator.pubkey)
-      .entries();
+    const pubkeysToPostIterator = validators.map((validator) => validator.pubkey).entries();
 
     //Iterate over pubkeysToPost with index and pubkey
     for (const [index, pubkey] of pubkeysToPostIterator) {
@@ -128,9 +100,7 @@ export async function importValidators(
         web3signerPostResponse.data[index].message +=
           ". Check that the keystore file format is valid and the password is correct.";
         logger.error(
-          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${
-            web3signerPostResponse.data[index].message
-          }`
+          `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${web3signerPostResponse.data[index].message}`
         );
       } else if (postStatus === "duplicate") {
         logger.warn(`Duplicate keystore for pubkey ${shortenPubkey(pubkey)}`);
@@ -152,8 +122,8 @@ export async function importValidators(
       .postRemoteKeys({
         remote_keys: validatorsToPost.map((validator) => ({
           pubkey: validator.pubkey,
-          url: signerUrl,
-        })),
+          url: signerUrl
+        }))
       })
       .catch((err) => logger.error(`Error setting validator pubkeys`, err));
 
@@ -165,33 +135,29 @@ export async function importValidators(
 
       await validatorApi
         .setFeeRecipient(validator.feeRecipient, validator.pubkey)
-        .catch((err) =>
-          logger.error(
-            `Error setting validator feeRecipient for pubkey ${validator.pubkey} :`,
-            err
-          )
-        );
+        .catch((err) => logger.error(`Error setting validator feeRecipient for pubkey ${validator.pubkey} :`, err));
     }
 
     logger.debug(`Added fee recipients to validator API`);
 
     const validatorsToDb = {
-      validators: validatorsToPost.reduce((acc, validator) => {
-        acc[prefix0xPubkey(validator.pubkey)] = {
-          tag: validator.tag,
-          feeRecipient: validator.feeRecipient,
-          automaticImport: postRequest.importFrom !== "ui",
-        };
-        return acc;
-      }, {} as { [pubkey: string]: PubkeyDetails }),
+      validators: validatorsToPost.reduce(
+        (acc, validator) => {
+          acc[prefix0xPubkey(validator.pubkey)] = {
+            tag: validator.tag,
+            feeRecipient: validator.feeRecipient,
+            automaticImport: postRequest.importFrom !== "ui"
+          };
+          return acc;
+        },
+        {} as { [pubkey: string]: PubkeyDetails }
+      )
     };
 
     // Write on db
     brainDb.addValidators(validatorsToDb);
 
-    logger.debug(
-      `Written on db: ${validatorsToPost.map((v) => v.pubkey).join(", ")}`
-    );
+    logger.debug(`Written on db: ${validatorsToPost.map((v) => v.pubkey).join(", ")}`);
 
     // IMPORTANT: start the cron
     reloadValidatorsCron.start();
@@ -202,31 +168,22 @@ export async function importValidators(
   }
 }
 
-async function getNonEditableFeeRecipient(
-  pubkey: string,
+function getNonEditableFeeRecipient(
   tag: NonEditableFeeRecipientTag,
   network: Network,
   suggestedFeeRecipient?: string
-): Promise<string> {
-  if (network == "gnosis") {
-    throw new Error(
-      "Currently, there are no DVT/LSDs supported on Gnosis chain in Dappnode."
-    );
-  } else if (network == "lukso") {
-    throw new Error(
-      "Currently, there are no DVT/LSDs supported on Lukso chain in Dappnode."
-    );
-  }
+): string {
+  if (network == "gnosis") throw Error("Currently, there are no DVT/LSDs supported on Gnosis chain in Dappnode.");
+  if (network == "lukso") throw Error("Currently, there are no DVT/LSDs supported on Lukso chain in Dappnode.");
 
   switch (tag) {
     case "rocketpool":
       return ROCKET_POOL_FEE_RECIPIENT;
-    case "stakehouse":
-      return await new StakeHouseSDK().getLsdFeeRecipient(pubkey);
 
     case "lido":
       if (network === "mainnet") return LIDO_FEE_RECIPIENT_MAINNET;
       else if (network === "holesky") return LIDO_FEE_RECIPIENT_HOLESKY;
+      else throw Error(`Fee recipient not found for tag: ${tag} and network: ${network}`);
 
     // Stader FR cannot be known in advance
     case "stader":
@@ -235,8 +192,9 @@ async function getNonEditableFeeRecipient(
       else {
         if (network === "mainnet") return STADER_POOL_FEE_RECIPIENT_MAINNET;
         else if (network === "prater") return STADER_POOL_FEE_RECIPIENT_PRATER;
+        else throw Error(`Fee recipient not found for tag: ${tag} and network: ${network}`);
       }
     default:
-      throw new Error("Fee recipient not found for tag: " + tag);
+      throw Error("Fee recipient not found for tag: " + tag);
   }
 }

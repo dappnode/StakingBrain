@@ -16,7 +16,7 @@ import {
   Step,
   StepLabel,
   Tooltip,
-  Checkbox,
+  Checkbox
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { GridSelectionModel } from "@mui/x-data-grid";
@@ -27,7 +27,7 @@ import {
   CustomValidatorUpdateRequest,
   areAllFeeRecipientsEditable,
   WithdrawalCredentialsFormat,
-  Network,
+  Network
 } from "@stakingbrain/common";
 import React from "react";
 
@@ -49,7 +49,7 @@ export default function FeeRecipientDialog({
   rows,
   selectedRows,
   network,
-  isMevBoostSet,
+  isMevBoostSet
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -89,10 +89,7 @@ export default function FeeRecipientDialog({
       await updateValidators();
       setOpen(false);
     } catch (err) {
-      setErrorMessage(
-        "There was an error setting the Smooth Fee Recipient to some validators: " +
-          err
-      );
+      setErrorMessage("There was an error setting the Smooth Fee Recipient to some validators: " + err);
     }
   };
 
@@ -100,9 +97,7 @@ export default function FeeRecipientDialog({
     window.open(smoothUrl, "_blank");
   };
 
-  const handleNewFeeRecipientChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleNewFeeRecipientChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (
       mevSpAddress &&
       !isMevSpAddressSelected &&
@@ -124,9 +119,7 @@ export default function FeeRecipientDialog({
         setIsMevSpAddressSelected(true);
       }
     } else {
-      console.error(
-        "Error: Tried to switch Smooth's address in a network that doesn't have it"
-      );
+      console.error("Error: Tried to switch Smooth's address in a network that doesn't have it");
     }
   };
 
@@ -151,7 +144,7 @@ export default function FeeRecipientDialog({
       if (row) {
         validatorsData.push({
           pubkey: row.pubkey,
-          feeRecipient: newFeeRecipient,
+          feeRecipient: newFeeRecipient
         });
       }
     });
@@ -164,9 +157,7 @@ export default function FeeRecipientDialog({
     try {
       await updateValidators();
     } catch (err) {
-      setErrorMessage(
-        "There was an error updating some fee recipients: " + err
-      );
+      setErrorMessage("There was an error updating some fee recipients: " + err);
     }
 
     setLoading(false);
@@ -184,16 +175,12 @@ export default function FeeRecipientDialog({
   }
 
   function areAllOldFrsSameAsGiven(givenFr: string) {
-    const oldFeeRecipients = selectedRows
-      .map((rowId) => rows[+rowId].feeRecipient)
-      .flat();
+    const oldFeeRecipients = selectedRows.map((rowId) => rows[+rowId].feeRecipient).flat();
 
     return oldFeeRecipients.every((fr) => fr === givenFr);
   }
   function isRemovingMevSpFr() {
-    const oldFeeRecipients = selectedRows
-      .map((rowId) => rows[+rowId].feeRecipient)
-      .flat();
+    const oldFeeRecipients = selectedRows.map((rowId) => rows[+rowId].feeRecipient).flat();
 
     return (
       mevSpAddress !== null &&
@@ -204,15 +191,11 @@ export default function FeeRecipientDialog({
   }
 
   function isNewFeeRecipientValid() {
-    return (
-      isValidEcdsaPubkey(newFeeRecipient) && newFeeRecipient !== BURN_ADDRESS
-    );
+    return isValidEcdsaPubkey(newFeeRecipient) && newFeeRecipient !== BURN_ADDRESS;
   }
 
   // Given a possible withdrawal credentials format, checks if any of the selected validators has it
-  const isAnyWithdrawalCredentialsEqual = (
-    givenFormat: WithdrawalCredentialsFormat
-  ): boolean => {
+  const isAnyWithdrawalCredentialsEqual = (givenFormat: WithdrawalCredentialsFormat): boolean => {
     let isAnyAsGivenFormat = false;
     for (const row of selectedRows) {
       const rowData = rows[+row];
@@ -226,9 +209,7 @@ export default function FeeRecipientDialog({
   };
 
   // Given a possible withdrawal credentials format, checks if any of the selected validators has a different format
-  const isAnyWithdrawalCredentialsDiff = (
-    givenFormat: WithdrawalCredentialsFormat
-  ): boolean => {
+  const isAnyWithdrawalCredentialsDiff = (givenFormat: WithdrawalCredentialsFormat): boolean => {
     let isAnyAsGivenFormat = false;
     for (const row of selectedRows) {
       const rowData = rows[+row];
@@ -261,7 +242,7 @@ export default function FeeRecipientDialog({
         return rowData.withdrawalCredentials.format !== "ecdsa"
           ? {
               pubkey: rowData.pubkey,
-              withdrawalFormat: rowData.withdrawalCredentials.format,
+              withdrawalFormat: rowData.withdrawalCredentials.format
             }
           : null;
       })
@@ -278,14 +259,10 @@ export default function FeeRecipientDialog({
           sx={{
             display: "flex",
             justifyContent: "center",
-            marginTop: 1,
+            marginTop: 1
           }}
         >
-          <Button
-            variant="contained"
-            sx={{ borderRadius: 2, marginLeft: 1 }}
-            onClick={handleSubscriptionClick}
-          >
+          <Button variant="contained" sx={{ borderRadius: 2, marginLeft: 1 }} onClick={handleSubscriptionClick}>
             Take me to Smooth Website!
           </Button>
         </Box>
@@ -301,31 +278,23 @@ export default function FeeRecipientDialog({
           sx={{
             display: "flex",
             justifyContent: "center",
-            marginY: 3,
+            marginY: 3
           }}
         >
-          <Button
-            variant="contained"
-            sx={{ borderRadius: 2, marginLeft: 1 }}
-            onClick={handleUnsubscriptionClick}
-          >
+          <Button variant="contained" sx={{ borderRadius: 2, marginLeft: 1 }} onClick={handleUnsubscriptionClick}>
             Take me to Smooth's website
           </Button>
         </Box>
         <div
           style={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "center"
           }}
         >
-          <Checkbox
-            checked={isUnsubUnderstood}
-            onChange={() => setIsUnsubUnderstood(!isUnsubUnderstood)}
-          />
+          <Checkbox checked={isUnsubUnderstood} onChange={() => setIsUnsubUnderstood(!isUnsubUnderstood)} />
           <span style={{ fontSize: 13 }}>
-            By checking this I understand that being subscribed to Smooth while
-            having a wrong fee recipient can result in my validators getting
-            banned from it.
+            By checking this I understand that being subscribed to Smooth while having a wrong fee recipient can result
+            in my validators getting banned from it.
           </span>
         </div>
       </>
@@ -369,19 +338,17 @@ export default function FeeRecipientDialog({
         return (
           <>
             <Alert severity="info" sx={{ marginY: 1 }}>
-              By setting the fee recipient to Smooth you are participating in
-              the smoothing pool. You will be able to claim your rewards{" "}
+              By setting the fee recipient to Smooth you are participating in the smoothing pool. You will be able to
+              claim your rewards{" "}
               <Tooltip
                 placement="top"
                 title={
                   <p style={{ fontSize: 12 }}>
-                    You don't need to change your withdrawal address, but you
-                    must have access to it to recieve rewards from Smooth.
+                    You don't need to change your withdrawal address, but you must have access to it to recieve rewards
+                    from Smooth.
                     <br /> <br />
-                    You will need to log in to Smooth UI from your Withdrawal
-                    address.
-                    <br /> <br /> EigenPods are not currently supported as they
-                    can't recieve Execution Layer rewards.
+                    You will need to log in to Smooth UI from your Withdrawal address.
+                    <br /> <br /> EigenPods are not currently supported as they can't recieve Execution Layer rewards.
                   </p>
                 }
                 arrow
@@ -394,13 +361,15 @@ export default function FeeRecipientDialog({
                 </b>
               </Tooltip>{" "}
               from the Smooth UI.{" "}
-              <a href={getSmoothUrlByNetwork(network)} target="_blank">Learn more</a>
+              <a href={getSmoothUrlByNetwork(network)} target="_blank">
+                Learn more
+              </a>
             </Alert>
 
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
+                alignItems: "center"
               }}
             >
               <Checkbox
@@ -410,8 +379,7 @@ export default function FeeRecipientDialog({
                 }}
               />
               <span style={{ fontSize: 13 }}>
-                I understand I must have access to the withdrawal address to
-                recieve Smooth rewards
+                I understand I must have access to the withdrawal address to recieve Smooth rewards
               </span>
             </div>
           </>
@@ -420,23 +388,17 @@ export default function FeeRecipientDialog({
       case "subSmoothStep2Alert":
         return (
           <Alert severity="info" sx={{ marginY: 2 }}>
-            You have changed your fee recipient to Smooth. To{" "}
-            <b>start accumulating rewards</b> right now,{" "}
+            You have changed your fee recipient to Smooth. To <b>start accumulating rewards</b> right now,{" "}
             <b>subscribe manually</b> thorugh Smooth's webpage.
-            <br /> In the Smooth web you can see pending rewards, claim them and
-            manage your Smooth validators.
+            <br /> In the Smooth web you can see pending rewards, claim them and manage your Smooth validators.
           </Alert>
         );
 
       case "unsubSmoothAlert":
         return (
           <Alert severity="warning" sx={{ marginY: 1 }}>
-            You are removing Smooth's fee recipient from <b>1 or more</b>{" "}
-            validators.{" "}
-            <b>
-              Please make sure all these validators are not subscribed to Smooth
-              before changing the fee recipient.
-            </b>{" "}
+            You are removing Smooth's fee recipient from <b>1 or more</b> validators.{" "}
+            <b>Please make sure all these validators are not subscribed to Smooth before changing the fee recipient.</b>{" "}
             Unsubscribing from Smooth can be done in Smooth's website.
           </Alert>
         );
@@ -444,16 +406,11 @@ export default function FeeRecipientDialog({
       case "alreadySmoothAlert":
         return (
           <Alert severity="warning" sx={{ marginY: 1 }}>
-            1 or more of the selected validators{" "}
-            <b>already have Smooth's fee recipient set</b>. For those
-            validators, the fee recipient won't updated. Their public keys are:
+            1 or more of the selected validators <b>already have Smooth's fee recipient set</b>. For those validators,
+            the fee recipient won't updated. Their public keys are:
             <ul>
               {smoothValidatorsPubkeys.map((pubkey) => (
-                <li>
-                  {pubkey.substring(0, 20) +
-                    "..." +
-                    pubkey.substring(pubkey.length - 20)}
-                </li>
+                <li>{pubkey.substring(0, 20) + "..." + pubkey.substring(pubkey.length - 20)}</li>
               ))}
             </ul>
           </Alert>
@@ -462,10 +419,9 @@ export default function FeeRecipientDialog({
       case "blsFormatAlert":
         return (
           <Alert severity="error" sx={{ marginY: 1 }}>
-            Some of the selected validators have an{" "}
-            <b>incorrect withdrawal address format</b>. In Smooth, only
-            validators with an ETH1 withdrawal address are permitted to join.
-            The validators with an incorrect withdrawal address are:
+            Some of the selected validators have an <b>incorrect withdrawal address format</b>. In Smooth, only
+            validators with an ETH1 withdrawal address are permitted to join. The validators with an incorrect
+            withdrawal address are:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat !== "error")
@@ -481,10 +437,7 @@ export default function FeeRecipientDialog({
             <p>
               Check how to change from BLS to ETH1{" "}
               <b>
-                <a
-                  href="https://launchpad.ethereum.org/en/btec/"
-                  target="_blank"
-                >
+                <a href="https://launchpad.ethereum.org/en/btec/" target="_blank">
                   here
                 </a>
               </b>
@@ -496,16 +449,10 @@ export default function FeeRecipientDialog({
       case "errorFormatAlert":
         return (
           <Alert severity="error" sx={{ marginY: 1 }}>
-            {
-              nonEcdsaValidatorsData.filter(
-                (validator) => validator.withdrawalFormat === "error"
-              ).length
-            }{" "}
-            of the selected validators' withdrawal address format could not be
-            checked. Please,{" "}
-            <b>make sure your consensus client is up and working!</b> This may
-            also happen if some validators are new to the chain. Affected
-            validator's public keys:
+            {nonEcdsaValidatorsData.filter((validator) => validator.withdrawalFormat === "error").length} of the
+            selected validators' withdrawal address format could not be checked. Please,{" "}
+            <b>make sure your consensus client is up and working!</b> This may also happen if some validators are new to
+            the chain. Affected validator's public keys:
             <ul>
               {nonEcdsaValidatorsData
                 .filter((validator) => validator.withdrawalFormat === "error")
@@ -519,36 +466,28 @@ export default function FeeRecipientDialog({
             </ul>
           </Alert>
         );
-        case "noMevBoostSetAlert":
-          const stakersLink = getStakersLink(network);
-          return (
-            <Alert severity="error" sx={{ marginY: 1 }}>
-              To subscribe to Smooth, you need to use MEV-Boost. Please install
-              the MEV-Boost package at your{" "}
-              <strong>
-                <a
-                  href={stakersLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Stakers tab
-                </a>
-              </strong>{" "}
-              and register to at least one MEV relay.
-            </Alert>
-          );
-        
-        
+      case "noMevBoostSetAlert":
+        return (
+          <Alert severity="error" sx={{ marginY: 1 }}>
+            To subscribe to Smooth, you need to use MEV-Boost. Please install the MEV-Boost package at your{" "}
+            <strong>
+              <a href={getStakersLink(network)} target="_blank" rel="noopener noreferrer">
+                Stakers tab
+              </a>
+            </strong>{" "}
+            and register to at least one MEV relay.
+          </Alert>
+        );
     }
   }
 
-  // This function renders the alerts that are related to Smooth. 
+  // This function renders the alerts that are related to Smooth.
   // If all conditions are met, all alerts are rendered.
   function renderMevSpAddressAlerts(mevSpAddress: string | null) {
     if (!mevSpAddress) {
       return null;
     }
-  
+
     return (
       <>
         {/* Renders UnsubscribeFromSmoothCard if isRemovingMevSpFr() is true */}
@@ -561,13 +500,19 @@ export default function FeeRecipientDialog({
         {isMevSpAddressSelected && isAnyWithdrawalCredentialsEqual("error") && alertCard("errorFormatAlert")}
 
         {/* If one or more validators has an incorrect withdrawal credentials format */}
-        {isMevSpAddressSelected && (isAnyWithdrawalCredentialsEqual("bls") || isAnyWithdrawalCredentialsEqual("unknown")) && alertCard("blsFormatAlert")}
+        {isMevSpAddressSelected &&
+          (isAnyWithdrawalCredentialsEqual("bls") || isAnyWithdrawalCredentialsEqual("unknown")) &&
+          alertCard("blsFormatAlert")}
 
         {/* If mevBoost is not installed */}
         {isMevSpAddressSelected && !isMevBoostSet && alertCard("noMevBoostSetAlert")}
 
         {/* If everything okay, render alert (only info) */}
-        {isMevSpAddressSelected && !areAllOldFrsSameAsGiven(newFeeRecipient) && !isAnyWithdrawalCredentialsDiff("ecdsa") && isMevBoostSet && alertCard("subSmoothStep1Alert")}
+        {isMevSpAddressSelected &&
+          !areAllOldFrsSameAsGiven(newFeeRecipient) &&
+          !isAnyWithdrawalCredentialsDiff("ecdsa") &&
+          isMevBoostSet &&
+          alertCard("subSmoothStep1Alert")}
       </>
     );
   }
@@ -575,33 +520,30 @@ export default function FeeRecipientDialog({
   const isApplyChangesDisabled = () => {
     // Not-Smooth related conditions
     const notSmoothRelated = !isNewFeeRecipientValid() || areAllOldFrsSameAsGiven(newFeeRecipient);
-  
+
     // Smooth-related conditions. Will always be false if mevSpAddress is null (not in a network with Smooth)
-    const smoothRelated = mevSpAddress !== null && (
-      isRemovingMevSpFr() && !isUnsubUnderstood ||
-      isAnyWithdrawalCredentialsDiff("ecdsa") && isMevSpAddressSelected ||
-      isMevSpAddressSelected && !isMevBoostSet
-    );
-  
+    const smoothRelated =
+      mevSpAddress !== null &&
+      ((isRemovingMevSpFr() && !isUnsubUnderstood) ||
+        (isAnyWithdrawalCredentialsDiff("ecdsa") && isMevSpAddressSelected) ||
+        (isMevSpAddressSelected && !isMevBoostSet));
+
     return notSmoothRelated || smoothRelated;
   };
-  
 
   function modalContent(): JSX.Element {
     return (
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {mevSpAddress &&
-            isMevSpAddressSelected &&
-            !isAnyWithdrawalCredentialsDiff("ecdsa") && (
-              <Stepper activeStep={activeStep} alternativeLabel>
-                {joinSpSteps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-            )}
+          {mevSpAddress && isMevSpAddressSelected && !isAnyWithdrawalCredentialsDiff("ecdsa") && (
+            <Stepper activeStep={activeStep} alternativeLabel>
+              {joinSpSteps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          )}
           {activeStep === 0 ? (
             <>
               <TextField
@@ -610,36 +552,29 @@ export default function FeeRecipientDialog({
                 label="New Fee Recipient"
                 error={
                   (!isNewFeeRecipientValid() && newFeeRecipient !== "") ||
-                  (isAnyWithdrawalCredentialsDiff("ecdsa") &&
-                    newFeeRecipient === mevSpAddress)
+                  (isAnyWithdrawalCredentialsDiff("ecdsa") && newFeeRecipient === mevSpAddress)
                 }
                 helperText={
                   newFeeRecipient === ""
                     ? "The fee recipient is the address where the validator will send the fees"
                     : !isValidEcdsaPubkey(newFeeRecipient)
-                    ? "Invalid address"
-                    : newFeeRecipient === BURN_ADDRESS
-                    ? "It is not possible to set the fee recipient to the burn address"
-                    : mevSpAddress &&
-                      isMevSpAddressSelected &&
-                      isAnyWithdrawalCredentialsDiff("ecdsa")
-                    ? "Smooth Fee Recipient is not valid for some of these validators"
-                    : "Address is valid"
+                      ? "Invalid address"
+                      : newFeeRecipient === BURN_ADDRESS
+                        ? "It is not possible to set the fee recipient to the burn address"
+                        : mevSpAddress && isMevSpAddressSelected && isAnyWithdrawalCredentialsDiff("ecdsa")
+                          ? "Smooth Fee Recipient is not valid for some of these validators"
+                          : "Address is valid"
                 }
                 value={newFeeRecipient}
                 disabled={isMevSpAddressSelected}
               />
 
-              <FormGroup
-                sx={{ marginTop: 1, display: "flex", alignContent: "center" }}
-              >
+              <FormGroup sx={{ marginTop: 1, display: "flex", alignContent: "center" }}>
                 {mevSpAddress && (
                   <>
                     {!areAllOldFrsSameAsGiven(mevSpAddress) && (
                       <FormControlLabel
-                        control={
-                          <Switch onChange={() => switchSetMevSpAddress()} />
-                        }
+                        control={<Switch onChange={() => switchSetMevSpAddress()} />}
                         label={
                           <Typography component="div">
                             Set <b>Smooth</b> Fee Recipient
@@ -651,10 +586,8 @@ export default function FeeRecipientDialog({
                   </>
                 )}
               </FormGroup>
-              {!areAllSelectedFeeRecipientsEditable() &&
-                alertCard("onlyEditableFeesAlert")}
-              {areAllOldFrsSameAsGiven(newFeeRecipient) &&
-                alertCard("feeAlreadySetToAllAlert")}
+              {!areAllSelectedFeeRecipientsEditable() && alertCard("onlyEditableFeesAlert")}
+              {areAllOldFrsSameAsGiven(newFeeRecipient) && alertCard("feeAlreadySetToAllAlert")}
               {successMessage && alertCard("successAlert")}
               {errorMessage && alertCard("errorAlert")}
               {renderMevSpAddressAlerts(mevSpAddress)}
@@ -681,10 +614,7 @@ export default function FeeRecipientDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle
-        id="alert-dialog-title"
-        sx={{ fontWeight: 700, fontSize: 24 }}
-      >
+      <DialogTitle id="alert-dialog-title" sx={{ fontWeight: 700, fontSize: 24 }}>
         Edit Fee Recipient (for selected validators)
       </DialogTitle>
       {modalContent()}
@@ -700,11 +630,7 @@ export default function FeeRecipientDialog({
               Apply changes
             </Button>
           )}
-          <Button
-            onClick={handleClose}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
-          >
+          <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
             Close
           </Button>
         </DialogActions>

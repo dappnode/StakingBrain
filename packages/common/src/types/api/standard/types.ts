@@ -24,10 +24,4 @@ export interface ErrnoException extends Error {
   port?: number;
 }
 
-export type ErrorCode =
-  | "ETIMEDOUT"
-  | "ENOTFOUND"
-  | "ECONNREFUSED"
-  | "ECONNRESET"
-  | "ERR_HTTP"
-  | "UNKNOWN";
+export type ErrorCode = "ETIMEDOUT" | "ENOTFOUND" | "ECONNREFUSED" | "ECONNRESET" | "ERR_HTTP" | "UNKNOWN";
