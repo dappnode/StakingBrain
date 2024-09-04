@@ -3055,6 +3055,7 @@ __metadata:
     rimraf: "npm:^4.1.1"
     sinon: "npm:^15.0.1"
     socket.io: "npm:^4.5.4"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 
@@ -3064,6 +3065,7 @@ __metadata:
   dependencies:
     "@types/sinon": "npm:^10.0.13"
     sinon: "npm:^15.0.1"
+    typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
 

@@ -4,6 +4,7 @@ import {
   BeaconchainPoolVoluntaryExitsPostRequest,
   BeaconchainForkFromStateGetResponse,
   BeaconchainGenesisGetResponse,
+  BeaconchainStateFinalityCheckpointsPostResponse,
   Network,
   ApiParams
 } from "@stakingbrain/common";
@@ -60,16 +61,41 @@ export class Beaconchain extends StandardApi {
   /**
    * Get Fork object from requested state.
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFork
-   * @param state_id - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
+   * @param stateId - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
    */
-  public async getForkFromState({ state_id }: { state_id: string }): Promise<BeaconchainForkFromStateGetResponse> {
+  public async getForkFromState({
+    stateId
+  }: {
+    stateId: "head" | "genesis" | "finalized";
+  }): Promise<BeaconchainForkFromStateGetResponse> {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "states", state_id, "fork")
+        endpoint: path.join(this.beaconchainEndpoint, "states", stateId, "fork")
       })) as BeaconchainForkFromStateGetResponse;
     } catch (e) {
       e.message += `Error getting (GET) fork from beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Returns finality checkpoints for state with given 'stateId'. In case finality is not yet achieved, checkpoint should return epoch 0 and ZERO_HASH as root.
+   * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFinalityCheckpoints
+   * @param stateId - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
+   */
+  public async getStateFinalityCheckpoints({
+    stateId
+  }: {
+    stateId: "head" | "genesis" | "finalized";
+  }): Promise<BeaconchainStateFinalityCheckpointsPostResponse> {
+    try {
+      return await this.request({
+        method: "GET",
+        endpoint: path.join(this.beaconchainEndpoint, "states", stateId, "finality_checkpoints")
+      });
+    } catch (e) {
+      e.message += `Error getting (GET) state finality checkpoints from beaconchain. `;
       throw e;
     }
   }

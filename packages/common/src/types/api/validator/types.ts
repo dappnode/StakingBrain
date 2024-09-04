@@ -41,6 +41,30 @@ export interface ValidatorDeleteRemoteKeysResponse {
   }[];
 }
 
+export interface ValidatorAttesterDutiesPostResponse {
+  dependent_root: string;
+  execution_optimistic: boolean;
+  data: {
+    pubkey: string;
+    validator_index: string;
+    committee_index: string;
+    committee_length: string;
+    committees_at_slot: string;
+    validator_committee_index: string;
+    slot: string;
+  }[];
+}
+
+export interface ValidatorProposerDutiesGetResponse {
+  dependent_root: string;
+  execution_optimistic: false;
+  data: {
+    pubkey: string;
+    validator_index: string;
+    slot: string;
+  }[];
+}
+
 export interface ValidatorExitGet extends BeaconchainPoolVoluntaryExitsPostRequest {
   pubkey: string;
 }

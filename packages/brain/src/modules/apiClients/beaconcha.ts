@@ -4,7 +4,7 @@ import { BeaconchaGetResponse } from "@stakingbrain/common";
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
 export class BeaconchaApi extends StandardApi {
-  /*
+  /**
    * Fetch info for every validator PK
    */
   public async fetchAllValidatorsInfo({ pubkeys }: { pubkeys: string[] }): Promise<BeaconchaGetResponse[]> {
