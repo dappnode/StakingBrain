@@ -25,15 +25,12 @@
     "eslint-plugin-prettier": "^5.2.1",
     "prettier": "^3.3.3",
     "rimraf": "^4.1.1",
-    "ts-node": "^10.9.2",
     "tsx": "^4.19.0"
   },
   "scripts": {
     "build": "yarn workspaces foreach --all -pt run build",
     "test": "yarn workspaces foreach --all -pt run test",
-    "build:webpack": "yarn workspaces foreach --all -pt run build:webpack",
     "start:dev": "yarn workspaces foreach --all -pt run start:dev",
-    "start:webpack:dev": "yarn workspaces foreach --all -pt run start:webpack:dev",
     "lint": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
     "lint:fix": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --fix --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
     "format": "prettier --write 'packages/**/src/**/*.{js,ts,tsx,json,md}' 'packages/**/test/**/*.{js,ts,tsx,json,md}'",

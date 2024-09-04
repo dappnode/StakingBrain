@@ -8,10 +8,5 @@
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
     "useUnknownInCatchVariables": false
-  },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node",
-    "experimentalResolver": true
   }
 }

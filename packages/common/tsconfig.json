@@ -5,10 +5,5 @@
   "compilerOptions": {
     "outDir": "dist",
     "skipLibCheck": true
-  },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node",
-    "experimentalResolver": true
   }
 }

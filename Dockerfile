@@ -1,28 +1,27 @@
 ARG DOCKER_IMAGE=node:20.17.0-alpine3.20
 
 # Build
-FROM ${DOCKER_IMAGE} as build-stage
+FROM ${DOCKER_IMAGE} AS build-stage
 
 WORKDIR /app
-COPY package.json yarn.lock lerna.json tsconfig.json ./
-COPY packages/ui/ packages/ui/
-COPY packages/brain/ packages/brain/
-COPY packages/common/ packages/common/
+COPY package.json yarn.lock tsconfig.json .yarnrc.yml ./
+COPY packages packages
 
 # Required to build with vite
 RUN apk update && apk add --no-cache python3 py3-pip build-base
+# Enable corepack to use modern package manager
+RUN corepack enable
 
 # Build but keep only production dependencies
-RUN yarn --frozen-lockfile --non-interactive --ignore-optional && \
+RUN yarn install --immutable && \
   yarn build && \
   yarn clean:libraries && \
-  yarn --frozen-lockfile --non-interactive --ignore-optional --production
+  yarn workspaces focus --all --production
 
 # Production
 FROM ${DOCKER_IMAGE}
 ENV NODE_ENV=production
 WORKDIR /app
-
 COPY ./packages/brain/tls ./tls
 
 # Copy root app

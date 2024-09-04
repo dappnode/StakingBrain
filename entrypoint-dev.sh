@@ -1,8 +1,9 @@
 #!/bin/bash
 
-cd /app && yarn && yarn build
-cd /app/packages/common && yarn start:dev &
-cd /app/packages/ui/ && yarn start:dev &
-cd /app/packages/brain && yarn start:dev &
+# Build must be located in entrypoint due to docker volume mount
+
+corepack enable && yarn set version berry
+
+cd /app && yarn && yarn build && yarn start:dev &
 
 wait

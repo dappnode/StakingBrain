@@ -3,10 +3,9 @@ import react from "@vitejs/plugin-react";
 import viteTsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  usePolling: true,
   // depending on your application, base can also be "/"
   build: {
-    outDir: "build",
+    outDir: "build"
   },
   base: "/",
   plugins: [react(), viteTsconfigPaths()],
@@ -19,15 +18,15 @@ export default defineConfig({
     // this sets the server to be accessible externally
     host: true,
     watch: {
-      usePolling: true,
+      usePolling: true
     },
     proxy: {
       "/socket.io/": {
         target: "ws://localhost:80",
         //changeOrigin: true,
         //secure: false,
-        ws: true,
-      },
-    },
-  },
+        ws: true
+      }
+    }
+  }
 });

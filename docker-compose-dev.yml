@@ -9,9 +9,9 @@ services:
       - .:/app
     environment:
       - NETWORK=holesky
-      - _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOLESKY=prysm-holesky.dnp.dappnode.eth
-      - _DAPPNODE_GLOBAL_EXECUTION_CLIENT_HOLESKY=holesky-nethermind.dnp.dappnode.eth
-      - _DAPPNODE_GLOBAL_MEVBOOST_HOLESKY=false
+      - _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOLESKY=nimbus-holesky.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_EXECUTION_CLIENT_HOLESKY=holesky-geth.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_MEVBOOST_HOLESKY=true
 
     networks:
       dncore_network:
