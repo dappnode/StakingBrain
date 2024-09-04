@@ -39,9 +39,6 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Build webpack
-        run: yarn build:webpack
-
       # Test
 
       - name: Test
