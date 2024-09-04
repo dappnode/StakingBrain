@@ -26,7 +26,7 @@
     "start": "vite",
     "build": "tsc -b && vite build",
     "serve": "vite preview",
-    "test": "mocha -r ts-node/register -r dotenv/config --exit --recursive 'test/**/*.test.ts'",
+    "test": "mocha -r dotenv/config --exit --recursive 'test/**/*.test.ts'",
     "dev": "vite build --watch --mode=development"
   },
   "eslintConfig": {
@@ -59,7 +59,6 @@
     "@vitejs/plugin-react": "^4.3.1",
     "chai": "^4.3.6",
     "mocha": "^10.0.0",
-    "ts-node": "^10.9.1",
     "vite": "^5.4.2"
   }
 }
