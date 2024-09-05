@@ -6,6 +6,7 @@ import {
   BeaconchainGenesisGetResponse,
   BeaconchainStateFinalityCheckpointsPostResponse,
   BeaconchainBlockAttestationsGetResponse,
+  BeaconchainAttestationRewardsPostResponse,
   Network,
   ApiParams
 } from "@stakingbrain/common";
@@ -151,6 +152,32 @@ export class Beaconchain extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) block attestations from beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Retrieve attestation reward info for validators specified by array of public keys or validator index. If no array is provided, return reward info for every validator.
+   *
+   * @param epoch The epoch to get rewards info from
+   * @param pubkeysOrIndexes An array of either hex encoded public key (any bytes48 with 0x prefix) or validator index
+   * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getAttestationsRewards
+   */
+  public async getAttestationsRewards({
+    epoch,
+    pubkeysOrIndexes
+  }: {
+    epoch: string;
+    pubkeysOrIndexes: string[];
+  }): Promise<BeaconchainAttestationRewardsPostResponse> {
+    try {
+      return await this.request({
+        method: "POST",
+        endpoint: path.join(this.beaconchainEndpoint, "rewards", "attestations", epoch),
+        body: pubkeysOrIndexes
+      });
+    } catch (e) {
+      e.message += `Error getting (POST) attestation rewards from beaconchain. `;
       throw e;
     }
   }
