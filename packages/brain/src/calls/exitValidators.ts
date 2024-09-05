@@ -67,7 +67,7 @@ async function _getExitValidators(pubkeys: string[]): Promise<ValidatorExitGet[]
   const currentEpoch = await beaconchainApi.getCurrentEpoch();
 
   // Get the fork from the beaconchain API to sign the voluntary exit
-  const fork = await beaconchainApi.getForkFromState({ state_id: "head" });
+  const fork = await beaconchainApi.getForkFromState({ stateId: "head" });
 
   // Get the genesis from the beaconchain API to sign the voluntary exit
   const genesis = await beaconchainApi.getGenesis();

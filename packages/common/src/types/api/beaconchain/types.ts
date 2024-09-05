@@ -52,6 +52,25 @@ export interface BeaconchainForkFromStateGetResponse {
   };
 }
 
+export interface BeaconchainStateFinalityCheckpointsPostResponse {
+  execution_optimistic: boolean;
+  finalized: boolean;
+  data: {
+    previous_justified: {
+      epoch: string;
+      root: string;
+    };
+    current_justified: {
+      epoch: string;
+      root: "string";
+    };
+    finalized: {
+      epoch: string;
+      root: "string";
+    };
+  };
+}
+
 export interface BeaconchainGenesisGetResponse {
   data: {
     genesis_time: string;
