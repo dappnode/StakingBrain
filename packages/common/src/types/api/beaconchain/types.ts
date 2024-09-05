@@ -35,6 +35,28 @@ export interface BeaconchainValidatorFromStateGetResponse {
   };
 }
 
+export interface BeaconchainBlockAttestationsGetResponse {
+  execution_optimistic: boolean;
+  finalized: boolean;
+  data: {
+    aggregation_bits: string;
+    signature: string;
+    data: {
+      slot: string;
+      index: string;
+      beacon_block_root: string;
+      source: {
+        epoch: string;
+        root: string;
+      };
+      target: {
+        epoch: string;
+        root: string;
+      };
+    };
+  }[];
+}
+
 export interface BeaconchainPoolVoluntaryExitsPostRequest {
   message: {
     epoch: string;

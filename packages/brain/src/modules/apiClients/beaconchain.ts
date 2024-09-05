@@ -5,6 +5,7 @@ import {
   BeaconchainForkFromStateGetResponse,
   BeaconchainGenesisGetResponse,
   BeaconchainStateFinalityCheckpointsPostResponse,
+  BeaconchainBlockAttestationsGetResponse,
   Network,
   ApiParams
 } from "@stakingbrain/common";
@@ -130,6 +131,28 @@ export class Beaconchain extends StandardApi {
   public async getCurrentEpoch(): Promise<number> {
     const head = await this.getBlockHeader({ block_id: "head" });
     return this.getEpochFromSlot(parseInt(head.data.header.message.slot));
+  }
+
+  /**
+   * Retrieves attestation included in requested block.
+   *
+   * @param blockId - Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
+   * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getBlockAttestations
+   */
+  public async getBlockAttestations({
+    blockId
+  }: {
+    blockId: string;
+  }): Promise<BeaconchainBlockAttestationsGetResponse> {
+    try {
+      return await this.request({
+        method: "GET",
+        endpoint: path.join(this.beaconchainEndpoint, "blocks", blockId, "attestations")
+      });
+    } catch (e) {
+      e.message += `Error getting (GET) block attestations from beaconchain. `;
+      throw e;
+    }
   }
 
   /**
