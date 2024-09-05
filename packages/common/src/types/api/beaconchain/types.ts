@@ -16,6 +16,29 @@ export interface BeaconchainBlockHeaderGetResponse {
   };
 }
 
+export interface BeaconchainAttestationRewardsPostResponse {
+  execution_optimistic: boolean;
+  finalized: boolean;
+  data: {
+    ideal_rewards: {
+      effective_balance: string;
+      head: string;
+      target: string;
+      source: string;
+      inclusion_delay: string;
+      inactivity: string;
+    }[];
+    total_rewards: {
+      validator_index: string;
+      head: string;
+      target: string;
+      source: string;
+      inclusion_delay: string;
+      inactivity: string;
+    }[];
+  };
+}
+
 export interface BeaconchainValidatorFromStateGetResponse {
   execution_optimistic: boolean;
   data: {
