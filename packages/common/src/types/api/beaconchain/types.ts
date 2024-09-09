@@ -16,6 +16,16 @@ export interface BeaconchainBlockHeaderGetResponse {
   };
 }
 
+export interface BeaconchainSyncingStatusGetResponse {
+  data: {
+    head_slot: string;
+    sync_distance: string;
+    is_syncing: boolean;
+    is_optimistic: boolean;
+    el_offline: boolean;
+  };
+}
+
 export interface BeaconchainAttestationRewardsPostResponse {
   execution_optimistic: boolean;
   finalized: boolean;

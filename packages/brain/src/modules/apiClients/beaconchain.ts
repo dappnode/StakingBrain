@@ -8,14 +8,35 @@ import {
   BeaconchainBlockAttestationsGetResponse,
   BeaconchainAttestationRewardsPostResponse,
   Network,
-  ApiParams
+  ApiParams,
+  ValidatorLivenessPostResponse,
+  BeaconchainSyncingStatusGetResponse
 } from "@stakingbrain/common";
 import { StandardApi } from "./standard.js";
 import path from "path";
 
+type BlockId = "head" | "genesis" | "finalized" | "slot" | `0x${string}`;
+
 export class Beaconchain extends StandardApi {
   private SLOTS_PER_EPOCH: number;
+
+  /**
+   * Endpoints to query node related information
+   * @see https://ethereum.github.io/beacon-APIs/#/Node
+   */
+  private nodeEndpoint = "/eth/v1/node";
+
+  /**
+   * Validator endpoint for beaconchain
+   * @see https://ethereum.github.io/beacon-APIs/#/Beacon
+   */
   private beaconchainEndpoint = "/eth/v1/beacon";
+
+  /**
+   * Validator endpoint
+   * @see https://ethereum.github.io/beacon-APIs/#/Validator
+   */
+  private validatorEndpoint = "/eth/v1/validator";
 
   constructor(apiParams: ApiParams, network: Network) {
     super(apiParams, network);
@@ -108,11 +129,11 @@ export class Beaconchain extends StandardApi {
    * @param state - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
    * @param pubkey - The validator's BLS public key, uniquely identifying them. _48-bytes, hex encoded with 0x prefix, case insensitive._
    */
-  public async getValidatorFromState({
+  public async getStateValidator({
     state,
     pubkey
   }: {
-    state: string;
+    state: BlockId;
     pubkey: string;
   }): Promise<BeaconchainValidatorFromStateGetResponse> {
     try {
@@ -127,10 +148,12 @@ export class Beaconchain extends StandardApi {
   }
 
   /**
-   * Retrieves current epoch based on the head chain block
+   * Retrieves the epoch from a block header
+   *
+   * @param blockId - Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
    */
-  public async getCurrentEpoch(): Promise<number> {
-    const head = await this.getBlockHeader({ block_id: "head" });
+  public async getEpochHeader(blockId: BlockId): Promise<number> {
+    const head = await this.getBlockHeader(blockId);
     return this.getEpochFromSlot(parseInt(head.data.header.message.slot));
   }
 
@@ -183,17 +206,59 @@ export class Beaconchain extends StandardApi {
   }
 
   /**
+   * Requests the beacon node to indicate if a validator has been observed to be live in a given epoch.
+   * The beacon node might detect liveness by observing messages from the validator on the network,
+   * in the beacon chain, from its API or from any other source. A beacon node SHOULD support
+   * the current and previous epoch, however it MAY support earlier epoch. It is important to note that
+   * the values returned by the beacon node are not canonical; they are best-effort and based upon a subjective
+   * view of the network. A beacon node that was recently started or suffered a network partition may indicate
+   * that a validator is not live when it actually is.
+   *
+   * @see https://ethereum.github.io/beacon-APIs/#/Validator/getLiveness
+   */
+  public async getLiveness(epoch: string, validatorIndexes: string[]): Promise<ValidatorLivenessPostResponse> {
+    try {
+      return await this.request({
+        method: "POST",
+        endpoint: path.join(this.validatorEndpoint, "liveness", epoch),
+        body: JSON.stringify(validatorIndexes)
+      });
+    } catch (e) {
+      e.message += `Error getting (POST) liveness from validator. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Requests the beacon node to describe if it's currently syncing or not, and if it is, what block it is up to.
+   *
+   * @see https://ethereum.github.io/beacon-APIs/#/Node/getSyncingStatus
+   */
+  public async getSyncingStatus(): Promise<BeaconchainSyncingStatusGetResponse> {
+    try {
+      return await this.request({
+        method: "GET",
+        endpoint: path.join(this.nodeEndpoint, "syncing")
+      });
+    } catch (e) {
+      e.message += `Error getting (GET) syncing status from beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
    * Retrieves block header for given block id.
+   *
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getBlockHeader
-   * @params block_id Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
+   * @params blockId Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
    * @example head
    */
-  private async getBlockHeader({ block_id }: { block_id: string }): Promise<BeaconchainBlockHeaderGetResponse> {
+  private async getBlockHeader(blockId: BlockId): Promise<BeaconchainBlockHeaderGetResponse> {
     try {
-      return (await this.request({
+      return await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "headers", block_id)
-      })) as BeaconchainBlockHeaderGetResponse;
+        endpoint: path.join(this.beaconchainEndpoint, "headers", blockId)
+      });
     } catch (e) {
       e.message += `Error getting (GET) block header from beaconchain. `;
       throw e;

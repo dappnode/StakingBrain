@@ -25,7 +25,7 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
   ).data.map((validator) => validator.pubkey);
 
   const signerPubkeys = (
-    await signerApi.getKeystores().catch((e) => {
+    await signerApi.listRemoteKeys().catch((e) => {
       logger.error(e);
       return { data: [] };
     })
@@ -44,7 +44,7 @@ export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
       withdrawalAddress = "",
       index = "";
     try {
-      const validatorStateResponse = await beaconchainApi.getValidatorFromState({
+      const validatorStateResponse = await beaconchainApi.getStateValidator({
         state: "head",
         pubkey
       });

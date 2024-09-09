@@ -64,7 +64,7 @@ keystoresRouter.delete(keystoresEndpoint, async (req, res) => {
 
 keystoresRouter.get(keystoresEndpoint, async (_req, res) => {
   try {
-    const getResponse = await signerApi.getKeystores();
+    const getResponse = await signerApi.listRemoteKeys();
 
     res.status(200).send(getResponse);
   } catch (e) {

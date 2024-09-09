@@ -38,7 +38,7 @@ export async function reloadValidators(
 
     // 1. GET data
     const dbPubkeys = Object.keys(brainDb.getData());
-    const signerPubkeys = (await signerApi.getKeystores()).data.map((keystore) => keystore.validating_pubkey);
+    const signerPubkeys = (await signerApi.listRemoteKeys()).data.map((keystore) => keystore.validating_pubkey);
 
     // 2. DELETE from signer API pubkeys that are not in DB
     await deleteSignerPubkeysNotInDB({ signerApi, signerPubkeys, dbPubkeys });
@@ -140,7 +140,7 @@ async function deleteSignerPubkeysNotInDB({
   if (signerPubkeysToRemove.length > 0) {
     logger.debug(`Found ${signerPubkeysToRemove.length} validators to remove from signer`);
 
-    const signerDeleteResponse = await signerApi.deleteKeystores({
+    const signerDeleteResponse = await signerApi.deleteRemoteKeys({
       pubkeys: signerPubkeysToRemove
     });
 

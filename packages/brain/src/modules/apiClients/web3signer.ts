@@ -105,9 +105,9 @@ export class Web3SignerApi extends StandardApi {
 
   /**
    * Import remote keys for the validator client to request duties for.
-   * @see https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/ListKeys
+   * @see https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager/importRemoteKeys
    */
-  public async importKeystores(postRequest: Web3signerPostRequest): Promise<Web3signerPostResponse> {
+  public async importRemoteKeys(postRequest: Web3signerPostRequest): Promise<Web3signerPostResponse> {
     try {
       // IMPORTANT: do not edit the keystore data, it must be exactly as it was received from the remote signer
       return (await this.request({
@@ -124,9 +124,9 @@ export class Web3SignerApi extends StandardApi {
 
   /**
    * Must delete all keys from request.pubkeys that are known to the validator client and exist in its persistent storage.
-   * https://ethereum.github.io/keymanager-APIs/#/Local%20Key%20Manager/ImportKeystores
+   * @see https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager/deleteRemoteKeys
    */
-  public async deleteKeystores(deleteRequest: Web3signerDeleteRequest): Promise<Web3signerDeleteResponse> {
+  public async deleteRemoteKeys(deleteRequest: Web3signerDeleteRequest): Promise<Web3signerDeleteResponse> {
     try {
       // Make sure all pubkeys are prefixed with 0x
       deleteRequest.pubkeys = deleteRequest.pubkeys.map((k) => prefix0xPubkey(k));
@@ -147,9 +147,9 @@ export class Web3SignerApi extends StandardApi {
 
   /**
    * List all remote validating pubkeys known to this validator client binary
-   * https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager/ListRemoteKeys
+   * @see https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager/ListRemoteKeys
    */
-  public async getKeystores(): Promise<Web3signerGetResponse> {
+  public async listRemoteKeys(): Promise<Web3signerGetResponse> {
     try {
       return (await this.request({
         method: "GET",
@@ -164,7 +164,7 @@ export class Web3SignerApi extends StandardApi {
 
   /**
    * Checks the Web3Signer server status. Confirms if Web3Signer is connected and running.
-   * https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Health-Status/operation/HEALTHCHECK
+   * @see https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Health-Status/operation/HEALTHCHECK
    */
   public async getStatus(): Promise<Web3signerHealthcheckResponse> {
     try {

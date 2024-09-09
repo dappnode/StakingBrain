@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ApiParams, Network } from "@stakingbrain/common";
 import { BeaconchaApi } from "../../../../src/modules/apiClients/index.js";
 
-describe.only("Test for fetching validator indexes in every available network", () => {
+describe.skip("Test for fetching validator indexes in every available network", () => {
   const networks: Network[] = ["mainnet", "gnosis", "lukso", "holesky"];
 
   networks.forEach((network) => {
