@@ -234,7 +234,7 @@ export class BeaconchainApi extends StandardApi {
       return await this.request({
         method: "POST",
         endpoint: path.join(this.beaconchainEndpoint, "rewards", "attestations", epoch),
-        body: pubkeysOrIndexes
+        body: JSON.stringify(pubkeysOrIndexes)
       });
     } catch (e) {
       e.message += `Error getting (POST) attestation rewards from beaconchain. `;
@@ -260,7 +260,7 @@ export class BeaconchainApi extends StandardApi {
       return await this.request({
         method: "POST",
         endpoint: path.join(this.beaconchainEndpoint, "rewards", "sync_committee", blockId),
-        body: validatorIndexesOrPubkeys
+        body: JSON.stringify(validatorIndexesOrPubkeys)
       });
     } catch (e) {
       e.message += `Error getting (POST) sync committee rewards from beaconchain. `;
