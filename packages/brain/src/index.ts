@@ -1,7 +1,6 @@
 import path from "path";
 import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
-import { loadStakerConfig } from "./modules/envs/index.js";
 import {
   Web3SignerApi,
   Beaconchain,
@@ -14,7 +13,8 @@ import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
 import { CronJob, reloadValidators, sendProofsOfValidation } from "./modules/cron/index.js";
-import { PostgresClient } from "./modules/postgresClient/index.js";
+import { PostgresClient } from "./modules/apiClients/index.js";
+import { brainConfig } from "./modules/config/index.js";
 
 logger.info(`Starting brain...`);
 
@@ -27,12 +27,12 @@ export const __dirname = process.cwd();
 // Load staker config
 export const {
   network,
-  executionClient,
-  consensusClient,
+  executionClientSelected,
+  consensusClientSelected,
   isMevBoostSet,
   executionClientUrl,
   validatorUrl,
-  beaconchaUrl,
+  blockExplorerUrl,
   beaconchainUrl,
   signerUrl,
   token,
@@ -42,9 +42,9 @@ export const {
   shareCronInterval,
   postgresUrl,
   tlsCert
-} = loadStakerConfig();
+} = brainConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}\n - Postgres url: ${postgresUrl}\n}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClientSelected}\n  - Consensus client: ${consensusClientSelected}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${blockExplorerUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}\n  - Postgres url: ${postgresUrl}\n}`
 );
 
 // Create API instances. Must preceed db initialization
@@ -56,7 +56,7 @@ export const signerApi = new Web3SignerApi(
   },
   network
 );
-export const beaconchaApi = new BeaconchaApi({ baseUrl: beaconchaUrl }, network);
+export const beaconchaApi = new BeaconchaApi({ baseUrl: blockExplorerUrl }, network);
 export const validatorApi = new ValidatorApi(
   {
     baseUrl: validatorUrl,

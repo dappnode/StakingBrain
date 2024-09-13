@@ -7,7 +7,7 @@
   "scripts": {
     "test": "yarn run test:unit",
     "test:unit": "mocha --exit --recursive 'test/**/*.unit.test.ts'",
-    "dev": "yarn run link:ui && node --import tsx/esm src/index.ts",
+    "dev": "yarn run link:ui && tsx --watch src/index.ts",
     "link:ui": "ln -s ../ui/build/ ./uiBuild",
     "build": "yarn run clean:dist && yarn run clean:ln && tsc -p tsconfig.json",
     "clean": "yarn run clean:dist && yarn run clean:modules",

@@ -1,8 +1,8 @@
-import { Network, StakerConfig } from "@stakingbrain/common";
+import { StakerConfig } from "@stakingbrain/common";
 import {
   network,
-  executionClient,
-  consensusClient,
+  executionClientSelected,
+  consensusClientSelected,
   isMevBoostSet,
   executionClientUrl,
   validatorUrl,
@@ -10,11 +10,11 @@ import {
   signerUrl
 } from "../index.js";
 
-export async function getStakerConfig(): Promise<StakerConfig<Network>> {
+export async function getStakerConfig(): Promise<StakerConfig> {
   return {
     network,
-    executionClient,
-    consensusClient,
+    executionClientSelected,
+    consensusClientSelected,
     isMevBoostSet,
     executionClientUrl,
     validatorUrl,

@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import logger from "../logger/index.js";
+import logger from "../../logger/index.js";
 import { BlockProposalStatus, ValidatorPerformance } from "./types.js";
 
 export class PostgresClient {
