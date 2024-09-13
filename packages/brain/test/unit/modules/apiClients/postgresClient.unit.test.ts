@@ -1,4 +1,4 @@
-import { PostgresClient } from "../../../../src/modules/postgresClient/index.js";
+import { PostgresClient } from "../../../../src/modules/apiClients/index.js";
 
 // This test must be executed with a real database connection
 
