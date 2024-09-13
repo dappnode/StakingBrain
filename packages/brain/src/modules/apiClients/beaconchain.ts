@@ -49,6 +49,7 @@ export class BeaconchainApi extends StandardApi {
 
   /**
    * Submits SignedVoluntaryExit object to node's pool and if passes validation node MUST broadcast it to network.
+   *
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/submitPoolVoluntaryExit
    * @param pubkeys - The public keys of the validators to exit.
    */
@@ -71,14 +72,15 @@ export class BeaconchainApi extends StandardApi {
 
   /**
    * Retrieve details of the chain's genesis which can be used to identify chain.
+   *
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getGenesis
    */
   public async getGenesis(): Promise<BeaconchainGenesisGetResponse> {
     try {
-      return (await this.request({
+      return await this.request({
         method: "GET",
         endpoint: path.join(this.beaconchainEndpoint, "genesis")
-      })) as BeaconchainGenesisGetResponse;
+      });
     } catch (e) {
       e.message += `Error getting (GET) genesis from beaconchain. `;
       throw e;
@@ -87,6 +89,7 @@ export class BeaconchainApi extends StandardApi {
 
   /**
    * Get Fork object from requested state.
+   *
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFork
    * @param stateId - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
    */
@@ -96,10 +99,10 @@ export class BeaconchainApi extends StandardApi {
     stateId: "head" | "genesis" | "finalized";
   }): Promise<BeaconchainForkFromStateGetResponse> {
     try {
-      return (await this.request({
+      return await this.request({
         method: "GET",
         endpoint: path.join(this.beaconchainEndpoint, "states", stateId, "fork")
-      })) as BeaconchainForkFromStateGetResponse;
+      });
     } catch (e) {
       e.message += `Error getting (GET) fork from beaconchain. `;
       throw e;
@@ -108,6 +111,7 @@ export class BeaconchainApi extends StandardApi {
 
   /**
    * Returns finality checkpoints for state with given 'stateId'. In case finality is not yet achieved, checkpoint should return epoch 0 and ZERO_HASH as root.
+   *
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFinalityCheckpoints
    * @param stateId - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
    */
@@ -129,6 +133,7 @@ export class BeaconchainApi extends StandardApi {
 
   /**
    * Retrieves validator from state and public key.
+   *
    * @see https://ethereum.github.io/beacon-APIs/#/Beacon/getStateValidator
    * @param state - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
    * @param pubkey - The validator's BLS public key, uniquely identifying them. _48-bytes, hex encoded with 0x prefix, case insensitive._
@@ -141,10 +146,10 @@ export class BeaconchainApi extends StandardApi {
     pubkey: string;
   }): Promise<BeaconchainValidatorFromStateGetResponse> {
     try {
-      return (await this.request({
+      return await this.request({
         method: "GET",
         endpoint: path.join(this.beaconchainEndpoint, "states", state, "validators", pubkey)
-      })) as BeaconchainValidatorFromStateGetResponse;
+      });
     } catch (e) {
       e.message += `Error getting (GET) validator from beaconchain. `;
       throw e;
@@ -184,8 +189,8 @@ export class BeaconchainApi extends StandardApi {
    *
    * @param blockId - Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
    */
-  public async getEpochHeader(blockId: BlockId): Promise<number> {
-    const head = await this.getBlockHeader(blockId);
+  public async getEpochHeader({ blockId }: { blockId: BlockId }): Promise<number> {
+    const head = await this.getBlockHeader({ blockId });
     return this.getEpochFromSlot(parseInt(head.data.header.message.slot));
   }
 
@@ -269,7 +274,7 @@ export class BeaconchainApi extends StandardApi {
    * @param blockId Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>
    * @see https://ethereum.github.io/beacon-APIs/#/Rewards/getBlockRewards
    */
-  public async getBlockRewards(blockId: BlockId): Promise<BeaconchainBlockRewardsGetResponse> {
+  public async getBlockRewards({ blockId }: { blockId: BlockId }): Promise<BeaconchainBlockRewardsGetResponse> {
     try {
       return await this.request({
         method: "GET",
@@ -292,7 +297,13 @@ export class BeaconchainApi extends StandardApi {
    *
    * @see https://ethereum.github.io/beacon-APIs/#/Validator/getLiveness
    */
-  public async getLiveness(epoch: string, validatorIndexes: string[]): Promise<ValidatorLivenessPostResponse> {
+  public async getLiveness({
+    epoch,
+    validatorIndexes
+  }: {
+    epoch: string;
+    validatorIndexes: string[];
+  }): Promise<ValidatorLivenessPostResponse> {
     try {
       return await this.request({
         method: "POST",
@@ -329,7 +340,7 @@ export class BeaconchainApi extends StandardApi {
    * @params blockId Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
    * @example head
    */
-  private async getBlockHeader(blockId: BlockId): Promise<BeaconchainBlockHeaderGetResponse> {
+  private async getBlockHeader({ blockId }: { blockId: BlockId }): Promise<BeaconchainBlockHeaderGetResponse> {
     try {
       return await this.request({
         method: "GET",
