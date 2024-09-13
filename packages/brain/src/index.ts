@@ -44,7 +44,7 @@ export const {
   tlsCert
 } = brainConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClientSelected}\n  - Consensus client: ${consensusClientSelected}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${blockExplorerUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}\n - Postgres url: ${postgresUrl}\n}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClientSelected}\n  - Consensus client: ${consensusClientSelected}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${blockExplorerUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}\n  - Postgres url: ${postgresUrl}\n}`
 );
 
 // Create API instances. Must preceed db initialization

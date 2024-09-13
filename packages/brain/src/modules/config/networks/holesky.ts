@@ -25,7 +25,7 @@ export const holeskyBrainConfig = (
     validatorsMonitorUrl: "https://validators-proofs.dappnode.io",
     shareCronInterval: 24 * 60 * 60 * 1000, // 1 day in ms
     minGenesisTime: 1695902100, // Sep-28-2023 11:55:00 +UTC
-    postgresUrl: "postgresql://postgres.web3signer-holesky.dappnode:5432/web3signer",
+    postgresUrl: "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer",
     tlsCert: tlsCert(consensusClientSelected)
   };
 };

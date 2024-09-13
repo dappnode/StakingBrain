@@ -9,7 +9,7 @@ services:
       - .:/app
     environment:
       - NETWORK=holesky
-      - _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOLESKY=nimbus-holesky.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOLESKY=lighthouse-holesky.dnp.dappnode.eth
       - _DAPPNODE_GLOBAL_EXECUTION_CLIENT_HOLESKY=holesky-geth.dnp.dappnode.eth
       - _DAPPNODE_GLOBAL_MEVBOOST_HOLESKY=true
 

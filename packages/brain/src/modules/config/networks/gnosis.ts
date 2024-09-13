@@ -25,7 +25,7 @@ export const gnosisBrainConfig = (
     validatorsMonitorUrl: "https://validators-proofs.dappnode.io",
     shareCronInterval: 24 * 60 * 60 * 1000, // 1 day in ms
     minGenesisTime: 1638968400, // Dec 8, 2021, 13:00 UTC
-    postgresUrl: "postgresql://postgres.web3signer-gnosis.dappnode:5432/web3signer-gnosis",
+    postgresUrl: "postgres://postgres:gnosis@postgres.web3signer-gnosis.dappnode:5432/web3signer-gnosis",
     tlsCert: tlsCert(consensusClientSelected)
   };
 };

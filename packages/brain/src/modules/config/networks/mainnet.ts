@@ -25,7 +25,7 @@ export const mainnetBrainConfig = (
     validatorsMonitorUrl: "https://validators-proofs.dappnode.io",
     shareCronInterval: 24 * 60 * 60 * 1000, // 1 day in ms
     minGenesisTime: 1606824000,
-    postgresUrl: "postgresql://postgres.web3signer.dappnode:5432/web3signer-mainnet",
+    postgresUrl: "postgres://postgres:mainnet@postgres.web3signer.dappnode:5432/web3signer-mainnet",
     tlsCert: tlsCert(consensusClientSelected)
   };
 };
