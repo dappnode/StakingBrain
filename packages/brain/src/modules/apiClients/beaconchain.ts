@@ -7,17 +7,21 @@ import {
   BeaconchainStateFinalityCheckpointsPostResponse,
   BeaconchainBlockAttestationsGetResponse,
   BeaconchainAttestationRewardsPostResponse,
+  BeaconchainValidatorStatePostResponse,
+  ValidatorStatus,
   Network,
   ApiParams,
   ValidatorLivenessPostResponse,
-  BeaconchainSyncingStatusGetResponse
+  BeaconchainSyncingStatusGetResponse,
+  BeaconchainSyncCommitteePostResponse,
+  BeaconchainBlockRewardsGetResponse
 } from "@stakingbrain/common";
 import { StandardApi } from "./standard.js";
 import path from "path";
 
 type BlockId = "head" | "genesis" | "finalized" | "slot" | `0x${string}`;
 
-export class Beaconchain extends StandardApi {
+export class BeaconchainApi extends StandardApi {
   private SLOTS_PER_EPOCH: number;
 
   /**
@@ -148,6 +152,34 @@ export class Beaconchain extends StandardApi {
   }
 
   /**
+   * Returns filterable list of validators with their balance, status and index.
+   * Information will be returned for all indices or public key that match known validators. If an index or public key does not match any known validator, no information will be returned but this will not cause an error. There are no guarantees for the returned data in terms of ordering; both the index and public key are returned for each validator, and can be used to confirm for which inputs a response has been returned.
+   * The POST variant of this endpoint has the same semantics as the GET endpoint but passes the lists of IDs and statuses via a POST body in order to enable larger requests.
+   *
+   * @see https://ethereum.github.io/beacon-APIs/#/Beacon/postStateValidators
+   * @param stateId - State identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded stateRoot with 0x prefix>.
+   * @param body - The list of validator IDs and statuses to retrieve.
+   */
+  public async postStateValidators({
+    stateId,
+    body
+  }: {
+    stateId: BlockId;
+    body: { ids: string[]; statuses: ValidatorStatus[] };
+  }): Promise<BeaconchainValidatorStatePostResponse> {
+    try {
+      return await this.request({
+        method: "POST",
+        endpoint: path.join(this.beaconchainEndpoint, "states", stateId, "validators"),
+        body: JSON.stringify(body)
+      });
+    } catch (e) {
+      e.message += `Error getting (POST) state validators from beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
    * Retrieves the epoch from a block header
    *
    * @param blockId - Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
@@ -201,6 +233,50 @@ export class Beaconchain extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (POST) attestation rewards from beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Retrieves rewards info for sync committee members specified by array of public keys or validator index. If no array is provided, return reward info for every committee member.
+   *
+   * @param validatorIndexesOrPubkeys An array of either hex encoded public key (any bytes48 with 0x prefix) or validator index
+   * @param blockId Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>
+   * @see https://ethereum.github.io/beacon-APIs/#/Rewards/getSyncCommitteeRewards
+   */
+  public async getSyncCommitteeRewards({
+    blockId,
+    validatorIndexesOrPubkeys
+  }: {
+    blockId: BlockId;
+    validatorIndexesOrPubkeys: string[];
+  }): Promise<BeaconchainSyncCommitteePostResponse> {
+    try {
+      return await this.request({
+        method: "POST",
+        endpoint: path.join(this.beaconchainEndpoint, "rewards", "sync_committee", blockId),
+        body: validatorIndexesOrPubkeys
+      });
+    } catch (e) {
+      e.message += `Error getting (POST) sync committee rewards from beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
+   * Retrieve block reward info for a single block
+   *
+   * @param blockId Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>
+   * @see https://ethereum.github.io/beacon-APIs/#/Rewards/getBlockRewards
+   */
+  public async getBlockRewards(blockId: BlockId): Promise<BeaconchainBlockRewardsGetResponse> {
+    try {
+      return await this.request({
+        method: "GET",
+        endpoint: path.join(this.beaconchainEndpoint, "rewards", "block", blockId)
+      });
+    } catch (e) {
+      e.message += `Error getting (GET) block rewards from beaconchain. `;
       throw e;
     }
   }

@@ -14,6 +14,7 @@ import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
 import { CronJob, reloadValidators, sendProofsOfValidation } from "./modules/cron/index.js";
+import { PostgresClient } from "./modules/postgresClient/index.js";
 
 logger.info(`Starting brain...`);
 
@@ -39,10 +40,11 @@ export const {
   shareDataWithDappnode,
   validatorsMonitorUrl,
   shareCronInterval,
+  postgresUrl,
   tlsCert
 } = loadStakerConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${beaconchaUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}\n - Postgres url: ${postgresUrl}\n}`
 );
 
 // Create API instances. Must preceed db initialization
@@ -71,6 +73,10 @@ export const brainDb = new BrainDataBase(
   mode === "production" ? path.resolve("data", params.brainDbName) : params.brainDbName
 );
 
+// Create postgres client
+const postgresClient = new PostgresClient(postgresUrl);
+await postgresClient.initialize();
+
 // Start server APIs
 const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName), network);
 const launchpadServer = startLaunchpadApi();
@@ -94,6 +100,7 @@ function handle(signal: string): void {
   reloadValidatorsCron.stop();
   proofOfValidationCron.stop();
   brainDb.close();
+  postgresClient.close();
   uiServer.close();
   launchpadServer.close();
   process.exit(0);

@@ -1,3 +1,16 @@
+// See validator status spec https://hackmd.io/ofFJ5gOmQpu1jjHilHbdQQ
+export enum ValidatorStatus {
+  PENDING_INITIALIZED = "pending_initialized",
+  PENDING_QUEUED = "pending_queued",
+  ACTIVE_ONGOING = "active_ongoing",
+  ACTIVE_EXITING = "active_exiting",
+  ACTIVE_SLASHED = "active_slashed",
+  EXITED_SLASHED = "exited_slashed",
+  EXITED_UNSLASHED = "exited_unslashed",
+  WITHDRAWAL_POSIBLE = "withdrawal_possible",
+  WITHDRAWAL_DONE = "withdrawal_done"
+}
+
 export interface BeaconchainBlockHeaderGetResponse {
   execution_optimistic: boolean;
   data: {
@@ -49,12 +62,34 @@ export interface BeaconchainAttestationRewardsPostResponse {
   };
 }
 
+export interface BeaconchainSyncCommitteePostResponse {
+  execution_optimistic: boolean;
+  finalized: boolean;
+  data: {
+    validator_index: string;
+    reward: string;
+  }[];
+}
+
+export interface BeaconchainBlockRewardsGetResponse {
+  execution_optimistic: boolean;
+  finalized: boolean;
+  data: {
+    proposer_index: string;
+    total: string;
+    attestations: string;
+    sync_aggregate: string;
+    proposer_slashings: string;
+    attester_slashings: string;
+  };
+}
+
 export interface BeaconchainValidatorFromStateGetResponse {
   execution_optimistic: boolean;
   data: {
     index: string;
     balance: string;
-    status: string;
+    status: ValidatorStatus;
     validator: {
       pubkey: string;
       withdrawal_credentials: string;
@@ -66,6 +101,26 @@ export interface BeaconchainValidatorFromStateGetResponse {
       withdrawable_epoch: string;
     };
   };
+}
+
+export interface BeaconchainValidatorStatePostResponse {
+  execution_optimistic: boolean;
+  finalized: boolean;
+  data: {
+    index: string;
+    balance: string;
+    status: ValidatorStatus;
+    validator: {
+      pubkey: string;
+      withdrawal_credentials: string;
+      effective_balance: string;
+      slashed: boolean;
+      activation_eligibility_epoch: string;
+      activation_epoch: string;
+      exit_epoch: string;
+      withdrawable_epoch: string;
+    };
+  }[];
 }
 
 export interface BeaconchainBlockAttestationsGetResponse {

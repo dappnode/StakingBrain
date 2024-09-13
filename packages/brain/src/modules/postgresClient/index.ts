@@ -1,8 +1,9 @@
 import postgres from "postgres";
 import logger from "../logger/index.js";
+import { BlockProposalStatus, ValidatorPerformance } from "./types.js";
 
 export class PostgresClient {
-  private sql;
+  private sql: postgres.Sql;
 
   /**
    * Initialize the client with the given database URL.
@@ -12,90 +13,80 @@ export class PostgresClient {
    */
   constructor(dbUrl: string) {
     this.sql = postgres(dbUrl, {
-      ssl: false // Enable SSL if required
+      // Enable connection pooling by setting the max number of connections
+      ssl: false, // Enable SSL if required
+      max: 10 // Maximum number of connections
     });
   }
 
-  // Initialize method to create the validator_performance table
-  async initialize() {
+  /**
+   * Initializes the database by creating the required table if it does not exist.
+   * The table will have the following columns:
+   * - validator_index: The index of the validator.
+   * - epoch: The epoch number.
+   * - slot: The slot number.
+   * - liveness: The liveness status of the validator.
+   * - block_proposal_status: The status of the block proposal (missed, proposed, unchosen).
+   * - sync_comittee_rewards: The rewards received by the validator for participating in the sync committee.
+   * - attestations_rewards: The rewards received by the validator for participating in the attestations.
+   * - error: Any error message related to the validator's performance fetch.
+   * The primary key will be a combination of validator_index and epoch.
+   */
+  public async initialize() {
     const query = `
-      CREATE TABLE IF NOT EXISTS validator_performance (
-        validator_index BIGINT NOT NULL,
-        epoch_slot BIGINT NOT NULL,
-        attestation_status BOOLEAN NOT NULL,
-        inclusion_distance BIGINT NOT NULL,
-        PRIMARY KEY (validator_index, epoch_slot)
-      );
+CREATE TABLE IF NOT EXISTS validator_performance (
+    validator_index BIGINT NOT NULL,
+    epoch BIGINT NOT NULL,
+    slot BIGINT NOT NULL,
+    liveness BOOLEAN,
+    block_proposal_status ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}'),
+    sync_comittee_rewards BIGINT,
+    attestations_rewards JSONB,
+    error TEXT,
+    PRIMARY KEY (validator_index, epoch)
+);
     `;
     try {
       await this.sql.unsafe(query);
       logger.info("Table created or already exists.");
     } catch (err) {
+      //TODO: what to do if initialize fails?
       logger.error("Error creating table:", err);
     }
   }
 
-  // Method to insert or update an attestation status record
-  async insertAttestationStatus(
-    validatorIndex: number,
-    epochSlot: number,
-    attestationStatus: boolean,
-    inclusionDistance: number
-  ) {
+  /**
+   * Inserts the given performance data into the database.
+   *
+   * @param data - The performance data to insert.
+   * @example insertPerformanceData({ validatorIndex: 1, epoch: 1, slot: 1, liveness: true, blockProposalStatus: "missed", syncCommitteeRewards: 100, attestationsRewards: { attestation1: 10, attestation2: 20 } })
+   */
+  public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
+    const query = `
+INSERT INTO validator_performance (validator_index, epoch, slot, liveness, block_proposal_status, sync_comittee_rewards, attestations_rewards, error)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
     try {
-      await this.sql`
-        INSERT INTO validator_performance 
-          (validator_index, epoch_slot, attestation_status, inclusion_distance)
-        VALUES 
-          (${validatorIndex}, ${epochSlot}, ${attestationStatus}, ${inclusionDistance})
-        ON CONFLICT (validator_index, epoch_slot)
-        DO UPDATE SET 
-          attestation_status = ${attestationStatus}, 
-          inclusion_distance = ${inclusionDistance};
-      `;
-      logger.info("Attestation status inserted/updated successfully.");
+      await this.sql.unsafe(query, [
+        data.validatorIndex,
+        data.epoch,
+        data.slot,
+        data.liveness ?? null,
+        data.blockProposalStatus ?? null,
+        data.syncCommitteeRewards ?? null,
+        JSON.stringify(data.attestationsRewards) ?? null, // JSONB expects a string
+        data.error ?? null
+      ]);
     } catch (err) {
-      logger.error("Error inserting/updating attestation status:", err);
+      logger.error("Error inserting data:", err);
+      // TODO: what to do if insert fails?
     }
   }
 
-  // Method to fetch attestation status by validator index and epoch slot
-  async getAttestationStatus(validatorIndex: number, epochSlot: number) {
-    try {
-      const result = await this.sql`
-        SELECT * FROM validator_performance 
-        WHERE validator_index = ${validatorIndex} 
-        AND epoch_slot = ${epochSlot}
-      `;
-      if (result.count > 0) {
-        return result[0];
-      } else {
-        logger.info("No record found.");
-        return null;
-      }
-    } catch (err) {
-      logger.error("Error fetching attestation status:", err);
-      return null;
-    }
-  }
-
-  // Method to get all attestations for a specific validator
-  async getAttestationsByValidator(validatorIndex: number) {
-    try {
-      const result = await this.sql`
-        SELECT * FROM validator_performance 
-        WHERE validator_index = ${validatorIndex}
-        ORDER BY epoch_slot DESC
-      `;
-      return result;
-    } catch (err) {
-      logger.error("Error fetching attestations by validator:", err);
-      return [];
-    }
-  }
-
-  // Close the connection
-  async close() {
+  /**
+   * Method to close the database connection.
+   */
+  public async close(): Promise<void> {
     try {
       await this.sql.end();
       logger.info("Database connection closed.");
