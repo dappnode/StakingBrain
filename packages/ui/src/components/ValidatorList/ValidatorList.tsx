@@ -3,7 +3,7 @@ import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
 import { Alert, Box, CircularProgress, Card } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { Network, CustomValidatorGetResponse, StakerConfig as StakerConfigType } from "@stakingbrain/common";
+import { CustomValidatorGetResponse, StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { api } from "../../api";
@@ -15,7 +15,7 @@ export default function ValidatorList({
   stakerConfig,
   userMode
 }: {
-  stakerConfig: StakerConfigType<Network>;
+  stakerConfig: StakerConfigType;
   userMode: "basic" | "advanced";
 }): JSX.Element {
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);

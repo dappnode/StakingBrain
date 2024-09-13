@@ -1,12 +1,12 @@
 import React from "react";
-import { Network, StakerConfig as StakerConfigType } from "@stakingbrain/common";
+import { StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { Card, Box, Container, Typography } from "@mui/material";
 import TrendingFlatRoundedIcon from "@mui/icons-material/TrendingFlatRounded";
 import SyncAltRoundedIcon from "@mui/icons-material/SyncAltRounded";
 import { prettyClientDnpName } from "../../utils/dataUtils";
 
-export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerConfigType<Network> }): JSX.Element {
-  const images = {
+export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerConfigType }): JSX.Element {
+  const images: { [key: string]: string } = {
     // Mainnet
     "erigon.dnp.dappnode.eth": "/assets/erigon.png",
     "geth.dnp.dappnode.eth": "/assets/geth.png",
@@ -113,11 +113,15 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                   padding: 1
                 }}
                 alt="erigon-goerli"
-                src={images[stakerConfig.executionClient]}
+                src={
+                  Object.keys(images).includes(stakerConfig.executionClientSelected)
+                    ? images[stakerConfig.executionClientSelected]
+                    : images["default"]
+                }
               />
             </Card>
             <Typography sx={{ fontWeight: "bold", mt: 2 }}>
-              {prettyClientDnpName(stakerConfig.executionClient)}
+              {prettyClientDnpName(stakerConfig.executionClientSelected)}
             </Typography>
           </Box>
           <Box
@@ -146,11 +150,15 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                   padding: 1
                 }}
                 alt="erigon-goerli"
-                src={images[stakerConfig.consensusClient]}
+                src={
+                  Object.keys(images).includes(stakerConfig.consensusClientSelected)
+                    ? images[stakerConfig.consensusClientSelected]
+                    : images["default"]
+                }
               />
             </Card>
             <Typography sx={{ fontWeight: "bold", mt: 2 }}>
-              {prettyClientDnpName(stakerConfig.consensusClient)}
+              {prettyClientDnpName(stakerConfig.consensusClientSelected)}
             </Typography>
           </Box>
 

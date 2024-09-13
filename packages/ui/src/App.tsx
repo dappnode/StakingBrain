@@ -7,14 +7,14 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
 import { startApi, api } from "./api";
-import { Network, StakerConfig, Web3SignerStatus } from "@stakingbrain/common";
+import { StakerConfig, Web3SignerStatus } from "@stakingbrain/common";
 
 function App(): JSX.Element {
   const [mode, setMode] = React.useState<"dark" | "light">("light");
   const [userMode, setUserMode] = React.useState<"basic" | "advanced">("basic");
 
   const [signerStatus, setSignerStatus] = React.useState<Web3SignerStatus>("LOADING");
-  const [stakerConfig, setStakerConfig] = React.useState<StakerConfig<Network>>();
+  const [stakerConfig, setStakerConfig] = React.useState<StakerConfig>();
 
   useEffect(() => {
     // Start API and Socket.io once user has logged in

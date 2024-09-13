@@ -5,7 +5,6 @@ import {
   CustomImportRequest,
   BeaconchaGetResponse,
   StakerConfig,
-  Network,
   CustomValidatorGetResponse,
   Web3signerPostResponse,
   CustomValidatorUpdateRequest,
@@ -26,7 +25,7 @@ export interface Routes {
   getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
   exitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<ValidatorExitExecute[]>;
   // Network
-  getStakerConfig: () => Promise<StakerConfig<Network>>;
+  getStakerConfig: () => Promise<StakerConfig>;
 }
 
 interface RouteData {
