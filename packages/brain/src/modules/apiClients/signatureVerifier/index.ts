@@ -1,5 +1,6 @@
-import { StandardApi } from "./index.js";
-import { Network, DappnodeSignatureVerifierPostRequest } from "@stakingbrain/common";
+import { StandardApi } from "../standard.js";
+import { Network } from "@stakingbrain/common";
+import { DappnodeSignatureVerifierPostRequest } from "../signer/types.js";
 
 export class DappnodeSignatureVerifier extends StandardApi {
   private dappnodeSignEndpoint = "/signatures";

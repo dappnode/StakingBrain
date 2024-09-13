@@ -1,5 +1,5 @@
-import { StandardApi } from "./standard.js";
-import { BeaconchaGetResponse } from "@stakingbrain/common";
+import { StandardApi } from "../standard.js";
+import { BeaconchaGetResponse } from "./types.js";
 
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 

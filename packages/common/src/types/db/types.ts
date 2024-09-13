@@ -34,5 +34,3 @@ export type NonEditableFeeRecipientTag = (typeof nonEditableFeeRecipientTags)[nu
  * Tag describes the protocol of the public key imported
  */
 export type Tag = (typeof tags)[number];
-
-// TODO: add types for ethereum addresses so the JSON schemas validate them
