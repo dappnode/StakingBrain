@@ -13,7 +13,7 @@ import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
 import { CronJob, reloadValidators, sendProofsOfValidation } from "./modules/cron/index.js";
-import { PostgresClient } from "./modules/postgresClient/index.js";
+import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
 
 logger.info(`Starting brain...`);
