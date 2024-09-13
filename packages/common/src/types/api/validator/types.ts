@@ -65,6 +65,13 @@ export interface ValidatorProposerDutiesGetResponse {
   }[];
 }
 
+export interface ValidatorLivenessPostResponse {
+  data: {
+    index: string;
+    is_live: boolean;
+  }[];
+}
+
 export interface ValidatorExitGet extends BeaconchainPoolVoluntaryExitsPostRequest {
   pubkey: string;
 }

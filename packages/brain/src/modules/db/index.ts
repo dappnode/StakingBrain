@@ -235,7 +235,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         // Create json file
         this.createJsonFileAndPermissions();
         // Fetch public keys from signer API
-        const pubkeys = (await signerApi.getKeystores()).data.map((keystore) => keystore.validating_pubkey);
+        const pubkeys = (await signerApi.listRemoteKeys()).data.map((keystore) => keystore.validating_pubkey);
         if (pubkeys.length === 0) {
           logger.info(`No public keys found in the signer API`);
           return;

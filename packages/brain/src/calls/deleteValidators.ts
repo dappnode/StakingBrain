@@ -30,7 +30,7 @@ export async function deleteValidators(deleteRequest: Web3signerDeleteRequest): 
       .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
 
     // Delete keystores on web3signer API
-    const web3signerDeleteResponse = await signerApi.deleteKeystores(deleteRequest);
+    const web3signerDeleteResponse = await signerApi.deleteRemoteKeys(deleteRequest);
 
     // Write on db
     brainDb.deleteValidators(deleteRequest.pubkeys);

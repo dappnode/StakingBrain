@@ -61,6 +61,8 @@ export function loadStakerConfig(): {
   shareDataWithDappnode: boolean;
   validatorsMonitorUrl: string;
   shareCronInterval: number;
+  minGenesisTime: number;
+  postgresUrl: string;
   tlsCert?: Buffer;
 } {
   const network = process.env.NETWORK as Network;
@@ -145,6 +147,8 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
+      minGenesisTime: 1606824000, // Dec 1, 2020, 12pm UTC,
+      postgresUrl: "postgresql://postgres.web3signer.dappnode:5432/web3signer-mainnet",
       tlsCert
     };
   } else if (network === "gnosis") {
@@ -204,6 +208,8 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
+      minGenesisTime: 1638968400, // Dec 8, 2021, 13:00 UTC
+      postgresUrl: "postgresql://postgres.web3signer-gnosis.dappnode:5432/web3signer-gnosis",
       tlsCert
     };
   } else if (network === "prater") {
@@ -270,6 +276,8 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
+      minGenesisTime: 1614588812, // Mar-01-2021 08:53:32 AM +UTC
+      postgresUrl: "postgresql://postgres.web3signer-prater.dappnode:5432/web3signer",
       tlsCert
     };
   } else if (network === "lukso") {
@@ -330,6 +338,8 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
+      minGenesisTime: 1684856400, // Tuesday, 23 May 2023 15:40:00 GMT
+      postgresUrl: "postgresql://postgres.web3signer-lukso.dappnode:5432/web3signer",
       tlsCert
     };
   } else if (network === "holesky") {
@@ -396,6 +406,8 @@ export function loadStakerConfig(): {
       shareDataWithDappnode,
       validatorsMonitorUrl,
       shareCronInterval,
+      minGenesisTime: 1695902100, // Sep-28-2023 11:55:00 +UTC
+      postgresUrl: "postgresql://postgres.web3signer-holesky.dappnode:5432/web3signer",
       tlsCert
     };
   } else {

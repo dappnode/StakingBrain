@@ -3045,6 +3045,7 @@ __metadata:
     "@types/express": "npm:^4.17.15"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/lowdb": "npm:^1.0.11"
+    "@types/mocha": "npm:^10.0.7"
     "@types/sinon": "npm:^10.0.13"
     ajv: "npm:^8.12.0"
     cors: "npm:^2.8.5"
@@ -3052,6 +3053,8 @@ __metadata:
     express: "npm:^4.18.2"
     lodash-es: "npm:^4.17.21"
     lowdb: "npm:^5.0.5"
+    mocha: "npm:^10.7.3"
+    postgres: "npm:^3.4.4"
     rimraf: "npm:^4.1.1"
     sinon: "npm:^15.0.1"
     socket.io: "npm:^4.5.4"
@@ -7558,6 +7561,13 @@ __metadata:
     picocolors: "npm:^1.0.1"
     source-map-js: "npm:^1.2.0"
   checksum: 10c0/53c33338261a3d4f4198f8893e9dfe8b828d8d9186142ee85f02d228f04245c5bbe31239411a357a556ad20ed96f28db24d0921d63edc428fdc9133289371a1d
+  languageName: node
+  linkType: hard
+
+"postgres@npm:^3.4.4":
+  version: 3.4.4
+  resolution: "postgres@npm:3.4.4"
+  checksum: 10c0/5c01a1501a1cb8851d981b1949bffd0a0a82ac5fd8453c410fdf4d6c0f91d01e69a42b30da2d08a77a00d6ddac0ea6ce58a1aa0dd6bd3f76e9220b1176bdfe60
   languageName: node
   linkType: hard
 

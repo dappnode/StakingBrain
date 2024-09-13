@@ -79,7 +79,7 @@ export async function importValidators(postRequest: CustomImportRequest): Promis
     }
 
     // Import keystores and passwords on web3signer API
-    const web3signerPostResponse = await signerApi.importKeystores({
+    const web3signerPostResponse = await signerApi.importRemoteKeys({
       keystores: validators.map((validator) => validator.keystore),
       passwords: validators.map((validator) => validator.password),
       slashing_protection: postRequest.slashing_protection ? postRequest.slashing_protection.toString() : undefined

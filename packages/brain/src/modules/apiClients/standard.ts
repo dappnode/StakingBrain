@@ -37,7 +37,7 @@ export class StandardApi {
     if (this.requestOptions.protocol?.includes("https")) this.useTls = true;
   }
 
-  /*
+  /**
    * Returns base URL in format http(s)://host:port
    */
   public getBaseUrl(): string {
@@ -105,10 +105,13 @@ export class StandardApi {
         reject: (error: any) => void | ApiError
       ) => {
         req.on("error", (e: ErrnoException) => {
+          // an error might have the following format
+          // {"bytesParsed":0,"code":"HPE_INVALID_CONSTANT","reason":"Expected HTTP/","rawPacket":{"type":"Buffer","data":[21,3,3,0,2,2,80]}}
+
           reject(
             new ApiError({
               name: e.name || "Standard ApiError",
-              message: `${e.message}. `,
+              message: `Request to ${endpoint} failed with status code ${e.code}: ${e.message}. `,
               errno: e.errno || -1,
               code: e.code || "UNKNOWN",
               path: endpoint,
@@ -161,7 +164,7 @@ export class StandardApi {
               reject(
                 new ApiError({
                   name: "Standard ApiError",
-                  message: errorMessage,
+                  message: `Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `,
                   errno: res.statusCode,
                   code: "ERR_HTTP",
                   path: endpoint,
