@@ -5,7 +5,7 @@ class RpcClient {
   private socket: Socket;
 
   constructor(serverUrl: string) {
-    this.socket = io(serverUrl);
+    this.socket = io(serverUrl, { autoConnect: true });
 
     this.socket.on("connect", () => {
       console.log("Connected to server");
@@ -13,6 +13,10 @@ class RpcClient {
 
     this.socket.on("disconnect", () => {
       console.log("Disconnected from server");
+    });
+
+    this.socket.on("connect_error", (error) => {
+      console.error("Connection error", error);
     });
   }
 
@@ -37,4 +41,5 @@ class RpcClient {
   }
 }
 
-export const rpcClient = new RpcClient("http://localhost:80");
+// It might be interesting to add the alias that contains the network. i.e: http://brain.web3signer-holesky.dappnode:80
+export const rpcClient = new RpcClient("http://brain:80");

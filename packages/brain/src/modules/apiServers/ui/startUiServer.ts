@@ -27,6 +27,7 @@ export function startUiServer(uiBuildPath: string, network: Network): http.Serve
   });
   io.on("connection", (socket) => {
     logger.debug("A user connected");
+
     socket.on("rpc", async (request: RpcRequest, callback) => {
       const { jsonrpc, method, params, id } = request;
       logger.debug(`Received rpc call: ${method}`);
@@ -54,8 +55,13 @@ export function startUiServer(uiBuildPath: string, network: Network): http.Serve
         });
       }
     });
+
     socket.on("disconnect", () => {
       logger.debug("A user disconnected");
+    });
+
+    socket.on("error", (error) => {
+      logger.error("Socket error", error);
     });
   });
 
