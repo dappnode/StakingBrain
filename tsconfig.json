@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ESNext", // Use the latest ECMAScript target
-    "module": "ESNext", // Use the latest ECMAScript module
+    "target": "ES2023", // Use the latest stable ECMAScript target
+    "module": "ES2022", // Use the latest stable ECMAScript module
     "lib": ["es2020", "esnext.bigint", "es2020.string", "es2020.symbol.wellknown", "dom"],
     "types": ["node", "mocha", "chai"],
 
