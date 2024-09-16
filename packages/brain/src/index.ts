@@ -12,7 +12,7 @@ import { startUiServer, startLaunchpadApi } from "./modules/apiServers/index.js"
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
-import { CronJob, reloadValidators, sendProofsOfValidation } from "./modules/cron/index.js";
+import { CronJob, reloadValidators, trackValidatorsPerformance, sendProofsOfValidation } from "./modules/cron/index.js";
 import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
 
@@ -41,6 +41,7 @@ export const {
   validatorsMonitorUrl,
   shareCronInterval,
   postgresUrl,
+  minGenesisTime,
   tlsCert
 } = brainConfig();
 logger.debug(
@@ -93,6 +94,7 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
   sendProofsOfValidation(signerApi, brainDb, dappnodeSignatureVerifierApi, shareDataWithDappnode)
 );
 proofOfValidationCron.start();
+await trackValidatorsPerformance(Object.keys(brainDb.data.validators), postgresClient, beaconchainApi, minGenesisTime);
 
 // Graceful shutdown
 function handle(signal: string): void {
