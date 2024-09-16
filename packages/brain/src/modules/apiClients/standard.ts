@@ -1,8 +1,9 @@
 import https from "node:https";
 import http from "node:http";
-import { ApiParams, AllowedMethods, ErrnoException, Network } from "@stakingbrain/common";
 import { ApiError } from "./error.js";
 import logger from "../logger/index.js";
+import type { ApiParams, AllowedMethods, ErrnoException } from "./types.js";
+import type { Network } from "@stakingbrain/common";
 
 export class StandardApi {
   private useTls = false;

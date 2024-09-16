@@ -14,10 +14,11 @@ import { GridSelectionModel } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
-import { CustomValidatorGetResponse, Web3signerDeleteResponse, shortenPubkey } from "@stakingbrain/common";
-import { api } from "../../api";
+import { shortenPubkey } from "@stakingbrain/common";
+import { rpcClient } from "../../socket";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
+import type { CustomValidatorGetResponse, Web3signerDeleteResponse } from "@stakingbrain/brain";
 
 export default function KeystoresDeleteDialog({
   rows,
@@ -41,7 +42,7 @@ export default function KeystoresDeleteDialog({
       setKeystoresDelete(undefined);
       setLoading(true);
       setKeystoresDelete(
-        await api.deleteValidators({
+        await rpcClient.call("deleteValidators", {
           pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
         })
       );

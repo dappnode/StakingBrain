@@ -1,9 +1,9 @@
-import {
+import { Web3SignerApi, DappnodeSignatureVerifier } from "../apiClients/index.js";
+import type {
   DappnodeSignatureVerifierPostRequest,
   Web3signerPostSignDappnodeRequest,
   Web3signerPostSignDappnodeResponse
-} from "@stakingbrain/common";
-import { Web3SignerApi, DappnodeSignatureVerifier } from "../apiClients/index.js";
+} from "../apiClients/types.js";
 import { BrainDataBase } from "../db/index.js";
 import logger from "../logger/index.js";
 import { isEmpty } from "lodash-es";

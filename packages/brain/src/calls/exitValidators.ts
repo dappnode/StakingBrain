@@ -1,6 +1,6 @@
-import { BeaconchainPoolVoluntaryExitsPostRequest, ValidatorExitExecute, ValidatorExitGet } from "@stakingbrain/common";
 import { beaconchainApi, signerApi } from "../index.js";
 import logger from "../modules/logger/index.js";
+import { BeaconchainPoolVoluntaryExitsPostRequest, ValidatorExitExecute, ValidatorExitGet } from "../types.js";
 
 /**
  * Get exit validators info signed

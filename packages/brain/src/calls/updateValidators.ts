@@ -1,12 +1,8 @@
-import {
-  CustomValidatorUpdateRequest,
-  prefix0xPubkey,
-  isFeeRecipientEditable,
-  PubkeyDetails
-} from "@stakingbrain/common";
+import { prefix0xPubkey, isFeeRecipientEditable, ActionRequestOrigin } from "@stakingbrain/common";
 import { reloadValidatorsCron, brainDb, validatorApi } from "../index.js";
 import logger from "../modules/logger/index.js";
-import { ActionRequestOrigin } from "@stakingbrain/common";
+import { CustomValidatorUpdateRequest } from "./types.js";
+import { PubkeyDetails } from "../modules/db/types.js";
 
 /**
  * Updates validators on DB:

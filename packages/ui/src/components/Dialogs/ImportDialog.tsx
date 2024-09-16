@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import { KeystoreInfo } from "../../types";
 import WaitBox from "../WaitBox/WaitBox";
-import { Web3signerPostResponse, shortenPubkey } from "@stakingbrain/common";
+import { shortenPubkey } from "@stakingbrain/common";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
+import type { Web3signerPostResponse } from "@stakingbrain/brain";
 
 export default function ImportDialog({
   open,

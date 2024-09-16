@@ -1,4 +1,4 @@
-export { BlockExplorer } from "./blockExplorer/index.js";
+export { BlockExplorerApi } from "./blockExplorer/index.js";
 export { BeaconchainApi } from "./beaconchain/index.js";
 export { ValidatorApi } from "./validator/index.js";
 export { StandardApi } from "./standard.js";

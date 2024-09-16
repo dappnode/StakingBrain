@@ -23,19 +23,18 @@ import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
 import ImportDialog from "./components/Dialogs/ImportDialog";
 import {
-  Web3signerPostResponse,
   Tag,
   isValidEcdsaPubkey,
   BURN_ADDRESS,
-  CustomImportRequest,
   isFeeRecipientEditable,
   areAllFeeRecipientsEditable,
   Network
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
-import { api } from "./api";
+import { rpcClient } from "./socket";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
 import { extractPubkey } from "./utils/dataUtils";
+import type { CustomImportRequest, Web3signerPostResponse } from "@stakingbrain/brain";
 
 export default function ImportScreen({
   network,
@@ -172,7 +171,7 @@ export default function ImportScreen({
         })
       };
 
-      const response = await api.importValidators(importRequest);
+      const response = await rpcClient.call("importValidators", importRequest);
 
       setKeystoresPostResponse(response);
       setKeystoresPostError(undefined);

@@ -1,4 +1,4 @@
-import { Tag } from "../../../../../common/src/types/db/types.js";
+import { Tag } from "../../db/types.js";
 
 export type Web3SignerStatus = "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
 

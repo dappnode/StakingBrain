@@ -1,6 +1,6 @@
-import { Web3signerDeleteRequest, Web3signerDeleteResponse } from "@stakingbrain/common";
 import { reloadValidatorsCron, validatorApi, signerApi, brainDb } from "../index.js";
 import logger from "../modules/logger/index.js";
+import { Web3signerDeleteRequest, Web3signerDeleteResponse } from "../types.js";
 
 /**
  * Delete keystores:

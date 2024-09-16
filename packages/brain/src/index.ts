@@ -3,8 +3,8 @@ import { BrainDataBase } from "./modules/db/index.js";
 import logger from "./modules/logger/index.js";
 import {
   Web3SignerApi,
-  Beaconchain,
-  BeaconchaApi,
+  BeaconchainApi,
+  BlockExplorerApi,
   ValidatorApi,
   DappnodeSignatureVerifier
 } from "./modules/apiClients/index.js";
@@ -56,7 +56,7 @@ export const signerApi = new Web3SignerApi(
   },
   network
 );
-export const beaconchaApi = new BeaconchaApi({ baseUrl: blockExplorerUrl }, network);
+export const blockExplorerApi = new BlockExplorerApi({ baseUrl: blockExplorerUrl }, network);
 export const validatorApi = new ValidatorApi(
   {
     baseUrl: validatorUrl,
@@ -65,7 +65,7 @@ export const validatorApi = new ValidatorApi(
   },
   network
 );
-export const beaconchainApi = new Beaconchain({ baseUrl: beaconchainUrl }, network);
+export const beaconchainApi = new BeaconchainApi({ baseUrl: beaconchainUrl }, network);
 export const dappnodeSignatureVerifierApi = new DappnodeSignatureVerifier(network, validatorsMonitorUrl);
 
 // Create DB instance

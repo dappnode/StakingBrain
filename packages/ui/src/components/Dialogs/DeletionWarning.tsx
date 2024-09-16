@@ -1,5 +1,6 @@
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { CustomValidatorGetResponse, shortenPubkey } from "@stakingbrain/common";
+import { shortenPubkey } from "@stakingbrain/common";
+import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
 export default function DeletionWarning({
   selectedRows,

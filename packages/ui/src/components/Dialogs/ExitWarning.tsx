@@ -1,6 +1,7 @@
 import { Alert } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { CustomValidatorGetResponse, shortenPubkey } from "@stakingbrain/common";
+import { shortenPubkey } from "@stakingbrain/common";
+import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
 export default function ExitWarning({
   selectedRows,

@@ -1,19 +1,25 @@
-import { Network, RpcPayload, RpcResponse } from "@stakingbrain/common";
+import { Network } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
 import { Server } from "socket.io";
 import logger from "../../logger/index.js";
-import { getRpcHandler } from "../../rpc/index.js";
-import * as routes from "../../../calls/index.js";
 import http from "http";
 import { params } from "../../../params.js";
+import { rpcMethods, RpcMethodNames } from "../../../calls/index.js";
+
+// Define the type for the RPC request
+interface RpcRequest {
+  jsonrpc: string;
+  method: RpcMethodNames;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params?: any;
+  id: string | number | null;
+}
 
 export function startUiServer(uiBuildPath: string, network: Network): http.Server {
   const app = express();
   const server = http.createServer(app);
-
-  const rpcHandler = getRpcHandler(routes);
 
   // Socket io
   const io = new Server(server, {
@@ -21,24 +27,32 @@ export function startUiServer(uiBuildPath: string, network: Network): http.Serve
   });
   io.on("connection", (socket) => {
     logger.debug("A user connected");
-    socket.on("rpc", async (rpcPayload: RpcPayload, callback: (res: RpcResponse) => void) => {
-      logger.debug(`Received rpc call`);
+    socket.on("rpc", async (request: RpcRequest, callback) => {
+      const { jsonrpc, method, params, id } = request;
+      logger.debug(`Received rpc call: ${method}`);
 
-      // Silent logger for importValidators call (safety reasons and too much noise)
-      if (rpcPayload.method === "importValidators") {
-        logger.debug(`Call to ${rpcPayload.method} (silent logger)`);
-      } else {
-        logger.debug(rpcPayload);
+      if (jsonrpc !== "2.0") {
+        callback({
+          jsonrpc: "2.0",
+          error: { code: -32600, message: "Invalid Request" },
+          id
+        });
+        return;
       }
 
-      if (typeof callback !== "function") return logger.error("JSON RPC over WS req without cb");
-
-      rpcHandler(rpcPayload)
-        .then(callback)
-        .catch((error) => callback({ error }))
-        .catch((error) => {
-          logger.error(`on JSON RPC over WS cb`, error);
+      try {
+        if (method in rpcMethods) {
+          const result = await rpcMethods[method](params);
+          callback({ jsonrpc: "2.0", result, id });
+        } else throw new Error("Method not found");
+      } catch (error) {
+        console.error(error);
+        callback({
+          jsonrpc: "2.0",
+          error: { code: -32601, message: error },
+          id
         });
+      }
     });
     socket.on("disconnect", () => {
       logger.debug("A user disconnected");

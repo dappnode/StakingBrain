@@ -1,5 +1,15 @@
-import { nonEditableFeeRecipientTags, Tag, tags } from "../types/db/types.js";
-import { ActionRequestOrigin } from "../types/index.js";
+export type ActionRequestOrigin = "ui" | "api";
+
+export const tags = ["obol", "diva", "ssv", "rocketpool", "stakewise", "stakehouse", "solo", "stader", "lido"] as const;
+
+export const nonEditableFeeRecipientTags = ["rocketpool", "stader", "stakewise", "lido"] as const;
+
+export type NonEditableFeeRecipientTag = (typeof nonEditableFeeRecipientTags)[number];
+
+/**
+ * Tag describes the protocol of the public key imported
+ */
+export type Tag = (typeof tags)[number];
 
 export function isValidEcdsaPubkey(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -15,10 +25,6 @@ export function isValidWithdrawableBlsAddress(address: string): boolean {
 
 export function isValidNonWithdrawableBlsAddress(address: string): boolean {
   return /^0x00[a-fA-F0-9]{62}$/.test(address);
-}
-
-export function isValidTag(tag: Tag): boolean {
-  return tags.includes(tag);
 }
 
 export function isFeeRecipientEditable(tag: Tag, requestOrigin?: ActionRequestOrigin): boolean {

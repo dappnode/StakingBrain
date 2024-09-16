@@ -1,12 +1,9 @@
 import {
-  CustomImportRequest,
-  Web3signerPostResponse,
   isFeeRecipientEditable,
   NonEditableFeeRecipientTag,
   Tag,
   shortenPubkey,
   prefix0xPubkey,
-  PubkeyDetails,
   Network,
   ROCKET_POOL_FEE_RECIPIENT,
   STADER_POOL_FEE_RECIPIENT_MAINNET,
@@ -16,6 +13,9 @@ import {
 } from "@stakingbrain/common";
 import { reloadValidatorsCron, network, signerApi, validatorApi, signerUrl, brainDb } from "../index.js";
 import logger from "../modules/logger/index.js";
+import { CustomImportRequest } from "./types.js";
+import { Web3signerPostResponse } from "../types.js";
+import { PubkeyDetails } from "../modules/db/types.js";
 
 type ValidatorImportRequest = {
   keystore: string;

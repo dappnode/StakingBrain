@@ -1,4 +1,4 @@
-import { Tag } from "../index.js";
+import { Tag } from "../modules/db/types.js";
 
 export type ActionRequestOrigin = "ui" | "api";
 

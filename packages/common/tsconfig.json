@@ -1,13 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": [
-    "src",
-    "../brain/src/modules/apiClients/blockExplorer/types.ts",
-    "../brain/src/modules/apiClients/beaconchain/types.ts",
-    "../brain/src/modules/apiClients/types.ts",
-    "../brain/src/modules/apiClients/validator/types.ts",
-    "../brain/src/modules/apiClients/signer/types.ts"
-  ],
+  "include": ["src"],
   "exclude": ["test", "./node_modules/", "./dist/"],
   "compilerOptions": {
     "outDir": "dist",

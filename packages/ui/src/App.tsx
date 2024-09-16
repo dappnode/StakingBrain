@@ -6,8 +6,9 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
-import { startApi, api } from "./api";
-import { StakerConfig, Web3SignerStatus } from "@stakingbrain/common";
+import { StakerConfig } from "@stakingbrain/common";
+import { rpcClient } from "./socket";
+import type { Web3SignerStatus } from "@stakingbrain/brain";
 
 function App(): JSX.Element {
   const [mode, setMode] = React.useState<"dark" | "light">("light");
@@ -17,12 +18,7 @@ function App(): JSX.Element {
   const [stakerConfig, setStakerConfig] = React.useState<StakerConfig>();
 
   useEffect(() => {
-    // Start API and Socket.io once user has logged in
-    startApi()
-      .then(() => {
-        getStakerConfig();
-      })
-      .catch((e) => console.error("Error on startApi", e));
+    getStakerConfig();
   }, []);
 
   useEffect(() => {
@@ -35,7 +31,7 @@ function App(): JSX.Element {
 
   async function signerGetStatus(): Promise<void> {
     try {
-      const status = (await api.signerGetStatus()).status;
+      const status = (await rpcClient.call("signerGetStatus", undefined)).status;
       setSignerStatus(status);
     } catch (e) {
       console.error("Error on signerGetStatus", e);
@@ -45,7 +41,7 @@ function App(): JSX.Element {
 
   async function getStakerConfig(): Promise<void> {
     try {
-      const config = await api.getStakerConfig();
+      const config = await rpcClient.call("getStakerConfig", undefined);
       console.log("config", config);
       setStakerConfig(config);
     } catch (e) {

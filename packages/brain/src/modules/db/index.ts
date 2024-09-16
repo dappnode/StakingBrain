@@ -1,18 +1,12 @@
-import {
-  StakingBrainDb,
-  isValidEcdsaPubkey,
-  isValidTag,
-  isValidBlsPubkey,
-  shortenPubkey,
-  StakingBrainDbUpdate,
-  PubkeyDetails
-} from "@stakingbrain/common";
+import { StakingBrainDb, StakingBrainDbUpdate, PubkeyDetails } from "./types.js";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
 import logger from "../logger/index.js";
 import { Web3SignerApi, ValidatorApi } from "../apiClients/index.js";
 import { params } from "../../params.js";
+import { isValidTag } from "./utils.js";
+import { shortenPubkey, isValidBlsPubkey, isValidEcdsaPubkey } from "@stakingbrain/common";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -34,7 +28,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
   constructor(dbName: string) {
     // JSONFileSync adapters will set db.data to null if file dbName doesn't exist.
-    super(new JSONFileSync<StakingBrainDb>(dbName));
+    super(new JSONFileSync<StakingBrainDb>(dbName), {});
     this.dbName = dbName;
   }
 
