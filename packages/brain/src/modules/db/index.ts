@@ -7,6 +7,7 @@ import { Web3SignerApi, ValidatorApi } from "../apiClients/index.js";
 import { params } from "../../params.js";
 import { isValidTag } from "./utils.js";
 import { shortenPubkey, isValidBlsPubkey, isValidEcdsaPubkey } from "@stakingbrain/common";
+import { isEmpty } from "lodash-es";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -27,7 +28,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   private dbName: string;
 
   constructor(dbName: string) {
-    // JSONFileSync adapters will set db.data to null if file dbName doesn't exist.
+    // JSONFileSync adapters will set db.data to empty object if file dbName doesn't exist.
     super(new JSONFileSync<StakingBrainDb>(dbName), {});
     this.dbName = dbName;
   }
@@ -52,10 +53,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    */
   public async initialize(signerApi: Web3SignerApi, validatorApi: ValidatorApi): Promise<void> {
     try {
-      // Important! .read() method must be called before accessing brainDb.data otherwise it will be null
+      // Important! .read() method must be called before accessing brainDb.data otherwise it will be empty object
       this.read();
-      // If db.json doesn't exist, db.data will be null
-      if (this.data === null) await this.databaseMigration(signerApi, validatorApi);
+      // If db.json doesn't exist, db.data will be an empty object
+      if (isEmpty(this.data)) await this.databaseMigration(signerApi, validatorApi);
       else this.setOwnerWriteRead();
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
@@ -177,7 +178,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   private validateDb(): void {
     try {
       this.read();
-      if (this.data === null) {
+      if (isEmpty(this.data)) {
         logger.warn(`Database file ${this.dbName} not found. Creating it...`);
         this.createJsonFileAndPermissions();
       }
