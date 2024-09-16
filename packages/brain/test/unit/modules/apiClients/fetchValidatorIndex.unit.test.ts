@@ -1,9 +1,10 @@
 import { expect } from "chai";
-import { ApiParams, Network } from "@stakingbrain/common";
-import { BeaconchaApi } from "../../../../src/modules/apiClients/index.js";
+import { Network } from "@stakingbrain/common";
+import { BlockExplorerApi } from "../../../../src/modules/apiClients";
+import { ApiParams } from "../../../../src/modules/apiClients/types.js";
 
 describe.skip("Test for fetching validator indexes in every available network", () => {
-  const networks: Network[] = ["mainnet", "gnosis", "lukso", "holesky"];
+  const networks: Network[] = [Network.Mainnet, Network.Gnosis, Network.Lukso, Network.Holesky];
 
   networks.forEach((network) => {
     it(`should return data corresponding to every validator PK for ${network}`, async () => {
@@ -12,7 +13,7 @@ describe.skip("Test for fetching validator indexes in every available network", 
         throw new Error(`API parameters for ${network} are not defined`);
       }
 
-      const beaconchaApi = new BeaconchaApi(apiParams, network);
+      const beaconchaApi = new BlockExplorerApi(apiParams, network);
       const testParams = networkTestMap.get(network);
       if (!testParams) {
         throw new Error(`Test parameters for ${network} are not defined`);
