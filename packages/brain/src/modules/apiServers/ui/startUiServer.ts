@@ -1,10 +1,11 @@
-import { Network } from "@stakingbrain/common";
+import { BRAIN_UI_DOMAIN, Network } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
 import { Server } from "socket.io";
 import logger from "../../logger/index.js";
 import http from "http";
+import fs from "fs";
 import { params } from "../../../params.js";
 import { rpcMethods, RpcMethodNames } from "../../../calls/index.js";
 
@@ -18,6 +19,9 @@ interface RpcRequest {
 }
 
 export function startUiServer(uiBuildPath: string, network: Network): http.Server {
+  // create index.html modified with network
+  injectNetworkInHtmmlIfNeeded(uiBuildPath, network);
+
   const app = express();
   const server = http.createServer(app);
 
@@ -47,7 +51,7 @@ export function startUiServer(uiBuildPath: string, network: Network): http.Serve
           callback({ jsonrpc: "2.0", result, id });
         } else throw new Error("Method not found");
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         callback({
           jsonrpc: "2.0",
           error: { code: -32601, message: error },
@@ -66,10 +70,7 @@ export function startUiServer(uiBuildPath: string, network: Network): http.Serve
   });
 
   // Express
-  const allowedOrigins = [
-    "http://my.dappnode",
-    `http://brain.web3signer${network === "mainnet" ? "" : "-" + network}.dappnode`
-  ];
+  const allowedOrigins = ["http://my.dappnode", `http://${BRAIN_UI_DOMAIN(network)}`];
   app.use(
     cors({
       origin: allowedOrigins
@@ -87,4 +88,44 @@ export function startUiServer(uiBuildPath: string, network: Network): http.Serve
   });
 
   return server;
+}
+
+/**
+ * Injects the network value into the index.html file so it can be accessed by the UI
+ * Vite does not allow dynamic injection of environment variables once the build is done
+ *
+ * @param uiBuildPath
+ * @param network
+ */
+function injectNetworkInHtmmlIfNeeded(uiBuildPath: string, network: Network): void {
+  const indexHtmlPath = path.join(uiBuildPath, "index.html");
+
+  try {
+    // Read the original index.html file synchronously
+    const htmlData = fs.readFileSync(indexHtmlPath, "utf8");
+
+    // skip if already has the network set
+    if (htmlData.includes("NETWORK")) {
+      logger.info("NETWORK value already injected, skipping");
+      return;
+    }
+
+    // Inject environment variables into the HTML file
+    const injectedHtml = htmlData.replace(
+      "<head>",
+      `<head>
+       <script>
+         window.env = {
+           NETWORK: "${network}"
+         };
+         console.log("NETWORK value injected:", "${network}");
+       </script>`
+    );
+
+    // Write the modified HTML back to the file system synchronously
+    logger.info(`Writing modified index.html to ${indexHtmlPath}`);
+    fs.writeFileSync(indexHtmlPath, injectedHtml, "utf8");
+  } catch (err) {
+    logger.error("Error processing index.html:", err);
+  }
 }

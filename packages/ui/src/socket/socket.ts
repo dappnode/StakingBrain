@@ -1,5 +1,6 @@
 import { io, Socket } from "socket.io-client";
 import { RoutesArguments, RoutesReturn, RpcMethodNames } from "./types.js";
+import { BRAIN_UI_DOMAIN, Network } from "@stakingbrain/common";
 
 class RpcClient {
   private socket: Socket;
@@ -41,5 +42,4 @@ class RpcClient {
   }
 }
 
-// It might be interesting to add the alias that contains the network. i.e: http://brain.web3signer-holesky.dappnode:80
-export const rpcClient = new RpcClient("http://brain:80");
+export const rpcClient = new RpcClient(`http://${BRAIN_UI_DOMAIN(window.env?.NETWORK || Network.Holesky)}:80`);
