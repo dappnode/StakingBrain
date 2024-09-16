@@ -1,4 +1,4 @@
-import { Web3signerPostRequest } from "@stakingbrain/common";
+import { Web3signerPostRequest } from "../../apiClients/types.js";
 
 export interface BrainKeystoreImportRequest extends Web3signerPostRequest {
   tags: string[];

@@ -1,11 +1,7 @@
-import {
-  CustomValidatorGetResponse,
-  WithdrawalCredentialsFormat,
-  isValidWithdrawableBlsAddress,
-  isValidNonWithdrawableBlsAddress
-} from "@stakingbrain/common";
+import { isValidWithdrawableBlsAddress, isValidNonWithdrawableBlsAddress } from "@stakingbrain/common";
 import { brainDb, validatorApi, signerApi, beaconchainApi } from "../index.js";
 import logger from "../modules/logger/index.js";
+import { CustomValidatorGetResponse, WithdrawalCredentialsFormat } from "./types.js";
 
 /**
  * Get all validators from db

@@ -9,15 +9,15 @@ import {
   BeaconchainAttestationRewardsPostResponse,
   BeaconchainValidatorStatePostResponse,
   ValidatorStatus,
-  Network,
-  ApiParams,
-  ValidatorLivenessPostResponse,
+  BeaconchainLivenessPostResponse,
   BeaconchainSyncingStatusGetResponse,
   BeaconchainSyncCommitteePostResponse,
   BeaconchainBlockRewardsGetResponse
-} from "@stakingbrain/common";
-import { StandardApi } from "./standard.js";
+} from "./types.js";
+import { StandardApi } from "../standard.js";
 import path from "path";
+import { ApiParams } from "../types.js";
+import { Network } from "@stakingbrain/common";
 
 type BlockId = "head" | "genesis" | "finalized" | "slot" | `0x${string}`;
 
@@ -303,7 +303,7 @@ export class BeaconchainApi extends StandardApi {
   }: {
     epoch: string;
     validatorIndexes: string[];
-  }): Promise<ValidatorLivenessPostResponse> {
+  }): Promise<BeaconchainLivenessPostResponse> {
     try {
       return await this.request({
         method: "POST",

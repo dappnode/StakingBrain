@@ -14,10 +14,11 @@ import { GridSelectionModel } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import ExitWarning from "./ExitWarning";
-import { CustomValidatorGetResponse, ValidatorExitExecute, shortenPubkey } from "@stakingbrain/common";
-import { api } from "../../api";
+import { shortenPubkey } from "@stakingbrain/common";
+import { rpcClient } from "../../socket";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
+import type { CustomValidatorGetResponse, ValidatorExitExecute } from "@stakingbrain/brain";
 
 export default function KeystoresExitDialog({
   rows,
@@ -42,7 +43,7 @@ export default function KeystoresExitDialog({
   async function getExitSelectedKeystores() {
     try {
       setLoading(true);
-      const exitKeysores = await api.getExitValidators({
+      const exitKeysores = await rpcClient.call("getExitValidators", {
         pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
       });
 
@@ -68,7 +69,7 @@ export default function KeystoresExitDialog({
       setValidatorsExitResponse(undefined);
       setLoading(true);
       setValidatorsExitResponse(
-        await api.exitValidators({
+        await rpcClient.call("exitValidators", {
           pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
         })
       );

@@ -1,16 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2019",
-    "lib": [
-      "es2020",
-      "esnext.bigint",
-      "es2020.string",
-      "es2020.symbol.wellknown",
-      "dom"
-    ],
+    "target": "ESNext", // Use the latest ECMAScript target
+    "module": "ESNext", // Use the latest ECMAScript module
+    "lib": ["es2020", "esnext.bigint", "es2020.string", "es2020.symbol.wellknown", "dom"],
     "types": ["node", "mocha", "chai"],
 
-    "module": "esnext",
     "moduleResolution": "node",
 
     "pretty": true,
@@ -21,7 +15,7 @@
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
-    "useUnknownInCatchVariables": true,
+    "useUnknownInCatchVariables": false,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,

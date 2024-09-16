@@ -6,13 +6,13 @@ import {
   Web3signerGetResponse,
   Web3signerHealthcheckResponse,
   Web3signerPostSignDappnodeRequest,
-  prefix0xPubkey,
   Web3SignerPostSignvoluntaryexitRequest,
   Web3SignerPostSignvoluntaryexitResponse,
   Web3signerPostSignDappnodeResponse
-} from "@stakingbrain/common";
-import { StandardApi } from "./standard.js";
+} from "./types.js";
+import { StandardApi } from "../standard.js";
 import path from "node:path";
+import { prefix0xPubkey } from "../prefix0xPubkey.js";
 
 /**
  * Key Manager API standard
@@ -110,12 +110,12 @@ export class Web3SignerApi extends StandardApi {
   public async importRemoteKeys(postRequest: Web3signerPostRequest): Promise<Web3signerPostResponse> {
     try {
       // IMPORTANT: do not edit the keystore data, it must be exactly as it was received from the remote signer
-      return (await this.request({
+      return await this.request({
         method: "POST",
         endpoint: this.localKeymanagerEndpoint,
         body: JSON.stringify(postRequest),
         headers: this.originHeader
-      })) as Web3signerPostResponse;
+      });
     } catch (e) {
       e.message += `Error importing (POST) keystores to remote signer. `;
       throw e;
@@ -133,12 +133,12 @@ export class Web3SignerApi extends StandardApi {
       const data = JSON.stringify({
         pubkeys: deleteRequest.pubkeys
       });
-      return (await this.request({
+      return await this.request({
         method: "DELETE",
         endpoint: this.localKeymanagerEndpoint,
         body: data,
         headers: this.originHeader
-      })) as Web3signerDeleteResponse;
+      });
     } catch (e) {
       e.message += `Error deleting (DELETE) keystores from remote signer. `;
       throw e;
@@ -151,11 +151,11 @@ export class Web3SignerApi extends StandardApi {
    */
   public async listRemoteKeys(): Promise<Web3signerGetResponse> {
     try {
-      return (await this.request({
+      return await this.request({
         method: "GET",
         endpoint: this.localKeymanagerEndpoint,
         headers: this.originHeader
-      })) as Web3signerGetResponse;
+      });
     } catch (e) {
       e.message += `Error getting (GET) keystores from remote signer. `;
       throw e;
@@ -168,11 +168,11 @@ export class Web3SignerApi extends StandardApi {
    */
   public async getStatus(): Promise<Web3signerHealthcheckResponse> {
     try {
-      return (await this.request({
+      return await this.request({
         method: "GET",
         endpoint: this.serverStatusEndpoint,
         headers: this.originHeader
-      })) as Web3signerHealthcheckResponse;
+      });
     } catch (e) {
       e.message += `Error getting (GET) server status. Is Web3Signer running? `;
       throw e;

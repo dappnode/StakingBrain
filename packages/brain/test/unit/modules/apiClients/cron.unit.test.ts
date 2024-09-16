@@ -6,7 +6,8 @@ import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import path from "path";
 import { reloadValidators } from "../../../../src/modules/cron/index.js";
-import { Network, PubkeyDetails } from "@stakingbrain/common";
+import { Network } from "@stakingbrain/common";
+import { PubkeyDetails } from "../../../../src/modules/db/types.js";
 
 describe.skip("Cron: Prater", () => {
   const defaultFeeRecipient = "0x0000000000000000000000000000000000000000";
@@ -112,7 +113,7 @@ describe.skip("Cron: Prater", () => {
         await validatorApi.deleteRemoteKeys({ pubkeys });
 
         //Clean signer
-        await signerApi.deleteKeystores({ pubkeys });
+        await signerApi.deleteRemoteKeys({ pubkeys });
       });
 
       it("Should post fee recipient in DB to validator", async () => {
@@ -145,7 +146,7 @@ describe.skip("Cron: Prater", () => {
 
         await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
 
-        const signerPubkeys = await signerApi.getKeystores();
+        const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
 
         expect(signerPubkeys.data.length).to.be.equal(1);
@@ -160,7 +161,7 @@ describe.skip("Cron: Prater", () => {
 
         await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
 
-        const signerPubkeys = await signerApi.getKeystores();
+        const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
 
         expect(signerPubkeys.data.length).to.be.equal(1);
@@ -174,11 +175,11 @@ describe.skip("Cron: Prater", () => {
         await addSampleKeystoresToSigner(2);
 
         brainDb.deleteValidators([pubkeys[0]]);
-        await signerApi.deleteKeystores({ pubkeys: [pubkeys[1]] });
+        await signerApi.deleteRemoteKeys({ pubkeys: [pubkeys[1]] });
 
         await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
 
-        const signerPubkeys = await signerApi.getKeystores();
+        const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
 
         expect(signerPubkeys.data.length).to.be.equal(0);
@@ -191,7 +192,7 @@ describe.skip("Cron: Prater", () => {
 
         await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
 
-        const signerPubkeys = await signerApi.getKeystores();
+        const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
 
         expect(signerPubkeys.data.length).to.be.equal(2);
@@ -263,7 +264,7 @@ describe.skip("Cron: Prater", () => {
 
         const passwords = Array(keystores.length).fill(keystorePass);
 
-        await signerApi.importKeystores({
+        await signerApi.importRemoteKeys({
           keystores,
           passwords
         });

@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { execSync } from "node:child_process";
 import { Web3SignerApi } from "../../../../src/modules/apiClients/index.js";
+import { Network } from "@stakingbrain/common";
 
 describe.skip("Signer API: Prater", () => {
   const keystoresPath = path.resolve(process.cwd(), "keystores");
@@ -31,7 +32,7 @@ describe.skip("Signer API: Prater", () => {
         baseUrl: `http://${signerIp}:9000`,
         host
       },
-      "prater"
+      Network.Prater
     );
   });
 
@@ -40,7 +41,7 @@ describe.skip("Signer API: Prater", () => {
     const keystores = keystoresPaths.map((file) => fs.readFileSync(path.join(keystoresPath, file)).toString());
     const passwords = Array(keystores.length).fill("stakingbrain");
 
-    const response = await signerApi.importKeystores({
+    const response = await signerApi.importRemoteKeys({
       keystores,
       passwords
     });
@@ -49,17 +50,17 @@ describe.skip("Signer API: Prater", () => {
   }).timeout(10000);
 
   it("Should get validators", async () => {
-    const response = await signerApi.getKeystores();
+    const response = await signerApi.listRemoteKeys();
     expect(response.data.map((item) => item.validating_pubkey)).to.have.members(pubkeys);
   });
 
   it("Should delete validators", async () => {
-    const response = await signerApi.deleteKeystores({
+    const response = await signerApi.deleteRemoteKeys({
       pubkeys
     });
     expect(response.data).to.be.ok;
 
-    const validators = await signerApi.getKeystores();
+    const validators = await signerApi.listRemoteKeys();
     expect(validators.data).to.be.empty;
   });
 });

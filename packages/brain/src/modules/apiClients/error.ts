@@ -1,4 +1,4 @@
-import { ErrnoException, ErrorCode } from "@stakingbrain/common";
+import type { ErrorCode, ErrnoException } from "./types.js";
 
 export class ApiError extends Error {
   public code: ErrorCode;

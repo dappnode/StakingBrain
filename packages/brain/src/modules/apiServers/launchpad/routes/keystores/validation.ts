@@ -1,5 +1,6 @@
-import { Web3signerDeleteRequest, isValidBlsPubkey } from "@stakingbrain/common";
-import { BrainKeystoreImportRequest } from "../../types.js";
+import { isValidBlsPubkey } from "@stakingbrain/common";
+import type { BrainKeystoreImportRequest } from "../../types.js";
+import type { Web3signerDeleteRequest } from "../../../../apiClients/types.js";
 
 export function validateImportKeystoresRequestBody(request: BrainKeystoreImportRequest): void {
   // Check if the request contains keystores

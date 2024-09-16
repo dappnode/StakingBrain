@@ -1,18 +1,19 @@
-import {
-  Web3signerDeleteResponse,
-  Web3signerDeleteRequest,
-  Web3signerHealthcheckResponse,
-  CustomImportRequest,
+import type {
   BeaconchaGetResponse,
-  StakerConfig,
+  BeaconchainPoolVoluntaryExitsPostRequest,
+  CustomImportRequest,
   CustomValidatorGetResponse,
-  Web3signerPostResponse,
   CustomValidatorUpdateRequest,
   ValidatorExitExecute,
-  BeaconchainPoolVoluntaryExitsPostRequest
-} from "./index.js";
+  Web3signerDeleteRequest,
+  Web3signerDeleteResponse,
+  Web3signerHealthcheckResponse,
+  Web3signerPostResponse
+} from "@stakingbrain/brain";
+import { StakerConfig } from "@stakingbrain/common";
 
-export interface Routes {
+// Define the type for RPC methods
+export interface RpcMethods {
   // BeaconchaApi
   beaconchaFetchAllValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse[]>;
   beaconchaFetchValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse>;
@@ -28,19 +29,17 @@ export interface Routes {
   getStakerConfig: () => Promise<StakerConfig>;
 }
 
-interface RouteData {
-  log?: boolean;
-}
+export type RpcMethodNames = keyof RpcMethods;
 
-export const routesData: { [P in keyof Routes]: RouteData } = {
-  beaconchaFetchAllValidatorsInfo: { log: true },
-  beaconchaFetchValidatorsInfo: { log: true },
-  importValidators: { log: true },
-  updateValidators: { log: true },
-  deleteValidators: { log: true },
-  getValidators: { log: true },
-  exitValidators: { log: true },
-  getExitValidators: { log: true },
-  signerGetStatus: { log: true },
-  getStakerConfig: { log: true }
+type ReplaceVoidWithNull<T> = T extends void ? null : T;
+
+export type RoutesArguments = {
+  [K in keyof RpcMethods]: Parameters<RpcMethods[K]> extends [] ? undefined : Parameters<RpcMethods[K]>[0];
+};
+
+// Unwraps the inner type of a Promise
+type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
+
+export type RoutesReturn = {
+  [K in keyof RpcMethods]: ReplaceVoidWithNull<UnwrapPromise<ReturnType<RpcMethods[K]>>>;
 };

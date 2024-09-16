@@ -1,8 +1,7 @@
 import Tooltip from "@mui/material/Tooltip";
 import { HourglassTop, CrisisAlert, CheckCircle, Warning, Close, Help, Block } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
-import { MevSpSubscriptionStatus } from "@stakingbrain/common";
-import { SmoothStatusProps } from "../../types";
+import { SmoothStatusProps, MevSpSubscriptionStatus } from "../../types";
 
 export default function SmoothStatus({
   rowData,

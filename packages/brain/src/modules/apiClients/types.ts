@@ -1,3 +1,8 @@
+export * from "./beaconchain/types.js";
+export * from "./blockExplorer/types.js";
+export * from "./signer/types.js";
+export * from "./validator/types.js";
+
 export interface CertFile {
   path: string;
   password: string;

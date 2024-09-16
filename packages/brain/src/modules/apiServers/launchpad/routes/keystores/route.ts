@@ -1,11 +1,12 @@
-import { Tag, Web3signerDeleteRequest } from "@stakingbrain/common";
+import { Tag } from "@stakingbrain/common";
 import express from "express";
-import { deleteValidators } from "../../../../../calls/index.js";
-import { importValidators } from "../../../../../calls/index.js";
+import { deleteValidators } from "../../../../../calls/deleteValidators.js";
+import { importValidators } from "../../../../../calls/importValidators.js";
 import { BrainKeystoreImportRequest } from "../../types.js";
 import { validateDeleteRequestBody, validateImportKeystoresRequestBody } from "./validation.js";
 import logger from "../../../../logger/index.js";
 import { signerApi } from "../../../../../index.js";
+import { Web3signerDeleteRequest } from "../../../../apiClients/types.js";
 
 const keystoresRouter = express.Router();
 

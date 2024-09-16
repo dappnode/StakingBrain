@@ -1,10 +1,10 @@
-import { BeaconchaGetResponse } from "@stakingbrain/common";
-import { beaconchaApi } from "../index.js";
+import { blockExplorerApi } from "../index.js";
+import { BeaconchaGetResponse } from "../types.js";
 
 export async function beaconchaFetchValidatorsInfo(pubkeys: string[]): Promise<BeaconchaGetResponse> {
-  return await beaconchaApi.fetchValidatorsInfo(pubkeys);
+  return await blockExplorerApi.fetchValidatorsInfo(pubkeys);
 }
 
 export async function beaconchaFetchAllValidatorsInfo(pubkeys: string[]): Promise<BeaconchaGetResponse[]> {
-  return await beaconchaApi.fetchAllValidatorsInfo({ pubkeys });
+  return await blockExplorerApi.fetchAllValidatorsInfo({ pubkeys });
 }

@@ -2,13 +2,8 @@ import { DataGrid, GridAlignment, GridSelectionModel } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
 import {
-  BeaconchaGetResponse,
-  CustomValidatorGetResponse,
-  SmoothValidatorByIndexApiResponse,
-  MevSpSubscriptionStatus,
   MAINNET_ORACLE_URL,
   TESTNET_ORACLE_URL,
-  SmoothValidator,
   nonEditableFeeRecipientTags,
   NonEditableFeeRecipientTag
 } from "@stakingbrain/common";
@@ -27,9 +22,11 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import { BeaconchaUrlBuildingStatus, SmoothStatusByPubkey } from "../../types";
-import { api } from "../../api";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { rpcClient } from "../../socket";
+import type { BeaconchaGetResponse, CustomValidatorGetResponse } from "@stakingbrain/brain";
+import { SmoothValidatorByIndexApiResponse, SmoothValidator, MevSpSubscriptionStatus } from "../../types";
 
 export default function KeystoresDataGrid({
   rows,
@@ -395,7 +392,8 @@ export default function KeystoresDataGrid({
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
 
     try {
-      allValidatorsInfo = await api.beaconchaFetchAllValidatorsInfo(
+      allValidatorsInfo = await rpcClient.call(
+        "beaconchaFetchAllValidatorsInfo",
         selectedRows.map((row) => rows[row as number].pubkey)
       );
     } catch (e) {

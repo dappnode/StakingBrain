@@ -3,13 +3,14 @@ import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
 import { Alert, Box, CircularProgress, Card } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import { CustomValidatorGetResponse, StakerConfig as StakerConfigType } from "@stakingbrain/common";
+import { StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
-import { api } from "../../api";
+import { rpcClient } from "../../socket";
 import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
 import { getSmoothAddressByNetwork } from "../../utils/addresses";
+import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
 export default function ValidatorList({
   stakerConfig,
@@ -44,7 +45,7 @@ export default function ValidatorList({
   async function getValidators() {
     try {
       setLoading(true);
-      setValidatorsGet(await api.getValidators());
+      setValidatorsGet(await rpcClient.call("getValidators", undefined));
       setValidatorsGetError(undefined);
       setLoading(false);
     } catch (e) {

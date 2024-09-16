@@ -1,7 +1,7 @@
-import { StakingBrainDb } from "@stakingbrain/common";
 import { ApiError } from "../apiClients/error.js";
 import { ValidatorApi, Web3SignerApi } from "../apiClients/index.js";
 import { BrainDataBase } from "../db/index.js";
+import { StakingBrainDb } from "../db/types.js";
 import logger from "../logger/index.js";
 
 /**

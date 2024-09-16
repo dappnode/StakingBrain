@@ -6,11 +6,11 @@ import {
   ValidatorPostRemoteKeysRequest,
   ValidatorPostRemoteKeysResponse,
   ValidatorProposerDutiesGetResponse,
-  ValidatorAttesterDutiesPostResponse,
-  prefix0xPubkey
-} from "@stakingbrain/common";
-import { StandardApi } from "./standard.js";
+  ValidatorAttesterDutiesPostResponse
+} from "./types.js";
+import { StandardApi } from "../standard.js";
 import path from "path";
+import { prefix0xPubkey } from "../prefix0xPubkey.js";
 
 export class ValidatorApi extends StandardApi {
   /**

@@ -1,4 +1,4 @@
-import { BeaconchaGetResponse } from "@stakingbrain/common";
+import type { BeaconchaGetResponse } from "@stakingbrain/brain";
 import { beaconchaApiParamsMap } from "../params";
 
 export default function buildValidatorSummaryURL({

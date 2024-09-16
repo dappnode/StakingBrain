@@ -20,20 +20,17 @@ import {
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { GridSelectionModel } from "@mui/x-data-grid";
-import {
-  CustomValidatorGetResponse,
-  BURN_ADDRESS,
-  isValidEcdsaPubkey,
-  CustomValidatorUpdateRequest,
-  areAllFeeRecipientsEditable,
-  WithdrawalCredentialsFormat,
-  Network
-} from "@stakingbrain/common";
+import { BURN_ADDRESS, isValidEcdsaPubkey, areAllFeeRecipientsEditable, Network } from "@stakingbrain/common";
 import React from "react";
+import type {
+  CustomValidatorUpdateRequest,
+  CustomValidatorGetResponse,
+  WithdrawalCredentialsFormat
+} from "@stakingbrain/brain";
 
 //Logic
 import { useEffect, useState } from "react";
-import { api } from "../../api";
+import { rpcClient } from "../../socket";
 
 //Styles
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
@@ -148,7 +145,7 @@ export default function FeeRecipientDialog({
         });
       }
     });
-    await api.updateValidators(validatorsData);
+    await rpcClient.call("updateValidators", validatorsData);
   }
 
   const handleApplyChanges = async () => {

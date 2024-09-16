@@ -188,3 +188,10 @@ export interface BeaconchainGenesisGetResponse {
     genesis_fork_version: string;
   };
 }
+
+export interface BeaconchainLivenessPostResponse {
+  data: {
+    index: string;
+    is_live: boolean;
+  }[];
+}

@@ -1,5 +1,18 @@
-export * from "./api/index.js";
-export * from "./db/types.js";
-export * from "./network/types.js";
-export * from "./customValidators/types.js";
-export * from "./rpc/types.js";
+export enum Network {
+  Mainnet = "mainnet",
+  Gnosis = "gnosis",
+  Prater = "prater",
+  Lukso = "lukso",
+  Holesky = "holesky"
+}
+
+export interface StakerConfig {
+  network: Network;
+  executionClientSelected: string;
+  consensusClientSelected: string;
+  isMevBoostSet: boolean;
+  executionClientUrl: string;
+  validatorUrl: string;
+  beaconchainUrl: string;
+  signerUrl: string;
+}

@@ -1,5 +1,5 @@
-import { Web3signerHealthcheckResponse } from "@stakingbrain/common";
 import { signerApi } from "../index.js";
+import { Web3signerHealthcheckResponse } from "../types.js";
 
 /**
  * Get signer status
