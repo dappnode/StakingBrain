@@ -5,6 +5,7 @@ import fs from "fs";
 import { Web3SignerApi, ValidatorApi } from "../../../../src/modules/apiClients/index.js";
 import { execSync } from "node:child_process";
 import path from "path";
+import { Network } from "@stakingbrain/common";
 
 describe("DataBase", () => {
   const testDbName = "testDb.json";
@@ -71,21 +72,21 @@ describe("DataBase", () => {
           baseUrl: `http://${signerIp}:9000`,
           host: `web3signer.web3signer-prater.dappnode`
         },
-        "prater"
+        Network.Prater
       );
       const validatorApi = new ValidatorApi(
         {
           baseUrl: `http://${consensusIp}:3500`,
           authToken: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg`
         },
-        "prater"
+        Network.Prater
       );
       // import to web3signer
       const keystoresPath = path.resolve(process.cwd(), "keystores");
       const keystoresPaths = fs.readdirSync(keystoresPath).filter((file) => file.endsWith(".json"));
       const keystores = keystoresPaths.map((file) => fs.readFileSync(path.join(keystoresPath, file)).toString());
       const passwords = Array(keystores.length).fill("stakingbrain");
-      await signerApi.importKeystores({
+      await signerApi.importRemoteKeys({
         keystores,
         passwords
       });
