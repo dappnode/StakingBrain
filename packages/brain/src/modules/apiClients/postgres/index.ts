@@ -3,6 +3,7 @@ import logger from "../../logger/index.js";
 import { BlockProposalStatus, ValidatorPerformance } from "./types.js";
 
 export class PostgresClient {
+  private readonly tableName = "validators_performance";
   private sql: postgres.Sql;
 
   /**
@@ -41,7 +42,7 @@ export class PostgresClient {
       END IF;
     END $$;
         
-    CREATE TABLE IF NOT EXISTS validators_performance (
+    CREATE TABLE IF NOT EXISTS ${this.tableName} (
       validator_index BIGINT NOT NULL,
       epoch BIGINT NOT NULL,
       slot BIGINT NOT NULL,
@@ -70,7 +71,7 @@ export class PostgresClient {
    */
   public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
     const query = `
-INSERT INTO validator_performance (validator_index, epoch, slot, liveness, block_proposal_status, sync_comittee_rewards, attestations_rewards, error)
+INSERT INTO ${this.tableName} (validator_index, epoch, slot, liveness, block_proposal_status, sync_comittee_rewards, attestations_rewards, error)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
     try {
