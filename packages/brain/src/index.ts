@@ -42,6 +42,7 @@ export const {
   shareCronInterval,
   postgresUrl,
   minGenesisTime,
+  secondsPerSlot,
   tlsCert
 } = brainConfig();
 logger.debug(
@@ -94,7 +95,11 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
   sendProofsOfValidation(signerApi, brainDb, dappnodeSignatureVerifierApi, shareDataWithDappnode)
 );
 proofOfValidationCron.start();
-await trackValidatorsPerformance(Object.keys(brainDb.data.validators), postgresClient, beaconchainApi, minGenesisTime);
+const trackValidatorsPerformanceCron = new CronJob(secondsPerSlot * 32 * 1000, () =>
+  // once every epoch
+  trackValidatorsPerformance({ brainDb, postgresClient, beaconchainApi, minGenesisTime, secondsPerSlot })
+);
+trackValidatorsPerformanceCron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
