@@ -69,7 +69,7 @@ export async function trackValidatorsPerformance({
       logger.debug(`${logPrefix}Validator indexes: ${validatorIndexes}`);
 
       // get only active validators
-      logger.debug(`${logPrefix}$Getting active validators`);
+      logger.debug(`${logPrefix}Getting active validators`);
       const activeValidators = (
         await beaconchainApi.postStateValidators({
           body: {
