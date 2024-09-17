@@ -98,7 +98,7 @@ export async function trackValidatorsPerformance({
       for (const validatorIndex of validatorIndexes) {
         //const liveness = validatorsLiveness.find((liveness) => liveness.index === validatorIndex)?.is_live;
         const attestationsRewards = validatorsAttestationsRewards.find(
-          (liveness) => liveness.validator_index === validatorIndex
+          (attestationReward) => attestationReward.validator_index === validatorIndex
         );
 
         if (!attestationsRewards) {
