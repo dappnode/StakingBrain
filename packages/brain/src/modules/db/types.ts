@@ -22,6 +22,7 @@ export interface PubkeyDetails {
   tag: Tag;
   feeRecipient: string;
   automaticImport: boolean;
+  index?: number; // index of the validator. Only available if the validator is active.
 }
 
 export const tags = ["obol", "diva", "ssv", "rocketpool", "stakewise", "stakehouse", "solo", "stader", "lido"] as const;
