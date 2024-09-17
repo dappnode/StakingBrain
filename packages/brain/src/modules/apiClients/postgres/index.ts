@@ -23,7 +23,7 @@ export class PostgresClient {
   /**
    * Delete database table.
    */
-  public async deleteDatabase() {
+  public async deleteDatabaseTable() {
     const query = `
     DROP TABLE IF EXISTS ${this.tableName};
   `;

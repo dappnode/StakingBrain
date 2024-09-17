@@ -13,6 +13,6 @@ describe.skip("Postgres client", function () {
   });
 
   it("should delete the table", async () => {
-    await postgresClient.deleteDatabase();
+    await postgresClient.deleteDatabaseTable();
   });
 });
