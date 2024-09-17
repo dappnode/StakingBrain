@@ -64,6 +64,21 @@ export class PostgresClient {
   }
 
   /**
+   * Delete database table.
+   */
+  public async deleteDatabaseTable() {
+    const query = `
+    DROP TABLE IF EXISTS ${this.tableName};
+  `;
+    try {
+      await this.sql.unsafe(query);
+      logger.info("Table deleted.");
+    } catch (err) {
+      logger.error("Error deleting table:", err);
+    }
+  }
+
+  /**
    * Inserts the given performance data into the database.
    *
    * @param data - The performance data to insert.
