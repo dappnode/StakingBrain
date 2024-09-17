@@ -62,7 +62,9 @@ export async function trackValidatorsPerformance({
         logger.debug(`${logPrefix}Getting validator indexes from pubkeys`);
         await Promise.all(
           validatorPubkeysWithNoIndex.map(async (pubkey) => {
-            validatorIndexes.push((await beaconchainApi.getStateValidator({ state: "finalized", pubkey })).data.index);
+            const index = (await beaconchainApi.getStateValidator({ state: "finalized", pubkey })).data.index;
+            validatorIndexes.push(index);
+            brainDb.updateValidators({ validators: { [pubkey]: { ...brainDbData[pubkey], index: parseInt(index) } } });
           })
         );
       }
