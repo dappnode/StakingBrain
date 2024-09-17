@@ -4,6 +4,7 @@ import logger from "../logger/index.js";
 import { ValidatorStatus } from "../apiClients/types.js";
 import { BlockProposalStatus } from "../apiClients/postgres/types.js";
 import { BrainDataBase } from "../db/index.js";
+import { isEmpty } from "lodash-es";
 
 const logPrefix = "[CRON - trackValidatorsPerformance]: ";
 
@@ -36,11 +37,10 @@ export async function trackValidatorsPerformance({
   minGenesisTime: number;
   secondsPerSlot: number;
 }): Promise<void> {
-  // get validator pubkeys
-  const validatorPubkeys = Object.keys(brainDb.getData());
-
-  // skip if no validator indexes
-  if (validatorPubkeys.length === 0) return;
+  // get brain db data
+  const brainDbData = brainDb.getData();
+  // skip if no validators
+  if (isEmpty(brainDbData)) return;
 
   const epochFinalized = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
   let newEpochFinalized = epochFinalized;
@@ -49,18 +49,29 @@ export async function trackValidatorsPerformance({
     try {
       logger.debug(`${logPrefix}Epoch finalized: ${epochFinalized}`);
 
-      // get validator indexes
-      // TODO: could be a better way to get the indexes? i.e store them in cache or brain DB
-      logger.debug(`${logPrefix}Getting validator indexes from pubkeys`);
-      const validatorIndexes = await Promise.all(
-        validatorPubkeys.map(
-          async (pubkey) => (await beaconchainApi.getStateValidator({ state: "finalized", pubkey })).data.index
-        )
-      );
+      // get validator indexes from brain db
+      const validatorIndexes: string[] = [];
+      const validatorPubkeysWithNoIndex: string[] = [];
+      // iterate over brain db data and push the indexes to the array
+      for (const [pubkey, details] of Object.entries(brainDbData)) {
+        if (details.index) validatorIndexes.push(details.index.toString());
+        else validatorPubkeysWithNoIndex.push(pubkey);
+      }
+
+      if (validatorPubkeysWithNoIndex.length > 0) {
+        logger.debug(`${logPrefix}Getting validator indexes from pubkeys`);
+        await Promise.all(
+          validatorPubkeysWithNoIndex.map(async (pubkey) => {
+            const index = (await beaconchainApi.getStateValidator({ state: "finalized", pubkey })).data.index;
+            validatorIndexes.push(index);
+            brainDb.updateValidators({ validators: { [pubkey]: { ...brainDbData[pubkey], index: parseInt(index) } } });
+          })
+        );
+      }
       logger.debug(`${logPrefix}Validator indexes: ${validatorIndexes}`);
 
       // get only active validators
-      logger.debug(`${logPrefix}$Getting active validators`);
+      logger.debug(`${logPrefix}Getting active validators`);
       const activeValidators = (
         await beaconchainApi.postStateValidators({
           body: {

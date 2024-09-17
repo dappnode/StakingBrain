@@ -96,7 +96,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Updates 1 or more public keys details from the database
+   * Updates 1 or more validators in db. The fields available to update are feeRecipient and index
    */
   public updateValidators({ validators }: { validators: StakingBrainDbUpdate }): void {
     try {
@@ -108,7 +108,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             // Remove pubkeys that don't exist
             logger.warn(`Pubkey ${pubkey} not found in the database`);
             delete validators[pubkey];
-          } else this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
+          } else {
+            this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
+            this.data[pubkey].index = validators[pubkey].index;
+          }
         }
 
       this.write();
