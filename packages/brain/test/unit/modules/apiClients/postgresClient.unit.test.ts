@@ -4,15 +4,10 @@ import { PostgresClient } from "../../../../src/modules/apiClients/index.js";
 
 describe.skip("Postgres client", function () {
   this.timeout(10 * 1000);
-  // change the dbUrl on demmand
-  const dbUrl = "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer";
-  const postgresClient = new PostgresClient(dbUrl);
-
   it("should initialize the database", async () => {
+    // change the dbUrl on demmand
+    const dbUrl = "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer";
+    const postgresClient = new PostgresClient(dbUrl);
     await postgresClient.initialize();
-  });
-
-  it("should delete the table", async () => {
-    await postgresClient.deleteDatabaseTable();
   });
 });

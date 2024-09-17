@@ -21,21 +21,6 @@ export class PostgresClient {
   }
 
   /**
-   * Delete database table.
-   */
-  public async deleteDatabaseTable() {
-    const query = `
-    DROP TABLE IF EXISTS ${this.tableName};
-  `;
-    try {
-      await this.sql.unsafe(query);
-      logger.info("Table deleted.");
-    } catch (err) {
-      logger.error("Error deleting table:", err);
-    }
-  }
-
-  /**
    * Initializes the database by creating the required table if it does not exist.
    * The table will have the following columns:
    * - validator_index: The index of the validator.
