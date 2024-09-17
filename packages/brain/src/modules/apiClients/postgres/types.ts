@@ -7,7 +7,7 @@ export enum BlockProposalStatus {
 export interface ValidatorPerformance {
   validatorIndex: number;
   epoch: number;
-  slot: number;
+  slot?: number;
   liveness?: boolean;
   blockProposalStatus?: BlockProposalStatus;
   syncCommitteeRewards?: number;

@@ -96,6 +96,7 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
   sendProofsOfValidation(signerApi, brainDb, dappnodeSignatureVerifierApi, shareDataWithDappnode)
 );
 proofOfValidationCron.start();
+// TODO: start cron within the first minute of the epoch
 const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
   // once every epoch
   trackValidatorsPerformance({ brainDb, postgresClient, beaconchainApi, minGenesisTime, secondsPerSlot })

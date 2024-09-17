@@ -111,7 +111,6 @@ export async function trackValidatorsPerformance({
         await postgresClient.insertPerformanceData({
           validatorIndex: parseInt(validatorIndex),
           epoch: epochFinalized,
-          slot: 1, // TODO: how to get the slot?
           blockProposalStatus: BlockProposalStatus.Missed, // TODO: how to get the block proposal status?
           attestationsRewards
         });

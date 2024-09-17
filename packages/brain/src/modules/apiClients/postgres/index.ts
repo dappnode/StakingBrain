@@ -45,7 +45,7 @@ export class PostgresClient {
     CREATE TABLE IF NOT EXISTS ${this.tableName} (
       validator_index BIGINT NOT NULL,
       epoch BIGINT NOT NULL,
-      slot BIGINT NOT NULL,
+      slot BIGINT,
       liveness BOOLEAN,
       block_proposal_status block_proposal_status,
       sync_comittee_rewards BIGINT,
@@ -78,7 +78,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       await this.sql.unsafe(query, [
         data.validatorIndex,
         data.epoch,
-        data.slot,
+        data.slot ?? null,
         data.liveness ?? null,
         data.blockProposalStatus ?? null,
         data.syncCommitteeRewards ?? null,
