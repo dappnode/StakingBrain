@@ -107,17 +107,15 @@ export async function trackValidatorsPerformance({
 
       // Get block proposal duties
       logger.debug(`${logPrefix}Getting block proposal duties for epoch ${epochFinalized}`);
-      const blockProposalsResponse = (
-        await beaconchainApi.getProposerDuties({
-          epoch: epochFinalized.toString(),
-        })
-      )
+      const blockProposalsResponse = await beaconchainApi.getProposerDuties({
+        epoch: epochFinalized.toString()
+      });
 
       // Map to store the block proposal status of each validator
       const validatorBlockStatus = new Map<string, BlockProposalStatus>();
 
       // Initialize all validator's status to Unchosen.
-      validatorIndexes.forEach(validatorIndex => {
+      validatorIndexes.forEach((validatorIndex) => {
         validatorBlockStatus.set(validatorIndex, BlockProposalStatus.Unchosen);
       });
 
@@ -130,7 +128,12 @@ export async function trackValidatorsPerformance({
             const blockHeader = await beaconchainApi.getBlockHeader({ blockId: slot });
             // Update status based on whether the validator in the block header matches the one supposed to propose
             // If the duty had a proposer index and it doesn't match with the header proposer index, we did something wrong, so we consider it as an error
-            validatorBlockStatus.set(validator_index, blockHeader.data.header.message.proposer_index == validator_index ? BlockProposalStatus.Proposed : BlockProposalStatus.Error);
+            validatorBlockStatus.set(
+              validator_index,
+              blockHeader.data.header.message.proposer_index == validator_index
+                ? BlockProposalStatus.Proposed
+                : BlockProposalStatus.Error
+            );
           } catch (error) {
             if (error.status === 404) {
               // Consensus clients return 404 a block was missed (there is no block for the slot)
@@ -158,7 +161,9 @@ export async function trackValidatorsPerformance({
 
         const blockProposalStatus = validatorBlockStatus.get(validatorIndex);
         if (!blockProposalStatus) {
-          logger.error(`${logPrefix}Missing block proposal data for validator ${validatorIndex}, block: ${blockProposalStatus}`);
+          logger.error(
+            `${logPrefix}Missing block proposal data for validator ${validatorIndex}, block: ${blockProposalStatus}`
+          );
           continue;
         }
 
