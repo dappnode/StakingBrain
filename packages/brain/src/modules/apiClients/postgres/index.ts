@@ -34,18 +34,25 @@ export class PostgresClient {
    */
   public async initialize() {
     const query = `
-CREATE TABLE IF NOT EXISTS validator_performance (
-    validator_index BIGINT NOT NULL,
-    epoch BIGINT NOT NULL,
-    slot BIGINT NOT NULL,
-    liveness BOOLEAN,
-    block_proposal_status ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}'),
-    sync_comittee_rewards BIGINT,
-    attestations_rewards JSONB,
-    error TEXT,
-    PRIMARY KEY (validator_index, epoch)
-);
-    `;
+    DO $$ 
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'block_proposal_status') THEN
+        CREATE TYPE block_proposal_status AS ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}');
+      END IF;
+    END $$;
+        
+    CREATE TABLE IF NOT EXISTS validators_performance (
+      validator_index BIGINT NOT NULL,
+      epoch BIGINT NOT NULL,
+      slot BIGINT NOT NULL,
+      liveness BOOLEAN,
+      block_proposal_status block_proposal_status,
+      sync_comittee_rewards BIGINT,
+      attestations_rewards JSONB,
+      error TEXT,
+      PRIMARY KEY (validator_index, epoch)
+    );
+  `;
     try {
       await this.sql.unsafe(query);
       logger.info("Table created or already exists.");
