@@ -12,7 +12,13 @@ import { startUiServer, startLaunchpadApi } from "./modules/apiServers/index.js"
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
-import { CronJob, reloadValidators, trackValidatorsPerformance, sendProofsOfValidation } from "./modules/cron/index.js";
+import {
+  CronJob,
+  reloadValidators,
+  trackValidatorsPerformance,
+  sendProofsOfValidation,
+  getSecondsToNextEpoch
+} from "./modules/cron/index.js";
 import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
 
@@ -96,12 +102,21 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
   sendProofsOfValidation(signerApi, brainDb, dappnodeSignatureVerifierApi, shareDataWithDappnode)
 );
 proofOfValidationCron.start();
-// TODO: start cron within the first minute of the epoch
 const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
   // once every epoch
   trackValidatorsPerformance({ brainDb, postgresClient, beaconchainApi, minGenesisTime, secondsPerSlot })
 );
-trackValidatorsPerformanceCron.start();
+const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
+// start the cron within the first minute of an epoch
+// If it remains more than 1 minute then wait for the next epoch, so wait the whole secondsToNextEpoch
+if (secondsToNextEpoch > 60)
+  setTimeout(
+    () => {
+      trackValidatorsPerformanceCron.start();
+    },
+    (secondsToNextEpoch + 10) * 1000
+  );
+else trackValidatorsPerformanceCron.start();
 
 // Graceful shutdown
 function handle(signal: string): void {

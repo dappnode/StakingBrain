@@ -122,8 +122,7 @@ export async function trackValidatorsPerformance({
       logger.error(`${logPrefix}Error occurred: ${error}. Updating epoch finalized and retrying in 1 minute`);
       // skip if the seconds to the next epoch is less than 1 minute
       const minuteInSeconds = 60;
-      const currentUnixTime = Math.floor(Date.now() / 1000);
-      const secondsToNextEpoch = getSecondsToNextEpoch({ currentUnixTime, minGenesisTime, secondsPerSlot });
+      const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
       if (secondsToNextEpoch < minuteInSeconds) {
         logger.warn(
           `${logPrefix}Seconds to the next epoch is less than 1 minute (${secondsToNextEpoch}). Skipping until next epoch`
@@ -144,19 +143,18 @@ export async function trackValidatorsPerformance({
 /**
  * Get the seconds to the start of the next epoch based on the current Unix time and the minimum genesis time of the chain.
  *
- * @param {number} currentUnixTime - Current Unix time in seconds.
  * @param {number} minGenesisTime - Minimum genesis time of the chain.
+ * @param {number} secondsPerSlot - Seconds per slot.
  * @returns {number} - Seconds to the start of the next epoch.
  */
-function getSecondsToNextEpoch({
-  currentUnixTime,
+export function getSecondsToNextEpoch({
   minGenesisTime,
   secondsPerSlot
 }: {
-  currentUnixTime: number;
   minGenesisTime: number;
   secondsPerSlot: number;
 }): number {
+  const currentUnixTime = Math.floor(Date.now() / 1000);
   const timeDifference = currentUnixTime - minGenesisTime; // Time difference in seconds
   const stlotsSinceGenesis = timeDifference / secondsPerSlot; // Slots since genesis
   const currentEpoch = Math.floor(stlotsSinceGenesis / 32); // Current epoch
