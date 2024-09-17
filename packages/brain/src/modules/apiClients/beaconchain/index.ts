@@ -271,21 +271,17 @@ export class BeaconchainApi extends StandardApi {
   }
 
   /**
-   * Retrieve block proposal duties for the specified epoch. This will return a list of 32 elements, each element corresponding to a slot in the epoch. 
+   * Retrieve block proposal duties for the specified epoch. This will return a list of 32 elements, each element corresponding to a slot in the epoch.
    * If the epoch requested is not yet finalized, a chain reorg is possible and the duties may change.
    *
    * @param epoch The epoch to get the proposer duties from
    * @see https://ethereum.github.io/beacon-APIs/#/Validator/getProposerDuties
    */
-  public async getProposerDuties({
-    epoch,
-  }: {
-    epoch: string;
-  }): Promise<BeaconchainProposerDutiesGetResponse> {
+  public async getProposerDuties({ epoch }: { epoch: string }): Promise<BeaconchainProposerDutiesGetResponse> {
     try {
       return await this.request({
         method: "GET",
-        endpoint: path.join(this.validatorEndpoint, "duties", "proposer", epoch),
+        endpoint: path.join(this.validatorEndpoint, "duties", "proposer", epoch)
       });
     } catch (e) {
       e.message += `Error getting (GET) proposer duties from beaconchain. `;
