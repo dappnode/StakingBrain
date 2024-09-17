@@ -27,6 +27,7 @@ export const luksoBrainConfig = (
     minGenesisTime: 1684856400, // Tuesday, 23 May 2023 15:40:00 GMT
     postgresUrl: "postgres://postgres:password@postgres.web3signer-lukso.dappnode:5432/web3signer",
     secondsPerSlot: 12,
+    slotsPerEpoch: 32,
     tlsCert: tlsCert(consensusClientSelected)
   };
 };

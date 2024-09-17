@@ -27,6 +27,7 @@ export const holeskyBrainConfig = (
     minGenesisTime: 1695902100, // Sep-28-2023 11:55:00 +UTC
     postgresUrl: "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer",
     secondsPerSlot: 12,
+    slotsPerEpoch: 32,
     tlsCert: tlsCert(consensusClientSelected)
   };
 };

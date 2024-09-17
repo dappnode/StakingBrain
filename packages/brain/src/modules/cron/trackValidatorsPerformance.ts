@@ -57,6 +57,7 @@ export async function trackValidatorsPerformance({
           async (pubkey) => (await beaconchainApi.getStateValidator({ state: "finalized", pubkey })).data.index
         )
       );
+      logger.debug(`${logPrefix}Validator indexes: ${validatorIndexes}`);
 
       // get only active validators
       logger.debug(`${logPrefix}$Getting active validators`);
@@ -69,6 +70,7 @@ export async function trackValidatorsPerformance({
           stateId: "finalized"
         })
       ).data.map((validator) => validator.index);
+      logger.debug(`${logPrefix}Active validators: ${activeValidators}`);
 
       if (activeValidators.length === 0) {
         logger.info(`${logPrefix}No active validators found`);
@@ -78,6 +80,7 @@ export async function trackValidatorsPerformance({
       // check node health
       logger.debug(`${logPrefix}Checking node health`);
       const { el_offline, is_syncing } = (await beaconchainApi.getSyncingStatus()).data;
+      logger.debug(`${logPrefix}EL Node offline: ${el_offline}, Node syncing: ${is_syncing}`);
       if (el_offline) throw Error("EL Node is offline");
       if (is_syncing) throw Error("Node is syncing");
 
@@ -89,6 +92,7 @@ export async function trackValidatorsPerformance({
           pubkeysOrIndexes: validatorIndexes
         })
       ).data.total_rewards;
+      logger.debug(`${logPrefix}Attestations rewards: ${JSON.stringify(validatorsAttestationsRewards)}`);
 
       // insert performance data
       for (const validatorIndex of validatorIndexes) {

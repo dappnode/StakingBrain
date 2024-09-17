@@ -1,7 +1,7 @@
 export enum BlockProposalStatus {
-  Missed = "missed",
-  Proposed = "proposed",
-  Unchosen = "unchosen"
+  Missed = "Missed",
+  Proposed = "Proposed",
+  Unchosen = "Unchosen"
 }
 
 export interface ValidatorPerformance {

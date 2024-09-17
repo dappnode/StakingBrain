@@ -27,6 +27,7 @@ export const praterBrainConfig = (
     minGenesisTime: 1614588812, // Mar-01-2021 08:53:32 AM +UTC
     postgresUrl: "postgres://postgres:password@postgres.web3signer-prater.dappnode:5432/web3signer",
     secondsPerSlot: 12,
+    slotsPerEpoch: 32,
     tlsCert: tlsCert(consensusClientSelected)
   };
 };

@@ -27,6 +27,7 @@ export const gnosisBrainConfig = (
     minGenesisTime: 1638968400, // Dec 8, 2021, 13:00 UTC
     postgresUrl: "postgres://postgres:gnosis@postgres.web3signer-gnosis.dappnode:5432/web3signer-gnosis",
     secondsPerSlot: 5,
+    slotsPerEpoch: 16,
     tlsCert: tlsCert(consensusClientSelected)
   };
 };
