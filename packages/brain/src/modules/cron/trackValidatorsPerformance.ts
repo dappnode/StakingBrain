@@ -150,7 +150,6 @@ export async function trackValidatorsPerformance({
           logger.error(`${logPrefix}Missing block proposal data for validator ${validatorIndex}, block: ${blockProposalStatus}`);
           continue;
         }
-        logger.debug(` blockProposalStatus: ${blockProposalStatus}`);
 
         // write on db
         logger.debug(`${logPrefix}Inserting performance data for validator ${validatorIndex}`);
