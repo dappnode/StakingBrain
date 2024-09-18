@@ -47,7 +47,7 @@ describe.skip("Validator API: Prater", () => {
     describe(`Consensus client: ${consensusClient.name}`, () => {
       let validatorApi: ValidatorApi;
 
-      before(() => {
+      function before(): void {
         const consensusIp = execSync(
           `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${consensusClient.containerName}`
         )
@@ -60,7 +60,8 @@ describe.skip("Validator API: Prater", () => {
           },
           stakerSpecs.network
         );
-      });
+      }
+      before();
 
       it("Should post validators", async () => {
         const response = await validatorApi.postRemoteKeys({
