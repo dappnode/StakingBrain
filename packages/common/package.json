@@ -9,7 +9,7 @@
     "dev": "tsc -w",
     "build": "tsc -p tsconfig.json",
     "test": "yarn run test:unit",
-    "test:unit": "mocha -r dotenv/config --exit --recursive 'test/**/*.unit.test.ts'"
+    "test:unit": "node --test --import tsx test/**/*.unit.test.ts"
   },
   "devDependencies": {
     "@types/sinon": "^10.0.13",

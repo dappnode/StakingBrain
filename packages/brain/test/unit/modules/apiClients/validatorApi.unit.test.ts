@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { before } from "mocha";
+import { describe, it } from "node:test";
 import { ValidatorApi } from "../../../../src/modules/apiClients/index.js";
 import { execSync } from "node:child_process";
 import { Network } from "@stakingbrain/common";

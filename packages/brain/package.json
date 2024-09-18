@@ -7,7 +7,7 @@
   "types": "dist/types.d.ts",
   "scripts": {
     "test": "yarn run test:unit",
-    "test:unit": "mocha --exit --recursive 'test/**/*.unit.test.ts'",
+    "test:unit": "node --test --import tsx test/**/*.unit.test.ts",
     "dev": "yarn run link:ui && tsx --watch src/index.ts",
     "link:ui": "ln -s ../ui/build/ ./uiBuild",
     "build": "yarn run clean:dist && yarn run clean:ln && tsc -p tsconfig.json",
@@ -32,9 +32,7 @@
     "@types/express": "^4.17.15",
     "@types/lodash-es": "^4.17.12",
     "@types/lowdb": "^1.0.15",
-    "@types/mocha": "^10.0.7",
     "@types/sinon": "^10.0.13",
-    "mocha": "^10.7.3",
     "rimraf": "^4.1.1",
     "sinon": "^15.0.1",
     "typescript": "^5.5.4"

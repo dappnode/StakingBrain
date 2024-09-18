@@ -1,4 +1,5 @@
 import { isValidNonWithdrawableBlsAddress, isValidWithdrawableBlsAddress } from "../../../src/utils/index.js";
+import { describe, it } from "node:test";
 import { expect } from "chai";
 
 describe("isValidWithdrawableBlsAddress", () => {

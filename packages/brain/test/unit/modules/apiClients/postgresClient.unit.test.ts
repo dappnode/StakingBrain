@@ -1,4 +1,5 @@
 import { PostgresClient } from "../../../../src/modules/apiClients/index.js";
+import { describe, it } from "node:test";
 
 // This test must be executed with a real database connection
 

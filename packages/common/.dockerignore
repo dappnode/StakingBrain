@@ -3,6 +3,5 @@ node_modules
 .eslintignore
 .eslintrc
 .gitignore
-.mocharc.yaml
 .prettierrc
 tests

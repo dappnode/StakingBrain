@@ -1,5 +1,5 @@
+import { describe, it } from "node:test";
 import { expect } from "chai";
-import { before } from "mocha";
 import path from "path";
 import fs from "fs";
 import { execSync } from "node:child_process";
@@ -20,7 +20,7 @@ describe.skip("Signer API: Prater", () => {
   const host = "web3signer.web3signer-prater.dappnode";
   let signerApi: Web3SignerApi;
 
-  before(() => {
+  function before(): void {
     // Get consensus client IP
     const signerIp = execSync(
       `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${signerContainerName}`
@@ -34,9 +34,11 @@ describe.skip("Signer API: Prater", () => {
       },
       Network.Prater
     );
-  });
+  }
 
-  it("Should post validators", async () => {
+  before();
+
+  it("Should post validators", { timeout: 5000 }, async () => {
     const keystoresPaths = fs.readdirSync(keystoresPath).filter((file) => file.endsWith(".json"));
     const keystores = keystoresPaths.map((file) => fs.readFileSync(path.join(keystoresPath, file)).toString());
     const passwords = Array(keystores.length).fill("stakingbrain");
@@ -47,7 +49,7 @@ describe.skip("Signer API: Prater", () => {
     });
 
     expect(response.data).to.be.an("array");
-  }).timeout(10000);
+  });
 
   it("Should get validators", async () => {
     const response = await signerApi.listRemoteKeys();

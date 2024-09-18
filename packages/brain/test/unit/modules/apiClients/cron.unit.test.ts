@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { before } from "mocha";
+import { describe, it } from "node:test";
 import { ValidatorApi, Web3SignerApi } from "../../../../src/modules/apiClients/index.js";
 import { execSync } from "node:child_process";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
@@ -69,7 +69,7 @@ describe.skip("Cron: Prater", () => {
 
       const host = "web3signer.web3signer-prater.dappnode";
 
-      before(() => {
+      function before(): void {
         const consensusIp = execSync(
           `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${consensusClient.containerName}`
         )
@@ -99,11 +99,10 @@ describe.skip("Cron: Prater", () => {
 
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);
-      });
+      }
+      before();
 
-      beforeEach(async function () {
-        this.timeout(40000);
-
+      async function beforeEach(): Promise<void> {
         console.log("Cleaning DB, validator and signer");
 
         //Clean DB
@@ -114,9 +113,10 @@ describe.skip("Cron: Prater", () => {
 
         //Clean signer
         await signerApi.deleteRemoteKeys({ pubkeys });
-      });
+      }
 
-      it("Should post fee recipient in DB to validator", async () => {
+      it("Should post fee recipient in DB to validator", { timeout: 3000 }, async () => {
+        await beforeEach();
         await addSampleValidatorsToAllSources(1);
 
         const pubkeyToTest = pubkeys[0];
@@ -138,9 +138,10 @@ describe.skip("Cron: Prater", () => {
 
         expect(validatorFeeRecipient.data.ethaddress).to.be.equal(feeRecipient);
         expect(validatorFeeRecipient.data.ethaddress).to.be.equal(feeRecipient);
-      }).timeout(15000);
+      });
 
-      it("Should remove 1 keystore from signer to match pubkeys in DB", async () => {
+      it("Should remove 1 keystore from signer to match pubkeys in DB", { timeout: 3000 }, async () => {
+        await beforeEach();
         addSampleValidatorsToDB(1);
         await addSampleKeystoresToSigner(2);
 
@@ -153,9 +154,10 @@ describe.skip("Cron: Prater", () => {
         expect(dbPubkeys.length).to.be.equal(1);
 
         expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(dbPubkeys[0]);
-      }).timeout(15000);
+      });
 
-      it("Should remove 1 keystore from DB to match keystores in signer", async () => {
+      it("Should remove 1 keystore from DB to match keystores in signer", { timeout: 3000 }, async () => {
+        await beforeEach();
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(1);
 
@@ -168,25 +170,31 @@ describe.skip("Cron: Prater", () => {
         expect(dbPubkeys.length).to.be.equal(1);
 
         expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(dbPubkeys[0]);
-      }).timeout(15000);
+      });
 
-      it("Should remove all the pubkeys in DB and keystores in signer to match each other", async () => {
-        addSampleValidatorsToDB(2);
-        await addSampleKeystoresToSigner(2);
+      it(
+        "Should remove all the pubkeys in DB and keystores in signer to match each other",
+        { timeout: 3000 },
+        async () => {
+          await beforeEach();
+          addSampleValidatorsToDB(2);
+          await addSampleKeystoresToSigner(2);
 
-        brainDb.deleteValidators([pubkeys[0]]);
-        await signerApi.deleteRemoteKeys({ pubkeys: [pubkeys[1]] });
+          brainDb.deleteValidators([pubkeys[0]]);
+          await signerApi.deleteRemoteKeys({ pubkeys: [pubkeys[1]] });
 
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+          await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
 
-        const signerPubkeys = await signerApi.listRemoteKeys();
-        const dbPubkeys = Object.keys(brainDb.getData());
+          const signerPubkeys = await signerApi.listRemoteKeys();
+          const dbPubkeys = Object.keys(brainDb.getData());
 
-        expect(signerPubkeys.data.length).to.be.equal(0);
-        expect(dbPubkeys.length).to.be.equal(0);
-      }).timeout(15000);
+          expect(signerPubkeys.data.length).to.be.equal(0);
+          expect(dbPubkeys.length).to.be.equal(0);
+        }
+      );
 
-      it("Should keep all the keystores in the signer and the pubkeys in the DB", async () => {
+      it("Should keep all the keystores in the signer and the pubkeys in the DB", { timeout: 3000 }, async () => {
+        await beforeEach();
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(2);
 
@@ -201,9 +209,10 @@ describe.skip("Cron: Prater", () => {
         //Expect the same pubkeys in both sources (could not be in the same order)
         expect(signerPubkeys.data[0].validating_pubkey).to.be.oneOf(dbPubkeys);
         expect(signerPubkeys.data[1].validating_pubkey).to.be.oneOf(dbPubkeys);
-      }).timeout(15000);
+      });
 
-      it("Should delete all pubkeys from validator with empty DB", async () => {
+      it("Should delete all pubkeys from validator with empty DB", { timeout: 3000 }, async () => {
+        await beforeEach();
         await addSamplePubkeysToValidator(1);
 
         console.log("Added pubkeys to validator");
@@ -217,9 +226,10 @@ describe.skip("Cron: Prater", () => {
         console.log("Got validator pubkeys");
 
         expect(validatorPubkeys.data.length).to.be.equal(0);
-      }).timeout(50000);
+      });
 
-      it("Should add the pubkeys in the DB to the validator", async () => {
+      it("Should add the pubkeys in the DB to the validator", { timeout: 3000 }, async () => {
+        await beforeEach();
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(2);
 
@@ -234,7 +244,7 @@ describe.skip("Cron: Prater", () => {
         //Expect the same pubkeys in both sources (could not be in the same order)
         expect(validatorPubkeys.data[0].pubkey).to.be.oneOf(pubkeysToTest);
         expect(validatorPubkeys.data[1].pubkey).to.be.oneOf(pubkeysToTest);
-      }).timeout(15000);
+      });
 
       // AUXILIARY FUNCTIONS //
 
