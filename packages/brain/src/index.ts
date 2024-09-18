@@ -108,14 +108,8 @@ const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlo
 );
 const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
 // start the cron within the first minute of an epoch
-// If it remains more than 1 minute + 10 seconds of margin then wait for the next epoch, so wait the whole secondsToNextEpoch
-if (secondsToNextEpoch > 60)
-  setTimeout(
-    () => {
-      trackValidatorsPerformanceCron.start();
-    },
-    (secondsToNextEpoch + 10) * 1000
-  );
+// If it remains more than 1 minute then wait for the next epoch (+ 10 seconds of margin)
+if (secondsToNextEpoch > 60) setTimeout(() => trackValidatorsPerformanceCron.start(), (secondsToNextEpoch + 10) * 1000);
 else trackValidatorsPerformanceCron.start();
 
 // Graceful shutdown
