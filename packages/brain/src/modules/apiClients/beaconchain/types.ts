@@ -39,6 +39,15 @@ export interface BeaconchainSyncingStatusGetResponse {
   };
 }
 
+export interface TotalRewards {
+  validator_index: string;
+  head: string;
+  target: string;
+  source: string;
+  inclusion_delay: string;
+  inactivity: string;
+}
+
 export interface BeaconchainAttestationRewardsPostResponse {
   execution_optimistic: boolean;
   finalized: boolean;
@@ -51,14 +60,7 @@ export interface BeaconchainAttestationRewardsPostResponse {
       inclusion_delay: string;
       inactivity: string;
     }[];
-    total_rewards: {
-      validator_index: string;
-      head: string;
-      target: string;
-      source: string;
-      inclusion_delay: string;
-      inactivity: string;
-    }[];
+    total_rewards: TotalRewards[];
   };
 }
 
