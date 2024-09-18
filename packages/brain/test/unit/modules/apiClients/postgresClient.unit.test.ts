@@ -12,6 +12,11 @@ describe.skip("Postgres client", function () {
     await postgresClient.initialize();
   });
 
+  it("should get table size", async () => {
+    const tableSize = await postgresClient.getTableSize();
+    console.log("Table size: ", tableSize);
+  });
+
   it("should delete the table", async () => {
     await postgresClient.deleteDatabaseTable();
   });

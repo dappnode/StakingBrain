@@ -21,6 +21,22 @@ export class PostgresClient {
   }
 
   /**
+   * Get table size from the database in bytes.
+   */
+  public async getTableSize(): Promise<number> {
+    const query = `
+SELECT pg_total_relation_size('${this.tableName}');
+    `;
+    try {
+      const result = await this.sql.unsafe(query);
+      return result[0].pg_total_relation_size;
+    } catch (err) {
+      err.message = "Error getting table size: " + err.message;
+      throw err;
+    }
+  }
+
+  /**
    * Initializes the database by creating the required table if it does not exist.
    * The table will have the following columns:
    * - validator_index: The index of the validator.
