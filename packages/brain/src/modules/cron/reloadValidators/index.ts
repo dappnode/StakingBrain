@@ -5,6 +5,7 @@ import { deleteDbPubkeysNotInSigner } from "./deleteDbPubkeysNotInSigner.js";
 import { deleteSignerPubkeysNotInDb } from "./deleteSignerPubkeysNotInDb.js";
 import { deleteValidatorPubkeysNotInDB } from "./deleteValidatorPubkeysNotInDb.js";
 import { getValidatorsFeeRecipients } from "./getValidatorsFeeRecipients.js";
+import { logPrefix } from "./logPrefix.js";
 import { postValidatorPubkeysFromDb } from "./postValidatorPubkeysFromDb.js";
 import { postValidatorsFeeRecipientsFromDb } from "./postValidatorsFeeRecipientsFromDb.js";
 
@@ -25,7 +26,7 @@ export async function reloadValidators(
   brainDb: BrainDataBase
 ): Promise<void> {
   try {
-    logger.debug(`Reloading data...`);
+    logger.debug(`${logPrefix}Reloading data...`);
 
     // 0. GET status
     const signerApiStatus = await signerApi.getStatus();
@@ -35,7 +36,7 @@ export async function reloadValidators(
     // Status can be "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
     if (signerApiStatus.status !== "UP") {
       logger.warn(
-        `Web3Signer is ${signerApiStatus.status}. Skipping data reload until Web3Signer is UP. Trying again in next jobexecution`
+        `${logPrefix}Web3Signer is ${signerApiStatus.status}. Skipping data reload until Web3Signer is UP. Trying again in next jobexecution`
       );
       return;
     }
@@ -77,7 +78,7 @@ export async function reloadValidators(
       })
     });
 
-    logger.debug(`Finished reloading data`);
+    logger.debug(`${logPrefix}Finished reloading data`);
   } catch (e) {
     if (e instanceof ApiError && e.code) {
       switch (e.code) {
@@ -98,9 +99,9 @@ export async function reloadValidators(
           break;
       }
 
-      logger.error(`Error reloading data`, e);
+      logger.error(`${logPrefix}Error reloading data`, e);
     } else {
-      logger.error(`Unknown error reloading data`, e);
+      logger.error(`${logPrefix}Unknown error reloading data`, e);
     }
   }
 }

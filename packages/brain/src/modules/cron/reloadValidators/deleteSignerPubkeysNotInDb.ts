@@ -1,5 +1,6 @@
 import { Web3SignerApi } from "../../apiClients/index.js";
 import logger from "../../logger/index.js";
+import { logPrefix } from "./logPrefix.js";
 
 /**
  * Delete from the validator API the pubkeys that are in the validator API and not in the DB
@@ -16,7 +17,7 @@ export async function deleteSignerPubkeysNotInDb({
   const signerPubkeysToRemove = signerPubkeys.filter((pubkey) => !dbPubkeys.includes(pubkey));
 
   if (signerPubkeysToRemove.length > 0) {
-    logger.debug(`Found ${signerPubkeysToRemove.length} validators to remove from signer`);
+    logger.debug(`${logPrefix}Found ${signerPubkeysToRemove.length} validators to remove from signer`);
 
     const signerDeleteResponse = await signerApi.deleteRemoteKeys({
       pubkeys: signerPubkeysToRemove
@@ -28,7 +29,7 @@ export async function deleteSignerPubkeysNotInDb({
         signerPubkeys.splice(signerPubkeys.indexOf(pubkeyToRemove), 1);
       else
         logger.error(
-          `Error deleting pubkey ${pubkeyToRemove} from signer API: ${signerDeleteResponse.data[index].message}`
+          `${logPrefix}Error deleting pubkey ${pubkeyToRemove} from signer API: ${signerDeleteResponse.data[index].message}`
         );
     }
   }

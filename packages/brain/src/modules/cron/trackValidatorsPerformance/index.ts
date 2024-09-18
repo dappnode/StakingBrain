@@ -10,6 +10,8 @@ import { getActiveValidators } from "./getActiveValidators.js";
 import { logPrefix } from "./logPrefix.js";
 import { getValidatorIndexesAndSaveInDb } from "./getValidatorIndexesAndSaveInDb.js";
 
+const MINUTE_IN_SECONDS = 60;
+
 // TODO: at this moment Lighthouse client does not support retrieving:
 // - liveness of validator from finalized epoch:
 // ```400: BAD_REQUEST: request epoch 79833 is more than one epoch from the current epoch 79835```
@@ -53,12 +55,12 @@ export async function trackValidatorsPerformance({
         logger.debug(`${logPrefix}Validator indexes: ${validatorIndexes}`);
 
         // active validators
-        const activeValidators = await getActiveValidators({ beaconchainApi, validatorIndexes });
-        if (activeValidators.length === 0) {
+        const activeValidatorsIndexes = await getActiveValidators({ beaconchainApi, validatorIndexes });
+        if (activeValidatorsIndexes.length === 0) {
           logger.info(`${logPrefix}No active validators found`);
           return;
         }
-        logger.debug(`${logPrefix}Active validators: ${activeValidators}`);
+        logger.debug(`${logPrefix}Active validators: ${activeValidatorsIndexes}`);
 
         // check node health
         await checkNodeHealth({ beaconchainApi });
@@ -67,7 +69,7 @@ export async function trackValidatorsPerformance({
         const validatorsAttestationsRewards = await getAttestationsTotalRewards({
           beaconchainApi,
           epoch: epochFinalized.toString(),
-          validatorIndexes: activeValidators
+          validatorIndexes: activeValidatorsIndexes
         });
         logger.debug(`${logPrefix}Attestations rewards: ${JSON.stringify(validatorsAttestationsRewards)}`);
 
@@ -75,14 +77,14 @@ export async function trackValidatorsPerformance({
         const validatorBlockStatus = await getBlockProposalStatusMap({
           beaconchainApi,
           epoch: epochFinalized.toString(),
-          validatorIndexes
+          validatorIndexes: activeValidatorsIndexes
         });
         logger.debug(`${logPrefix}Block proposal status map: ${JSON.stringify([...validatorBlockStatus])}`);
 
         // insert performance data
         await insertPerformanceData({
           postgresClient,
-          validatorIndexes: activeValidators,
+          validatorIndexes: activeValidatorsIndexes,
           epochFinalized,
           validatorBlockStatus,
           validatorsAttestationsRewards
@@ -92,19 +94,22 @@ export async function trackValidatorsPerformance({
         return;
       } catch (error) {
         logger.error(`${logPrefix}Error occurred: ${error}. Updating epoch finalized and retrying in 1 minute`);
+
         // skip if the seconds to the next epoch is less than 1 minute
-        const minuteInSeconds = 60;
         const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
-        if (secondsToNextEpoch < minuteInSeconds) {
+        if (secondsToNextEpoch < MINUTE_IN_SECONDS) {
           logger.warn(
             `${logPrefix}Seconds to the next epoch is less than 1 minute (${secondsToNextEpoch}). Skipping until next epoch`
           );
           return;
         }
-        // wait 1 minute without blocking the event loop
-        await new Promise((resolve) => setTimeout(resolve, minuteInSeconds * 1000));
-        // update epoch finalized
-        newEpochFinalized = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+        // wait 1 minute without blocking the event loop and update epoch finalized
+        newEpochFinalized = await new Promise((resolve) =>
+          setTimeout(
+            async () => resolve(await beaconchainApi.getEpochHeader({ blockId: "finalized" })),
+            MINUTE_IN_SECONDS * 1000
+          )
+        );
       }
     }
 
@@ -112,7 +117,7 @@ export async function trackValidatorsPerformance({
       `${logPrefix}Epoch finalized changed: ${newEpochFinalized}, finished tracking performance for epoch ${epochFinalized}`
     );
   } catch (e) {
-    logger.error(`Error in trackValidatorsPerformance: ${e}`);
+    logger.error(`${logPrefix}Error in trackValidatorsPerformance: ${e}`);
     return;
   }
 }

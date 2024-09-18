@@ -5,7 +5,9 @@ import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
 
 /**
- * Insert the performance data for the validators in the Postgres DB.
+ * Insert the performance data for the validators in the Postgres DB. On any error
+ * inserting the performance of a validator, the error will be logged and the process will continue
+ * with the next validator.
  *
  * @param postgresClient - Postgres client to interact with the DB.
  * @param validatorIndexes - Array of validator indexes.
@@ -47,11 +49,16 @@ export async function insertPerformanceData({
 
     // write on db
     logger.debug(`${logPrefix}Inserting performance data for validator ${validatorIndex}`);
-    await postgresClient.insertPerformanceData({
-      validatorIndex: parseInt(validatorIndex),
-      epoch: epochFinalized,
-      blockProposalStatus: blockProposalStatus,
-      attestationsRewards
-    });
+    try {
+      await postgresClient.insertPerformanceData({
+        validatorIndex: parseInt(validatorIndex),
+        epoch: epochFinalized,
+        blockProposalStatus: blockProposalStatus,
+        attestationsRewards
+      });
+    } catch (e) {
+      logger.error(`${logPrefix}Error inserting performance data for validator ${validatorIndex}: ${e}`);
+      continue;
+    }
   }
 }

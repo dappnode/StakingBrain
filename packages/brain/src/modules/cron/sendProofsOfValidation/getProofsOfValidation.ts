@@ -7,6 +7,7 @@ import {
 } from "../../apiClients/types.js";
 import { BrainDataBase } from "../../db/index.js";
 import logger from "../../logger/index.js";
+import { logPrefix } from "./logPrefix.js";
 
 /**
  * Get the proofs of validation from the signer
@@ -47,7 +48,7 @@ export async function getProofsOfValidation(
           tag: dbPubkeysDetailsFiltered[pubkey].tag
         };
       } catch (e) {
-        logger.error(`Error getting proof of validation for pubkey ${pubkey}. Error: ${e.message}`);
+        logger.error(`${logPrefix}Error getting proof of validation for pubkey ${pubkey}. Error: ${e.message}`);
         return null;
       }
     })
