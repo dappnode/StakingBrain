@@ -38,7 +38,7 @@ describe.skip("Signer API: Prater", () => {
 
   before();
 
-  it("Should post validators", { timeout: 5000 }, async () => {
+  it("Should post validators", async () => {
     const keystoresPaths = fs.readdirSync(keystoresPath).filter((file) => file.endsWith(".json"));
     const keystores = keystoresPaths.map((file) => fs.readFileSync(path.join(keystoresPath, file)).toString());
     const passwords = Array(keystores.length).fill("stakingbrain");

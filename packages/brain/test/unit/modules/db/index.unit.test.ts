@@ -24,7 +24,7 @@ describe("DataBase", () => {
     /**
      * Should do migration if the database file is not found
      */
-    it.skip("Should do migration if database file not found", { timeout: 5000 }, async () => {
+    it.skip("Should do migration if database file not found", async () => {
       setup();
       const expectedDb = {
         "0x821a80380122281580ba8a56cd21956933d43c62fdc8f5b4ec31b2c620e8534e80b6b816c9a2cc8d25568dc4ebcfd47a": {
@@ -105,7 +105,7 @@ describe("DataBase", () => {
     /**
      * Create a new empty database if migration fails
      */
-    it("Should create a new empty database if migration fails", { timeout: 10000 }, async () => {
+    it("Should create a new empty database if migration fails", async () => {
       setup();
       const db = new BrainDataBase(testDbName);
       async function databaseMigration(): Promise<void> {

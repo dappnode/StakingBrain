@@ -115,7 +115,7 @@ describe.skip("Cron: Prater", () => {
         await signerApi.deleteRemoteKeys({ pubkeys });
       }
 
-      it("Should post fee recipient in DB to validator", { timeout: 3000 }, async () => {
+      it("Should post fee recipient in DB to validator", async () => {
         await beforeEach();
         await addSampleValidatorsToAllSources(1);
 
@@ -140,7 +140,7 @@ describe.skip("Cron: Prater", () => {
         expect(validatorFeeRecipient.data.ethaddress).to.be.equal(feeRecipient);
       });
 
-      it("Should remove 1 keystore from signer to match pubkeys in DB", { timeout: 3000 }, async () => {
+      it("Should remove 1 keystore from signer to match pubkeys in DB", async () => {
         await beforeEach();
         addSampleValidatorsToDB(1);
         await addSampleKeystoresToSigner(2);
@@ -156,7 +156,7 @@ describe.skip("Cron: Prater", () => {
         expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(dbPubkeys[0]);
       });
 
-      it("Should remove 1 keystore from DB to match keystores in signer", { timeout: 3000 }, async () => {
+      it("Should remove 1 keystore from DB to match keystores in signer", async () => {
         await beforeEach();
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(1);
@@ -172,28 +172,24 @@ describe.skip("Cron: Prater", () => {
         expect(signerPubkeys.data[0].validating_pubkey).to.be.equal(dbPubkeys[0]);
       });
 
-      it(
-        "Should remove all the pubkeys in DB and keystores in signer to match each other",
-        { timeout: 3000 },
-        async () => {
-          await beforeEach();
-          addSampleValidatorsToDB(2);
-          await addSampleKeystoresToSigner(2);
+      it("Should remove all the pubkeys in DB and keystores in signer to match each other", async () => {
+        await beforeEach();
+        addSampleValidatorsToDB(2);
+        await addSampleKeystoresToSigner(2);
 
-          brainDb.deleteValidators([pubkeys[0]]);
-          await signerApi.deleteRemoteKeys({ pubkeys: [pubkeys[1]] });
+        brainDb.deleteValidators([pubkeys[0]]);
+        await signerApi.deleteRemoteKeys({ pubkeys: [pubkeys[1]] });
 
-          await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
 
-          const signerPubkeys = await signerApi.listRemoteKeys();
-          const dbPubkeys = Object.keys(brainDb.getData());
+        const signerPubkeys = await signerApi.listRemoteKeys();
+        const dbPubkeys = Object.keys(brainDb.getData());
 
-          expect(signerPubkeys.data.length).to.be.equal(0);
-          expect(dbPubkeys.length).to.be.equal(0);
-        }
-      );
+        expect(signerPubkeys.data.length).to.be.equal(0);
+        expect(dbPubkeys.length).to.be.equal(0);
+      });
 
-      it("Should keep all the keystores in the signer and the pubkeys in the DB", { timeout: 3000 }, async () => {
+      it("Should keep all the keystores in the signer and the pubkeys in the DB", async () => {
         await beforeEach();
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(2);
@@ -211,7 +207,7 @@ describe.skip("Cron: Prater", () => {
         expect(signerPubkeys.data[1].validating_pubkey).to.be.oneOf(dbPubkeys);
       });
 
-      it("Should delete all pubkeys from validator with empty DB", { timeout: 3000 }, async () => {
+      it("Should delete all pubkeys from validator with empty DB", async () => {
         await beforeEach();
         await addSamplePubkeysToValidator(1);
 
@@ -228,7 +224,7 @@ describe.skip("Cron: Prater", () => {
         expect(validatorPubkeys.data.length).to.be.equal(0);
       });
 
-      it("Should add the pubkeys in the DB to the validator", { timeout: 3000 }, async () => {
+      it("Should add the pubkeys in the DB to the validator", async () => {
         await beforeEach();
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(2);
