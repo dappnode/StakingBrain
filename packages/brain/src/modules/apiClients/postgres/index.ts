@@ -1,6 +1,7 @@
 import postgres from "postgres";
 import logger from "../../logger/index.js";
 import { BlockProposalStatus, ValidatorPerformance } from "./types.js";
+import { PostgresApiError } from "./error.js";
 
 export class PostgresClient {
   private readonly tableName = "validators_performance";
@@ -32,7 +33,7 @@ SELECT pg_total_relation_size('${this.tableName}');
       return result[0].pg_total_relation_size;
     } catch (err) {
       err.message = "Error getting table size: " + err.message;
-      throw err;
+      throw new PostgresApiError({ ...err });
     }
   }
 

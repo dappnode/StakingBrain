@@ -1,5 +1,6 @@
 import { StandardApi } from "../standard.js";
 import { BeaconchaGetResponse } from "./types.js";
+import { BlockExplorerApiError } from "./error.js";
 
 const maxValidatorsPerRequest = 100; //For beaconcha.in --> TODO: is it the same for Gnosis?
 
@@ -44,7 +45,7 @@ export class BlockExplorerApi extends StandardApi {
       })) as BeaconchaGetResponse;
     } catch (e) {
       e.message += "Error on getting indexes for validator public keys";
-      throw e;
+      throw new BlockExplorerApiError({ ...e });
     }
   }
 }

@@ -1,6 +1,6 @@
 import https from "node:https";
 import http from "node:http";
-import { ApiError } from "./error.js";
+import { ApiError } from "../errors/index.js";
 import logger from "../logger/index.js";
 import type { ApiParams, AllowedMethods, ErrnoException } from "./types.js";
 import type { Network } from "@stakingbrain/common";
@@ -73,13 +73,7 @@ export class StandardApi {
     if (timeout) {
       req.setTimeout(timeout, () => {
         const error = new ApiError({
-          name: "TimeoutError",
-          message: `Request to ${endpoint} timed out.`,
-          errno: -1,
-          code: "ETIMEDOUT",
-          path: endpoint,
-          syscall: method,
-          hostname: this.requestOptions.hostname || undefined
+          message: `Request to ${endpoint} timed out`
         });
         req.destroy(error);
       });
@@ -103,23 +97,12 @@ export class StandardApi {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolve: (data?: any) => void | string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        reject: (error: any) => void | ApiError
+        reject: (error: any) => void | typeof ApiError
       ) => {
         req.on("error", (e: ErrnoException) => {
-          // an error might have the following format
-          // {"bytesParsed":0,"code":"HPE_INVALID_CONSTANT","reason":"Expected HTTP/","rawPacket":{"type":"Buffer","data":[21,3,3,0,2,2,80]}}
-
           reject(
             new ApiError({
-              name: e.name || "Standard ApiError",
-              message: `Request to ${endpoint} failed with status code ${e.code}: ${e.message}. `,
-              errno: e.errno || -1,
-              code: e.code || "UNKNOWN",
-              path: endpoint,
-              syscall: method,
-              hostname: this.requestOptions.hostname || undefined,
-              address: e.address,
-              port: e.port
+              message: `Request to ${endpoint} failed with status code ${e.code}: ${e.message}. `
             })
           );
         });
@@ -141,7 +124,7 @@ export class StandardApi {
                   else resolve(Buffer.concat(data).toString());
                 } catch (e) {
                   logger.error(
-                    `Error parsing response from ${this.requestOptions.hostname} ${endpoint} ${e.message}`,
+                    `Error parsing response from ${this.requestOptions.hostname} ${endpoint} ${e.message}. Considering the response as text`,
                     e
                   );
                   resolve(Buffer.concat(data).toString());
@@ -164,13 +147,7 @@ export class StandardApi {
 
               reject(
                 new ApiError({
-                  name: "Standard ApiError",
-                  message: `Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `,
-                  errno: res.statusCode,
-                  code: "ERR_HTTP",
-                  path: endpoint,
-                  syscall: method,
-                  hostname: this.requestOptions.hostname || undefined
+                  message: `Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `
                 })
               );
             }
@@ -178,15 +155,7 @@ export class StandardApi {
           res.on("error", (e: ErrnoException) => {
             reject(
               new ApiError({
-                name: e.name || "Standard ApiError",
-                message: `${e.message}. `,
-                errno: e.errno || -1,
-                code: e.code || "UNKNOWN",
-                path: endpoint,
-                syscall: method,
-                hostname: this.requestOptions.hostname || undefined,
-                address: e.address,
-                port: e.port
+                message: `${e.message}. `
               })
             );
           });
@@ -194,4 +163,16 @@ export class StandardApi {
       }
     );
   }
+}
+
+// Utility to append help message to error depending on error code
+export function appendHelpMessage(errorMessage: string, errorCode: string, errno?: string, hostname?: string): string {
+  if (errorCode === "ECONNREFUSED")
+    errorMessage += `Connection refused by the server ${hostname}. Make sure the port is open and the server is running`;
+  else if (errorCode === "ECONNRESET") errorMessage += `Connection reset by the server ${hostname}, check server logs`;
+  else if (errorCode === "ENOTFOUND")
+    errorMessage += `Host ${hostname} not found. Make sure the server is running and the hostname is correct`;
+  else if (errorCode === "ERR_HTTP") errorMessage += `HTTP error code ${errno}`;
+
+  return errorMessage;
 }

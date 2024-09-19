@@ -13,6 +13,7 @@ import {
 import { StandardApi } from "../standard.js";
 import path from "node:path";
 import { prefix0xPubkey } from "../prefix0xPubkey.js";
+import { SignerApiError } from "./error.js";
 
 /**
  * Key Manager API standard
@@ -72,7 +73,7 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. `;
-      throw e;
+      throw new SignerApiError({ ...e });
     }
   }
 
@@ -99,7 +100,7 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error signing (POST) proof of validation for validator ${pubkey}. `;
-      throw e;
+      throw new SignerApiError({ ...e });
     }
   }
 
@@ -118,7 +119,7 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error importing (POST) keystores to remote signer. `;
-      throw e;
+      throw new SignerApiError({ ...e });
     }
   }
 
@@ -141,7 +142,7 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error deleting (DELETE) keystores from remote signer. `;
-      throw e;
+      throw new SignerApiError({ ...e });
     }
   }
 
@@ -158,7 +159,7 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) keystores from remote signer. `;
-      throw e;
+      throw new SignerApiError({ ...e });
     }
   }
 
@@ -175,7 +176,7 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) server status. Is Web3Signer running? `;
-      throw e;
+      throw new SignerApiError({ ...e });
     }
   }
 }

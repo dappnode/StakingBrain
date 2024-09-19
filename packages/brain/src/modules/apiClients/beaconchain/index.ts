@@ -19,6 +19,7 @@ import { StandardApi } from "../standard.js";
 import path from "path";
 import { ApiParams } from "../types.js";
 import { Network } from "@stakingbrain/common";
+import { BeaconchainApiError } from "./error.js";
 
 // TODO: BlockId can also be a simple slot in the form of a string. Is this type still necessary?
 type BlockId = "head" | "genesis" | "finalized" | string | `0x${string}`;
@@ -68,7 +69,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error posting (POST) voluntary exits to beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -85,7 +86,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) genesis from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -107,7 +108,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) fork from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -129,7 +130,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) state finality checkpoints from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -154,7 +155,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) validator from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -182,7 +183,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (POST) state validators from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -214,7 +215,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) block attestations from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -240,7 +241,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (POST) attestation rewards from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -266,7 +267,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (POST) sync committee rewards from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -285,7 +286,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) proposer duties from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -303,7 +304,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) block rewards from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -333,7 +334,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (POST) liveness from validator. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -350,7 +351,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) syncing status from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 
@@ -369,7 +370,7 @@ export class BeaconchainApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) block header from beaconchain. `;
-      throw e;
+      throw new BeaconchainApiError({ ...e });
     }
   }
 

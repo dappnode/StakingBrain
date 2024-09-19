@@ -11,6 +11,7 @@ import {
 import { StandardApi } from "../standard.js";
 import path from "path";
 import { prefix0xPubkey } from "../prefix0xPubkey.js";
+import { ValidatorApiError } from "./error.js";
 
 export class ValidatorApi extends StandardApi {
   /**
@@ -37,7 +38,7 @@ export class ValidatorApi extends StandardApi {
       })) as ValidatorGetFeeResponse;
     } catch (e) {
       e.message += `Error getting (GET) fee recipient for pubkey ${publicKey} from validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
 
@@ -54,7 +55,7 @@ export class ValidatorApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error setting (POST) fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
 
@@ -70,7 +71,7 @@ export class ValidatorApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error deleting (DELETE) fee recipient for pubkey ${publicKey} from validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
 
@@ -86,7 +87,7 @@ export class ValidatorApi extends StandardApi {
       })) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
       e.message += `Error getting (GET) remote keys from validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
   /**
@@ -108,7 +109,7 @@ export class ValidatorApi extends StandardApi {
       return this.toLowerCaseStatus(response);
     } catch (e) {
       e.message += `Error posting (POST) remote keys to validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
 
@@ -129,7 +130,7 @@ export class ValidatorApi extends StandardApi {
       return this.toLowerCaseStatus(response);
     } catch (e) {
       e.message += `Error deleting (DELETE) remote keys from validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
 
@@ -161,7 +162,7 @@ export class ValidatorApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (POST) attester duties from validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
 
@@ -184,7 +185,7 @@ export class ValidatorApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (GET) proposer duties from validator. `;
-      throw e;
+      throw new ValidatorApiError({ ...e });
     }
   }
 
