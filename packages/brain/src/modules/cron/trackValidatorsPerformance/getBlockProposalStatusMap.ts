@@ -19,7 +19,6 @@ export async function getBlockProposalStatusMap({
   epoch: string;
   validatorIndexes: string[];
 }): Promise<Map<string, BlockProposalStatus>> {
-
   // Get the block proposal duties for the given epoch. Which validators
   // are supposed to propose a block in which slot?
   const blockProposalsResponse = await beaconchainApi.getProposerDuties({
