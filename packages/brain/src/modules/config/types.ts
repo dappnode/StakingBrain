@@ -17,5 +17,7 @@ export interface BrainConfig {
   shareCronInterval: number;
   minGenesisTime: number;
   postgresUrl: string;
+  secondsPerSlot: number;
+  slotsPerEpoch: number;
   tlsCert: Buffer | null;
 }

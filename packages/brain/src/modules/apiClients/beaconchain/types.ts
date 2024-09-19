@@ -39,6 +39,15 @@ export interface BeaconchainSyncingStatusGetResponse {
   };
 }
 
+export interface TotalRewards {
+  validator_index: string;
+  head: string;
+  target: string;
+  source: string;
+  inclusion_delay: string;
+  inactivity: string;
+}
+
 export interface BeaconchainAttestationRewardsPostResponse {
   execution_optimistic: boolean;
   finalized: boolean;
@@ -51,15 +60,18 @@ export interface BeaconchainAttestationRewardsPostResponse {
       inclusion_delay: string;
       inactivity: string;
     }[];
-    total_rewards: {
-      validator_index: string;
-      head: string;
-      target: string;
-      source: string;
-      inclusion_delay: string;
-      inactivity: string;
-    }[];
+    total_rewards: TotalRewards[];
   };
+}
+
+export interface BeaconchainProposerDutiesGetResponse {
+  dependent_root: string; // The block root that the response is dependent on.
+  execution_optimistic: boolean; // Indicates whether the response references an unverified execution payload.
+  data: {
+    pubkey: string; // The validator's BLS public key, 48-bytes, hex encoded with 0x prefix.
+    validator_index: string; // The index of the validator in the validator registry.
+    slot: string; // The slot at which the validator must propose a block.
+  }[];
 }
 
 export interface BeaconchainSyncCommitteePostResponse {

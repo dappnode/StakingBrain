@@ -1,41 +1,19 @@
-import { Web3SignerApi, DappnodeSignatureVerifier } from "../apiClients/index.js";
-import type {
+import { isEmpty } from "lodash-es";
+import { Web3SignerApi } from "../../apiClients/index.js";
+import {
   DappnodeSignatureVerifierPostRequest,
   Web3signerPostSignDappnodeRequest,
   Web3signerPostSignDappnodeResponse
-} from "../apiClients/types.js";
-import { BrainDataBase } from "../db/index.js";
-import logger from "../logger/index.js";
-import { isEmpty } from "lodash-es";
-
-/**
- * Send the proof of validation to the dappnode-signatures.io domain
- */
-export async function sendProofsOfValidation(
-  signerApi: Web3SignerApi,
-  brainDb: BrainDataBase,
-  DappnodeSignatureVerifier: DappnodeSignatureVerifier,
-  shareDataWithDappnode: boolean
-): Promise<void> {
-  try {
-    // Get the proofs of validation from the signer
-    const proofsOfValidations = await getProofsOfValidation(signerApi, brainDb, shareDataWithDappnode);
-    if (proofsOfValidations.length === 0) {
-      logger.debug(`No proofs of validation to send`);
-      return;
-    }
-    logger.debug(`Sending ${proofsOfValidations.length} proofs of validations`);
-    await DappnodeSignatureVerifier.sendProofsOfValidation(proofsOfValidations);
-  } catch (e) {
-    logger.error(`Error sending proof of validation: ${e.message}`);
-  }
-}
+} from "../../apiClients/types.js";
+import { BrainDataBase } from "../../db/index.js";
+import logger from "../../logger/index.js";
+import { logPrefix } from "./logPrefix.js";
 
 /**
  * Get the proofs of validation from the signer
  * for all the pubkeys in the db
  */
-async function getProofsOfValidation(
+export async function getProofsOfValidation(
   signerApi: Web3SignerApi,
   brainDb: BrainDataBase,
   shareDataWithDappnode: boolean
@@ -70,7 +48,7 @@ async function getProofsOfValidation(
           tag: dbPubkeysDetailsFiltered[pubkey].tag
         };
       } catch (e) {
-        logger.error(`Error getting proof of validation for pubkey ${pubkey}. Error: ${e.message}`);
+        logger.error(`${logPrefix}Error getting proof of validation for pubkey ${pubkey}. Error: ${e.message}`);
         return null;
       }
     })

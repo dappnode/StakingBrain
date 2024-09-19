@@ -3,6 +3,7 @@ import logger from "../../logger/index.js";
 import { BlockProposalStatus, ValidatorPerformance } from "./types.js";
 
 export class PostgresClient {
+  private readonly tableName = "validators_performance";
   private sql: postgres.Sql;
 
   /**
@@ -20,6 +21,22 @@ export class PostgresClient {
   }
 
   /**
+   * Get table size from the database in bytes.
+   */
+  public async getTableSize(): Promise<number> {
+    const query = `
+SELECT pg_total_relation_size('${this.tableName}');
+    `;
+    try {
+      const result = await this.sql.unsafe(query);
+      return result[0].pg_total_relation_size;
+    } catch (err) {
+      err.message = "Error getting table size: " + err.message;
+      throw err;
+    }
+  }
+
+  /**
    * Initializes the database by creating the required table if it does not exist.
    * The table will have the following columns:
    * - validator_index: The index of the validator.
@@ -34,24 +51,46 @@ export class PostgresClient {
    */
   public async initialize() {
     const query = `
-CREATE TABLE IF NOT EXISTS validator_performance (
-    validator_index BIGINT NOT NULL,
-    epoch BIGINT NOT NULL,
-    slot BIGINT NOT NULL,
-    liveness BOOLEAN,
-    block_proposal_status ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}'),
-    sync_comittee_rewards BIGINT,
-    attestations_rewards JSONB,
-    error TEXT,
-    PRIMARY KEY (validator_index, epoch)
-);
-    `;
+    DO $$ 
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'block_proposal_status') THEN
+        CREATE TYPE block_proposal_status AS ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}');
+      END IF;
+    END $$;
+        
+    CREATE TABLE IF NOT EXISTS ${this.tableName} (
+      validator_index BIGINT NOT NULL,
+      epoch BIGINT NOT NULL,
+      slot BIGINT,
+      liveness BOOLEAN,
+      block_proposal_status block_proposal_status,
+      sync_comittee_rewards BIGINT,
+      attestations_rewards JSONB,
+      error TEXT,
+      PRIMARY KEY (validator_index, epoch)
+    );
+  `;
     try {
       await this.sql.unsafe(query);
       logger.info("Table created or already exists.");
     } catch (err) {
       //TODO: what to do if initialize fails?
       logger.error("Error creating table:", err);
+    }
+  }
+
+  /**
+   * Delete database table.
+   */
+  public async deleteDatabaseTable() {
+    const query = `
+    DROP TABLE IF EXISTS ${this.tableName};
+  `;
+    try {
+      await this.sql.unsafe(query);
+      logger.info("Table deleted.");
+    } catch (err) {
+      logger.error("Error deleting table:", err);
     }
   }
 
@@ -63,14 +102,14 @@ CREATE TABLE IF NOT EXISTS validator_performance (
    */
   public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
     const query = `
-INSERT INTO validator_performance (validator_index, epoch, slot, liveness, block_proposal_status, sync_comittee_rewards, attestations_rewards, error)
+INSERT INTO ${this.tableName} (validator_index, epoch, slot, liveness, block_proposal_status, sync_comittee_rewards, attestations_rewards, error)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
     try {
       await this.sql.unsafe(query, [
         data.validatorIndex,
         data.epoch,
-        data.slot,
+        data.slot ?? null,
         data.liveness ?? null,
         data.blockProposalStatus ?? null,
         data.syncCommitteeRewards ?? null,

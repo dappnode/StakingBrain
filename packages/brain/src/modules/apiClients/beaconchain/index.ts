@@ -12,14 +12,16 @@ import {
   BeaconchainLivenessPostResponse,
   BeaconchainSyncingStatusGetResponse,
   BeaconchainSyncCommitteePostResponse,
-  BeaconchainBlockRewardsGetResponse
+  BeaconchainBlockRewardsGetResponse,
+  BeaconchainProposerDutiesGetResponse
 } from "./types.js";
 import { StandardApi } from "../standard.js";
 import path from "path";
 import { ApiParams } from "../types.js";
 import { Network } from "@stakingbrain/common";
 
-type BlockId = "head" | "genesis" | "finalized" | "slot" | `0x${string}`;
+// TODO: BlockId can also be a simple slot in the form of a string. Is this type still necessary?
+type BlockId = "head" | "genesis" | "finalized" | string | `0x${string}`;
 
 export class BeaconchainApi extends StandardApi {
   private SLOTS_PER_EPOCH: number;
@@ -269,6 +271,25 @@ export class BeaconchainApi extends StandardApi {
   }
 
   /**
+   * Retrieve block proposal duties for the specified epoch. This will return a list of 32 elements, each element corresponding to a slot in the epoch.
+   * If the epoch requested is not yet finalized, a chain reorg is possible and the duties may change.
+   *
+   * @param epoch The epoch to get the proposer duties from
+   * @see https://ethereum.github.io/beacon-APIs/#/Validator/getProposerDuties
+   */
+  public async getProposerDuties({ epoch }: { epoch: string }): Promise<BeaconchainProposerDutiesGetResponse> {
+    try {
+      return await this.request({
+        method: "GET",
+        endpoint: path.join(this.validatorEndpoint, "duties", "proposer", epoch)
+      });
+    } catch (e) {
+      e.message += `Error getting (GET) proposer duties from beaconchain. `;
+      throw e;
+    }
+  }
+
+  /**
    * Retrieve block reward info for a single block
    *
    * @param blockId Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>
@@ -340,7 +361,7 @@ export class BeaconchainApi extends StandardApi {
    * @params blockId Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
    * @example head
    */
-  private async getBlockHeader({ blockId }: { blockId: BlockId }): Promise<BeaconchainBlockHeaderGetResponse> {
+  public async getBlockHeader({ blockId }: { blockId: BlockId }): Promise<BeaconchainBlockHeaderGetResponse> {
     try {
       return await this.request({
         method: "GET",
