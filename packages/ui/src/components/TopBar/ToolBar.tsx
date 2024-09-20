@@ -1,12 +1,13 @@
 import Toolbar from "@mui/material/Toolbar";
 import { HeaderTypography } from "../../Styles/Typographies";
-import { Box, Chip } from "@mui/material";
+import { Box, Chip, Button } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import { Network } from "@stakingbrain/common";
+import { Link } from "react-router-dom"; // Import Link from react-router-dom
 
 export default function ToolBar({
   mode,
@@ -49,6 +50,15 @@ export default function ToolBar({
             alignItems: "center"
           }}
         >
+          <Button component={Link} to="/" color="inherit" sx={{ mx: 1 }}>
+            Home
+          </Button>
+          <Button component={Link} to="/import" color="inherit" sx={{ mx: 1 }}>
+            Import
+          </Button>
+          <Button component={Link} to="/validatorsPerformance" color="inherit" sx={{ mx: 1 }}>
+            Validators Performance
+          </Button>
           <IconButton sx={{ ml: 1 }} onClick={() => setMode(mode === "dark" ? "light" : "dark")} color="inherit">
             {mode === "dark" ? (
               <LightModeIcon titleAccess="Set Light Mode" />
@@ -62,7 +72,7 @@ export default function ToolBar({
             color="inherit"
           >
             {userMode === "basic" ? (
-              <UnfoldMoreIcon titleAccess="Expand Andanced Info" />
+              <UnfoldMoreIcon titleAccess="Expand Advanced Info" />
             ) : (
               <UnfoldLessIcon titleAccess="Collapse Advanced Info" />
             )}
