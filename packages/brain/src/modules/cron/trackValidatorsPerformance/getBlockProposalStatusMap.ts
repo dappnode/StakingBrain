@@ -19,41 +19,48 @@ export async function getBlockProposalStatusMap({
   epoch: string;
   validatorIndexes: string[];
 }): Promise<Map<string, BlockProposalStatus>> {
+  // Get the block proposal duties for the given epoch. Which validators
+  // are supposed to propose a block in which slot?
   const blockProposalsResponse = await beaconchainApi.getProposerDuties({
     epoch
   });
+
+  // Utilize a Set for quick lookup. We assume that the validator indexes are unique.
+  const validatorIndexesSet = new Set(validatorIndexes);
 
   // Map to store the block proposal status of each validator
   const validatorBlockStatus = new Map<string, BlockProposalStatus>();
 
   // Initialize all validator's status to Unchosen.
-  validatorIndexes.forEach((validatorIndex) => {
+  validatorIndexesSet.forEach((validatorIndex) => {
     validatorBlockStatus.set(validatorIndex, BlockProposalStatus.Unchosen);
   });
 
-  // Since we know block proposal duties, we can check if the validator proposed the block or missed it.
+  // For each slot in the epoch, determine if the validator supposed to propose
+  // it is one of our monitored validators. If so, check if the validator did it correctly.
   for (const duty of blockProposalsResponse.data) {
     const { validator_index, slot } = duty;
 
-    if (validatorIndexes.includes(validator_index)) {
+    // enter loop if one of our monitored validators had to propose in this slot
+    if (validatorIndexesSet.has(validator_index)) {
       try {
+        // Get the block header for the slot. It has the proposer index.
         const blockHeader = await beaconchainApi.getBlockHeader({ blockId: slot });
-        // Update status based on whether the validator in the block header matches the one supposed to propose
-        // If the duty had a proposer index and it doesn't match with the header proposer index, we did something wrong, so we consider it as an error
+        // If the proposer index in the block header matches the validator index, the block was proposed correctly.
         validatorBlockStatus.set(
           validator_index,
-          blockHeader.data.header.message.proposer_index == validator_index
+          blockHeader.data.header.message.proposer_index === validator_index
             ? BlockProposalStatus.Proposed
             : BlockProposalStatus.Error
         );
       } catch (error) {
         if (error.status === 404) {
-          // Consensus clients return 404 a block was missed (there is no block for the slot)
+          // If the block header is not found, the validator missed the block proposal
           validatorBlockStatus.set(validator_index, BlockProposalStatus.Missed);
         } else {
           // If consensus client doesnt return 200 or 404, something went wrong
           logger.error(`${logPrefix}Error retrieving block header for slot ${slot}: ${error}`);
-          validatorBlockStatus.set(validator_index, BlockProposalStatus.Error); // Something went wrong
+          validatorBlockStatus.set(validator_index, BlockProposalStatus.Error);
         }
       }
     }

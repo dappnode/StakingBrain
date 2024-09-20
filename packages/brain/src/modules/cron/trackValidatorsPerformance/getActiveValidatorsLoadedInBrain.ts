@@ -14,7 +14,7 @@ import { logPrefix } from "./logPrefix.js";
  * @param {BrainDataBase} brainDb - Brain DB client.
  * @returns {string[]} - Array of active validator indexes.
  */
-export async function getActiveValidators({
+export async function getActiveValidatorsLoadedInBrain({
   beaconchainApi,
   brainDb
 }: {

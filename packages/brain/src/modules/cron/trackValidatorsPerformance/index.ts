@@ -6,7 +6,7 @@ import { insertPerformanceData } from "./insertPerformanceData.js";
 import { getAttestationsTotalRewards } from "./getAttestationsTotalRewards.js";
 import { getBlockProposalStatusMap } from "./getBlockProposalStatusMap.js";
 import { checkNodeHealth } from "./checkNodeHealth.js";
-import { getActiveValidators } from "./getActiveValidators.js";
+import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
 
 const MINUTE_IN_SECONDS = 60;
@@ -49,7 +49,7 @@ export async function trackValidatorsPerformance({
         logger.debug(`${logPrefix}Epoch finalized: ${epochFinalized}`);
 
         // active validators indexes
-        const activeValidatorsIndexes = await getActiveValidators({ beaconchainApi, brainDb });
+        const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
         if (activeValidatorsIndexes.length === 0) {
           logger.info(`${logPrefix}No active validators found`);
           return;
