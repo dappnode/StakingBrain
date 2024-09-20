@@ -114,14 +114,14 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                 }}
                 alt="erigon-goerli"
                 src={
-                  Object.keys(images).includes(stakerConfig.executionClientSelected)
-                    ? images[stakerConfig.executionClientSelected]
+                  Object.keys(images).includes(stakerConfig.executionClient)
+                    ? images[stakerConfig.executionClient]
                     : images["default"]
                 }
               />
             </Card>
             <Typography sx={{ fontWeight: "bold", mt: 2 }}>
-              {prettyClientDnpName(stakerConfig.executionClientSelected)}
+              {prettyClientDnpName(stakerConfig.executionClient)}
             </Typography>
           </Box>
           <Box
@@ -151,14 +151,14 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                 }}
                 alt="erigon-goerli"
                 src={
-                  Object.keys(images).includes(stakerConfig.consensusClientSelected)
-                    ? images[stakerConfig.consensusClientSelected]
+                  Object.keys(images).includes(stakerConfig.consensusClient)
+                    ? images[stakerConfig.consensusClient]
                     : images["default"]
                 }
               />
             </Card>
             <Typography sx={{ fontWeight: "bold", mt: 2 }}>
-              {prettyClientDnpName(stakerConfig.consensusClientSelected)}
+              {prettyClientDnpName(stakerConfig.consensusClient)}
             </Typography>
           </Box>
 
