@@ -1,25 +1,25 @@
-import { Network } from "@stakingbrain/common";
+import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 import { BrainConfig } from "../types.js";
 import { tlsCert } from "./tlsCert.js";
 import { validatorToken } from "./validatorToken.js";
 
 export const praterBrainConfig = (
-  executionClientSelected: string,
-  consensusClientSelected: string,
+  executionClient: ExecutionClient,
+  consensusClient: ConsensusClient,
   isMevBoostSet: boolean,
   shareDataWithDappnode: boolean
 ): BrainConfig => {
   return {
     network: Network.Prater,
-    executionClientSelected,
-    consensusClientSelected,
+    executionClient,
+    consensusClient,
     isMevBoostSet,
     executionClientUrl: "http://execution.prater.dncore.dappnode:8545",
     validatorUrl: "http://validator.prater.dncore.dappnode:3500",
     beaconchainUrl: "http:/beacon-chain.prater.dncore.dappnode:3500",
     blockExplorerUrl: "https://prater.beaconcha.in",
     signerUrl: "http://web3signer.web3signer-prater.dappnode:9000",
-    token: validatorToken(consensusClientSelected),
+    token: validatorToken(consensusClient),
     host: "brain.web3signer-prater.dappnode",
     shareDataWithDappnode,
     validatorsMonitorUrl: "https://validators-proofs.dappnode.io",
@@ -28,6 +28,6 @@ export const praterBrainConfig = (
     postgresUrl: "postgres://postgres:password@postgres.web3signer-prater.dappnode:5432/web3signer",
     secondsPerSlot: 12,
     slotsPerEpoch: 32,
-    tlsCert: tlsCert(consensusClientSelected)
+    tlsCert: tlsCert(consensusClient)
   };
 };

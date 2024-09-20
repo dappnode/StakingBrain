@@ -33,8 +33,8 @@ export const __dirname = process.cwd();
 // Load staker config
 export const {
   network,
-  executionClientSelected,
-  consensusClientSelected,
+  executionClient,
+  consensusClient,
   isMevBoostSet,
   executionClientUrl,
   validatorUrl,
@@ -53,7 +53,7 @@ export const {
   tlsCert
 } = brainConfig();
 logger.debug(
-  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClientSelected}\n  - Consensus client: ${consensusClientSelected}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${blockExplorerUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}\n  - Postgres url: ${postgresUrl}\n}`
+  `Loaded staker config:\n  - Network: ${network}\n  - Execution client: ${executionClient}\n  - Consensus client: ${consensusClient}\n  - Execution client url: ${executionClientUrl}\n  - Validator url: ${validatorUrl}\n  - Beaconcha url: ${blockExplorerUrl}\n  - Beaconchain url: ${beaconchainUrl}\n  - Signer url: ${signerUrl}\n  - Token: ${token}\n  - Host: ${host}}\n  - Postgres url: ${postgresUrl}\n}`
 );
 
 // Create API instances. Must preceed db initialization
@@ -104,7 +104,15 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 proofOfValidationCron.start();
 const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
   // once every epoch
-  trackValidatorsPerformance({ brainDb, postgresClient, beaconchainApi, minGenesisTime, secondsPerSlot })
+  trackValidatorsPerformance({
+    brainDb,
+    postgresClient,
+    beaconchainApi,
+    minGenesisTime,
+    secondsPerSlot,
+    executionClient,
+    consensusClient
+  })
 );
 const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
 // start the cron within the first minute of an epoch

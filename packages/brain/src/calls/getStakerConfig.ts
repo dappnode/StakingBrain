@@ -1,8 +1,8 @@
 import { StakerConfig } from "@stakingbrain/common";
 import {
   network,
-  executionClientSelected,
-  consensusClientSelected,
+  executionClient,
+  consensusClient,
   isMevBoostSet,
   executionClientUrl,
   validatorUrl,
@@ -13,8 +13,8 @@ import {
 export async function getStakerConfig(): Promise<StakerConfig> {
   return {
     network,
-    executionClientSelected,
-    consensusClientSelected,
+    executionClient,
+    consensusClient,
     isMevBoostSet,
     executionClientUrl,
     validatorUrl,

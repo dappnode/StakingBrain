@@ -1,12 +1,14 @@
-export const validatorToken = (consensusClientSelected: string): string => {
-  if (consensusClientSelected.includes("teku")) return "cd4892ca35d2f5d3e2301a65fc7aa660";
-  if (consensusClientSelected.includes("lighthouse"))
+import { ConsensusClient } from "@stakingbrain/common";
+
+export const validatorToken = (consensusClient: ConsensusClient): string => {
+  if (consensusClient === ConsensusClient.Teku) return "cd4892ca35d2f5d3e2301a65fc7aa660";
+  if (consensusClient === ConsensusClient.Lighthouse)
     return "api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d";
-  if (consensusClientSelected.includes("prysm"))
+  if (consensusClient === ConsensusClient.Prysm)
     return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg";
-  if (consensusClientSelected.includes("nimbus"))
+  if (consensusClient === ConsensusClient.Nimbus)
     return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg";
-  if (consensusClientSelected.includes("lodestar"))
+  if (consensusClient === ConsensusClient.Lodestar)
     return "api-token-0x7fd16fff6453982a5d8bf14617e7823b68cd18ade59985befe64e0a659300e7d";
-  throw Error(`Unknown consensus client selected: ${consensusClientSelected}`);
+  throw Error(`Unknown consensus client selected: ${consensusClient}`);
 };

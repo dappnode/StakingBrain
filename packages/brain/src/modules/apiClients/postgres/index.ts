@@ -2,6 +2,20 @@ import postgres from "postgres";
 import logger from "../../logger/index.js";
 import { BlockProposalStatus, ValidatorPerformance } from "./types.js";
 import { PostgresApiError } from "./error.js";
+import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
+
+enum Columns {
+  validatorIndex = "validator_index",
+  epoch = "epoch",
+  executionClient = "execution_client",
+  consensusClient = "consensus_client",
+  slot = "slot",
+  liveness = "liveness",
+  blockProposalStatus = "block_proposal_status",
+  syncCommitteeRewards = "sync_comittee_rewards",
+  attestationsRewards = "attestations_rewards",
+  error = "error"
+}
 
 export class PostgresClient {
   private readonly tableName = "validators_performance";
@@ -51,25 +65,40 @@ SELECT pg_total_relation_size('${this.tableName}');
    */
   public async initialize() {
     const query = `
-    DO $$ 
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'block_proposal_status') THEN
-        CREATE TYPE block_proposal_status AS ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}');
-      END IF;
-    END $$;
-        
-    CREATE TABLE IF NOT EXISTS ${this.tableName} (
-      validator_index BIGINT NOT NULL,
-      epoch BIGINT NOT NULL,
-      slot BIGINT,
-      liveness BOOLEAN,
-      block_proposal_status block_proposal_status,
-      sync_comittee_rewards BIGINT,
-      attestations_rewards JSONB,
-      error TEXT,
-      PRIMARY KEY (validator_index, epoch)
-    );
-  `;
+DO $$ 
+BEGIN
+  -- Check and create BLOCK_PROPOSAL_STATUS ENUM type if not exists
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BLOCK_PROPOSAL_STATUS') THEN
+    CREATE TYPE BLOCK_PROPOSAL_STATUS AS ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}');
+  END IF;
+
+  -- Check and create EXECUTION_CLIENT ENUM type if not exists
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'EXECUTION_CLIENT') THEN
+    CREATE TYPE EXECUTION_CLIENT AS ENUM('${ExecutionClient.Besu}', '${ExecutionClient.Nethermind}', '${ExecutionClient.Geth}', '${ExecutionClient.Erigon}', '${ExecutionClient.Unknown}');
+  END IF;
+
+  -- Check and create CONSENSUS_CLIENT ENUM type if not exists
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'CONSENSUS_CLIENT') THEN
+    CREATE TYPE CONSENSUS_CLIENT AS ENUM('${ConsensusClient.Teku}', '${ConsensusClient.Prysm}', '${ConsensusClient.Lighthouse}', '${ConsensusClient.Nimbus}', '${ConsensusClient.Unknown}');
+  END IF;
+END $$;
+
+-- Create the table if not exists
+CREATE TABLE IF NOT EXISTS ${this.tableName} (
+  ${Columns.validatorIndex} BIGINT NOT NULL,
+  ${Columns.epoch} BIGINT NOT NULL,
+  ${Columns.executionClient} EXECUTION_CLIENT NOT NULL,
+  ${Columns.consensusClient} CONSENSUS_CLIENT NOT NULL,
+  ${Columns.slot} BIGINT,
+  ${Columns.liveness} BOOLEAN,
+  ${Columns.blockProposalStatus} BLOCK_PROPOSAL_STATUS,
+  ${Columns.syncCommitteeRewards} BIGINT,
+  ${Columns.attestationsRewards} JSONB,
+  ${Columns.error} TEXT,
+  PRIMARY KEY (${Columns.validatorIndex}, ${Columns.epoch})
+);
+`;
+
     try {
       await this.sql.unsafe(query);
       logger.info("Table created or already exists.");
@@ -95,6 +124,23 @@ SELECT pg_total_relation_size('${this.tableName}');
   }
 
   /**
+   * Delete enum types.
+   */
+  public async deleteEnumTypes(): Promise<void> {
+    const query = `
+    DROP TYPE IF EXISTS BLOCK_PROPOSAL_STATUS;
+    DROP TYPE IF EXISTS EXECUTION_CLIENT;
+    DROP TYPE IF EXISTS CONSENSUS_CLIENT;
+  `;
+    try {
+      await this.sql.unsafe(query);
+      logger.info("Enum types deleted.");
+    } catch (err) {
+      logger.error("Error deleting enum types:", err);
+    }
+  }
+
+  /**
    * Inserts the given performance data into the database.
    *
    * @param data - The performance data to insert.
@@ -102,13 +148,15 @@ SELECT pg_total_relation_size('${this.tableName}');
    */
   public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
     const query = `
-INSERT INTO ${this.tableName} (validator_index, epoch, slot, liveness, block_proposal_status, sync_comittee_rewards, attestations_rewards, error)
+INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsRewards}, ${Columns.error})
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
     try {
       await this.sql.unsafe(query, [
         data.validatorIndex,
         data.epoch,
+        data.executionClient,
+        data.consensusClient,
         data.slot ?? null,
         data.liveness ?? null,
         data.blockProposalStatus ?? null,
@@ -119,6 +167,39 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     } catch (err) {
       logger.error("Error inserting data:", err);
       // TODO: what to do if insert fails?
+    }
+  }
+
+  /**
+   * Get the validators data for the given validator indexes from all epochs.
+   *
+   * @param validatorIndexes - The indexes of the validators to get the data for.
+   * @returns The performance data for the given validators.
+   */
+  public async getValidatorsDataFromAllEpochs(validatorIndexes: string[]): Promise<ValidatorPerformance[]> {
+    const query = `
+SELECT * FROM ${this.tableName}
+WHERE ${Columns.validatorIndex} = ANY($1)
+    `;
+    try {
+      const result = await this.sql.unsafe(query, [validatorIndexes]);
+      // TODO: add type for result
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return result.map((row: any) => ({
+        validatorIndex: row.validator_index,
+        epoch: row.epoch,
+        executionClient: row.execution_client,
+        consensusClient: row.consensus_client,
+        slot: row.slot,
+        liveness: row.liveness,
+        blockProposalStatus: row.block_proposal_status,
+        syncCommitteeRewards: row.sync_comittee_rewards,
+        attestationsRewards: row.attestations_rewards,
+        error: row.error
+      }));
+    } catch (err) {
+      logger.error("Error getting data:", err);
+      return [];
     }
   }
 

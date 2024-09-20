@@ -1,9 +1,9 @@
-import { Network } from "@stakingbrain/common";
+import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 
 export interface BrainConfig {
   network: Network;
-  executionClientSelected: string;
-  consensusClientSelected: string;
+  executionClient: ExecutionClient;
+  consensusClient: ConsensusClient;
   isMevBoostSet: boolean;
   executionClientUrl: string;
   validatorUrl: string;
