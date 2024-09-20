@@ -2,12 +2,15 @@ import { BeaconchainApi } from "../../apiClients/beaconchain/index.js";
 import { PostgresClient } from "../../apiClients/postgres/index.js";
 import logger from "../../logger/index.js";
 import { BrainDataBase } from "../../db/index.js";
-import { insertPerformanceData } from "./insertPerformanceData.js";
+import { insertPerformanceDataNotThrow } from "./insertPerformanceData.js";
 import { getAttestationsTotalRewards } from "./getAttestationsTotalRewards.js";
-import { getBlockProposalStatusMap } from "./getBlockProposalStatusMap.js";
+import { setBlockProposalStatusMap } from "./setBlockProposalStatusMap.js";
 import { checkNodeHealth } from "./checkNodeHealth.js";
 import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
+import { TotalRewards } from "../../apiClients/types.js";
+import { BlockProposalStatus } from "../../apiClients/postgres/types.js";
+import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 
 const MINUTE_IN_SECONDS = 60;
 
@@ -32,24 +35,32 @@ export async function trackValidatorsPerformance({
   postgresClient,
   beaconchainApi,
   minGenesisTime,
-  secondsPerSlot
+  secondsPerSlot,
+  executionClient,
+  consensusClient
 }: {
   brainDb: BrainDataBase;
   postgresClient: PostgresClient;
   beaconchainApi: BeaconchainApi;
   minGenesisTime: number;
   secondsPerSlot: number;
+  executionClient: ExecutionClient;
+  consensusClient: ConsensusClient;
 }): Promise<void> {
   try {
     const epochFinalized = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+    let errorGettingValidatorData: Error | undefined;
     let newEpochFinalized = epochFinalized;
+    const activeValidatorsIndexes: string[] = [];
+    const validatorsAttestationsRewards: TotalRewards[] = [];
+    const validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
 
-    while (epochFinalized === newEpochFinalized) {
+    label: while (epochFinalized === newEpochFinalized) {
       try {
         logger.debug(`${logPrefix}Epoch finalized: ${epochFinalized}`);
 
         // active validators indexes
-        const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
+        await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb, activeValidatorsIndexes });
         if (activeValidatorsIndexes.length === 0) {
           logger.info(`${logPrefix}No active validators found`);
           return;
@@ -60,42 +71,39 @@ export async function trackValidatorsPerformance({
         await checkNodeHealth({ beaconchainApi });
 
         // get block attestations rewards
-        const validatorsAttestationsRewards = await getAttestationsTotalRewards({
+        await getAttestationsTotalRewards({
           beaconchainApi,
           epoch: epochFinalized.toString(),
-          validatorIndexes: activeValidatorsIndexes
+          validatorIndexes: activeValidatorsIndexes,
+          totalRewards: validatorsAttestationsRewards
         });
         logger.debug(`${logPrefix}Attestations rewards: ${JSON.stringify(validatorsAttestationsRewards)}`);
 
         // get block proposal status
-        const validatorBlockStatus = await getBlockProposalStatusMap({
+        await setBlockProposalStatusMap({
           beaconchainApi,
           epoch: epochFinalized.toString(),
-          validatorIndexes: activeValidatorsIndexes
-        });
-        logger.debug(`${logPrefix}Block proposal status map: ${JSON.stringify([...validatorBlockStatus])}`);
-
-        // insert performance data
-        await insertPerformanceData({
-          postgresClient,
           validatorIndexes: activeValidatorsIndexes,
-          epochFinalized,
-          validatorBlockStatus,
-          validatorsAttestationsRewards
+          validatorBlockStatusMap
         });
+        logger.debug(`${logPrefix}Block proposal status map: ${JSON.stringify([...validatorBlockStatusMap])}`);
 
-        logger.debug(`${logPrefix}Performance data inserted for epoch ${epochFinalized}`);
-        return;
+        // update error to undefined if no error occurred in last iteration
+        errorGettingValidatorData = undefined;
       } catch (error) {
         logger.error(`${logPrefix}Error occurred: ${error}. Updating epoch finalized and retrying in 1 minute`);
+        // update error if an error occurred
+        errorGettingValidatorData = error;
 
         // skip if the seconds to the next epoch is less than 1 minute
         const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
         if (secondsToNextEpoch < MINUTE_IN_SECONDS) {
           logger.warn(
-            `${logPrefix}Seconds to the next epoch is less than 1 minute (${secondsToNextEpoch}). Skipping until next epoch`
+            `${logPrefix}Could not get validator data for epoch ${epochFinalized}. Writing error and skipping to next epoch.`
           );
-          return;
+          // TODO: collect report of the staker setup status: el is offline, node is syncing, signer is not up and original error
+          // exit the while loop and write the error to the DB
+          break label;
         }
         // wait 1 minute without blocking the event loop and update epoch finalized
         newEpochFinalized = await new Promise((resolve) =>
@@ -106,10 +114,20 @@ export async function trackValidatorsPerformance({
         );
       }
     }
+    logger.debug(`${logPrefix}Epoch finalized changed: ${newEpochFinalized}`);
 
-    logger.debug(
-      `${logPrefix}Epoch finalized changed: ${newEpochFinalized}, finished tracking performance for epoch ${epochFinalized}`
-    );
+    // insert performance data or each validator
+    await insertPerformanceDataNotThrow({
+      postgresClient,
+      validatorIndexes: activeValidatorsIndexes,
+      epochFinalized,
+      validatorBlockStatus: validatorBlockStatusMap,
+      validatorsAttestationsRewards,
+      error: errorGettingValidatorData,
+      executionClient,
+      consensusClient
+    });
+    logger.debug(`${logPrefix}Performance data inserted for epoch ${epochFinalized}`);
   } catch (e) {
     logger.error(`${logPrefix}Error in trackValidatorsPerformance: ${e}`);
     return;

@@ -10,15 +10,17 @@ import { logPrefix } from "./logPrefix.js";
  * @param {string} epoch - The epoch to get the block proposal duties.
  * @param {string[]} validatorIndexes - Array of validator indexes.
  */
-export async function getBlockProposalStatusMap({
+export async function setBlockProposalStatusMap({
   beaconchainApi,
   epoch,
-  validatorIndexes
+  validatorIndexes,
+  validatorBlockStatusMap
 }: {
   beaconchainApi: BeaconchainApi;
   epoch: string;
   validatorIndexes: string[];
-}): Promise<Map<string, BlockProposalStatus>> {
+  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
+}): Promise<void> {
   // Get the block proposal duties for the given epoch. Which validators
   // are supposed to propose a block in which slot?
   const blockProposalsResponse = await beaconchainApi.getProposerDuties({
@@ -28,12 +30,9 @@ export async function getBlockProposalStatusMap({
   // Utilize a Set for quick lookup. We assume that the validator indexes are unique.
   const validatorIndexesSet = new Set(validatorIndexes);
 
-  // Map to store the block proposal status of each validator
-  const validatorBlockStatus = new Map<string, BlockProposalStatus>();
-
   // Initialize all validator's status to Unchosen.
   validatorIndexesSet.forEach((validatorIndex) => {
-    validatorBlockStatus.set(validatorIndex, BlockProposalStatus.Unchosen);
+    validatorBlockStatusMap.set(validatorIndex, BlockProposalStatus.Unchosen);
   });
 
   // For each slot in the epoch, determine if the validator supposed to propose
@@ -47,7 +46,7 @@ export async function getBlockProposalStatusMap({
         // Get the block header for the slot. It has the proposer index.
         const blockHeader = await beaconchainApi.getBlockHeader({ blockId: slot });
         // If the proposer index in the block header matches the validator index, the block was proposed correctly.
-        validatorBlockStatus.set(
+        validatorBlockStatusMap.set(
           validator_index,
           blockHeader.data.header.message.proposer_index === validator_index
             ? BlockProposalStatus.Proposed
@@ -56,15 +55,13 @@ export async function getBlockProposalStatusMap({
       } catch (error) {
         if (error.status === 404) {
           // If the block header is not found, the validator missed the block proposal
-          validatorBlockStatus.set(validator_index, BlockProposalStatus.Missed);
+          validatorBlockStatusMap.set(validator_index, BlockProposalStatus.Missed);
         } else {
           // If consensus client doesnt return 200 or 404, something went wrong
           logger.error(`${logPrefix}Error retrieving block header for slot ${slot}: ${error}`);
-          validatorBlockStatus.set(validator_index, BlockProposalStatus.Error);
+          validatorBlockStatusMap.set(validator_index, BlockProposalStatus.Error);
         }
       }
     }
   }
-
-  return validatorBlockStatus;
 }

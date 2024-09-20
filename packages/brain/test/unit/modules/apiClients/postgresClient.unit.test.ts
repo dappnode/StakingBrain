@@ -17,7 +17,14 @@ describe.skip("Postgres client", function () {
     console.log("Table size: ", tableSize);
   });
 
+  it("should get validators data from the db", async () => {
+    const validatorIndexes = ["1802289", "1802258"];
+    const data = await postgresClient.getValidatorsDataFromAllEpochs(validatorIndexes);
+    console.log("Validators data: ", data);
+  });
+
   it("should delete the table", async () => {
+    await postgresClient.deleteEnumTypes();
     await postgresClient.deleteDatabaseTable();
   });
 });

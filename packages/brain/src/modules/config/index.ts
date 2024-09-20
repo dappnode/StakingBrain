@@ -10,19 +10,18 @@ import {
 } from "./networks/index.js";
 
 export const brainConfig = (): BrainConfig => {
-  const { network, executionClientSelected, consensusClientSelected, isMevBoostSet, shareDataWithDappnode } =
-    loadEnvs();
+  const { network, executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode } = loadEnvs();
   switch (network) {
     case Network.Holesky:
-      return holeskyBrainConfig(executionClientSelected, consensusClientSelected, isMevBoostSet, shareDataWithDappnode);
+      return holeskyBrainConfig(executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode);
     case Network.Mainnet:
-      return mainnetBrainConfig(executionClientSelected, consensusClientSelected, isMevBoostSet, shareDataWithDappnode);
+      return mainnetBrainConfig(executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode);
     case Network.Gnosis:
-      return gnosisBrainConfig(executionClientSelected, consensusClientSelected, isMevBoostSet, shareDataWithDappnode);
+      return gnosisBrainConfig(executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode);
     case Network.Lukso:
-      return luksoBrainConfig(executionClientSelected, consensusClientSelected, isMevBoostSet, shareDataWithDappnode);
+      return luksoBrainConfig(executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode);
     case Network.Prater:
-      return praterBrainConfig(executionClientSelected, consensusClientSelected, isMevBoostSet, shareDataWithDappnode);
+      return praterBrainConfig(executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode);
     default:
       throw Error(`Network ${network} is not supported`);
   }

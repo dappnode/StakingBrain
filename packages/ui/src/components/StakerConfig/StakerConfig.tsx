@@ -7,59 +7,15 @@ import { prettyClientDnpName } from "../../utils/dataUtils";
 
 export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerConfigType }): JSX.Element {
   const images: { [key: string]: string } = {
-    // Mainnet
-    "erigon.dnp.dappnode.eth": "/assets/erigon.png",
-    "geth.dnp.dappnode.eth": "/assets/geth.png",
-    "besu.public.dappnode.eth": "/assets/besu.png",
-    "nethermind.public.dappnode.eth": "/assets/nethermind.png",
-    "prysm.dnp.dappnode.eth": "/assets/prysm.png",
-    "lighthouse.dnp.dappnode.eth": "/assets/lighthouse.png",
-    "teku.dnp.dappnode.eth": "/assets/teku.png",
-    "nimbus.dnp.dappnode.eth": "/assets/nimbus.png",
-    "lodestar.dnp.dappnode.eth": "/assets/lodestar.png",
-
-    // Goerli/Prater
-    "goerli-erigon.dnp.dappnode.eth": "/assets/erigon-goerli.png",
-    "goerli-geth.dnp.dappnode.eth": "/assets/geth-goerli.png",
-    "goerli-besu.dnp.dappnode.eth": "/assets/besu-goerli.png",
-    "goerli-nethermind.dnp.dappnode.eth": "/assets/nethermind-goerli.png",
-    "prysm-prater.dnp.dappnode.eth": "/assets/prysm-prater.png",
-    "lighthouse-prater.dnp.dappnode.eth": "/assets/lighthouse-prater.png",
-    "teku-prater.dnp.dappnode.eth": "/assets/teku-prater.png",
-    "nimbus-prater.dnp.dappnode.eth": "/assets/nimbus-prater.png",
-    "lodestar-prater.dnp.dappnode.eth": "/assets/lodestar-prater.png",
-
-    // Gnosis
-    "nethermind-xdai.dnp.dappnode.eth": "/assets/nethermind-gnosis.png",
-    "gnosis-erigon.dnp.dappnode.eth": "/assets/gnosis-erigon.png",
-    "gnosis-beacon-chain-prysm.dnp.dappnode.eth": "/assets/prysm-gnosis.png",
-    "lighthouse-gnosis.dnp.dappnode.eth": "/assets/lighthouse-gnosis.png",
-    "teku-gnosis.dnp.dappnode.eth": "/assets/teku-gnosis.png",
-    // TODO: Add Nimbus Gnosis logo (now mainnet)
-    "nimbus-gnosis.dnp.dappnode.eth": "/assets/nimbus.png",
-    "lodestar-gnosis.dnp.dappnode.eth": "/assets/lodestar-gnosis.png",
-
-    // Lukso --> // TODO: Add Lukso logos (now mainnet)
-    "lukso-geth.dnp.dappnode.eth": "/assets/geth.png",
-    "lukso-erigon.dnp.dappnode.eth": "/assets/erigon.png",
-    "lukso-besu.dnp.dappnode.eth": "/assets/besu.png",
-    "lukso-nethermind.dnp.dappnode.eth": "/assets/nethermind.png",
-    "prysm-lukso.dnp.dappnode.eth": "/assets/prysm.png",
-    "lighthouse-lukso.dnp.dappnode.eth": "/assets/lighthouse.png",
-    "teku-lukso.dnp.dappnode.eth": "/assets/teku.png",
-    "nimbus-lukso.dnp.dappnode.eth": "/assets/nimbus.png",
-    "lodestar-lukso.dnp.dappnode.eth": "/assets/lodestar.png",
-
-    //Holesky --> // TODO: Add Holesky logos (now mainnet)
-    "holesky-geth.dnp.dappnode.eth": "/assets/geth.png",
-    "holesky-erigon.dnp.dappnode.eth": "/assets/erigon.png",
-    "holesky-besu.dnp.dappnode.eth": "/assets/besu.png",
-    "holesky-nethermind.dnp.dappnode.eth": "/assets/nethermind.png",
-    "prysm-holesky.dnp.dappnode.eth": "/assets/prysm.png",
-    "lighthouse-holesky.dnp.dappnode.eth": "/assets/lighthouse.png",
-    "teku-holesky.dnp.dappnode.eth": "/assets/teku.png",
-    "nimbus-holesky.dnp.dappnode.eth": "/assets/nimbus.png",
-    "lodestar-holesky.dnp.dappnode.eth": "/assets/lodestar.png",
+    erigon: "/assets/erigon.png",
+    geth: "/assets/geth.png",
+    besu: "/assets/besu.png",
+    nethermind: "/assets/nethermind.png",
+    prysm: "/assets/prysm.png",
+    lighthouse: "/assets/lighthouse.png",
+    teku: "/assets/teku.png",
+    nimbus: "/assets/nimbus.png",
+    lodestar: "/assets/lodestar.png",
 
     // Default logo until we have a package for them
     default: "/assets/dappnode_logo_clean.png"
@@ -114,14 +70,14 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                 }}
                 alt="erigon-goerli"
                 src={
-                  Object.keys(images).includes(stakerConfig.executionClientSelected)
-                    ? images[stakerConfig.executionClientSelected]
+                  Object.keys(images).includes(stakerConfig.executionClient)
+                    ? images[stakerConfig.executionClient]
                     : images["default"]
                 }
               />
             </Card>
             <Typography sx={{ fontWeight: "bold", mt: 2 }}>
-              {prettyClientDnpName(stakerConfig.executionClientSelected)}
+              {prettyClientDnpName(stakerConfig.executionClient)}
             </Typography>
           </Box>
           <Box
@@ -151,14 +107,14 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                 }}
                 alt="erigon-goerli"
                 src={
-                  Object.keys(images).includes(stakerConfig.consensusClientSelected)
-                    ? images[stakerConfig.consensusClientSelected]
+                  Object.keys(images).includes(stakerConfig.consensusClient)
+                    ? images[stakerConfig.consensusClient]
                     : images["default"]
                 }
               />
             </Card>
             <Typography sx={{ fontWeight: "bold", mt: 2 }}>
-              {prettyClientDnpName(stakerConfig.consensusClientSelected)}
+              {prettyClientDnpName(stakerConfig.consensusClient)}
             </Typography>
           </Box>
 

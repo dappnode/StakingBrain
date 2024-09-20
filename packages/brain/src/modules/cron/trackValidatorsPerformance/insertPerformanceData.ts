@@ -1,3 +1,4 @@
+import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { PostgresClient } from "../../apiClients/index.js";
 import { BlockProposalStatus } from "../../apiClients/postgres/types.js";
 import { TotalRewards } from "../../apiClients/types.js";
@@ -15,18 +16,24 @@ import { logPrefix } from "./logPrefix.js";
  * @param validatorBlockStatus - Map with the block proposal status of each validator.
  * @param validatorsAttestationsRewards - Array of total rewards for the validators.
  */
-export async function insertPerformanceData({
+export async function insertPerformanceDataNotThrow({
   postgresClient,
   validatorIndexes,
   epochFinalized,
   validatorBlockStatus,
-  validatorsAttestationsRewards
+  validatorsAttestationsRewards,
+  executionClient,
+  consensusClient,
+  error
 }: {
   postgresClient: PostgresClient;
   validatorIndexes: string[];
   epochFinalized: number;
   validatorBlockStatus: Map<string, BlockProposalStatus>;
   validatorsAttestationsRewards: TotalRewards[];
+  executionClient: ExecutionClient;
+  consensusClient: ConsensusClient;
+  error?: Error;
 }): Promise<void> {
   for (const validatorIndex of validatorIndexes) {
     //const liveness = validatorsLiveness.find((liveness) => liveness.index === validatorIndex)?.is_live;
@@ -53,8 +60,11 @@ export async function insertPerformanceData({
       await postgresClient.insertPerformanceData({
         validatorIndex: parseInt(validatorIndex),
         epoch: epochFinalized,
-        blockProposalStatus: blockProposalStatus,
-        attestationsRewards
+        blockProposalStatus,
+        attestationsRewards,
+        error: error?.message,
+        executionClient,
+        consensusClient
       });
     } catch (e) {
       logger.error(`${logPrefix}Error inserting performance data for validator ${validatorIndex}: ${e}`);

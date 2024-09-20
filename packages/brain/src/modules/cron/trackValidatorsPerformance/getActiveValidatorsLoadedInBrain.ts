@@ -16,14 +16,16 @@ import { logPrefix } from "./logPrefix.js";
  */
 export async function getActiveValidatorsLoadedInBrain({
   beaconchainApi,
-  brainDb
+  brainDb,
+  activeValidatorsIndexes
 }: {
   beaconchainApi: BeaconchainApi;
   brainDb: BrainDataBase;
-}): Promise<string[]> {
+  activeValidatorsIndexes: string[];
+}): Promise<void> {
   const validatorIndexes = await getValidatorIndexesAndSaveInDb({ beaconchainApi, brainDb });
-  if (validatorIndexes.length === 0) return [];
-  return (
+  if (validatorIndexes.length === 0) return;
+  (
     await beaconchainApi.postStateValidators({
       body: {
         ids: validatorIndexes,
@@ -31,7 +33,7 @@ export async function getActiveValidatorsLoadedInBrain({
       },
       stateId: "finalized"
     })
-  ).data.map((validator) => validator.index);
+  ).data.forEach((validator) => activeValidatorsIndexes.push(validator.index));
 }
 
 /**

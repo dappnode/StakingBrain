@@ -6,10 +6,27 @@ export enum Network {
   Holesky = "holesky"
 }
 
+export enum ExecutionClient {
+  Besu = "besu",
+  Nethermind = "nethermind",
+  Geth = "geth",
+  Erigon = "erigon",
+  Unknown = "unknown"
+}
+
+export enum ConsensusClient {
+  Teku = "teku",
+  Prysm = "prysm",
+  Lighthouse = "lighthouse",
+  Nimbus = "nimbus",
+  Lodestar = "lodestar",
+  Unknown = "unknown"
+}
+
 export interface StakerConfig {
   network: Network;
-  executionClientSelected: string;
-  consensusClientSelected: string;
+  executionClient: ExecutionClient;
+  consensusClient: ConsensusClient;
   isMevBoostSet: boolean;
   executionClientUrl: string;
   validatorUrl: string;

@@ -12,16 +12,18 @@ import { TotalRewards } from "../../apiClients/types.js";
 export async function getAttestationsTotalRewards({
   beaconchainApi,
   epoch,
-  validatorIndexes
+  validatorIndexes,
+  totalRewards
 }: {
   beaconchainApi: BeaconchainApi;
   epoch: string;
   validatorIndexes: string[];
-}): Promise<TotalRewards[]> {
-  return (
+  totalRewards: TotalRewards[];
+}): Promise<void> {
+  (
     await beaconchainApi.getAttestationsRewards({
       epoch,
       pubkeysOrIndexes: validatorIndexes
     })
-  ).data.total_rewards;
+  ).data.total_rewards.forEach((reward) => totalRewards.push(reward));
 }
