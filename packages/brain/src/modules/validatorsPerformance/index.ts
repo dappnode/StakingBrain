@@ -32,7 +32,7 @@ import { PostgresClient } from "../apiClients/index.js";
 
 // TODO: blocksProposedByEpochAndSlot
 
-interface ValidatorsPerformanceProcessed {
+export interface ValidatorsPerformanceProcessed {
   mapValidatorPerformance: Map<
     string,
     {
@@ -56,4 +56,8 @@ export async function processValidatorsData({
 }: {
   validatorIndexes: string[];
   postgresClient: PostgresClient;
-}) {}
+}) {
+  console.log("Processing validators data");
+  console.log("Validator indexes: ", validatorIndexes);
+  console.log("Postgres client: ", postgresClient);
+}
