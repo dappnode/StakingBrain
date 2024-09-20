@@ -86,31 +86,31 @@ SELECT pg_total_relation_size('${this.tableName}');
     // important: enum create types must be broken into separate conditional checks for each ENUM type before trying to create it.
     // Check and create BLOCK_PROPOSAL_STATUS ENUM type if not exists
     await this.sql.unsafe(`
-    DO $$ 
+    DO $$
     BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '${this.BLOCK_PROPOSAL_STATUS}') THEN
-        CREATE TYPE ${this.BLOCK_PROPOSAL_STATUS} AS ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}');
-      END IF;
+      CREATE TYPE ${this.BLOCK_PROPOSAL_STATUS} AS ENUM('${BlockProposalStatus.Missed}', '${BlockProposalStatus.Proposed}', '${BlockProposalStatus.Unchosen}');
+    EXCEPTION
+        WHEN duplicate_object THEN NULL;
     END $$;
   `);
 
     // Check and create EXECUTION_CLIENT ENUM type if not exists
     await this.sql.unsafe(`
-    DO $$ 
+    DO $$
     BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '${this.EXECUTION_CLIENT}') THEN
-        CREATE TYPE ${this.CONSENSUS_CLIENT} AS ENUM('${ExecutionClient.Besu}', '${ExecutionClient.Nethermind}', '${ExecutionClient.Geth}', '${ExecutionClient.Erigon}', '${ExecutionClient.Unknown}');
-      END IF;
+        CREATE TYPE ${this.EXECUTION_CLIENT} AS ENUM('${ExecutionClient.Besu}', '${ExecutionClient.Nethermind}', '${ExecutionClient.Geth}', '${ExecutionClient.Erigon}', '${ExecutionClient.Unknown}');
+    EXCEPTION
+        WHEN duplicate_object THEN NULL;
     END $$;
   `);
 
     // Check and create CONSENSUS_CLIENT ENUM type if not exists
     await this.sql.unsafe(`
-    DO $$ 
+    DO $$
     BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '${this.CONSENSUS_CLIENT}') THEN
         CREATE TYPE ${this.CONSENSUS_CLIENT} AS ENUM('${ConsensusClient.Teku}', '${ConsensusClient.Prysm}', '${ConsensusClient.Lighthouse}', '${ConsensusClient.Nimbus}', '${ConsensusClient.Unknown}');
-      END IF;
+    EXCEPTION
+        WHEN duplicate_object THEN NULL;
     END $$;
   `);
 
@@ -140,9 +140,9 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
   public async deleteDatabaseTableAndEnumTypes() {
     await this.sql.unsafe(`DROP TABLE IF EXISTS ${this.tableName}`);
     await this.sql.unsafe(`
-    DROP TYPE IF EXISTS BLOCK_PROPOSAL_STATUS;
-    DROP TYPE IF EXISTS EXECUTION_CLIENT;
-    DROP TYPE IF EXISTS CONSENSUS_CLIENT;
+    DROP TYPE IF EXISTS ${this.BLOCK_PROPOSAL_STATUS};
+    DROP TYPE IF EXISTS ${this.EXECUTION_CLIENT};
+    DROP TYPE IF EXISTS ${this.CONSENSUS_CLIENT};
   `);
   }
 
