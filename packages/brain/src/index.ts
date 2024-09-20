@@ -84,7 +84,7 @@ export const brainDb = new BrainDataBase(
 
 // Create postgres client
 const postgresClient = new PostgresClient(postgresUrl);
-await postgresClient.initialize();
+await postgresClient.initialize().catch((err) => logger.error(`Error initializing table in postgres db`, err)); // TODO: handle error. Consider attempting to initialize on every cron iteration
 
 // Start server APIs
 const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName), network);
@@ -126,9 +126,10 @@ function handle(signal: string): void {
   reloadValidatorsCron.stop();
   proofOfValidationCron.stop();
   brainDb.close();
-  postgresClient.close();
+  postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
   uiServer.close();
   launchpadServer.close();
+  logger.debug(`Stopped all cron jobs and closed all connections.`);
   process.exit(0);
 }
 

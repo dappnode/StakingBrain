@@ -23,8 +23,7 @@ describe.skip("Postgres client", function () {
     console.log("Validators data: ", data);
   });
 
-  it("should delete the table", async () => {
-    await postgresClient.deleteEnumTypes();
-    await postgresClient.deleteDatabaseTable();
+  it("should delete the table and its enum types", async () => {
+    await postgresClient.deleteDatabaseTableAndEnumTypes();
   });
 });

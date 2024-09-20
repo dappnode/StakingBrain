@@ -77,7 +77,6 @@ export async function trackValidatorsPerformance({
           validatorIndexes: activeValidatorsIndexes,
           totalRewards: validatorsAttestationsRewards
         });
-        logger.debug(`${logPrefix}Attestations rewards: ${JSON.stringify(validatorsAttestationsRewards)}`);
 
         // get block proposal status
         await setBlockProposalStatusMap({
@@ -86,7 +85,6 @@ export async function trackValidatorsPerformance({
           validatorIndexes: activeValidatorsIndexes,
           validatorBlockStatusMap
         });
-        logger.debug(`${logPrefix}Block proposal status map: ${JSON.stringify([...validatorBlockStatusMap])}`);
 
         // update error to undefined if no error occurred in last iteration
         errorGettingValidatorData = undefined;
