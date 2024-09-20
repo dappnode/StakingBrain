@@ -37,8 +37,7 @@ export class ValidatorApi extends StandardApi {
         endpoint: path.join(this.validatorEndpoint, prefix0xPubkey(publicKey), "feerecipient")
       })) as ValidatorGetFeeResponse;
     } catch (e) {
-      e.message += `Error getting (GET) fee recipient for pubkey ${publicKey} from validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(`Error getting fee recipient for pubkey ${publicKey} from validator. ${e.message}`);
     }
   }
 
@@ -54,8 +53,9 @@ export class ValidatorApi extends StandardApi {
         body: JSON.stringify({ ethaddress: newFeeRecipient })
       });
     } catch (e) {
-      e.message += `Error setting (POST) fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(
+        `Error setting fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. ${e.message}`
+      );
     }
   }
 
@@ -70,8 +70,7 @@ export class ValidatorApi extends StandardApi {
         endpoint: path.join(this.validatorEndpoint, prefix0xPubkey(publicKey), "feerecipient")
       });
     } catch (e) {
-      e.message += `Error deleting (DELETE) fee recipient for pubkey ${publicKey} from validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(`Error deleting fee recipient for pubkey ${publicKey} from validator. ${e.message}`);
     }
   }
 
@@ -86,8 +85,7 @@ export class ValidatorApi extends StandardApi {
         endpoint: this.remoteKeymanagerEndpoint
       })) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
-      e.message += `Error getting (GET) remote keys from validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(`Error getting remote keys from validator. ${e.message}`);
     }
   }
   /**
@@ -108,8 +106,7 @@ export class ValidatorApi extends StandardApi {
 
       return this.toLowerCaseStatus(response);
     } catch (e) {
-      e.message += `Error posting (POST) remote keys to validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(`Error posting (POST) remote keys to validator. ${e.message}`);
     }
   }
 
@@ -130,7 +127,7 @@ export class ValidatorApi extends StandardApi {
       return this.toLowerCaseStatus(response);
     } catch (e) {
       e.message += `Error deleting (DELETE) remote keys from validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(`Error deleting (DELETE) remote keys from validator. ${e.message}`);
     }
   }
 
@@ -162,7 +159,7 @@ export class ValidatorApi extends StandardApi {
       });
     } catch (e) {
       e.message += `Error getting (POST) attester duties from validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(`Error getting (POST) attester duties from validator. ${e.message}`);
     }
   }
 
@@ -184,8 +181,7 @@ export class ValidatorApi extends StandardApi {
         endpoint: path.join(this.validatorEndpoint, "duties", "proposer", epoch)
       });
     } catch (e) {
-      e.message += `Error getting (GET) proposer duties from validator. `;
-      throw new ValidatorApiError({ ...e });
+      throw new ValidatorApiError(`Error getting (GET) proposer duties from validator. ${e.message}`);
     }
   }
 

@@ -72,8 +72,9 @@ export class Web3SignerApi extends StandardApi {
         headers: this.originHeader
       });
     } catch (e) {
-      e.message += `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. `;
-      throw new SignerApiError({ ...e });
+      throw new SignerApiError(
+        `Error signing (POST) voluntary exit for validator index ${signerVoluntaryExitRequest.voluntary_exit.validator_index}. ${e.message}`
+      );
     }
   }
 
@@ -99,8 +100,7 @@ export class Web3SignerApi extends StandardApi {
         }
       });
     } catch (e) {
-      e.message += `Error signing (POST) proof of validation for validator ${pubkey}. `;
-      throw new SignerApiError({ ...e });
+      throw new SignerApiError(`Error signing (POST) proof of validation for validator ${pubkey}. ${e.message}`);
     }
   }
 
@@ -118,8 +118,7 @@ export class Web3SignerApi extends StandardApi {
         headers: this.originHeader
       });
     } catch (e) {
-      e.message += `Error importing (POST) keystores to remote signer. `;
-      throw new SignerApiError({ ...e });
+      throw new SignerApiError(`Error importing (POST) keystores to remote signer. ${e.message}`);
     }
   }
 
@@ -141,8 +140,7 @@ export class Web3SignerApi extends StandardApi {
         headers: this.originHeader
       });
     } catch (e) {
-      e.message += `Error deleting (DELETE) keystores from remote signer. `;
-      throw new SignerApiError({ ...e });
+      throw new SignerApiError(`Error deleting (DELETE) keystores from remote signer. ${e.message}`);
     }
   }
 
@@ -158,8 +156,7 @@ export class Web3SignerApi extends StandardApi {
         headers: this.originHeader
       });
     } catch (e) {
-      e.message += `Error getting (GET) keystores from remote signer. `;
-      throw new SignerApiError({ ...e });
+      throw new SignerApiError(`Error getting (GET) keystores from remote signer. ${e.message}`);
     }
   }
 
@@ -175,8 +172,7 @@ export class Web3SignerApi extends StandardApi {
         headers: this.originHeader
       });
     } catch (e) {
-      e.message += `Error getting (GET) server status. Is Web3Signer running? `;
-      throw new SignerApiError({ ...e });
+      throw new SignerApiError(`Error getting (GET) server status. Is Web3Signer running?: ${e.message}`);
     }
   }
 }

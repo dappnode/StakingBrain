@@ -1,8 +1,8 @@
-import { ApiError } from "../../errors/index.js";
+import { ApiError } from "../error.js";
 
 export class BeaconchainApiError extends ApiError {
-  constructor(message: string, stack?: string) {
-    super({ message, stack });
+  constructor(message: string) {
+    super(message);
     this.name = "BeaconchainApiError"; // Override the name if needed
   }
 }

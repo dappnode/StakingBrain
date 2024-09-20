@@ -1,9 +1,9 @@
 export function createErrorFactory(errorName: string) {
   return class CustomError extends Error {
-    constructor({ message, stack }: { message: string; stack?: string }) {
+    constructor(message: string) {
       super(message);
       this.name = errorName; // Set the error name provided to the factory
-      if (stack) this.stack = stack;
+      Error.captureStackTrace(this, CustomError); // Capture the stack trace and omit the constructor frame
     }
   };
 }

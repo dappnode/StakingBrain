@@ -1,6 +1,6 @@
 import https from "node:https";
 import http from "node:http";
-import { ApiError } from "../errors/index.js";
+import { ApiError } from "./error.js";
 import logger from "../logger/index.js";
 import type { ApiParams, AllowedMethods, ErrnoException } from "./types.js";
 import type { Network } from "@stakingbrain/common";
@@ -72,9 +72,7 @@ export class StandardApi {
 
     if (timeout) {
       req.setTimeout(timeout, () => {
-        const error = new ApiError({
-          message: `Request to ${endpoint} timed out`
-        });
+        const error = new ApiError(`Request to ${endpoint} timed out`);
         req.destroy(error);
       });
     }
@@ -100,11 +98,7 @@ export class StandardApi {
         reject: (error: any) => void | typeof ApiError
       ) => {
         req.on("error", (e: ErrnoException) => {
-          reject(
-            new ApiError({
-              message: `Request to ${endpoint} failed with status code ${e.code}: ${e.message}. `
-            })
-          );
+          reject(new ApiError(`Request to ${endpoint} failed with status code ${e.code}: ${e.message}. `));
         });
 
         req.on("response", (res) => {
@@ -146,18 +140,12 @@ export class StandardApi {
               } else errorMessage = Buffer.concat(data).toString();
 
               reject(
-                new ApiError({
-                  message: `Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `
-                })
+                new ApiError(`Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `)
               );
             }
           });
           res.on("error", (e: ErrnoException) => {
-            reject(
-              new ApiError({
-                message: `${e.message}. `
-              })
-            );
+            reject(new ApiError(`${e.message}. `));
           });
         });
       }

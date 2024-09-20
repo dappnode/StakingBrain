@@ -44,8 +44,7 @@ export class BlockExplorerApi extends StandardApi {
         endpoint
       })) as BeaconchaGetResponse;
     } catch (e) {
-      e.message += "Error on getting indexes for validator public keys";
-      throw new BlockExplorerApiError({ ...e });
+      throw new BlockExplorerApiError(`Error on getting indexes for validator public keys. ${e.message}`);
     }
   }
 }

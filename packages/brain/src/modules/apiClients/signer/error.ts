@@ -1,8 +1,8 @@
-import { ApiError } from "../../errors/index.js";
+import { ApiError } from "../error.js";
 
 export class SignerApiError extends ApiError {
-  constructor(message: string, stack?: string) {
-    super({ message, stack });
-    this.name = "SignerApiError"; // Override the name if needed
+  constructor(message: string) {
+    super(message);
+    this.name = "SignerApiError";
   }
 }

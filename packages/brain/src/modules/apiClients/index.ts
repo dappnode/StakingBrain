@@ -5,3 +5,4 @@ export { StandardApi } from "./standard.js";
 export { Web3SignerApi } from "./signer/index.js";
 export { PostgresClient } from "./postgres/index.js";
 export { DappnodeSignatureVerifier } from "./signatureVerifier/index.js";
+export { ApiError } from "./error.js";

@@ -32,8 +32,7 @@ SELECT pg_total_relation_size('${this.tableName}');
       const result = await this.sql.unsafe(query);
       return result[0].pg_total_relation_size;
     } catch (err) {
-      err.message = "Error getting table size: " + err.message;
-      throw new PostgresApiError({ ...err });
+      throw new PostgresApiError(`Error getting table size: ${err.message}`);
     }
   }
 
