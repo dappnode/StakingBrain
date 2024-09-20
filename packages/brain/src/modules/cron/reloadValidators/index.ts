@@ -1,4 +1,4 @@
-import { Web3SignerApi, ValidatorApi, ApiError } from "../../apiClients/index.js";
+import { Web3SignerApi, ValidatorApi } from "../../apiClients/index.js";
 import { BrainDataBase } from "../../db/index.js";
 import logger from "../../logger/index.js";
 import { deleteDbPubkeysNotInSigner } from "./deleteDbPubkeysNotInSigner.js";
@@ -80,28 +80,6 @@ export async function reloadValidators(
 
     logger.debug(`${logPrefix}Finished reloading data`);
   } catch (e) {
-    if (e instanceof ApiError && e.code) {
-      switch (e.code) {
-        case "ECONNREFUSED":
-          e.message += `Connection refused by the server ${e.hostname}. Make sure the port is open and the server is running`;
-          break;
-        case "ECONNRESET":
-          e.message += `Connection reset by the server ${e.hostname}, check server logs`;
-          break;
-        case "ENOTFOUND":
-          e.message += `Host ${e.hostname} not found. Make sure the server is running and the hostname is correct`;
-          break;
-        case "ERR_HTTP":
-          e.message += `HTTP error code ${e.errno}`;
-          break;
-        default:
-          e.message += `Unknown error`;
-          break;
-      }
-
-      logger.error(`${logPrefix}Error reloading data`, e);
-    } else {
-      logger.error(`${logPrefix}Unknown error reloading data`, e);
-    }
+    logger.error(`${logPrefix}Unknown error reloading data`, e);
   }
 }

@@ -1,3 +1,3 @@
 import { createErrorFactory } from "../../createErrorFactory.js";
 
-export const ApiError = createErrorFactory("ApiError");
+export const CronError = createErrorFactory("CronError");

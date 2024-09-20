@@ -8,6 +8,7 @@ import { params } from "../../params.js";
 import { isValidTag } from "./utils.js";
 import { shortenPubkey, isValidBlsPubkey, isValidEcdsaPubkey } from "@stakingbrain/common";
 import { isEmpty } from "lodash-es";
+import { BrainDbError } from "./error.js";
 
 // TODO:
 // The db must have a initial check and maybe should be added on every function to check whenever it is corrupted or not. It should be validated with a JSON schema
@@ -90,8 +91,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.data = { ...this.data, ...validators };
       this.write();
     } catch (e) {
-      e.message += `Unable to add pubkeys ${Object.keys(validators).join(", ")}. `;
-      throw e;
+      throw new BrainDbError(`Unable to add pubkeys ${Object.keys(validators).join(", ")}. ${e.message}`);
     }
   }
 
@@ -116,8 +116,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
 
       this.write();
     } catch (e) {
-      e.message += `Unable to update pubkeys ${Object.keys(validators).join(", ")}`;
-      throw e;
+      throw new BrainDbError(`Unable to update pubkeys ${Object.keys(validators).join(", ")}. ${e.message}`);
     }
   }
 
@@ -136,8 +135,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         this.write();
       }
     } catch (e) {
-      e.message += `Unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}`;
-      throw e;
+      throw new BrainDbError(`Unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}. ${e.message}`);
     }
   }
 
@@ -209,7 +207,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     const dbSize = fs.statSync(this.dbName).size;
     const pubkeysSize = Buffer.byteLength(JSON.stringify(validators));
     if (dbSize + pubkeysSize > MAX_DB_SIZE)
-      throw Error(
+      throw new BrainDbError(
         `The database is too big. Max size is ${MAX_DB_SIZE} bytes. Current size is ${dbSize} bytes. Data to be added is ${pubkeysSize} bytes. `
       );
   }
@@ -278,8 +276,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             setTimeout(resolve, 6 * 1000);
           });
         } else {
-          e.message += `Unable to perform database migration`;
-          throw e;
+          throw new BrainDbError(`Unable to perform database migration. ${e.message}`);
         }
       }
     }
@@ -366,6 +363,6 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       }
     });
 
-    if (errors.length > 0) throw Error(errors.join("\n"));
+    if (errors.length > 0) throw new BrainDbError(errors.join("\n"));
   }
 }
