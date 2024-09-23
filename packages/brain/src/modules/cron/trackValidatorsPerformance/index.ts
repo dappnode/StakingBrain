@@ -52,16 +52,16 @@ export async function trackValidatorsPerformance({
     const epochFinalized = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
     let errorGettingValidatorData: Error | undefined;
     let newEpochFinalized = epochFinalized;
-    const activeValidatorsIndexes: string[] = [];
-    const validatorsAttestationsTotalRewards: TotalRewards[] = [];
-    const validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
+    let activeValidatorsIndexes: string[] = [];
+    let validatorsAttestationsTotalRewards: TotalRewards[] = [];
+    let validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
 
     while (epochFinalized === newEpochFinalized) {
       try {
         logger.debug(`${logPrefix}Epoch finalized: ${epochFinalized}`);
 
         // active validators indexes
-        await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb, activeValidatorsIndexes });
+        activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
         if (activeValidatorsIndexes.length === 0) {
           logger.info(`${logPrefix}No active validators found`);
           return;
@@ -72,19 +72,17 @@ export async function trackValidatorsPerformance({
         await checkNodeHealth({ beaconchainApi });
 
         // get block attestations rewards
-        await getAttestationsTotalRewards({
+        validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
           beaconchainApi,
           epoch: epochFinalized.toString(),
-          validatorIndexes: activeValidatorsIndexes,
-          totalRewards: validatorsAttestationsTotalRewards
+          activeValidatorsIndexes
         });
 
         // get block proposal status
-        await setBlockProposalStatusMap({
+        validatorBlockStatusMap = await setBlockProposalStatusMap({
           beaconchainApi,
           epoch: epochFinalized.toString(),
-          validatorIndexes: activeValidatorsIndexes,
-          validatorBlockStatusMap
+          activeValidatorsIndexes
         });
 
         // update error to undefined if no error occurred in last iteration and break the loop
@@ -119,9 +117,9 @@ export async function trackValidatorsPerformance({
     // insert performance data or each validator
     await insertPerformanceDataNotThrow({
       postgresClient,
-      validatorIndexes: activeValidatorsIndexes,
+      activeValidatorsIndexes,
       epochFinalized,
-      validatorBlockStatus: validatorBlockStatusMap,
+      validatorBlockStatusMap,
       validatorsAttestationsTotalRewards,
       error: errorGettingValidatorData,
       executionClient,

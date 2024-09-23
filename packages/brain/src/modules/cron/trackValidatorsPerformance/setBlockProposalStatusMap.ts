@@ -8,19 +8,19 @@ import { logPrefix } from "./logPrefix.js";
  *
  * @param {BeaconchainApi} beaconchainApi - Beaconchain API client.
  * @param {string} epoch - The epoch to get the block proposal duties.
- * @param {string[]} validatorIndexes - Array of validator indexes.
+ * @param {string[]} activeValidatorIndexes - Array of validator indexes.
  */
 export async function setBlockProposalStatusMap({
   beaconchainApi,
   epoch,
-  validatorIndexes,
-  validatorBlockStatusMap
+  activeValidatorsIndexes
 }: {
   beaconchainApi: BeaconchainApi;
   epoch: string;
-  validatorIndexes: string[];
-  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
-}): Promise<void> {
+  activeValidatorsIndexes: string[];
+}): Promise<Map<string, BlockProposalStatus>> {
+  // Initialize the map with the block proposal status of each validator.
+  const validatorBlockStatusMap = new Map<string, BlockProposalStatus>();
   // Get the block proposal duties for the given epoch. Which validators
   // are supposed to propose a block in which slot?
   const blockProposalsResponse = await beaconchainApi.getProposerDuties({
@@ -28,7 +28,7 @@ export async function setBlockProposalStatusMap({
   });
 
   // Utilize a Set for quick lookup. We assume that the validator indexes are unique.
-  const validatorIndexesSet = new Set(validatorIndexes);
+  const validatorIndexesSet = new Set(activeValidatorsIndexes);
 
   // Initialize all validator's status to Unchosen.
   validatorIndexesSet.forEach((validatorIndex) => {
@@ -64,4 +64,5 @@ export async function setBlockProposalStatusMap({
       }
     }
   }
+  return validatorBlockStatusMap;
 }

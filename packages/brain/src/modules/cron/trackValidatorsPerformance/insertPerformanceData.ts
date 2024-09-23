@@ -11,31 +11,31 @@ import { logPrefix } from "./logPrefix.js";
  * with the next validator.
  *
  * @param postgresClient - Postgres client to interact with the DB.
- * @param validatorIndexes - Array of validator indexes.
+ * @param activeValidatorIndexes - Array of validator indexes.
  * @param epochFinalized - The epoch finalized.
- * @param validatorBlockStatus - Map with the block proposal status of each validator.
+ * @param validatorBlockStatusMap - Map with the block proposal status of each validator.
  * @param validatorsAttestationsTotalRewards - Array of total rewards for the validators.
  */
 export async function insertPerformanceDataNotThrow({
   postgresClient,
-  validatorIndexes,
+  activeValidatorsIndexes,
   epochFinalized,
-  validatorBlockStatus,
+  validatorBlockStatusMap,
   validatorsAttestationsTotalRewards,
   executionClient,
   consensusClient,
   error
 }: {
   postgresClient: PostgresClient;
-  validatorIndexes: string[];
+  activeValidatorsIndexes: string[];
   epochFinalized: number;
-  validatorBlockStatus: Map<string, BlockProposalStatus>;
+  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
   validatorsAttestationsTotalRewards: TotalRewards[];
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   error?: Error;
 }): Promise<void> {
-  for (const validatorIndex of validatorIndexes) {
+  for (const validatorIndex of activeValidatorsIndexes) {
     //const liveness = validatorsLiveness.find((liveness) => liveness.index === validatorIndex)?.is_live;
     const attestationsTotalRewards = validatorsAttestationsTotalRewards.find(
       (attestationReward) => attestationReward.validator_index === validatorIndex
@@ -46,7 +46,7 @@ export async function insertPerformanceDataNotThrow({
       continue;
     }
 
-    const blockProposalStatus = validatorBlockStatus.get(validatorIndex);
+    const blockProposalStatus = validatorBlockStatusMap.get(validatorIndex);
     if (!blockProposalStatus) {
       logger.error(
         `${logPrefix}Missing block proposal data for validator ${validatorIndex}, block: ${blockProposalStatus}`
