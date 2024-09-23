@@ -3,7 +3,8 @@ import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 export enum BlockProposalStatus {
   Missed = "Missed",
   Proposed = "Proposed",
-  Unchosen = "Unchosen"
+  Unchosen = "Unchosen",
+  Error = "Error"
 }
 
 export interface AttestationsTotalRewards {
