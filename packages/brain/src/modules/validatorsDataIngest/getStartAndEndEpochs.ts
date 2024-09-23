@@ -1,22 +1,18 @@
-export function getStartAndEndEpochs(
-  minGenesisTime: number,
-  secondsPerSlot: number,
-  dateRange?: { startDate: Date; endDate: Date }
-): { startEpoch: number; endEpoch: number } {
-  if (dateRange)
-    return {
-      startEpoch: getEpochFromDate(dateRange.startDate, minGenesisTime, secondsPerSlot),
-      endEpoch: getEpochFromDate(dateRange.endDate, minGenesisTime, secondsPerSlot)
-    };
-  else {
-    // calculate the date from 7 days ago and its epoch
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return {
-      startEpoch: getEpochFromDate(sevenDaysAgo, minGenesisTime, secondsPerSlot),
-      endEpoch: getEpochFromDate(new Date(), minGenesisTime, secondsPerSlot)
-    };
-  }
+export function getStartAndEndEpochs({
+  minGenesisTime,
+  secondsPerSlot,
+  startDate,
+  endDate
+}: {
+  minGenesisTime: number;
+  secondsPerSlot: number;
+  startDate: Date;
+  endDate: Date;
+}): { startEpoch: number; endEpoch: number } {
+  return {
+    startEpoch: getEpochFromDate(startDate, minGenesisTime, secondsPerSlot),
+    endEpoch: getEpochFromDate(endDate, minGenesisTime, secondsPerSlot)
+  };
 }
 
 function getEpochFromDate(date: Date, minGenesisTime: number, secondsPerSlot: number): number {

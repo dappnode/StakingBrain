@@ -2,8 +2,8 @@ import { PostgresClient } from "../apiClients/index.js";
 import logger from "../logger/index.js";
 import { getStartAndEndEpochs } from "./getStartAndEndEpochs.js";
 import { calculateAttestationSuccessRate } from "./calculateAttestationSuccessRate.js";
-import { calculateBlocksProposedSuccessRate } from "./calculateBlocksProposedSuccessRate.js";
-import { ValidatorsPerformanceProcessed } from "./types.js";
+import { Granularity, NumberOfDaysToQuery, ValidatorsDataProcessed } from "./types.js";
+import { getIntervalsEpochs } from "./getIntervalsEpochs.js";
 
 // Module in charge of querying and processin the data of the validators to get the performance metrics:
 // - Attestation success rate
@@ -14,9 +14,15 @@ import { ValidatorsPerformanceProcessed } from "./types.js";
 // Note: It is overkill to store in db the attestation success rate for each epoch since it is only useful froma a global perspective
 // taking into account the historical data. As for now we will calculate dynamicall the attestation success rate with the arguments: epoch start and epoch end.
 
-// TODO: return current validator balance: 2 ways of doing it: 1) get the balance from the beaconchain API, 2) store the ideal rewards with the effective balance and get the balance from the postgres DB. The second option is more efficient but it is not real time.
+// TODO: return current validator balance: 2 ways of doing it: 1) **get the balance from the beaconchain API**, 2) store the ideal rewards with the effective balance and get the balance from the postgres DB. The second option is more efficient but it is not real time.
 // TODO: return to the frontend the remaining seconds to next epoch. In the frontend use this parameter to query the backend every time the epoch changes.
 // TODO: add to block proposed epoch and slot
+// TODO: implement first epoch limit?
+
+// GRANULARITY AND START/END DATE ALLOWED -> only from past to present not from past to past
+// - 1 day: granularity allowed HOURLY
+// - 7 days: granularity allowed HOURLY and DAILY
+// - 1 month (28 days): granularity allowed HOURLY, DAILY and WEEKLY
 
 /**
  * Get the processed data for the validators in the given date range and the given validators indexes.
@@ -33,23 +39,36 @@ export async function fetchAndProcessValidatorsData({
   postgresClient,
   minGenesisTime,
   secondsPerSlot,
-  dateRange
+  numberOfDaysToQuery = 1,
+  granularity = Granularity.Hourly
 }: {
   validatorIndexes: string[];
-  postgresClient: PostgresClient;
-  minGenesisTime: number;
-  secondsPerSlot: number;
-  dateRange?: { startDate: Date; endDate: Date };
-}): Promise<ValidatorsPerformanceProcessed> {
+  postgresClient: PostgresClient; // import from backend index
+  minGenesisTime: number; // import from backend index
+  secondsPerSlot: number; // immport from backend index
+  numberOfDaysToQuery?: NumberOfDaysToQuery;
+  granularity?: Granularity;
+}): Promise<
+  Map<
+    string, // validatorIndex
+    ValidatorsDataProcessed // processed data of the validator
+  >
+> {
   logger.info("Processing validators data");
+  const mapValidatorPerformance = new Map<string, ValidatorsDataProcessed>();
 
-  const mapValidatorPerformance: Map<string, { attestationSuccessRate: number; blocksProposedSuccessRate: number }> =
-    new Map();
+  // Get start timestamp and end timestamp
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - numberOfDaysToQuery);
 
-  // Calculate the epochs for the given dates, if no dates are given then use the last 7 days epoch and the latest epoch
-  const { startEpoch, endEpoch } = getStartAndEndEpochs(minGenesisTime, secondsPerSlot, dateRange);
+  // Calculate the epochs for the given dates
+  const { startEpoch, endEpoch } = getStartAndEndEpochs({ minGenesisTime, secondsPerSlot, startDate, endDate });
 
-  // Get the validators data from the postgres database
+  // Get the start and end epochs for each interval
+  const intervals = getIntervalsEpochs({ startDate, endDate, granularity, minGenesisTime, secondsPerSlot });
+
+  // Get the validators data from the postgres database with the start and end epoch
   const validatorsDataMap = await postgresClient.getValidatorsDataMapForEpochRange({
     validatorIndexes,
     startEpoch,
@@ -59,34 +78,20 @@ export async function fetchAndProcessValidatorsData({
   // Calculate the attestation success rate for each validator
   for (const [validatorIndex, validatorData] of validatorsDataMap.entries())
     mapValidatorPerformance.set(validatorIndex, {
-      attestationSuccessRate: calculateAttestationSuccessRate({
-        validatorData,
-        startEpoch,
-        endEpoch
+      attestationSuccessRate: calculateAttestationSuccessRate({ validatorData, startEpoch, endEpoch }),
+      attestationSuccessRatePerInterval: intervals.map(({ startEpoch, endEpoch }) => {
+        return {
+          startEpoch,
+          endEpoch,
+          attestationSuccessRate: calculateAttestationSuccessRate({ validatorData, startEpoch, endEpoch })
+        };
       }),
-      blocksProposedSuccessRate: calculateBlocksProposedSuccessRate({
-        validatorData
-      })
+      blocks: {
+        proposed: validatorData.filter((data) => data.blockProposalStatus === "Proposed").length,
+        missed: validatorData.filter((data) => data.blockProposalStatus === "Missed").length
+      }
     });
 
-  // Calculate the mean attestation success rate
-  const meanAttestationSuccessRate =
-    Array.from(mapValidatorPerformance.values()).reduce(
-      (acc, { attestationSuccessRate }) => acc + attestationSuccessRate,
-      0
-    ) / mapValidatorPerformance.size;
-
-  // Calculate the mean blocks proposed success rate
-  const meanBlocksProposedSuccessRate =
-    Array.from(mapValidatorPerformance.values()).reduce(
-      (acc, { blocksProposedSuccessRate }) => acc + blocksProposedSuccessRate,
-      0
-    ) / mapValidatorPerformance.size;
-
   // Return the processed data
-  return {
-    mapValidatorPerformance,
-    meanAttestationSuccessRate,
-    meanBlocksProposedSuccessRate
-  };
+  return mapValidatorPerformance;
 }
