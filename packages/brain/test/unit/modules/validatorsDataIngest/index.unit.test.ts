@@ -9,5 +9,19 @@ describe("Validators data ingest", function () {
   const dbUrl = "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer";
   const postgresClient = new PostgresClient(dbUrl);
 
-  it("should fetch and process validators data", async () => {});
+  it("should fetch and process validators data", async () => {
+    const validatorIndexes = ["1802289", "1802258"];
+    const minGenesisTime = 1695902100;
+    const secondsPerSlot = 12;
+
+    const data = await fetchAndProcessValidatorsData({
+      validatorIndexes,
+      postgresClient,
+      minGenesisTime,
+      secondsPerSlot,
+      numberOfDaysToQuery: 1
+    });
+
+    console.log(data);
+  });
 });
