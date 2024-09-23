@@ -1,4 +1,5 @@
 import type { ValidatorPerformance } from "../apiClients/postgres/types.js";
+import logger from "../logger/index.js";
 
 /**
  * Calculates the attestation success rate for a given validator. The attestation success rate is the percentage of successful attestations
@@ -20,11 +21,16 @@ export function calculateAttestationSuccessRate({
 }): number {
   // Calculate the total attestation opportunities
   const totalAttestationOpportunities = endEpoch - startEpoch;
+  if (totalAttestationOpportunities <= 0) {
+    logger.warn("totalAttestationOpportunities is less than or equal to 0");
+    return 0;
+  }
 
   // Calculate the total successful attestations
-  const totalSuccessfulAttestations = validatorData.filter(
-    (data) => parseInt(data.attestationsTotalRewards.source) >= 0
-  ).length;
+  const totalSuccessfulAttestations = validatorData.filter((data) => {
+    const rewards = JSON.parse(data.attestationsTotalRewards); // Parse the JSON
+    return rewards.source >= 0; // Check if source is non-negative
+  }).length;
 
   return (totalSuccessfulAttestations / totalAttestationOpportunities) * 100;
 }
