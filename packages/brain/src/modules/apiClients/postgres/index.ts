@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
    */
   public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
     const query = `
-INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsTotalRewards}, ${Columns.error})
+INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.executionClient}, ${Columns.consensusClient}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsTotalRewards}, ${Columns.error})
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
 

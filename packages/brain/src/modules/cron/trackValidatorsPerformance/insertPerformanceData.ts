@@ -54,9 +54,8 @@ export async function insertPerformanceDataNotThrow({
       continue;
     }
 
-    // write on db
-    logger.debug(`${logPrefix}Inserting performance data for validator ${validatorIndex}`);
     try {
+      logger.debug(`${logPrefix}Inserting performance data for validator ${validatorIndex}`);
       await postgresClient.insertPerformanceData({
         validatorIndex: parseInt(validatorIndex),
         epoch: epochFinalized,
@@ -66,6 +65,7 @@ export async function insertPerformanceDataNotThrow({
         executionClient,
         consensusClient
       });
+      logger.debug(`${logPrefix}Performance data inserted for epoch ${epochFinalized}`);
     } catch (e) {
       logger.error(`${logPrefix}Error inserting performance data for validator ${validatorIndex}: ${e}`);
       continue;

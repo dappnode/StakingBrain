@@ -125,7 +125,6 @@ export async function trackValidatorsPerformance({
       executionClient,
       consensusClient
     });
-    logger.debug(`${logPrefix}Performance data inserted for epoch ${epochFinalized}`);
   } catch (e) {
     logger.error(`${logPrefix}Error in trackValidatorsPerformance: ${e}`);
     return;
