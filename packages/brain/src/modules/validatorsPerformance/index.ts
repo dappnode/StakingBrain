@@ -1,63 +1,92 @@
 import { PostgresClient } from "../apiClients/index.js";
+import logger from "../logger/index.js";
+import { getStartAndEndEpochs } from "./getStartAndEndEpochs.js";
+import { calculateAttestationSuccessRate } from "./calculateAttestationSuccessRate.js";
+import { calculateBlocksProposedSuccessRate } from "./calculateBlocksProposedSuccessRate.js";
+import { ValidatorsPerformanceProcessed } from "./types.js";
 
-// Module in charge of queriyng the validators attestation rewards, block proposals and sync committee rewards and
-// processing the data to be displayed in the validators performance page.
-
-// FRONTEND
-
-// Will display the following data:
-// - Attestation success rate (not chart until granularity)
-// - Blocks proposed success rate (not chart until granularity)
-// - Sync committee success rate (not chart until granularity)
-// - Balance -> No chart
-// - Means: mean attestation success rate, mean blocks proposed success rate, mean balance -> No chart
-
-// BACKEND
-
-// The frontend will call backend with arguments:
-// - startDate and endDate -> backend will translate these dates to epochs.
-//      The backend will calculate  ValidatorsPerformanceProcessed for the given dates
-//      If no arguments passeed to backend then the backend will use last 7 days epoch and latest epoch
-// - Clients (execution and consensus) -> optional
-// - Attestation/block success rate granularity (future): admit granularity of att success rate: by epoch, by day, by week, by month -> THIS enables chart visualization
-
-// Return also current balance for each validator
+// Module in charge of querying and processin the data of the validators to get the performance metrics:
+// - Attestation success rate
+// - Blocks proposed success rate
+// - Mean attestation success rate
+// - Mean blocks proposed success rate
 
 // Note: It is overkill to store in db the attestation success rate for each epoch since it is only useful froma a global perspective
 // taking into account the historical data. As for now we will calculate dynamicall the attestation success rate with the arguments: epoch start and epoch end.
 
-//  (%) = (Number of Successful Attestations + Number of Successful Proposals) / (Total Attestation Opportunities + Total Proposal Opportunities) * 100
-// Total Attestation Opportunities: is the number of epochs between the first and last epoch in the data set of a specific validator.
-// Total Proposal Opportunities:
-
-// TODO: blocksProposedByEpochAndSlot
-
-export interface ValidatorsPerformanceProcessed {
-  mapValidatorPerformance: Map<
-    string,
-    {
-      attestationSuccessRate: number;
-      blocksProposedSuccessRate: number;
-      balance: number;
-      syncCommitteeSuccessRate?: number;
-    }
-  >;
-  meanAttestationSuccessRate: number;
-  meanBlocksProposedSuccessRate: number;
-  meanBalance: number;
-}
+// TODO: return current validator balance: 2 ways of doing it: 1) get the balance from the beaconchain API, 2) store the ideal rewards with the effective balance and get the balance from the postgres DB. The second option is more efficient but it is not real time.
+// TODO: return to the frontend the remaining seconds to next epoch. In the frontend use this parameter to query the backend every time the epoch changes.
+// TODO: add to block proposed epoch and slot
 
 /**
+ * Get the processed data for the validators in the given date range and the given validators indexes.
  *
+ * @param validatorIndexes - Array of validator indexes.
+ * @param postgresClient - Postgres client to interact with the DB.
+ * @param minGenesisTime - The genesis time of the chain.
+ * @param secondsPerSlot - The number of seconds per slot.
+ * @param dateRange - The date range to get the data from.
+ * @returns the processed data for the validators
  */
-export async function processValidatorsData({
+export async function getValidatorsDataProcessed({
   validatorIndexes,
-  postgresClient
+  postgresClient,
+  minGenesisTime,
+  secondsPerSlot,
+  dateRange
 }: {
   validatorIndexes: string[];
   postgresClient: PostgresClient;
-}) {
-  console.log("Processing validators data");
-  console.log("Validator indexes: ", validatorIndexes);
-  console.log("Postgres client: ", postgresClient);
+  minGenesisTime: number;
+  secondsPerSlot: number;
+  dateRange?: { startDate: Date; endDate: Date };
+}): Promise<ValidatorsPerformanceProcessed> {
+  logger.info("Processing validators data");
+
+  const mapValidatorPerformance: Map<string, { attestationSuccessRate: number; blocksProposedSuccessRate: number }> =
+    new Map();
+
+  // Calculate the epochs for the given dates, if no dates are given then use the last 7 days epoch and the latest epoch
+  const { startEpoch, endEpoch } = getStartAndEndEpochs(minGenesisTime, secondsPerSlot, dateRange);
+
+  // Get the validators data from the postgres database
+  const validatorsDataMap = await postgresClient.getValidatorsDataMapForEpochRange({
+    validatorIndexes,
+    startEpoch,
+    endEpoch
+  });
+
+  // Calculate the attestation success rate for each validator
+  for (const [validatorIndex, validatorData] of validatorsDataMap.entries())
+    mapValidatorPerformance.set(validatorIndex, {
+      attestationSuccessRate: calculateAttestationSuccessRate({
+        validatorData,
+        startEpoch,
+        endEpoch
+      }),
+      blocksProposedSuccessRate: calculateBlocksProposedSuccessRate({
+        validatorData
+      })
+    });
+
+  // Calculate the mean attestation success rate
+  const meanAttestationSuccessRate =
+    Array.from(mapValidatorPerformance.values()).reduce(
+      (acc, { attestationSuccessRate }) => acc + attestationSuccessRate,
+      0
+    ) / mapValidatorPerformance.size;
+
+  // Calculate the mean blocks proposed success rate
+  const meanBlocksProposedSuccessRate =
+    Array.from(mapValidatorPerformance.values()).reduce(
+      (acc, { blocksProposedSuccessRate }) => acc + blocksProposedSuccessRate,
+      0
+    ) / mapValidatorPerformance.size;
+
+  // Return the processed data
+  return {
+    mapValidatorPerformance,
+    meanAttestationSuccessRate,
+    meanBlocksProposedSuccessRate
+  };
 }

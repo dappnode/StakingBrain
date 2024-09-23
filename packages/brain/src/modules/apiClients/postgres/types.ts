@@ -3,8 +3,16 @@ import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 export enum BlockProposalStatus {
   Missed = "Missed",
   Proposed = "Proposed",
-  Unchosen = "Unchosen",
-  Error = "Error"
+  Unchosen = "Unchosen"
+}
+
+export interface AttestationsTotalRewards {
+  validator_index: string;
+  head: string;
+  target: string;
+  source: string;
+  inclusion_delay: string;
+  inactivity: string;
 }
 
 export interface ValidatorPerformance {
@@ -12,10 +20,10 @@ export interface ValidatorPerformance {
   epoch: number;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
+  blockProposalStatus: BlockProposalStatus;
+  attestationsTotalRewards: AttestationsTotalRewards;
   slot?: number;
   liveness?: boolean;
-  blockProposalStatus?: BlockProposalStatus;
   syncCommitteeRewards?: number;
-  attestationsRewards?: object;
   error?: string;
 }

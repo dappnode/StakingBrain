@@ -12,15 +12,10 @@ import { startUiServer, startLaunchpadApi } from "./modules/apiServers/index.js"
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
-import {
-  CronJob,
-  reloadValidators,
-  trackValidatorsPerformance,
-  sendProofsOfValidation,
-  getSecondsToNextEpoch
-} from "./modules/cron/index.js";
+import { CronJob, reloadValidators, trackValidatorsPerformance, sendProofsOfValidation } from "./modules/cron/index.js";
 import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
+import { getSecondsToNextEpoch } from "./getSecondsToNextEpoch.js";
 
 logger.info(`Starting brain...`);
 

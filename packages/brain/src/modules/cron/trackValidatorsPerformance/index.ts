@@ -11,6 +11,7 @@ import { logPrefix } from "./logPrefix.js";
 import { TotalRewards } from "../../apiClients/types.js";
 import { BlockProposalStatus } from "../../apiClients/postgres/types.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
+import { getSecondsToNextEpoch } from "../../../getSecondsToNextEpoch.js";
 
 const MINUTE_IN_SECONDS = 60;
 
@@ -52,7 +53,7 @@ export async function trackValidatorsPerformance({
     let errorGettingValidatorData: Error | undefined;
     let newEpochFinalized = epochFinalized;
     const activeValidatorsIndexes: string[] = [];
-    const validatorsAttestationsRewards: TotalRewards[] = [];
+    const validatorsAttestationsTotalRewards: TotalRewards[] = [];
     const validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
 
     label: while (epochFinalized === newEpochFinalized) {
@@ -75,7 +76,7 @@ export async function trackValidatorsPerformance({
           beaconchainApi,
           epoch: epochFinalized.toString(),
           validatorIndexes: activeValidatorsIndexes,
-          totalRewards: validatorsAttestationsRewards
+          totalRewards: validatorsAttestationsTotalRewards
         });
 
         // get block proposal status
@@ -120,7 +121,7 @@ export async function trackValidatorsPerformance({
       validatorIndexes: activeValidatorsIndexes,
       epochFinalized,
       validatorBlockStatus: validatorBlockStatusMap,
-      validatorsAttestationsRewards,
+      validatorsAttestationsTotalRewards,
       error: errorGettingValidatorData,
       executionClient,
       consensusClient
@@ -130,27 +131,4 @@ export async function trackValidatorsPerformance({
     logger.error(`${logPrefix}Error in trackValidatorsPerformance: ${e}`);
     return;
   }
-}
-
-/**
- * Get the seconds to the start of the next epoch based on the current Unix time and the minimum genesis time of the chain.
- *
- * @param {number} minGenesisTime - Minimum genesis time of the chain.
- * @param {number} secondsPerSlot - Seconds per slot.
- * @returns {number} - Seconds to the start of the next epoch.
- */
-export function getSecondsToNextEpoch({
-  minGenesisTime,
-  secondsPerSlot
-}: {
-  minGenesisTime: number;
-  secondsPerSlot: number;
-}): number {
-  const currentUnixTime = Math.floor(Date.now() / 1000);
-  const timeDifference = currentUnixTime - minGenesisTime; // Time difference in seconds
-  const stlotsSinceGenesis = timeDifference / secondsPerSlot; // Slots since genesis
-  const currentEpoch = Math.floor(stlotsSinceGenesis / 32); // Current epoch
-  const nextEpochStartSlot = (currentEpoch + 1) * 32; // Slot at the start of the next epoch
-  const nextEpochStartTime = nextEpochStartSlot * secondsPerSlot + minGenesisTime; // Time at the start of the next epoch in seconds
-  return nextEpochStartTime - currentUnixTime; // Return the difference in seconds
 }

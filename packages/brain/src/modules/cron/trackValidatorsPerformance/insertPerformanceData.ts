@@ -14,14 +14,14 @@ import { logPrefix } from "./logPrefix.js";
  * @param validatorIndexes - Array of validator indexes.
  * @param epochFinalized - The epoch finalized.
  * @param validatorBlockStatus - Map with the block proposal status of each validator.
- * @param validatorsAttestationsRewards - Array of total rewards for the validators.
+ * @param validatorsAttestationsTotalRewards - Array of total rewards for the validators.
  */
 export async function insertPerformanceDataNotThrow({
   postgresClient,
   validatorIndexes,
   epochFinalized,
   validatorBlockStatus,
-  validatorsAttestationsRewards,
+  validatorsAttestationsTotalRewards,
   executionClient,
   consensusClient,
   error
@@ -30,19 +30,19 @@ export async function insertPerformanceDataNotThrow({
   validatorIndexes: string[];
   epochFinalized: number;
   validatorBlockStatus: Map<string, BlockProposalStatus>;
-  validatorsAttestationsRewards: TotalRewards[];
+  validatorsAttestationsTotalRewards: TotalRewards[];
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   error?: Error;
 }): Promise<void> {
   for (const validatorIndex of validatorIndexes) {
     //const liveness = validatorsLiveness.find((liveness) => liveness.index === validatorIndex)?.is_live;
-    const attestationsRewards = validatorsAttestationsRewards.find(
+    const attestationsTotalRewards = validatorsAttestationsTotalRewards.find(
       (attestationReward) => attestationReward.validator_index === validatorIndex
     );
 
-    if (!attestationsRewards) {
-      logger.error(`${logPrefix}Missing data for validator ${validatorIndex}, att: ${attestationsRewards}`);
+    if (!attestationsTotalRewards) {
+      logger.error(`${logPrefix}Missing data for validator ${validatorIndex}, att: ${attestationsTotalRewards}`);
       continue;
     }
 
@@ -61,7 +61,7 @@ export async function insertPerformanceDataNotThrow({
         validatorIndex: parseInt(validatorIndex),
         epoch: epochFinalized,
         blockProposalStatus,
-        attestationsRewards,
+        attestationsTotalRewards,
         error: error?.message,
         executionClient,
         consensusClient
