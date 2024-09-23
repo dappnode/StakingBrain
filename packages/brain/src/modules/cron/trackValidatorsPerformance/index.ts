@@ -56,7 +56,7 @@ export async function trackValidatorsPerformance({
     const validatorsAttestationsTotalRewards: TotalRewards[] = [];
     const validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
 
-    label: while (epochFinalized === newEpochFinalized) {
+    while (epochFinalized === newEpochFinalized) {
       try {
         logger.debug(`${logPrefix}Epoch finalized: ${epochFinalized}`);
 
@@ -87,8 +87,9 @@ export async function trackValidatorsPerformance({
           validatorBlockStatusMap
         });
 
-        // update error to undefined if no error occurred in last iteration
+        // update error to undefined if no error occurred in last iteration and break the loop
         errorGettingValidatorData = undefined;
+        break;
       } catch (error) {
         logger.error(`${logPrefix}Error occurred: ${error}. Updating epoch finalized and retrying in 1 minute`);
         // update error if an error occurred
@@ -102,7 +103,7 @@ export async function trackValidatorsPerformance({
           );
           // TODO: collect report of the staker setup status: el is offline, node is syncing, signer is not up and original error
           // exit the while loop and write the error to the DB
-          break label;
+          break;
         }
         // wait 1 minute without blocking the event loop and update epoch finalized
         newEpochFinalized = await new Promise((resolve) =>
