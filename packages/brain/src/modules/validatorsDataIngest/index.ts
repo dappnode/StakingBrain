@@ -28,7 +28,7 @@ import { ValidatorsPerformanceProcessed } from "./types.js";
  * @param dateRange - The date range to get the data from.
  * @returns the processed data for the validators
  */
-export async function getValidatorsDataProcessed({
+export async function fetchAndProcessValidatorsData({
   validatorIndexes,
   postgresClient,
   minGenesisTime,
