@@ -32,5 +32,5 @@ export function calculateAttestationSuccessRate({
     return rewards.source >= 0; // Check if source is non-negative
   }).length;
 
-  return (totalSuccessfulAttestations / totalAttestationOpportunities) * 100;
+  return Math.round(totalSuccessfulAttestations / totalAttestationOpportunities) * 100;
 }
