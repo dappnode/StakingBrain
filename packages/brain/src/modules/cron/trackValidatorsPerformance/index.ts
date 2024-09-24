@@ -8,13 +8,10 @@ import { setBlockProposalStatusMap } from "./setBlockProposalStatusMap.js";
 import { checkNodeHealth } from "./checkNodeHealth.js";
 import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
-import { TotalRewards } from "../../apiClients/types.js";
-import { BlockProposalStatus } from "../../apiClients/postgres/types.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
-import { getSecondsToNextEpoch } from "../../../getSecondsToNextEpoch.js";
 
-const MINUTE_IN_SECONDS = 60;
-
+const RETRY_WAIT_TIME = 30 * 1000; // 30 seconds wait time before retrying
+const MAX_RETRIES = 3;  // Define the maximum number of retries
 // TODO: at this moment Lighthouse client does not support retrieving:
 // - liveness of validator from finalized epoch:
 // ```400: BAD_REQUEST: request epoch 79833 is more than one epoch from the current epoch 79835```
@@ -48,75 +45,68 @@ export async function trackValidatorsPerformance({
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
 }): Promise<void> {
+  let attempts = 0;
 
-  try {
-    logger.debug(`${logPrefix}Starting to track performance for epoch: ${currentEpoch}`);
+  while (attempts < MAX_RETRIES) {
+    try {
+      logger.debug(`${logPrefix}Starting to track performance for epoch: ${currentEpoch}`);
 
-    const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
-    if (activeValidatorsIndexes.length === 0) {
-      logger.info(`${logPrefix}No active validators found`);
-      return;
+      const latestEpoch = await beaconchainApi.getEpochHeader({ blockId: 'finalized' });
+      if (latestEpoch !== currentEpoch) {
+        logger.info(`${logPrefix}Epoch has changed from ${currentEpoch} to ${latestEpoch}, aborting retry.`);
+        return;  // Exit if the current finalized epoch is different from the one that we wanted to track with this cron execution
+      }
+
+      const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
+      if (activeValidatorsIndexes.length === 0) {
+        logger.info(`${logPrefix}No active validators found`);
+        return;  // Exit if no active validators are found
+      }
+
+      await checkNodeHealth({ beaconchainApi });
+
+      const validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
+        beaconchainApi,
+        epoch: currentEpoch.toString(),
+        activeValidatorsIndexes
+      });
+
+      const validatorBlockStatusMap = await setBlockProposalStatusMap({
+        beaconchainApi,
+        epoch: currentEpoch.toString(),
+        activeValidatorsIndexes
+      });
+
+      await insertPerformanceDataNotThrow({
+        postgresClient,
+        activeValidatorsIndexes,
+        currentEpoch,
+        validatorBlockStatusMap,
+        validatorsAttestationsTotalRewards,
+        error: undefined,
+        executionClient,
+        consensusClient
+      });
+
+      logger.debug(`${logPrefix}Finished tracking performance for epoch: ${currentEpoch}`);
+      return;  // Success, exit function
+    } catch (e) {
+      attempts++;
+      logger.error(`${logPrefix}Attempt ${attempts} failed: ${e}`);
+      if (attempts >= MAX_RETRIES) {
+        await insertPerformanceDataNotThrow({
+          postgresClient,
+          activeValidatorsIndexes: [],
+          currentEpoch,
+          validatorBlockStatusMap: new Map(),
+          validatorsAttestationsTotalRewards: [],
+          error: e,  // Store the error in the DB after all retries are exhausted
+          executionClient,
+          consensusClient
+        });
+        return;  // Exit after final attempt
+      }
+      await new Promise(resolve => setTimeout(resolve, RETRY_WAIT_TIME));  // Wait 30 seconds before retrying
     }
-
-    await checkNodeHealth({ beaconchainApi });
-
-    const validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
-      beaconchainApi,
-      epoch: currentEpoch.toString(),
-      activeValidatorsIndexes
-    });
-
-    const validatorBlockStatusMap = await setBlockProposalStatusMap({
-      beaconchainApi,
-      epoch: currentEpoch.toString(),
-      activeValidatorsIndexes
-    });
-
-    await insertPerformanceDataNotThrow({
-      postgresClient,
-      activeValidatorsIndexes,
-      currentEpoch,
-      validatorBlockStatusMap,
-      validatorsAttestationsTotalRewards,
-      error: undefined,
-      executionClient,
-      consensusClient
-    });
-
-    logger.debug(`${logPrefix}Finished tracking performance for epoch: ${currentEpoch}`);
-  } catch (e) {
-    logger.error(`${logPrefix}Error in trackValidatorsPerformance: ${e}`);
-    await handlePerformanceDataOnError({
-      postgresClient,
-      currentEpoch,
-      error: e,
-      executionClient,
-      consensusClient
-    });
   }
-}
-
-async function handlePerformanceDataOnError({
-  postgresClient,
-  currentEpoch,
-  error,
-  executionClient,
-  consensusClient
-}: {
-  postgresClient: PostgresClient;
-  currentEpoch: number;
-  error: Error;
-  executionClient: ExecutionClient;
-  consensusClient: ConsensusClient;
-}): Promise<void> {
-  await insertPerformanceDataNotThrow({
-    postgresClient,
-    activeValidatorsIndexes: [],
-    currentEpoch,
-    validatorBlockStatusMap: new Map(),
-    validatorsAttestationsTotalRewards: [],
-    error,
-    executionClient,
-    consensusClient
-  });
 }

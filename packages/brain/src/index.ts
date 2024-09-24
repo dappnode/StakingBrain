@@ -100,28 +100,34 @@ proofOfValidationCron.start();
 
 // defned outside of cron to keep track of the latest processed epoch
 // this must persist even if brain is stoped! 
+// we should read db and get the latest processed epoch from there
 let latestProcessedEpoch: number | undefined;
 
 // executes once each minute, TBD 
 const trackValidatorsPerformanceCron = new CronJob(60 * 1000, async () => {
 
-  const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: 'finalized' });
+  try {
+    const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: 'finalized' });
 
-  if (!latestProcessedEpoch || currentEpoch > latestProcessedEpoch) {
-    await trackValidatorsPerformance({
-      brainDb,
-      postgresClient,
-      currentEpoch,
-      beaconchainApi,
-      minGenesisTime,
-      secondsPerSlot,
-      executionClient,
-      consensusClient
-    });
-    // update latestProcessedEpoch
-    latestProcessedEpoch = currentEpoch;
-  } else {
-    console.log('No new epoch to process.');
+    if (!latestProcessedEpoch || currentEpoch > latestProcessedEpoch) {
+      await trackValidatorsPerformance({
+        brainDb,
+        postgresClient,
+        currentEpoch,
+        beaconchainApi,
+        minGenesisTime,
+        secondsPerSlot,
+        executionClient,
+        consensusClient
+      });
+      // update latestProcessedEpoch
+      latestProcessedEpoch = currentEpoch;
+    } else {
+      console.log('No new epoch to process.');
+    }
+  }
+  catch (err) {
+    logger.error(`Error in trackValidatorsPerformanceCron`, err);
   }
 });
 
