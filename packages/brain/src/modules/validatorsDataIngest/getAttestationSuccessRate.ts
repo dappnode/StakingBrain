@@ -12,7 +12,7 @@ import logger from "../logger/index.js";
  * @param startEpoch the start epoch of the data set
  * @param endEpoch the end epoch of the data set
  */
-export function calculateAttestationSuccessRate({
+export function getAttestationSuccessRate({
   validatorData,
   startEpoch,
   endEpoch

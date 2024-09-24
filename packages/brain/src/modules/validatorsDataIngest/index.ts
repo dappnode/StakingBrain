@@ -1,9 +1,11 @@
 import { PostgresClient } from "../apiClients/index.js";
 import logger from "../logger/index.js";
 import { getStartAndEndEpochs } from "./getStartAndEndEpochs.js";
-import { calculateAttestationSuccessRate } from "./calculateAttestationSuccessRate.js";
+import { getAttestationSuccessRate } from "./getAttestationSuccessRate.js";
 import { Granularity, NumberOfDaysToQuery, ValidatorsDataProcessed } from "./types.js";
 import { getIntervalsEpochs } from "./getIntervalsEpochs.js";
+import { getAttestationSuccessRatePerClients } from "./getAttestationSuccessRatePerClients.js";
+import { getClientsUsedInIntervals } from "./getClientsUsedInInterval.js";
 
 // Module in charge of querying and processin the data of the validators to get the performance metrics:
 // - Attestation success rate
@@ -72,12 +74,14 @@ export async function fetchAndProcessValidatorsData({
   // Calculate the attestation success rate for each validator
   for (const [validatorIndex, validatorData] of validatorsDataMap.entries())
     mapValidatorPerformance.set(validatorIndex, {
-      attestationSuccessRate: calculateAttestationSuccessRate({ validatorData, startEpoch, endEpoch }),
+      attestationSuccessRate: getAttestationSuccessRate({ validatorData, startEpoch, endEpoch }),
+      attestationSuccessRatePerClients: getAttestationSuccessRatePerClients({ validatorData, startEpoch, endEpoch }),
       attestationSuccessRatePerInterval: intervals.map(({ startEpoch, endEpoch }) => {
         return {
           startEpoch,
           endEpoch,
-          attestationSuccessRate: calculateAttestationSuccessRate({ validatorData, startEpoch, endEpoch })
+          attestationSuccessRate: getAttestationSuccessRate({ validatorData, startEpoch, endEpoch }),
+          clientsUsedInInterval: getClientsUsedInIntervals({ validatorData, startEpoch, endEpoch })
         };
       }),
       blocks: {
