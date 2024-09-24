@@ -1,3 +1,12 @@
+/**
+ * Get the start and end epochs for the given date range
+ *
+ * @param minGenesisTime - The minimum genesis time of the chain
+ * @param secondsPerSlot - The number of seconds per slot in the chain
+ * @param startDate - The start date of the date range
+ * @param endDate - The end date of the date range
+ * @returns the start and end epochs for the given date range
+ */
 export function getStartAndEndEpochs({
   minGenesisTime,
   secondsPerSlot,
