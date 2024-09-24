@@ -98,39 +98,28 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 );
 proofOfValidationCron.start();
 
-// defned outside of cron to keep track of the latest processed epoch
-// this must persist even if brain is stoped! 
-let latestProcessedEpoch: number | undefined;
-
-// executes once each minute, TBD 
-const trackValidatorsPerformanceCron = new CronJob(60 * 1000, async () => {
-
-  const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: 'finalized' });
-
-  if (!latestProcessedEpoch || currentEpoch > latestProcessedEpoch) {
-    await trackValidatorsPerformance({
-      brainDb,
-      postgresClient,
-      currentEpoch,
-      beaconchainApi,
-      minGenesisTime,
-      secondsPerSlot,
-      executionClient,
-      consensusClient
-    });
-    // update latestProcessedEpoch
-    latestProcessedEpoch = currentEpoch;
-  } else {
-    console.log('No new epoch to process.');
-  }
-});
-
-
+// executes once every epoch
+const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
+  trackValidatorsPerformance({
+    brainDb,
+    postgresClient,
+    beaconchainApi,
+    executionClient,
+    consensusClient
+  })
+);
+// if we are in the first 10% of the epoch we start the cron job if not we wait until the next epoch with a timeout.
+// gnosis chain 80 seconds per epoch -> 8 seconds
+// ethereum 384 seconds per epoch -> 38.4 seconds
 const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
-// start the cron within the first minute of an epoch
-// If it remains more than 1 minute then wait for the next epoch (+ 10 seconds of margin)
-if (secondsToNextEpoch > 60) setTimeout(() => trackValidatorsPerformanceCron.start(), (secondsToNextEpoch + 10) * 1000);
-else trackValidatorsPerformanceCron.start();
+if (secondsToNextEpoch <= slotsPerEpoch * secondsPerSlot * 0.1) trackValidatorsPerformanceCron.start();
+else
+  setTimeout(
+    () => {
+      trackValidatorsPerformanceCron.start();
+    },
+    (secondsToNextEpoch + 3) * 1000
+  );
 
 // Graceful shutdown
 function handle(signal: string): void {
