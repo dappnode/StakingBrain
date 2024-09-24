@@ -17,12 +17,6 @@ import { getIntervalsEpochs } from "./getIntervalsEpochs.js";
 // TODO: return current validator balance: 2 ways of doing it: 1) **get the balance from the beaconchain API**, 2) store the ideal rewards with the effective balance and get the balance from the postgres DB. The second option is more efficient but it is not real time.
 // TODO: return to the frontend the remaining seconds to next epoch. In the frontend use this parameter to query the backend every time the epoch changes.
 // TODO: add to block proposed epoch and slot
-// TODO: implement first epoch limit?
-
-// GRANULARITY AND START/END DATE ALLOWED -> only from past to present not from past to past
-// - 1 day: granularity allowed HOURLY
-// - 7 days: granularity allowed HOURLY and DAILY
-// - 1 month (28 days): granularity allowed HOURLY, DAILY and WEEKLY
 
 /**
  * Get the processed data for the validators in the given date range and the given validators indexes.

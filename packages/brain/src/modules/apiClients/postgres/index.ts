@@ -197,7 +197,7 @@ WHERE ${Columns.validatorIndex} = ANY($1)
       liveness: row.liveness,
       blockProposalStatus: row.block_proposal_status,
       syncCommitteeRewards: row.sync_comittee_rewards,
-      attestationsTotalRewards: row.attestations_total_rewards,
+      attestationsTotalRewards: JSON.parse(row.attestations_total_rewards),
       error: row.error
     }));
   }
@@ -241,7 +241,7 @@ AND ${Columns.epoch} <= $3
         liveness: row.liveness,
         blockProposalStatus: row.block_proposal_status,
         syncCommitteeRewards: row.sync_comittee_rewards,
-        attestationsTotalRewards: row.attestations_total_rewards,
+        attestationsTotalRewards: JSON.parse(row.attestations_total_rewards),
         error: row.error
       };
 

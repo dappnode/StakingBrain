@@ -22,7 +22,7 @@ export interface ValidatorPerformance {
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   blockProposalStatus: BlockProposalStatus;
-  attestationsTotalRewards: string; // JSON string AttestationsTotalRewards
+  attestationsTotalRewards: AttestationsTotalRewards;
   slot?: number;
   liveness?: boolean;
   syncCommitteeRewards?: number;
