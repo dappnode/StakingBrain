@@ -87,7 +87,7 @@ class BeaconchainApiMock extends BeaconchainApi {
   }
 }
 
-describe.only("Cron - trackValidatorsPerformance - getBlockProposalStatusMap", () => {
+describe("Cron - trackValidatorsPerformance - getBlockProposalStatusMap", () => {
   const beaconchainApi = new BeaconchainApiMock({ baseUrl: "http://localhost:3000" }, Network.Mainnet);
 
   it("should return the block proposal status of each validator: ", async () => {
