@@ -15,7 +15,7 @@ export const holeskyBrainConfig = (
     consensusClient,
     isMevBoostSet,
     executionClientUrl: "http://execution.holesky.dncore.dappnode:8545",
-    validatorUrl: "http://validator.holesky.dncore.dappnode:3500",
+    validatorUrl: `${consensusClient === "teku" ? "https" : "http"}://validator.holesky.dncore.dappnode:3500`,
     beaconchainUrl: "http:/beacon-chain.holesky.dncore.dappnode:3500",
     blockExplorerUrl: "https://holesky.beaconcha.in",
     signerUrl: "http://web3signer.web3signer-holesky.dappnode:9000",
