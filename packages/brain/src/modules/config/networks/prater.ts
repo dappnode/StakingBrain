@@ -28,6 +28,6 @@ export const praterBrainConfig = (
     postgresUrl: "postgres://postgres:password@postgres.web3signer-prater.dappnode:5432/web3signer",
     secondsPerSlot: 12,
     slotsPerEpoch: 32,
-    tlsCert: tlsCert(consensusClient)
+    tlsCert: tlsCert(consensusClient, Network.Prater)
   };
 };

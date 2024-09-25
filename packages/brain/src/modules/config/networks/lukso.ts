@@ -28,6 +28,6 @@ export const luksoBrainConfig = (
     postgresUrl: "postgres://postgres:password@postgres.web3signer-lukso.dappnode:5432/web3signer",
     secondsPerSlot: 12,
     slotsPerEpoch: 32,
-    tlsCert: tlsCert(consensusClient)
+    tlsCert: tlsCert(consensusClient, Network.Lukso)
   };
 };

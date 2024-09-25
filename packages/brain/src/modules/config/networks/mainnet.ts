@@ -28,6 +28,6 @@ export const mainnetBrainConfig = (
     postgresUrl: "postgres://postgres:mainnet@postgres.web3signer.dappnode:5432/web3signer-mainnet",
     secondsPerSlot: 12,
     slotsPerEpoch: 32,
-    tlsCert: tlsCert(consensusClient)
+    tlsCert: tlsCert(consensusClient, Network.Mainnet)
   };
 };
