@@ -28,6 +28,6 @@ export const holeskyBrainConfig = (
     postgresUrl: "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer",
     secondsPerSlot: 12,
     slotsPerEpoch: 32,
-    tlsCert: tlsCert(consensusClient)
+    tlsCert: tlsCert(consensusClient, Network.Holesky)
   };
 };

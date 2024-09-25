@@ -28,6 +28,6 @@ export const gnosisBrainConfig = (
     postgresUrl: "postgres://postgres:gnosis@postgres.web3signer-gnosis.dappnode:5432/web3signer-gnosis",
     secondsPerSlot: 5,
     slotsPerEpoch: 16,
-    tlsCert: tlsCert(consensusClient)
+    tlsCert: tlsCert(consensusClient, Network.Gnosis)
   };
 };
