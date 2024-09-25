@@ -8,19 +8,19 @@ import { logPrefix } from "./logPrefix.js";
  *
  * @param {BeaconchainApi} beaconchainApi - Beaconchain API client.
  * @param {string} epoch - The epoch to get the block proposal duties.
- * @param {string[]} validatorIndexes - Array of validator indexes.
+ * @param {string[]} activeValidatorIndexes - Array of validator indexes.
  */
-export async function setBlockProposalStatusMap({
+export async function getBlockProposalStatusMap({
   beaconchainApi,
   epoch,
-  validatorIndexes,
-  validatorBlockStatusMap
+  activeValidatorsIndexes
 }: {
   beaconchainApi: BeaconchainApi;
   epoch: string;
-  validatorIndexes: string[];
-  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
-}): Promise<void> {
+  activeValidatorsIndexes: string[];
+}): Promise<Map<string, BlockProposalStatus>> {
+  // Initialize the map with the block proposal status of each validator.
+  const validatorBlockStatusMap = new Map<string, BlockProposalStatus>();
   // Get the block proposal duties for the given epoch. Which validators
   // are supposed to propose a block in which slot?
   const blockProposalsResponse = await beaconchainApi.getProposerDuties({
@@ -28,7 +28,7 @@ export async function setBlockProposalStatusMap({
   });
 
   // Utilize a Set for quick lookup. We assume that the validator indexes are unique.
-  const validatorIndexesSet = new Set(validatorIndexes);
+  const validatorIndexesSet = new Set(activeValidatorsIndexes);
 
   // Initialize all validator's status to Unchosen.
   validatorIndexesSet.forEach((validatorIndex) => {
@@ -43,14 +43,13 @@ export async function setBlockProposalStatusMap({
     // enter loop if one of our monitored validators had to propose in this slot
     if (validatorIndexesSet.has(validator_index)) {
       try {
-        // Get the block header for the slot. It has the proposer index.
-        const blockHeader = await beaconchainApi.getBlockHeader({ blockId: slot });
+        // Get the proposer index from the block header for the slot
+        const proposerIndex = (await beaconchainApi.getBlockHeader({ blockId: slot })).data.header.message
+          .proposer_index;
         // If the proposer index in the block header matches the validator index, the block was proposed correctly.
         validatorBlockStatusMap.set(
           validator_index,
-          blockHeader.data.header.message.proposer_index === validator_index
-            ? BlockProposalStatus.Proposed
-            : BlockProposalStatus.Error
+          proposerIndex === validator_index ? BlockProposalStatus.Proposed : BlockProposalStatus.Error
         );
       } catch (error) {
         if (error.status === 404) {
@@ -64,4 +63,5 @@ export async function setBlockProposalStatusMap({
       }
     }
   }
+  return validatorBlockStatusMap;
 }

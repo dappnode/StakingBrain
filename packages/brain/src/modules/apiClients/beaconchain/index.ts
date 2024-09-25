@@ -13,16 +13,14 @@ import {
   BeaconchainSyncingStatusGetResponse,
   BeaconchainSyncCommitteePostResponse,
   BeaconchainBlockRewardsGetResponse,
-  BeaconchainProposerDutiesGetResponse
+  BeaconchainProposerDutiesGetResponse,
+  BlockId
 } from "./types.js";
 import { StandardApi } from "../standard.js";
 import path from "path";
 import { ApiParams } from "../types.js";
 import { Network } from "@stakingbrain/common";
 import { BeaconchainApiError } from "./error.js";
-
-// TODO: BlockId can also be a simple slot in the form of a string. Is this type still necessary?
-type BlockId = "head" | "genesis" | "finalized" | string | `0x${string}`;
 
 export class BeaconchainApi extends StandardApi {
   private SLOTS_PER_EPOCH: number;

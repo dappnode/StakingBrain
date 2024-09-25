@@ -6,24 +6,22 @@ import { TotalRewards } from "../../apiClients/types.js";
  *
  * @param {BeaconchainApi} beaconchainApi - Beaconchain API client.
  * @param {string} epoch - The epoch to get the rewards.
- * @param {string[]} validatorIndexes - Array of validator indexes.
+ * @param {string[]} activeValidatorsIndexes - Array of active validator indexes.
  * @returns {TotalRewards[]} - Array of total rewards for the validators.
  */
 export async function getAttestationsTotalRewards({
   beaconchainApi,
   epoch,
-  validatorIndexes,
-  totalRewards
+  activeValidatorsIndexes
 }: {
   beaconchainApi: BeaconchainApi;
   epoch: string;
-  validatorIndexes: string[];
-  totalRewards: TotalRewards[];
-}): Promise<void> {
-  (
+  activeValidatorsIndexes: string[];
+}): Promise<TotalRewards[]> {
+  return (
     await beaconchainApi.getAttestationsRewards({
       epoch,
-      pubkeysOrIndexes: validatorIndexes
+      pubkeysOrIndexes: activeValidatorsIndexes
     })
-  ).data.total_rewards.forEach((reward) => totalRewards.push(reward));
+  ).data.total_rewards;
 }

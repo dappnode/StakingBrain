@@ -15,7 +15,7 @@ export const luksoBrainConfig = (
     consensusClient,
     isMevBoostSet,
     executionClientUrl: "http://execution.lukso.dncore.dappnode:8545",
-    validatorUrl: "http://validator.lukso.dncore.dappnode:3500",
+    validatorUrl: `${consensusClient === "teku" ? "https" : "http"}://validator.lukso.dncore.dappnode:3500`,
     beaconchainUrl: "http:/beacon-chain.lukso.dncore.dappnode:3500",
     blockExplorerUrl: "https://explorer.consensus.mainnet.lukso.network/",
     signerUrl: "http://web3signer.web3signer-lukso.dappnode:9000",

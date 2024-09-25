@@ -15,9 +15,9 @@ import { params } from "./params.js";
 import {
   CronJob,
   reloadValidators,
-  trackValidatorsPerformance,
+  trackValidatorsPerformanceCron,
   sendProofsOfValidation,
-  getSecondsToNextEpoch
+  startWithinTenFirstPercentageOfEpoch
 } from "./modules/cron/index.js";
 import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
@@ -102,29 +102,24 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
   sendProofsOfValidation(signerApi, brainDb, dappnodeSignatureVerifierApi, shareDataWithDappnode)
 );
 proofOfValidationCron.start();
-const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
-  // once every epoch
-  trackValidatorsPerformance({
-    brainDb,
-    postgresClient,
-    beaconchainApi,
-    minGenesisTime,
-    secondsPerSlot,
-    executionClient,
-    consensusClient
-  })
+
+// executes once every epoch
+export const trackValidatorsPerformanceCronTask = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
+  trackValidatorsPerformanceCron({ brainDb, postgresClient, beaconchainApi, executionClient, consensusClient })
 );
-const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
-// start the cron within the first minute of an epoch
-// If it remains more than 1 minute then wait for the next epoch (+ 10 seconds of margin)
-if (secondsToNextEpoch > 60) setTimeout(() => trackValidatorsPerformanceCron.start(), (secondsToNextEpoch + 10) * 1000);
-else trackValidatorsPerformanceCron.start();
+startWithinTenFirstPercentageOfEpoch({
+  minGenesisTime,
+  secondsPerSlot,
+  slotsPerEpoch,
+  jobFunction: trackValidatorsPerformanceCronTask
+});
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCron.stop();
   proofOfValidationCron.stop();
+  trackValidatorsPerformanceCronTask.stop();
   brainDb.close();
   postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
   uiServer.close();

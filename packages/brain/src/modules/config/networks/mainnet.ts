@@ -15,7 +15,7 @@ export const mainnetBrainConfig = (
     consensusClient,
     isMevBoostSet,
     executionClientUrl: "http://execution.mainnet.dncore.dappnode:8545",
-    validatorUrl: "http://validator.mainnet.dncore.dappnode:3500",
+    validatorUrl: `${consensusClient === "teku" ? "https" : "http"}://validator.mainnet.dncore.dappnode:3500`,
     beaconchainUrl: "http:/beacon-chain.mainnet.dncore.dappnode:3500",
     blockExplorerUrl: "https://beaconcha.in",
     signerUrl: "http://web3signer.web3signer.dappnode:9000",

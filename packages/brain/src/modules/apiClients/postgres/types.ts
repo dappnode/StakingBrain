@@ -7,15 +7,24 @@ export enum BlockProposalStatus {
   Error = "Error"
 }
 
+export interface AttestationsTotalRewards {
+  validator_index: string;
+  head: string;
+  target: string;
+  source: string;
+  inclusion_delay: string;
+  inactivity: string;
+}
+
 export interface ValidatorPerformance {
   validatorIndex: number;
   epoch: number;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
+  blockProposalStatus: BlockProposalStatus;
+  attestationsTotalRewards: AttestationsTotalRewards;
   slot?: number;
   liveness?: boolean;
-  blockProposalStatus?: BlockProposalStatus;
   syncCommitteeRewards?: number;
-  attestationsRewards?: object;
   error?: string;
 }

@@ -11,42 +11,42 @@ import { logPrefix } from "./logPrefix.js";
  * with the next validator.
  *
  * @param postgresClient - Postgres client to interact with the DB.
- * @param validatorIndexes - Array of validator indexes.
+ * @param activeValidatorIndexes - Array of validator indexes.
  * @param epochFinalized - The epoch finalized.
- * @param validatorBlockStatus - Map with the block proposal status of each validator.
- * @param validatorsAttestationsRewards - Array of total rewards for the validators.
+ * @param validatorBlockStatusMap - Map with the block proposal status of each validator.
+ * @param validatorsAttestationsTotalRewards - Array of total rewards for the validators.
  */
 export async function insertPerformanceDataNotThrow({
   postgresClient,
-  validatorIndexes,
-  epochFinalized,
-  validatorBlockStatus,
-  validatorsAttestationsRewards,
+  activeValidatorsIndexes,
+  currentEpoch,
+  validatorBlockStatusMap,
+  validatorsAttestationsTotalRewards,
   executionClient,
   consensusClient,
   error
 }: {
   postgresClient: PostgresClient;
-  validatorIndexes: string[];
-  epochFinalized: number;
-  validatorBlockStatus: Map<string, BlockProposalStatus>;
-  validatorsAttestationsRewards: TotalRewards[];
+  activeValidatorsIndexes: string[];
+  currentEpoch: number;
+  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
+  validatorsAttestationsTotalRewards: TotalRewards[];
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   error?: Error;
 }): Promise<void> {
-  for (const validatorIndex of validatorIndexes) {
+  for (const validatorIndex of activeValidatorsIndexes) {
     //const liveness = validatorsLiveness.find((liveness) => liveness.index === validatorIndex)?.is_live;
-    const attestationsRewards = validatorsAttestationsRewards.find(
+    const attestationsTotalRewards = validatorsAttestationsTotalRewards.find(
       (attestationReward) => attestationReward.validator_index === validatorIndex
     );
 
-    if (!attestationsRewards) {
-      logger.error(`${logPrefix}Missing data for validator ${validatorIndex}, att: ${attestationsRewards}`);
+    if (!attestationsTotalRewards) {
+      logger.error(`${logPrefix}Missing data for validator ${validatorIndex}, att: ${attestationsTotalRewards}`);
       continue;
     }
 
-    const blockProposalStatus = validatorBlockStatus.get(validatorIndex);
+    const blockProposalStatus = validatorBlockStatusMap.get(validatorIndex);
     if (!blockProposalStatus) {
       logger.error(
         `${logPrefix}Missing block proposal data for validator ${validatorIndex}, block: ${blockProposalStatus}`
@@ -54,18 +54,18 @@ export async function insertPerformanceDataNotThrow({
       continue;
     }
 
-    // write on db
-    logger.debug(`${logPrefix}Inserting performance data for validator ${validatorIndex}`);
     try {
+      logger.debug(`${logPrefix}Inserting performance data for validator ${validatorIndex}`);
       await postgresClient.insertPerformanceData({
         validatorIndex: parseInt(validatorIndex),
-        epoch: epochFinalized,
+        epoch: currentEpoch,
         blockProposalStatus,
-        attestationsRewards,
+        attestationsTotalRewards,
         error: error?.message,
         executionClient,
         consensusClient
       });
+      logger.debug(`${logPrefix}Performance data inserted for epoch ${currentEpoch}`);
     } catch (e) {
       logger.error(`${logPrefix}Error inserting performance data for validator ${validatorIndex}: ${e}`);
       continue;
