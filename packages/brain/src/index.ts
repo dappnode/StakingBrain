@@ -12,10 +12,15 @@ import { startUiServer, startLaunchpadApi } from "./modules/apiServers/index.js"
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
-import { CronJob, reloadValidators, trackValidatorsPerformance, sendProofsOfValidation } from "./modules/cron/index.js";
+import {
+  CronJob,
+  reloadValidators,
+  trackValidatorsPerformanceCron,
+  sendProofsOfValidation,
+  startWithinTenFirstPercentageOfEpoch
+} from "./modules/cron/index.js";
 import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
-import { getSecondsToNextEpoch } from "./getSecondsToNextEpoch.js";
 
 logger.info(`Starting brain...`);
 
@@ -99,34 +104,22 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 proofOfValidationCron.start();
 
 // executes once every epoch
-const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, async () => {
-  try {
-    const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
-    await trackValidatorsPerformance({
-      currentEpoch,
-      brainDb,
-      postgresClient,
-      beaconchainApi,
-      executionClient,
-      consensusClient
-    });
-  } catch (e) {
-    logger.error(`Error tracking validator performance: ${e}`);
-  }
+export const trackValidatorsPerformanceCronTask = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
+  trackValidatorsPerformanceCron({ brainDb, postgresClient, beaconchainApi, executionClient, consensusClient })
+);
+startWithinTenFirstPercentageOfEpoch({
+  minGenesisTime,
+  secondsPerSlot,
+  slotsPerEpoch,
+  jobFunction: trackValidatorsPerformanceCronTask
 });
-// if we are in the first 10% of the epoch we start the cron job if not we wait until the next epoch with a timeout.
-// gnosis chain 80 seconds per epoch -> 8 seconds
-// ethereum 384 seconds per epoch -> 38.4 seconds
-const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
-if (secondsToNextEpoch <= slotsPerEpoch * secondsPerSlot * 0.1) trackValidatorsPerformanceCron.start();
-else setTimeout(() => trackValidatorsPerformanceCron.start(), (secondsToNextEpoch + 3) * 1000);
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCron.stop();
   proofOfValidationCron.stop();
-  trackValidatorsPerformanceCron.stop();
+  trackValidatorsPerformanceCronTask.stop();
   brainDb.close();
   postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
   uiServer.close();
