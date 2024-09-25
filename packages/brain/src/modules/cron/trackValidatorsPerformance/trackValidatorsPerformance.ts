@@ -37,12 +37,6 @@ export async function trackValidatorsPerformanceCron({
   }
 }
 
-// TODO: at this moment Lighthouse client does not support retrieving:
-// - liveness of validator from finalized epoch:
-// ```400: BAD_REQUEST: request epoch 79833 is more than one epoch from the current epoch 79835```
-// - sync committee rewards:
-// ```404: NOT_FOUND: Parent state is not available! MissingBeaconState(0xa9592014ad4aa3d5dcc4ef67b669278a85fb4dbe80f12364f2486444b7db3927)```
-
 /**
  * Cron task that will track validators performance for the epoch finalized and store it in the Postgres DB.
  * If any issue is arisen during the process, it will be retried after 30 seconds. If the issue persists until the epoch
