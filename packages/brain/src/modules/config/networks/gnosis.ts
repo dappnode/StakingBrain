@@ -15,7 +15,7 @@ export const gnosisBrainConfig = (
     consensusClient,
     isMevBoostSet,
     executionClientUrl: "http://execution.gnosis.dncore.dappnode:8545",
-    validatorUrl: "http://validator.gnosis.dncore.dappnode:3500",
+    validatorUrl: `${consensusClient === "teku" ? "https" : "http"}://validator.gnosis.dncore.dappnode:3500`,
     beaconchainUrl: "http:/beacon-chain.gnosis.dncore.dappnode:3500",
     blockExplorerUrl: "https://gnosischa.in",
     signerUrl: "http://web3signer.web3signer-gnosis.dappnode:9000",

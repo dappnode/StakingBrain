@@ -15,7 +15,7 @@ export const praterBrainConfig = (
     consensusClient,
     isMevBoostSet,
     executionClientUrl: "http://execution.prater.dncore.dappnode:8545",
-    validatorUrl: "http://validator.prater.dncore.dappnode:3500",
+    validatorUrl: `${consensusClient === "teku" ? "https" : "http"}://validator.prater.dncore.dappnode:3500`,
     beaconchainUrl: "http:/beacon-chain.prater.dncore.dappnode:3500",
     blockExplorerUrl: "https://prater.beaconcha.in",
     signerUrl: "http://web3signer.web3signer-prater.dappnode:9000",
