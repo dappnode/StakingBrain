@@ -126,6 +126,7 @@ function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCron.stop();
   proofOfValidationCron.stop();
+  trackValidatorsPerformanceCron.stop();
   brainDb.close();
   postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
   uiServer.close();
