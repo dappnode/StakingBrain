@@ -1,7 +1,7 @@
 import type { ValidatorPerformance } from "../apiClients/postgres/types.js";
 import type { ExecutionConsensusConcatenated } from "./types.js";
 
-export function getClientsUsedInIntervals({
+export function getClientsUsedPerIntervalsMap({
   validatorData,
   startEpoch,
   endEpoch

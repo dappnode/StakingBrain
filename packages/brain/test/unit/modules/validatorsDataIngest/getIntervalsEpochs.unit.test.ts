@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { getIntervalsEpochs } from "../../../../src/modules/validatorsDataIngest/getIntervalsEpochs.js";
 import { Granularity } from "../../../../src/modules/validatorsDataIngest/types.js";
 
-describe("getIntervalsEpochs", () => {
+describe("validatorsDataIngest - getIntervalsEpochs", () => {
   const minGenesisTime = 1695902100; // Min genesis time Holesky
   const secondsPerSlot = 12; // Seconds per slot
 
