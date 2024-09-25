@@ -4,7 +4,7 @@ import logger from "../../logger/index.js";
 import { BrainDataBase } from "../../db/index.js";
 import { insertPerformanceDataNotThrow } from "./insertPerformanceData.js";
 import { getAttestationsTotalRewards } from "./getAttestationsTotalRewards.js";
-import { setBlockProposalStatusMap } from "./setBlockProposalStatusMap.js";
+import { getBlockProposalStatusMap } from "./getBlockProposalStatusMap.js";
 import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
@@ -68,7 +68,7 @@ export async function trackValidatorsPerformance({
         activeValidatorsIndexes
       });
 
-      const validatorBlockStatusMap = await setBlockProposalStatusMap({
+      const validatorBlockStatusMap = await getBlockProposalStatusMap({
         beaconchainApi,
         epoch: currentEpoch.toString(),
         activeValidatorsIndexes
