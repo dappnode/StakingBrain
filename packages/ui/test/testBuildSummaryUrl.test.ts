@@ -1,4 +1,5 @@
-import { BeaconchaGetResponse } from "@stakingbrain/common";
+import type { BeaconchaGetResponse } from "@stakingbrain/brain";
+import { describe, it } from "node:test";
 import { expect } from "chai";
 import buildValidatorSummaryURL from "../src/utils/buildValidatorSummaryURL.js";
 

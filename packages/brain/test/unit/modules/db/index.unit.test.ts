@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { describe, it } from "node:test";
 import sinon from "sinon";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
@@ -12,9 +13,9 @@ describe("DataBase", () => {
   const signerDnp = "DAppNodePackage-web3signer.web3signer-prater.dnp.dappnode.eth";
   const consensusClientDnp = "DAppNodePackage-validator.prysm-prater.dnp.dappnode.eth";
 
-  beforeEach(() => {
+  function setup(): void {
     if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
-  });
+  }
 
   /**
    * Test public initializeDb()
@@ -24,6 +25,7 @@ describe("DataBase", () => {
      * Should do migration if the database file is not found
      */
     it.skip("Should do migration if database file not found", async () => {
+      setup();
       const expectedDb = {
         "0x821a80380122281580ba8a56cd21956933d43c62fdc8f5b4ec31b2c620e8534e80b6b816c9a2cc8d25568dc4ebcfd47a": {
           tag: "solo",
@@ -98,12 +100,13 @@ describe("DataBase", () => {
       console.log(db.data);
       // check database
       expect(db.data).to.deep.equal(expectedDb);
-    }).timeout(10000);
+    });
 
     /**
      * Create a new empty database if migration fails
      */
     it("Should create a new empty database if migration fails", async () => {
+      setup();
       const db = new BrainDataBase(testDbName);
       async function databaseMigration(): Promise<void> {
         throw new Error("Database migration failed");
@@ -117,12 +120,13 @@ describe("DataBase", () => {
       expect(fs.existsSync(testDbName)).to.be.true;
       db.read();
       expect(db.data).to.be.empty;
-    }).timeout(10000);
+    });
 
     /**
      * Do nothing if the database file exists and is valid
      */
     it("Should do nothing if the database file exists and is valid", () => {
+      setup();
       const db = new BrainDataBase(testDbName);
       fs.writeFileSync(testDbName, JSON.stringify({}));
       const signerApi = sinon.createStubInstance(Web3SignerApi);
@@ -168,7 +172,9 @@ describe("DataBase", () => {
     it("Should add the pubkeys to the database", () => {});
   });
 
-  after(() => {
+  function after(): void {
     if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
-  });
+  }
+
+  after();
 });

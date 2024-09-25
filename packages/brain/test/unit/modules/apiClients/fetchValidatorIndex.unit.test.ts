@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { Network } from "@stakingbrain/common";
 import { BlockExplorerApi } from "../../../../src/modules/apiClients";
+import { describe, it } from "node:test";
 import { ApiParams } from "../../../../src/modules/apiClients/types.js";
 
 describe.skip("Test for fetching validator indexes in every available network", () => {

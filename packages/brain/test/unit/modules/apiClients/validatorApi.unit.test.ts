@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { before } from "mocha";
+import { describe, it } from "node:test";
 import { ValidatorApi } from "../../../../src/modules/apiClients/index.js";
 import { execSync } from "node:child_process";
 import { Network } from "@stakingbrain/common";
@@ -47,7 +47,7 @@ describe.skip("Validator API: Prater", () => {
     describe(`Consensus client: ${consensusClient.name}`, () => {
       let validatorApi: ValidatorApi;
 
-      before(() => {
+      function before(): void {
         const consensusIp = execSync(
           `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${consensusClient.containerName}`
         )
@@ -60,7 +60,8 @@ describe.skip("Validator API: Prater", () => {
           },
           stakerSpecs.network
         );
-      });
+      }
+      before();
 
       it("Should post validators", async () => {
         const response = await validatorApi.postRemoteKeys({
