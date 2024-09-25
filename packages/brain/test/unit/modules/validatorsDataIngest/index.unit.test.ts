@@ -4,7 +4,7 @@ import { Granularity } from "../../../../src/modules/validatorsDataIngest/types.
 
 // This test must be executed with a real database connection
 
-describe("Validators data ingest", function () {
+describe.skip("Validators data ingest", function () {
   this.timeout(10 * 1000);
   // change the dbUrl on demmand
   const dbUrl = "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer";
