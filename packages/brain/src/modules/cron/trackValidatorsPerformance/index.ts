@@ -56,11 +56,11 @@ export async function trackValidatorsPerformance({
       }
 
       const { el_offline, is_syncing } = (await beaconchainApi.getSyncingStatus()).data;
-      if (el_offline) throw new Error("EL Node offline"); // throw error and retry
       if (is_syncing) {
         logger.debug(`${logPrefix}Node is syncing, skipping epoch ${currentEpoch}`);
         return; // Exit if the node is syncing. Head finalized will change
       }
+      if (el_offline) throw new Error("EL Node offline"); // throw error and retry
 
       const validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
         beaconchainApi,
