@@ -207,3 +207,5 @@ export interface BeaconchainLivenessPostResponse {
     is_live: boolean;
   }[];
 }
+
+export type BlockId = "head" | "genesis" | "finalized" | string | `0x${string}`;
