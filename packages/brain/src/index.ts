@@ -97,29 +97,36 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
   sendProofsOfValidation(signerApi, brainDb, dappnodeSignatureVerifierApi, shareDataWithDappnode)
 );
 proofOfValidationCron.start();
-const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
-  // once every epoch
-  trackValidatorsPerformance({
-    brainDb,
-    postgresClient,
-    beaconchainApi,
-    minGenesisTime,
-    secondsPerSlot,
-    executionClient,
-    consensusClient
-  })
-);
+
+// executes once every epoch
+const trackValidatorsPerformanceCron = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, async () => {
+  try {
+    const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+    await trackValidatorsPerformance({
+      currentEpoch,
+      brainDb,
+      postgresClient,
+      beaconchainApi,
+      executionClient,
+      consensusClient
+    });
+  } catch (e) {
+    logger.error(`Error tracking validator performance: ${e}`);
+  }
+});
+// if we are in the first 10% of the epoch we start the cron job if not we wait until the next epoch with a timeout.
+// gnosis chain 80 seconds per epoch -> 8 seconds
+// ethereum 384 seconds per epoch -> 38.4 seconds
 const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
-// start the cron within the first minute of an epoch
-// If it remains more than 1 minute then wait for the next epoch (+ 10 seconds of margin)
-if (secondsToNextEpoch > 60) setTimeout(() => trackValidatorsPerformanceCron.start(), (secondsToNextEpoch + 10) * 1000);
-else trackValidatorsPerformanceCron.start();
+if (secondsToNextEpoch <= slotsPerEpoch * secondsPerSlot * 0.1) trackValidatorsPerformanceCron.start();
+else setTimeout(() => trackValidatorsPerformanceCron.start(), (secondsToNextEpoch + 3) * 1000);
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCron.stop();
   proofOfValidationCron.stop();
+  trackValidatorsPerformanceCron.stop();
   brainDb.close();
   postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
   uiServer.close();

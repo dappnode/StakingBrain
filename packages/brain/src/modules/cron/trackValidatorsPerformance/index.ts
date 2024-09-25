@@ -8,12 +8,7 @@ import { setBlockProposalStatusMap } from "./setBlockProposalStatusMap.js";
 import { checkNodeHealth } from "./checkNodeHealth.js";
 import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
-import { TotalRewards } from "../../apiClients/types.js";
-import { BlockProposalStatus } from "../../apiClients/postgres/types.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
-import { getSecondsToNextEpoch } from "../../../getSecondsToNextEpoch.js";
-
-const MINUTE_IN_SECONDS = 60;
 
 // TODO: at this moment Lighthouse client does not support retrieving:
 // - liveness of validator from finalized epoch:
@@ -23,110 +18,89 @@ const MINUTE_IN_SECONDS = 60;
 
 /**
  * Cron task that will track validators performance for the epoch finalized and store it in the Postgres DB.
- * If any issue is arisen during the process, it will be retried after 1 minute. If the issue persists until the epoch
+ * If any issue is arisen during the process, it will be retried after 30 seconds. If the issue persists until the epoch
  * finalized changes, the issue will be logged and stored in the DB.
  *
  * @param validatorPubkeys - The pubkeys of the validators to track.
  * @param postgresClient - Postgres client to interact with the DB.
  * @param beaconchainApi - Beaconchain API client to interact with the Beaconchain API.
- * @param minGenesisTime - The minimum genesis time of the chain.
+ * @param executionClient - The execution client to interact with.
+ * @param consensusClient - The consensus client to interact with.
+ *
+ * @throws {Error} If there is an error when updating the latestEpoch in the error handling
  */
 export async function trackValidatorsPerformance({
+  currentEpoch,
   brainDb,
   postgresClient,
   beaconchainApi,
-  minGenesisTime,
-  secondsPerSlot,
   executionClient,
   consensusClient
 }: {
+  currentEpoch: number;
   brainDb: BrainDataBase;
   postgresClient: PostgresClient;
   beaconchainApi: BeaconchainApi;
-  minGenesisTime: number;
-  secondsPerSlot: number;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
 }): Promise<void> {
-  try {
-    const epochFinalized = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
-    let errorGettingValidatorData: Error | undefined;
-    let newEpochFinalized = epochFinalized;
-    let activeValidatorsIndexes: string[] = [];
-    let validatorsAttestationsTotalRewards: TotalRewards[] = [];
-    let validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
+  let latestEpoch = currentEpoch;
 
-    while (epochFinalized === newEpochFinalized) {
-      try {
-        logger.debug(`${logPrefix}Epoch finalized: ${epochFinalized}`);
+  while (currentEpoch === latestEpoch) {
+    try {
+      logger.debug(`${logPrefix}Starting to track performance for epoch: ${currentEpoch}`);
 
-        // active validators indexes
-        activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
-        if (activeValidatorsIndexes.length === 0) {
-          logger.info(`${logPrefix}No active validators found`);
-          return;
-        }
-        logger.debug(`${logPrefix}Active validators: ${activeValidatorsIndexes}`);
-
-        // check node health
-        await checkNodeHealth({ beaconchainApi });
-
-        // get block attestations rewards
-        validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
-          beaconchainApi,
-          epoch: epochFinalized.toString(),
-          activeValidatorsIndexes
-        });
-
-        // get block proposal status
-        validatorBlockStatusMap = await setBlockProposalStatusMap({
-          beaconchainApi,
-          epoch: epochFinalized.toString(),
-          activeValidatorsIndexes
-        });
-
-        // update error to undefined if no error occurred in last iteration and break the loop
-        errorGettingValidatorData = undefined;
-        break;
-      } catch (error) {
-        logger.error(`${logPrefix}Error occurred: ${error}. Updating epoch finalized and retrying in 1 minute`);
-        // update error if an error occurred
-        errorGettingValidatorData = error;
-
-        // skip if the seconds to the next epoch is less than 1 minute
-        const secondsToNextEpoch = getSecondsToNextEpoch({ minGenesisTime, secondsPerSlot });
-        if (secondsToNextEpoch < MINUTE_IN_SECONDS) {
-          logger.warn(
-            `${logPrefix}Could not get validator data for epoch ${epochFinalized}. Writing error and skipping to next epoch.`
-          );
-          // TODO: collect report of the staker setup status: el is offline, node is syncing, signer is not up and original error
-          // exit the while loop and write the error to the DB
-          break;
-        }
-        // wait 1 minute without blocking the event loop and update epoch finalized
-        newEpochFinalized = await new Promise((resolve) =>
-          setTimeout(
-            async () => resolve(await beaconchainApi.getEpochHeader({ blockId: "finalized" })),
-            MINUTE_IN_SECONDS * 1000
-          )
-        );
+      const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
+      if (activeValidatorsIndexes.length === 0) {
+        logger.info(`${logPrefix}No active validators found`);
+        return; // Exit if no active validators are found
       }
-    }
-    logger.debug(`${logPrefix}Epoch finalized changed: ${newEpochFinalized}`);
 
-    // insert performance data or each validator
-    await insertPerformanceDataNotThrow({
-      postgresClient,
-      activeValidatorsIndexes,
-      epochFinalized,
-      validatorBlockStatusMap,
-      validatorsAttestationsTotalRewards,
-      error: errorGettingValidatorData,
-      executionClient,
-      consensusClient
-    });
-  } catch (e) {
-    logger.error(`${logPrefix}Error in trackValidatorsPerformance: ${e}`);
-    return;
+      await checkNodeHealth({ beaconchainApi });
+
+      const validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
+        beaconchainApi,
+        epoch: currentEpoch.toString(),
+        activeValidatorsIndexes
+      });
+
+      const validatorBlockStatusMap = await setBlockProposalStatusMap({
+        beaconchainApi,
+        epoch: currentEpoch.toString(),
+        activeValidatorsIndexes
+      });
+
+      await insertPerformanceDataNotThrow({
+        postgresClient,
+        activeValidatorsIndexes,
+        currentEpoch,
+        validatorBlockStatusMap,
+        validatorsAttestationsTotalRewards,
+        error: undefined,
+        executionClient,
+        consensusClient
+      });
+
+      logger.debug(`${logPrefix}Finished tracking performance for epoch: ${currentEpoch}`);
+      return; // Success, exit function
+    } catch (e) {
+      logger.error(`${logPrefix}Error tracking validator peformance for epoch ${currentEpoch}: ${e}`);
+      latestEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+      if (latestEpoch !== currentEpoch) {
+        logger.info(`${logPrefix}Epoch has changed from ${currentEpoch} to ${latestEpoch}, aborting retry.`);
+        await insertPerformanceDataNotThrow({
+          postgresClient,
+          activeValidatorsIndexes: [],
+          currentEpoch,
+          validatorBlockStatusMap: new Map(),
+          validatorsAttestationsTotalRewards: [],
+          error: e.message, // Store the error in the DB after all retries are exhausted
+          executionClient,
+          consensusClient
+        });
+        return; // Exit after final attempt
+      }
+      await new Promise((resolve) => setTimeout(resolve, 30 * 1000)); // Wait 30 seconds before retrying
+    }
   }
 }

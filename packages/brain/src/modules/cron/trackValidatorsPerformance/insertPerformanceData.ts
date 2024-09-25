@@ -19,7 +19,7 @@ import { logPrefix } from "./logPrefix.js";
 export async function insertPerformanceDataNotThrow({
   postgresClient,
   activeValidatorsIndexes,
-  epochFinalized,
+  currentEpoch,
   validatorBlockStatusMap,
   validatorsAttestationsTotalRewards,
   executionClient,
@@ -28,7 +28,7 @@ export async function insertPerformanceDataNotThrow({
 }: {
   postgresClient: PostgresClient;
   activeValidatorsIndexes: string[];
-  epochFinalized: number;
+  currentEpoch: number;
   validatorBlockStatusMap: Map<string, BlockProposalStatus>;
   validatorsAttestationsTotalRewards: TotalRewards[];
   executionClient: ExecutionClient;
@@ -58,14 +58,14 @@ export async function insertPerformanceDataNotThrow({
       logger.debug(`${logPrefix}Inserting performance data for validator ${validatorIndex}`);
       await postgresClient.insertPerformanceData({
         validatorIndex: parseInt(validatorIndex),
-        epoch: epochFinalized,
+        epoch: currentEpoch,
         blockProposalStatus,
         attestationsTotalRewards,
         error: error?.message,
         executionClient,
         consensusClient
       });
-      logger.debug(`${logPrefix}Performance data inserted for epoch ${epochFinalized}`);
+      logger.debug(`${logPrefix}Performance data inserted for epoch ${currentEpoch}`);
     } catch (e) {
       logger.error(`${logPrefix}Error inserting performance data for validator ${validatorIndex}: ${e}`);
       continue;
