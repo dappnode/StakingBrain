@@ -5,7 +5,7 @@ import { getAttestationSuccessRate } from "./getAttestationSuccessRate.js";
 import { Granularity, NumberOfDaysToQuery, ValidatorsDataProcessed } from "./types.js";
 import { getIntervalsEpochs } from "./getIntervalsEpochs.js";
 import { getAttestationSuccessRatePerClients } from "./getAttestationSuccessRatePerClients.js";
-import { getClientsUsedInIntervals } from "./getClientsUsedInInterval.js";
+import { getClientsUsedPerIntervalsMap } from "./getClientsUsedPerIntervalsMap.js";
 
 // Module in charge of querying and processin the data of the validators to get the performance metrics:
 // - Attestation success rate
@@ -81,7 +81,7 @@ export async function fetchAndProcessValidatorsData({
           startEpoch,
           endEpoch,
           attestationSuccessRate: getAttestationSuccessRate({ validatorData, startEpoch, endEpoch }),
-          clientsUsedInInterval: getClientsUsedInIntervals({ validatorData, startEpoch, endEpoch })
+          clientsUsedInInterval: getClientsUsedPerIntervalsMap({ validatorData, startEpoch, endEpoch })
         };
       }),
       blocks: {

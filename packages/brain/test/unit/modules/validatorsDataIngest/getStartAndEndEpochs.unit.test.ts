@@ -1,8 +1,8 @@
 import { getStartAndEndEpochs } from "../../../../dist/modules/validatorsDataIngest/getStartAndEndEpochs.js";
 import { expect } from "chai";
 
-describe("getStartAndEndEpochs", () => {
-  it("should return correct start and end epochs for the given date range", () => {
+describe("validatorsDataIngest - getStartAndEndEpochs", () => {
+  it("should return correct start and end epochs for the given date range in Holesky", () => {
     // Define constants
     const minGenesisTime = 1695902100; // Use the provided minGenesisTime
     const secondsPerSlot = 12; // Use the provided secondsPerSlot
@@ -27,6 +27,30 @@ describe("getStartAndEndEpochs", () => {
     expect(result).to.deep.equal({
       startEpoch: expectedStartEpoch,
       endEpoch: expectedEndEpoch
+    });
+  });
+
+  it("should return correct start and end epochs for the given date range in Holesky", () => {
+    // Define constants
+    const minGenesisTime = 1606824000; // Min genesis time ethereum
+    const secondsPerSlot = 12; // Use the provided secondsPerSlot
+
+    // Define date range for testing
+    const startDate = new Date("Sep-25-2024 16:46:47 UTC+2");
+    const endDate = new Date("Sep-25-2024 17:57:11 UTC+2");
+
+    // Call the function
+    const result = getStartAndEndEpochs({
+      minGenesisTime,
+      secondsPerSlot,
+      startDate,
+      endDate
+    });
+
+    // Assert the results
+    expect(result).to.deep.equal({
+      startEpoch: 313676,
+      endEpoch: 313687
     });
   });
 });
