@@ -10,8 +10,6 @@ import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInB
 import { logPrefix } from "./logPrefix.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 
-const RETRY_WAIT_TIME = 30 * 1000; // 30 seconds wait time before retrying
-const MAX_RETRIES = 3;  // Define the maximum number of retries
 // TODO: at this moment Lighthouse client does not support retrieving:
 // - liveness of validator from finalized epoch:
 // ```400: BAD_REQUEST: request epoch 79833 is more than one epoch from the current epoch 79835```
@@ -20,47 +18,42 @@ const MAX_RETRIES = 3;  // Define the maximum number of retries
 
 /**
  * Cron task that will track validators performance for the epoch finalized and store it in the Postgres DB.
- * If any issue is arisen during the process, it will be retried after 1 minute. If the issue persists until the epoch
+ * If any issue is arisen during the process, it will be retried after 30 seconds. If the issue persists until the epoch
  * finalized changes, the issue will be logged and stored in the DB.
  *
  * @param validatorPubkeys - The pubkeys of the validators to track.
  * @param postgresClient - Postgres client to interact with the DB.
  * @param beaconchainApi - Beaconchain API client to interact with the Beaconchain API.
- * @param minGenesisTime - The minimum genesis time of the chain.
+ * @param executionClient - The execution client to interact with.
+ * @param consensusClient - The consensus client to interact with.
+ *
+ * @throws {Error} If there is an error when updating the latestEpoch in the error handling
  */
 export async function trackValidatorsPerformance({
+  currentEpoch,
   brainDb,
   postgresClient,
-  currentEpoch,
   beaconchainApi,
   executionClient,
   consensusClient
 }: {
+  currentEpoch: number;
   brainDb: BrainDataBase;
   postgresClient: PostgresClient;
-  currentEpoch: number;
   beaconchainApi: BeaconchainApi;
-  minGenesisTime: number;
-  secondsPerSlot: number;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
 }): Promise<void> {
-  let attempts = 0;
+  let latestEpoch = currentEpoch;
 
-  while (attempts < MAX_RETRIES) {
+  while (currentEpoch === latestEpoch) {
     try {
       logger.debug(`${logPrefix}Starting to track performance for epoch: ${currentEpoch}`);
-
-      const latestEpoch = await beaconchainApi.getEpochHeader({ blockId: 'finalized' });
-      if (latestEpoch !== currentEpoch) {
-        logger.info(`${logPrefix}Epoch has changed from ${currentEpoch} to ${latestEpoch}, aborting retry.`);
-        return;  // Exit if the current finalized epoch is different from the one that we wanted to track with this cron execution
-      }
 
       const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
       if (activeValidatorsIndexes.length === 0) {
         logger.info(`${logPrefix}No active validators found`);
-        return;  // Exit if no active validators are found
+        return; // Exit if no active validators are found
       }
 
       await checkNodeHealth({ beaconchainApi });
@@ -89,24 +82,25 @@ export async function trackValidatorsPerformance({
       });
 
       logger.debug(`${logPrefix}Finished tracking performance for epoch: ${currentEpoch}`);
-      return;  // Success, exit function
+      return; // Success, exit function
     } catch (e) {
-      attempts++;
-      logger.error(`${logPrefix}Attempt ${attempts} failed: ${e}`);
-      if (attempts >= MAX_RETRIES) {
+      logger.error(`${logPrefix}Error tracking validator peformance for epoch ${currentEpoch}: ${e}`);
+      latestEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+      if (latestEpoch !== currentEpoch) {
+        logger.info(`${logPrefix}Epoch has changed from ${currentEpoch} to ${latestEpoch}, aborting retry.`);
         await insertPerformanceDataNotThrow({
           postgresClient,
           activeValidatorsIndexes: [],
           currentEpoch,
           validatorBlockStatusMap: new Map(),
           validatorsAttestationsTotalRewards: [],
-          error: e,  // Store the error in the DB after all retries are exhausted
+          error: e.message, // Store the error in the DB after all retries are exhausted
           executionClient,
           consensusClient
         });
-        return;  // Exit after final attempt
+        return; // Exit after final attempt
       }
-      await new Promise(resolve => setTimeout(resolve, RETRY_WAIT_TIME));  // Wait 30 seconds before retrying
+      await new Promise((resolve) => setTimeout(resolve, 30 * 1000)); // Wait 30 seconds before retrying
     }
   }
 }
