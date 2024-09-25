@@ -5,7 +5,6 @@ import { BrainDataBase } from "../../db/index.js";
 import { insertPerformanceDataNotThrow } from "./insertPerformanceData.js";
 import { getAttestationsTotalRewards } from "./getAttestationsTotalRewards.js";
 import { setBlockProposalStatusMap } from "./setBlockProposalStatusMap.js";
-import { checkNodeHealth } from "./checkNodeHealth.js";
 import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
@@ -56,7 +55,12 @@ export async function trackValidatorsPerformance({
         return; // Exit if no active validators are found
       }
 
-      await checkNodeHealth({ beaconchainApi });
+      const { el_offline, is_syncing } = (await beaconchainApi.getSyncingStatus()).data;
+      if (is_syncing) {
+        logger.debug(`${logPrefix}Node is syncing, skipping epoch ${currentEpoch}`);
+        return; // Exit if the node is syncing. Head finalized will change
+      }
+      if (el_offline) throw new Error("EL Node offline"); // throw error and retry
 
       const validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
         beaconchainApi,
