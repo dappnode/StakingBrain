@@ -27,7 +27,7 @@ export async function trackValidatorsPerformanceCron({
 }): Promise<void> {
   try {
     const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
-    
+
     if (currentEpoch !== lastProcessedEpoch) {
       await fetchAndInsertPerformanceCron({
         brainDb,

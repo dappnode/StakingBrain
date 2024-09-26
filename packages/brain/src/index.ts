@@ -103,15 +103,18 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 proofOfValidationCron.start();
 
 // execute the performance cron task every 1/4 of an epoch
-export const trackValidatorsPerformanceCronTask = new CronJob((slotsPerEpoch * secondsPerSlot) / 4 * 1000, async ()  => {
-  await trackValidatorsPerformanceCron({
-    brainDb,
-    postgresClient,
-    beaconchainApi,
-    executionClient,
-    consensusClient
-  });
-});
+export const trackValidatorsPerformanceCronTask = new CronJob(
+  ((slotsPerEpoch * secondsPerSlot) / 4) * 1000,
+  async () => {
+    await trackValidatorsPerformanceCron({
+      brainDb,
+      postgresClient,
+      beaconchainApi,
+      executionClient,
+      consensusClient
+    });
+  }
+);
 trackValidatorsPerformanceCronTask.start();
 
 // Graceful shutdown
