@@ -1,6 +1,6 @@
 import { ConsensusClient } from "@stakingbrain/common";
 
-export const validatorToken = (consensusClient: ConsensusClient): string => {
+export const getValidatorToken = (consensusClient: ConsensusClient): string => {
   if (consensusClient === ConsensusClient.Teku) return "cd4892ca35d2f5d3e2301a65fc7aa660";
   if (consensusClient === ConsensusClient.Lighthouse)
     return "api-token-0x0200e6ce18e26fd38caca7ae1bfb9e2bba7efb20ed2746ad17f2f6dda44603152d";
