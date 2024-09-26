@@ -102,7 +102,6 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 );
 proofOfValidationCron.start();
 
-
 // execute the performance cron task every 1/4 of an epoch
 const secondsPerEpoch = slotsPerEpoch * secondsPerSlot;
 const oneFourthEpochInSeconds = secondsPerEpoch / 4;
@@ -111,7 +110,6 @@ let lastProcessedEpoch: number | undefined = undefined;
 export const trackValidatorsPerformanceCronTask = new CronJob(oneFourthEpochInSeconds * 1000, async () => {
   try {
     const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
-    console.log('Current Epoch:', currentEpoch);
 
     if (currentEpoch !== lastProcessedEpoch) {
       await trackValidatorsPerformanceCron({
@@ -125,7 +123,7 @@ export const trackValidatorsPerformanceCronTask = new CronJob(oneFourthEpochInSe
       lastProcessedEpoch = currentEpoch;
     }
   } catch (error) {
-    console.error('Failed to fetch or process epoch:', error);
+    logger.error(`Failed to fetch or process epoch:`, error);
   }
 });
 

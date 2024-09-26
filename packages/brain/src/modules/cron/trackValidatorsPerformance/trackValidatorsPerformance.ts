@@ -58,7 +58,6 @@ export async function trackValidatorsPerformanceCron({
       epoch: currentEpoch.toString(),
       activeValidatorsIndexes
     });
-
   } catch (e) {
     logger.error(`${logPrefix}Error tracking validator performance for epoch ${currentEpoch}: ${e}`);
     errorDetails = e; // Capture the error message
