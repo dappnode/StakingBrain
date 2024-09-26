@@ -16,8 +16,7 @@ import {
   CronJob,
   reloadValidators,
   trackValidatorsPerformanceCron,
-  sendProofsOfValidation,
-  startWithinTenFirstPercentageOfEpoch
+  sendProofsOfValidation
 } from "./modules/cron/index.js";
 import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
@@ -103,16 +102,20 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 );
 proofOfValidationCron.start();
 
-// executes once every epoch
-export const trackValidatorsPerformanceCronTask = new CronJob(slotsPerEpoch * secondsPerSlot * 1000, () =>
-  trackValidatorsPerformanceCron({ brainDb, postgresClient, beaconchainApi, executionClient, consensusClient })
+// execute the performance cron task every 1/4 of an epoch
+export const trackValidatorsPerformanceCronTask = new CronJob(
+  ((slotsPerEpoch * secondsPerSlot) / 4) * 1000,
+  async () => {
+    await trackValidatorsPerformanceCron({
+      brainDb,
+      postgresClient,
+      beaconchainApi,
+      executionClient,
+      consensusClient
+    });
+  }
 );
-startWithinTenFirstPercentageOfEpoch({
-  minGenesisTime,
-  secondsPerSlot,
-  slotsPerEpoch,
-  jobFunction: trackValidatorsPerformanceCronTask
-});
+trackValidatorsPerformanceCronTask.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
