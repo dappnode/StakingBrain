@@ -26,7 +26,14 @@ export async function trackValidatorsPerformanceCron({
   consensusClient: ConsensusClient;
 }): Promise<void> {
   try {
-    const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+    const currentEpoch = parseInt(
+      (
+        await beaconchainApi.getStateFinalityCheckpoints({
+          stateId: "finalized"
+        })
+      ).data.finalized.epoch
+    );
+    // TODO: what if finalized is false
 
     if (currentEpoch !== lastProcessedEpoch) {
       await fetchAndInsertPerformanceCron({
