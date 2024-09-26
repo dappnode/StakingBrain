@@ -103,30 +103,15 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 proofOfValidationCron.start();
 
 // execute the performance cron task every 1/4 of an epoch
-const secondsPerEpoch = slotsPerEpoch * secondsPerSlot;
-const oneFourthEpochInSeconds = secondsPerEpoch / 4;
-let lastProcessedEpoch: number | undefined = undefined;
-
-export const trackValidatorsPerformanceCronTask = new CronJob(oneFourthEpochInSeconds * 1000, async () => {
-  try {
-    const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
-
-    if (currentEpoch !== lastProcessedEpoch) {
-      await trackValidatorsPerformanceCron({
-        brainDb,
-        postgresClient,
-        beaconchainApi,
-        executionClient,
-        consensusClient,
-        currentEpoch
-      });
-      lastProcessedEpoch = currentEpoch;
-    }
-  } catch (error) {
-    logger.error(`Failed to fetch or process epoch:`, error);
-  }
+export const trackValidatorsPerformanceCronTask = new CronJob((slotsPerEpoch * secondsPerSlot) / 4 * 1000, async ()  => {
+  await trackValidatorsPerformanceCron({
+    brainDb,
+    postgresClient,
+    beaconchainApi,
+    executionClient,
+    consensusClient
+  });
 });
-
 trackValidatorsPerformanceCronTask.start();
 
 // Graceful shutdown

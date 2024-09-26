@@ -10,7 +10,41 @@ import { logPrefix } from "./logPrefix.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { TotalRewards } from "../../apiClients/types.js";
 
+let lastProcessedEpoch: number | undefined = undefined;
+
 export async function trackValidatorsPerformanceCron({
+  brainDb,
+  postgresClient,
+  beaconchainApi,
+  executionClient,
+  consensusClient
+}: {
+  brainDb: BrainDataBase;
+  postgresClient: PostgresClient;
+  beaconchainApi: BeaconchainApi;
+  executionClient: ExecutionClient;
+  consensusClient: ConsensusClient;
+}): Promise<void> {
+  try {
+    const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+    
+    if (currentEpoch !== lastProcessedEpoch) {
+      await fetchAndInsertPerformanceCron({
+        brainDb,
+        postgresClient,
+        beaconchainApi,
+        executionClient,
+        consensusClient,
+        currentEpoch
+      });
+      lastProcessedEpoch = currentEpoch;
+    }
+  } catch (error) {
+    logger.error(`Failed to fetch or process epoch:`, error);
+  }
+}
+
+export async function fetchAndInsertPerformanceCron({
   brainDb,
   postgresClient,
   beaconchainApi,
