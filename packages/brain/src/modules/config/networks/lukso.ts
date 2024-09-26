@@ -1,33 +1,10 @@
-import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
-import { BrainConfig } from "../types.js";
-import { tlsCert } from "./tlsCert.js";
-import { validatorToken } from "./validatorToken.js";
+import type { NetworkConfig } from "../types.js";
 
-export const luksoBrainConfig = (
-  executionClient: ExecutionClient,
-  consensusClient: ConsensusClient,
-  isMevBoostSet: boolean,
-  shareDataWithDappnode: boolean
-): BrainConfig => {
+export const luksoBrainConfig = (): NetworkConfig => {
   return {
-    network: Network.Lukso,
-    executionClient,
-    consensusClient,
-    isMevBoostSet,
-    executionClientUrl: "http://execution.lukso.dncore.dappnode:8545",
-    validatorUrl: `${consensusClient === "teku" ? "https" : "http"}://validator.lukso.dncore.dappnode:3500`,
-    beaconchainUrl: "http:/beacon-chain.lukso.dncore.dappnode:3500",
     blockExplorerUrl: "https://explorer.consensus.mainnet.lukso.network/",
-    signerUrl: "http://web3signer.web3signer-lukso.dappnode:9000",
-    token: validatorToken(consensusClient),
-    host: "brain.web3signer-lukso.dappnode",
-    shareDataWithDappnode,
-    validatorsMonitorUrl: "https://validators-proofs.dappnode.io",
-    shareCronInterval: 24 * 60 * 60 * 1000, // 1 day in ms
     minGenesisTime: 1684856400, // Tuesday, 23 May 2023 15:40:00 GMT
-    postgresUrl: "postgres://postgres:password@postgres.web3signer-lukso.dappnode:5432/web3signer",
     secondsPerSlot: 12,
-    slotsPerEpoch: 32,
-    tlsCert: tlsCert(consensusClient, Network.Lukso)
+    slotsPerEpoch: 32
   };
 };

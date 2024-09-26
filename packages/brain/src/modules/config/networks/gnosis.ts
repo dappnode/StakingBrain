@@ -1,33 +1,10 @@
-import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
-import { BrainConfig } from "../types.js";
-import { tlsCert } from "./tlsCert.js";
-import { validatorToken } from "./validatorToken.js";
+import type { NetworkConfig } from "../types.js";
 
-export const gnosisBrainConfig = (
-  executionClient: ExecutionClient,
-  consensusClient: ConsensusClient,
-  isMevBoostSet: boolean,
-  shareDataWithDappnode: boolean
-): BrainConfig => {
+export const gnosisBrainConfig = (): NetworkConfig => {
   return {
-    network: Network.Gnosis,
-    executionClient,
-    consensusClient,
-    isMevBoostSet,
-    executionClientUrl: "http://execution.gnosis.dncore.dappnode:8545",
-    validatorUrl: `${consensusClient === "teku" ? "https" : "http"}://validator.gnosis.dncore.dappnode:3500`,
-    beaconchainUrl: "http:/beacon-chain.gnosis.dncore.dappnode:3500",
     blockExplorerUrl: "https://gnosischa.in",
-    signerUrl: "http://web3signer.web3signer-gnosis.dappnode:9000",
-    token: validatorToken(consensusClient),
-    host: "brain.web3signer-gnosis.dappnode",
-    shareDataWithDappnode,
-    validatorsMonitorUrl: "https://validators-proofs.dappnode.io",
-    shareCronInterval: 24 * 60 * 60 * 1000, // 1 day in ms
     minGenesisTime: 1638968400, // Dec 8, 2021, 13:00 UTC
-    postgresUrl: "postgres://postgres:gnosis@postgres.web3signer-gnosis.dappnode:5432/web3signer-gnosis",
     secondsPerSlot: 5,
-    slotsPerEpoch: 16,
-    tlsCert: tlsCert(consensusClient, Network.Gnosis)
+    slotsPerEpoch: 16
   };
 };

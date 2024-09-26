@@ -1,6 +1,6 @@
 import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 
-export interface BrainConfig {
+export interface BrainConfig extends NetworkConfig {
   network: Network;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
@@ -8,16 +8,19 @@ export interface BrainConfig {
   executionClientUrl: string;
   validatorUrl: string;
   beaconchainUrl: string;
-  blockExplorerUrl: string;
   signerUrl: string;
   token: string;
   host: string;
   shareDataWithDappnode: boolean;
   validatorsMonitorUrl: string;
   shareCronInterval: number;
-  minGenesisTime: number;
   postgresUrl: string;
+  tlsCert: Buffer | null;
+}
+
+export interface NetworkConfig {
+  minGenesisTime: number;
   secondsPerSlot: number;
   slotsPerEpoch: number;
-  tlsCert: Buffer | null;
+  blockExplorerUrl: string;
 }
