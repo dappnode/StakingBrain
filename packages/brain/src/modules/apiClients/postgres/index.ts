@@ -114,6 +114,7 @@ SELECT pg_total_relation_size('${this.tableName}');
     END $$;
   `);
 
+    // TODO: implement with an object the columns && nullish check of each column
     const query = `
 -- Create the table if not exists
 CREATE TABLE IF NOT EXISTS ${this.tableName} (
@@ -123,10 +124,10 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
   ${Columns.consensusClient} ${this.CONSENSUS_CLIENT} NOT NULL,
   ${Columns.slot} BIGINT,
   ${Columns.liveness} BOOLEAN,
-  ${Columns.blockProposalStatus} ${this.BLOCK_PROPOSAL_STATUS} NOT NULL,
+  ${Columns.blockProposalStatus} ${this.BLOCK_PROPOSAL_STATUS},
   ${Columns.syncCommitteeRewards} BIGINT,
-  ${Columns.attestationsTotalRewards} JSONB NOT NULL,
-  ${Columns.error} TEXT,
+  ${Columns.attestationsTotalRewards} JSONB,
+  ${Columns.error} JSONB NULL,
   PRIMARY KEY (${Columns.validatorIndex}, ${Columns.epoch})
 );
 `;
@@ -149,15 +150,38 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
   /**
    * Inserts the given performance data into the database.
    *
+   * If there is no error, the query will update the record if there is a duplicate key exception.
+   * If there is an error, it will perform a normal insert without updating the record.
+   *
+   * IMPORTANT: there is an assumption where if the error object exist its being assumed that data is nullish!
+   * this error nullish must be properly updated otherwise the the query will not update the record.
+   *
    * @param data - The performance data to insert.
-   * @example insertPerformanceData({ validatorIndex: 1, epoch: 1, slot: 1, liveness: true, blockProposalStatus: "missed", syncCommitteeRewards: 100, attestationsTotalRewards: { attestation1: 10, attestation2: 20 } })
    */
   public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
-    const query = `
+    // Define the base insert query
+    let query = `
 INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.executionClient}, ${Columns.consensusClient}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsTotalRewards}, ${Columns.error})
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-    `;
+  `;
 
+    // Check if error exists; if not, add the ON CONFLICT clause to update existing records on conflict
+    if (!data.error) {
+      query += `
+ON CONFLICT (${Columns.validatorIndex}, ${Columns.epoch})
+DO UPDATE SET
+  ${Columns.executionClient} = EXCLUDED.${Columns.executionClient},
+  ${Columns.consensusClient} = EXCLUDED.${Columns.consensusClient},
+  ${Columns.slot} = EXCLUDED.${Columns.slot},
+  ${Columns.liveness} = EXCLUDED.${Columns.liveness},
+  ${Columns.blockProposalStatus} = EXCLUDED.${Columns.blockProposalStatus},
+  ${Columns.syncCommitteeRewards} = EXCLUDED.${Columns.syncCommitteeRewards},
+  ${Columns.attestationsTotalRewards} = EXCLUDED.${Columns.attestationsTotalRewards},
+  ${Columns.error} = EXCLUDED.${Columns.error};
+    `;
+    }
+
+    // Execute the query with the appropriate parameters
     await this.sql.unsafe(query, [
       data.validatorIndex,
       data.epoch,
@@ -165,10 +189,10 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       data.consensusClient,
       data.slot ?? null,
       data.liveness ?? null,
-      data.blockProposalStatus,
+      data.blockProposalStatus ?? null,
       data.syncCommitteeRewards ?? null,
-      JSON.stringify(data.attestationsTotalRewards), // JSONB expects a string
-      data.error ?? null
+      data.attestationsTotalRewards ? JSON.stringify(data.attestationsTotalRewards) : null, // JSONB expects a string or null
+      data.error ? JSON.stringify(data.error) : null // JSONB expects a string or null
     ]);
   }
 
@@ -198,7 +222,7 @@ WHERE ${Columns.validatorIndex} = ANY($1)
       blockProposalStatus: row.block_proposal_status,
       syncCommitteeRewards: row.sync_comittee_rewards,
       attestationsTotalRewards: JSON.parse(row.attestations_total_rewards),
-      error: row.error
+      error: JSON.parse(row.error)
     }));
   }
 
@@ -242,7 +266,7 @@ AND ${Columns.epoch} <= $3
         blockProposalStatus: row.block_proposal_status,
         syncCommitteeRewards: row.sync_comittee_rewards,
         attestationsTotalRewards: JSON.parse(row.attestations_total_rewards),
-        error: row.error
+        error: JSON.parse(row.error)
       };
 
       if (map.has(key)) {

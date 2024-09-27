@@ -29,9 +29,11 @@ export function getAttestationSuccessRate({
   }
 
   // Calculate the total successful attestations
-  const totalSuccessfulAttestations = validatorData.filter(
-    (data) => data.epoch >= startEpoch && data.epoch < endEpoch && parseInt(data.attestationsTotalRewards.source) >= 0
-  ).length;
+  const totalSuccessfulAttestations = validatorData.filter((data) => {
+    const attestationsTotalRewards = data.attestationsTotalRewards;
+    if (!attestationsTotalRewards) return false;
+    return data.epoch >= startEpoch && data.epoch < endEpoch && parseInt(attestationsTotalRewards.source) >= 0;
+  }).length;
 
   return Math.round((totalSuccessfulAttestations / totalAttestationOpportunities) * 100);
 }

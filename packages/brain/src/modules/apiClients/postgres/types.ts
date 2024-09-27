@@ -21,10 +21,25 @@ export interface ValidatorPerformance {
   epoch: number;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
-  blockProposalStatus: BlockProposalStatus;
-  attestationsTotalRewards: AttestationsTotalRewards;
+  blockProposalStatus?: BlockProposalStatus;
+  attestationsTotalRewards?: AttestationsTotalRewards;
   slot?: number;
   liveness?: boolean;
   syncCommitteeRewards?: number;
-  error?: string;
+  error?: ValidatorPerformanceError;
+}
+
+export enum ValidatorPerformanceErrorCode {
+  BEACONCHAIN_API_ERROR = "BEACONCHAIN_API_ERROR",
+  EXECUTION_OFFLINE = "EXECUTION_OFFLINE",
+  CONSENSUS_SYNCING = "CONSENSUS_SYNCING",
+  BRAINDDB_ERROR = "BRAINDDB_ERROR",
+  MISSING_BLOCK_DATA = "MISSING_BLOCK_DATA",
+  MISSING_ATT_DATA = "MISSING_ATT_DATA",
+  UNKNOWN_ERROR = "UNKNOWN_ERROR"
+}
+
+export interface ValidatorPerformanceError {
+  code: ValidatorPerformanceErrorCode;
+  message: string;
 }
