@@ -108,7 +108,7 @@ SELECT pg_total_relation_size('${this.tableName}');
     await this.sql.unsafe(`
     DO $$
     BEGIN
-        CREATE TYPE ${this.CONSENSUS_CLIENT} AS ENUM('${ConsensusClient.Teku}', '${ConsensusClient.Prysm}', '${ConsensusClient.Lighthouse}', '${ConsensusClient.Nimbus}', '${ConsensusClient.Unknown}');
+        CREATE TYPE ${this.CONSENSUS_CLIENT} AS ENUM('${ConsensusClient.Teku}', '${ConsensusClient.Lodestar}', '${ConsensusClient.Prysm}', '${ConsensusClient.Lighthouse}', '${ConsensusClient.Nimbus}', '${ConsensusClient.Unknown}');
     EXCEPTION
         WHEN duplicate_object THEN NULL;
     END $$;
@@ -118,7 +118,7 @@ SELECT pg_total_relation_size('${this.tableName}');
     const query = `
 -- Create the table if not exists
 CREATE TABLE IF NOT EXISTS ${this.tableName} (
-  ${Columns.validatorIndex} BIGINT NOT NULL,
+  ${Columns.validatorIndex} BIGINT NOT NULL, 
   ${Columns.epoch} BIGINT NOT NULL,
   ${Columns.executionClient} ${this.EXECUTION_CLIENT} NOT NULL,
   ${Columns.consensusClient} ${this.CONSENSUS_CLIENT} NOT NULL,
@@ -148,26 +148,17 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
   }
 
   /**
-   * Inserts the given performance data into the database.
+   * Inserts the given performance data into the database. If the data already exists for the given validator index and epoch,
    *
-   * If there is no error, the query will update the record if there is a duplicate key exception.
-   * If there is an error, it will perform a normal insert without updating the record.
-   *
-   * IMPORTANT: there is an assumption where if the error object exist its being assumed that data is nullish!
-   * this error nullish must be properly updated otherwise the the query will not update the record.
+   * IMPORTANT: it must be noted that the query will update if the data already exists for the given validator index and epoch.
+   * If the data exists without an error and the new data has an error, the error will be updated and the other fields will remain the same.
    *
    * @param data - The performance data to insert.
    */
   public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
-    // Define the base insert query
-    let query = `
+    const query = `
 INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.executionClient}, ${Columns.consensusClient}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsTotalRewards}, ${Columns.error})
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-  `;
-
-    // Check if error exists; if not, add the ON CONFLICT clause to update existing records on conflict
-    if (!data.error) {
-      query += `
 ON CONFLICT (${Columns.validatorIndex}, ${Columns.epoch})
 DO UPDATE SET
   ${Columns.executionClient} = EXCLUDED.${Columns.executionClient},
@@ -179,7 +170,6 @@ DO UPDATE SET
   ${Columns.attestationsTotalRewards} = EXCLUDED.${Columns.attestationsTotalRewards},
   ${Columns.error} = EXCLUDED.${Columns.error};
     `;
-    }
 
     // Execute the query with the appropriate parameters
     await this.sql.unsafe(query, [
