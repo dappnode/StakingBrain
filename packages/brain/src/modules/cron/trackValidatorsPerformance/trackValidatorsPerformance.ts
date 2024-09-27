@@ -96,13 +96,13 @@ export async function fetchAndInsertPerformanceCron({
     if (is_syncing) throw new NodeSyncingError("Node is syncing");
     if (el_offline) throw new ExecutionOfflineError("Execution layer is offline");
 
-    validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
+    validatorBlockStatusMap = await getBlockProposalStatusMap({
       beaconchainApi,
       epoch: currentEpoch.toString(),
       activeValidatorsIndexes
     });
 
-    validatorBlockStatusMap = await getBlockProposalStatusMap({
+    validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
       beaconchainApi,
       epoch: currentEpoch.toString(),
       activeValidatorsIndexes
