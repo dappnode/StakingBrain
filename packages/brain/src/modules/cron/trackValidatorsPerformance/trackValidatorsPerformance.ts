@@ -31,7 +31,15 @@ export async function trackValidatorsPerformanceCron({
   consensusClient: ConsensusClient;
 }): Promise<void> {
   try {
-    const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "finalized" });
+    // Get finalized epoch from finality endpoint instead of from header endpoint.
+    // The header endpoint might jump two epochs in one call (due to missed block proposals), which would cause the cron to skip an epoch.
+    const currentEpoch = parseInt(
+      (
+        await beaconchainApi.getStateFinalityCheckpoints({
+          stateId: "finalized"
+        })
+      ).data.finalized.epoch
+    );
 
     // If the current epoch is different from the last processed epoch, or epoch is the same but the last epoch was processed with an error
     // then fetch and insert the performance data
