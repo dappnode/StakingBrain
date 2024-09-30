@@ -85,8 +85,15 @@ export async function fetchAndProcessValidatorsData({
         };
       }),
       blocks: {
-        proposed: validatorData.filter((data) => data.blockProposalStatus === "Proposed").length,
-        missed: validatorData.filter((data) => data.blockProposalStatus === "Missed").length
+        proposed: validatorData
+          .filter((data) => data.blockProposalStatus === "Proposed")
+          .map((data) => ({ epoch: data.epoch })),
+        missed: validatorData
+          .filter((data) => data.blockProposalStatus === "Missed")
+          .map((data) => ({ epoch: data.epoch })),
+        unchosen: validatorData
+          .filter((data) => data.blockProposalStatus === "Unchosen")
+          .map((data) => ({ epoch: data.epoch }))
       }
     });
 

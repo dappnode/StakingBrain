@@ -13,14 +13,11 @@ export interface ValidatorsDataProcessed {
     clientsUsedInInterval: Map<ExecutionConsensusConcatenated, number>; // Map indexed by ["execution-consensus"] (i.e "geth-lighthouse") with the number of epochs the client was used in the interval
   }[];
   blocks: {
-    proposed: number; // number of blocks proposed
-    missed: number; // number of blocks missed
+    // TODO: add slot { epoch: number, slot: number }
+    proposed: { epoch: number }[];
+    missed: { epoch: number }[];
+    unchosen: { epoch: number }[];
   };
-  // TODO: instead blocks should look as folloes
-  // blocks: {
-  //   proposed: {epoch: number, slot: number}[],
-  //   missed: {epoch: number, slot: number}[]
-  // }
 }
 
 export enum Granularity {
