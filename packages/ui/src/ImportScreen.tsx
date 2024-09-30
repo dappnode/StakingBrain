@@ -1,5 +1,5 @@
-import FileDrop from "../FileDrop/FileDrop";
-import { SecondaryInfoTypography } from "../../Styles/Typographies";
+import FileDrop from "./components/FileDrop/FileDrop";
+import { SecondaryInfoTypography } from "./Styles/Typographies";
 import {
   Box,
   Button,
@@ -19,9 +19,9 @@ import { Link } from "react-router-dom";
 import { DropEvent } from "react-dropzone";
 import { useEffect, useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
-import { ImportStatus, KeystoreInfo, TagSelectOption } from "../../types";
-import FileCardList from "../FileCards/FileCardList";
-import ImportDialog from "../Dialogs/ImportDialog";
+import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
+import FileCardList from "./components/FileCards/FileCardList";
+import ImportDialog from "./components/Dialogs/ImportDialog";
 import {
   Tag,
   isValidEcdsaPubkey,
@@ -31,12 +31,12 @@ import {
   Network
 } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
-import { rpcClient } from "../../socket";
+import { rpcClient } from "./socket";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
-import { extractPubkey } from "../../utils/dataUtils";
+import { extractPubkey } from "./utils/dataUtils";
 import type { CustomImportRequest, Web3signerPostResponse } from "@stakingbrain/brain";
 
-export function ValidatorsImport({
+export default function ImportScreen({
   network,
   isMevBoostSet
 }: {

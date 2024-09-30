@@ -1,12 +1,11 @@
-import React, { useEffect } from "react";
 import { Alert, CircularProgress } from "@mui/material";
 import TopBar from "./components/TopBar/TopBar";
-import { ValidatorsImport } from "./components/ValidatorsImport/ValidatorsImport";
+import ImportScreen from "./ImportScreen";
 import ValidatorList from "./components/ValidatorList/ValidatorList";
-import ValidatorsPerformance from "./components/ValidatorsPerformance/ValidatorsPerformance";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import React, { useEffect } from "react";
 import { StakerConfig } from "@stakingbrain/common";
 import { rpcClient } from "./socket";
 import type { Web3SignerStatus } from "@stakingbrain/brain";
@@ -105,9 +104,8 @@ function App(): JSX.Element {
               <Route path="/" element={<ValidatorList stakerConfig={stakerConfig} userMode={userMode} />} />
               <Route
                 path="import"
-                element={<ValidatorsImport network={stakerConfig.network} isMevBoostSet={stakerConfig.isMevBoostSet} />}
+                element={<ImportScreen network={stakerConfig.network} isMevBoostSet={stakerConfig.isMevBoostSet} />}
               />
-              <Route path="validatorsPerformance" element={<ValidatorsPerformance />} />
             </Routes>
           </BrowserRouter>
         )
