@@ -36,6 +36,19 @@ enum Columns {
   error = "error"
 }
 
+interface ValidatorPerformancePostgres {
+  [Columns.validatorIndex]: number;
+  [Columns.epoch]: number;
+  [Columns.executionClient]: ExecutionClient;
+  [Columns.consensusClient]: ConsensusClient;
+  [Columns.slot]: number;
+  [Columns.liveness]: boolean;
+  [Columns.blockProposalStatus]: BlockProposalStatus;
+  [Columns.syncCommitteeRewards]: number;
+  [Columns.attestationsTotalRewards]: string;
+  [Columns.error]: string;
+}
+
 export class PostgresClient {
   private readonly tableName = "validators_performance";
   private readonly BLOCK_PROPOSAL_STATUS = "BLOCK_PROPOSAL_STATUS";
@@ -114,7 +127,6 @@ SELECT pg_total_relation_size('${this.tableName}');
     END $$;
   `);
 
-    // TODO: implement with an object the columns && nullish check of each column
     const query = `
 -- Create the table if not exists
 CREATE TABLE IF NOT EXISTS ${this.tableName} (
@@ -199,10 +211,8 @@ SELECT * FROM ${this.tableName}
 WHERE ${Columns.validatorIndex} = ANY($1)
     `;
 
-    const result = await this.sql.unsafe(query, [validatorIndexes]);
-    // TODO: add type to result
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return result.map((row: any) => ({
+    const result = (await this.sql.unsafe(query, [validatorIndexes])) as ValidatorPerformancePostgres[];
+    return result.map((row: ValidatorPerformancePostgres) => ({
       validatorIndex: row.validator_index,
       epoch: row.epoch,
       executionClient: row.execution_client,
@@ -233,7 +243,7 @@ WHERE ${Columns.validatorIndex} = ANY($1)
     validatorIndexes: string[];
     startEpoch: number;
     endEpoch: number;
-  }): Promise<Map<string, ValidatorPerformance[]>> {
+  }): Promise<Map<number, ValidatorPerformance[]>> {
     const query = `
 SELECT * FROM ${this.tableName}
 WHERE ${Columns.validatorIndex} = ANY($1)
@@ -241,11 +251,15 @@ AND ${Columns.epoch} >= $2
 AND ${Columns.epoch} <= $3
     `;
 
-    const result = await this.sql.unsafe(query, [validatorIndexes, startEpoch, endEpoch]);
-    // TODO: add type to result
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return result.reduce((map: Map<string, ValidatorPerformance[]>, row: any) => {
+    const result = (await this.sql.unsafe(query, [
+      validatorIndexes,
+      startEpoch,
+      endEpoch
+    ])) as ValidatorPerformancePostgres[];
+
+    return result.reduce((map: Map<number, ValidatorPerformance[]>, row) => {
       const key = row.validator_index;
+
       const performanceData = {
         validatorIndex: row.validator_index,
         epoch: row.epoch,
@@ -259,14 +273,11 @@ AND ${Columns.epoch} <= $3
         error: JSON.parse(row.error)
       };
 
-      if (map.has(key)) {
-        map.get(key)?.push(performanceData);
-      } else {
-        map.set(key, [performanceData]);
-      }
+      if (map.has(key)) map.get(key)?.push(performanceData);
+      else map.set(key, [performanceData]);
 
       return map;
-    }, new Map<string, ValidatorPerformance[]>());
+    }, new Map<number, ValidatorPerformance[]>());
   }
 
   /**

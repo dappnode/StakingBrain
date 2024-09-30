@@ -46,12 +46,12 @@ export async function fetchAndProcessValidatorsData({
   granularity?: Granularity;
 }): Promise<
   Map<
-    string, // validatorIndex
+    number, // validatorIndex
     ValidatorsDataProcessed // processed data of the validator
   >
 > {
   logger.info("Processing validators data");
-  const mapValidatorPerformance = new Map<string, ValidatorsDataProcessed>();
+  const mapValidatorPerformance = new Map<number, ValidatorsDataProcessed>();
 
   // Get start timestamp and end timestamp
   const endDate = new Date();
