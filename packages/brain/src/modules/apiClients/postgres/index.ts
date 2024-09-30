@@ -227,7 +227,7 @@ WHERE ${Columns.validatorIndex} = ANY($1)
   }
 
   /**
-   * Get tje validators data for the given validator indexes and an epoch start and end range. In order to improve data process
+   * Get the validators data for the given validator indexes and an epoch start and end range. In order to improve data process
    * it will return a map with the validator index as key and the performance data as value.
    *
    * @param validatorIndexes - The indexes of the validators to get the data for.

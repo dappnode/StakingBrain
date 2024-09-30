@@ -82,7 +82,7 @@ export const brainDb = new BrainDataBase(
 );
 
 // Create postgres client
-const postgresClient = new PostgresClient(postgresUrl);
+export const postgresClient = new PostgresClient(postgresUrl);
 await postgresClient.initialize().catch((err) => logger.error(`Error initializing table in postgres db`, err)); // TODO: handle error. Consider attempting to initialize on every cron iteration
 
 // Start server APIs
