@@ -144,7 +144,7 @@ export class BeaconchainApi extends StandardApi {
   }): Promise<BeaconchainValidatorFromStateGetResponse> {
     try {
       return await this.request({
-        method: "GET",
+        method: "POST",
         endpoint: path.join(this.beaconchainEndpoint, "states", state, "validators", pubkey)
       });
     } catch (e) {
@@ -168,6 +168,7 @@ export class BeaconchainApi extends StandardApi {
     stateId: BlockId;
     body: { ids: string[]; statuses: ValidatorStatus[] };
   }): Promise<BeaconchainValidatorStatePostResponse> {
+    console.log(JSON.stringify(body))
     try {
       return await this.request({
         method: "POST",
