@@ -168,7 +168,6 @@ export class BeaconchainApi extends StandardApi {
     stateId: BlockId;
     body: { ids: string[]; statuses: ValidatorStatus[] };
   }): Promise<BeaconchainValidatorStatePostResponse> {
-    console.log(JSON.stringify(body))
     try {
       return await this.request({
         method: "POST",
