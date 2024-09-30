@@ -260,12 +260,6 @@ AND ${Columns.epoch} <= $3
     return result.reduce((map: Map<number, ValidatorPerformance[]>, row) => {
       const key = row.validator_index;
 
-      // print type ofs
-      logger.debug(`typeof row.validator_index: ${typeof row.validator_index}`);
-      logger.debug(`typeof row.epoch: ${typeof row.epoch}`);
-      logger.debug(`typeof row.execution_client: ${typeof row.execution_client}`);
-      logger.debug(`typeof row.consensus_client: ${typeof row.consensus_client}`);
-
       const performanceData = {
         validatorIndex: row.validator_index,
         epoch: row.epoch,
