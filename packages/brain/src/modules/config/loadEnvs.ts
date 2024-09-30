@@ -45,6 +45,7 @@ function getExecutionClient(network: Network): ExecutionClient {
   if (executionClientStr.includes(ExecutionClient.Besu)) return ExecutionClient.Besu;
   if (executionClientStr.includes(ExecutionClient.Nethermind)) return ExecutionClient.Nethermind;
   if (executionClientStr.includes(ExecutionClient.Erigon)) return ExecutionClient.Erigon;
+  if (executionClientStr.includes(ExecutionClient.Reth)) return ExecutionClient.Reth;
   return ExecutionClient.Unknown;
 }
 

@@ -10,6 +10,7 @@ export enum ExecutionClient {
   Besu = "besu",
   Nethermind = "nethermind",
   Geth = "geth",
+  Reth = "reth",
   Erigon = "erigon",
   Unknown = "unknown"
 }
