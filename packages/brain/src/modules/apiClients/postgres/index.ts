@@ -243,7 +243,7 @@ WHERE ${Columns.validatorIndex} = ANY($1)
     validatorIndexes: string[];
     startEpoch: number;
     endEpoch: number;
-  }): Promise<Map<string, ValidatorPerformance[]>> {
+  }): Promise<Map<number, ValidatorPerformance[]>> {
     const query = `
 SELECT * FROM ${this.tableName}
 WHERE ${Columns.validatorIndex} = ANY($1)
@@ -251,9 +251,13 @@ AND ${Columns.epoch} >= $2
 AND ${Columns.epoch} <= $3
     `;
 
-    const result = await this.sql.unsafe(query, [validatorIndexes, startEpoch, endEpoch]);
+    const result = (await this.sql.unsafe(query, [
+      validatorIndexes,
+      startEpoch,
+      endEpoch
+    ])) as ValidatorPerformancePostgres[];
 
-    return result.reduce((map: Map<string, ValidatorPerformance[]>, row) => {
+    return result.reduce((map: Map<number, ValidatorPerformance[]>, row) => {
       const key = row.validator_index;
 
       // print type ofs
@@ -279,7 +283,7 @@ AND ${Columns.epoch} <= $3
       else map.set(key, [performanceData]);
 
       return map;
-    }, new Map<string, ValidatorPerformance[]>());
+    }, new Map<number, ValidatorPerformance[]>());
   }
 
   /**
