@@ -5,13 +5,22 @@ import ValidatorList from "./components/ValidatorList/ValidatorList";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StakerConfig } from "@stakingbrain/common";
 import { rpcClient } from "./socket";
 import type { Web3SignerStatus } from "@stakingbrain/brain";
+import NavBar from "./components/Navbar";
 
 function App(): JSX.Element {
-  const [mode, setMode] = React.useState<"dark" | "light">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
   const [userMode, setUserMode] = React.useState<"basic" | "advanced">("basic");
 
   const [signerStatus, setSignerStatus] = React.useState<Web3SignerStatus>("LOADING");
@@ -50,56 +59,56 @@ function App(): JSX.Element {
   }
 
   return (
-    <ThemeProvider
-      theme={createTheme({
-        palette: {
-          mode
-        }
-      })}
-    >
-      <CssBaseline />
-      <TopBar
-        network={stakerConfig?.network}
-        mode={mode}
-        setMode={setMode}
-        userMode={userMode}
-        setUserMode={setUserMode}
-      />
+    
+      <BrowserRouter>
+        <NavBar
+          network={stakerConfig?.network}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          userMode={userMode}
+          setUserMode={setUserMode}
+        />
+        {/* <TopBar
+          network={stakerConfig?.network}
+          mode={mode}
+          setMode={setMode}
+          userMode={userMode}
+          setUserMode={setUserMode}
+        /> */}
 
-      {signerStatus !== "UP" ? (
-        signerStatus === "LOADING" ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100vh"
-            }}
-          >
-            <CircularProgress />
-          </div>
+        {signerStatus !== "UP" ? (
+          signerStatus === "LOADING" ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh"
+              }}
+            >
+              <CircularProgress />
+            </div>
+          ) : (
+            <>
+              <Alert severity="error" sx={{ m: 2 }} variant="filled">
+                Web3Signer is not available.
+                {signerStatus === "DOWN" ? (
+                  <> Its API is responsive, but signer is down. </>
+                ) : (
+                  <> Its API is not responsive. Check if the Web3Signer package is running. </>
+                )}
+                To avoid slashing, <b>do not upload </b>
+                your validator <b>keystores to another machine</b>.
+              </Alert>
+              <Alert severity="info" sx={{ m: 2 }} variant="filled">
+                To safely migrate your keystores, remove the Web3Signer package (or its volumes) after you make sure you
+                have a backup of your keystores. Then, wait for at least 2 epochs before you upload your keystores to
+                another machine.
+              </Alert>
+            </>
+          )
         ) : (
-          <>
-            <Alert severity="error" sx={{ m: 2 }} variant="filled">
-              Web3Signer is not available.
-              {signerStatus === "DOWN" ? (
-                <> Its API is responsive, but signer is down. </>
-              ) : (
-                <> Its API is not responsive. Check if the Web3Signer package is running. </>
-              )}
-              To avoid slashing, <b>do not upload </b>
-              your validator <b>keystores to another machine</b>.
-            </Alert>
-            <Alert severity="info" sx={{ m: 2 }} variant="filled">
-              To safely migrate your keystores, remove the Web3Signer package (or its volumes) after you make sure you
-              have a backup of your keystores. Then, wait for at least 2 epochs before you upload your keystores to
-              another machine.
-            </Alert>
-          </>
-        )
-      ) : (
-        stakerConfig && (
-          <BrowserRouter>
+          stakerConfig && (
             <Routes>
               <Route path="/" element={<ValidatorList stakerConfig={stakerConfig} userMode={userMode} />} />
               <Route
@@ -107,10 +116,9 @@ function App(): JSX.Element {
                 element={<ImportScreen network={stakerConfig.network} isMevBoostSet={stakerConfig.isMevBoostSet} />}
               />
             </Routes>
-          </BrowserRouter>
-        )
-      )}
-    </ThemeProvider>
+          )
+        )}
+      </BrowserRouter>
   );
 }
 
