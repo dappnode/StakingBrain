@@ -22,21 +22,21 @@ export async function sendValidatorsPerformanceNotifications({
   currentEpoch,
   validatorBlockStatusMap,
   validatorsAttestationsTotalRewards,
-  validatorPerformanceError
+  error
 }: {
   sendNotification: boolean;
   dappmanagerApi: DappmanagerApi;
   currentEpoch: string;
   validatorBlockStatusMap: Map<string, BlockProposalStatus>;
   validatorsAttestationsTotalRewards: TotalRewards[];
-  validatorPerformanceError?: ValidatorPerformanceError;
+  error?: ValidatorPerformanceError;
 }): Promise<void> {
   if (!sendNotification) return;
-  if (validatorPerformanceError)
+  if (error)
     await dappmanagerApi.sendDappmanagerNotification({
       title: "Failed to fetch performance data",
       notificationType: NotificationType.Danger,
-      body: `Failed to fetch performance data for epoch ${currentEpoch}: ${validatorPerformanceError}`
+      body: `Failed to fetch performance data for epoch ${currentEpoch}: ${error}`
     });
   else {
     await Promise.all([
