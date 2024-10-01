@@ -9,10 +9,16 @@ import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInB
 import { logPrefix } from "./logPrefix.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { TotalRewards } from "../../apiClients/types.js";
-import { ValidatorPerformanceError, ValidatorPerformanceErrorCode } from "../../apiClients/postgres/types.js";
+import {
+  BlockProposalStatus,
+  ValidatorPerformanceError,
+  ValidatorPerformanceErrorCode
+} from "../../apiClients/postgres/types.js";
 import { BeaconchainApiError } from "../../apiClients/beaconchain/error.js";
 import { BrainDbError } from "../../db/error.js";
 import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
+import { DappmanagerApi } from "../../apiClients/index.js";
+import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
 
 let lastProcessedEpoch: number | undefined = undefined;
 let lastEpochProcessedWithError = false;
@@ -22,13 +28,17 @@ export async function trackValidatorsPerformanceCron({
   postgresClient,
   beaconchainApi,
   executionClient,
-  consensusClient
+  consensusClient,
+  dappmanagerApi,
+  sendNotification
 }: {
   brainDb: BrainDataBase;
   postgresClient: PostgresClient;
   beaconchainApi: BeaconchainApi;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
+  dappmanagerApi: DappmanagerApi;
+  sendNotification: boolean;
 }): Promise<void> {
   try {
     // Get finalized epoch from finality endpoint instead of from header endpoint.
@@ -50,7 +60,9 @@ export async function trackValidatorsPerformanceCron({
         beaconchainApi,
         executionClient,
         consensusClient,
-        currentEpoch
+        currentEpoch,
+        dappmanagerApi,
+        sendNotification
       });
       lastProcessedEpoch = currentEpoch;
     }
@@ -65,7 +77,9 @@ export async function fetchAndInsertPerformanceCron({
   beaconchainApi,
   executionClient,
   consensusClient,
-  currentEpoch
+  currentEpoch,
+  dappmanagerApi,
+  sendNotification
 }: {
   brainDb: BrainDataBase;
   postgresClient: PostgresClient;
@@ -73,10 +87,12 @@ export async function fetchAndInsertPerformanceCron({
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   currentEpoch: number;
+  dappmanagerApi: DappmanagerApi;
+  sendNotification: boolean;
 }): Promise<void> {
   let validatorPerformanceError: ValidatorPerformanceError | undefined;
   let activeValidatorsIndexes: string[] = [];
-  let validatorBlockStatusMap = new Map();
+  let validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
   let validatorsAttestationsTotalRewards: TotalRewards[] = [];
 
   try {
@@ -126,6 +142,14 @@ export async function fetchAndInsertPerformanceCron({
       error: validatorPerformanceError,
       executionClient,
       consensusClient
+    });
+    await sendValidatorsPerformanceNotifications({
+      sendNotification,
+      dappmanagerApi,
+      currentEpoch: currentEpoch.toString(),
+      validatorBlockStatusMap,
+      validatorPerformanceError,
+      validatorsAttestationsTotalRewards
     });
   }
 }
