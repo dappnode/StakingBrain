@@ -9,7 +9,7 @@ describe.skip('Beaconchain API Tests', function () {
     let validatorIndexes = ['1802459', '1802425']
     before(async function () {
         const apiParams: ApiParams = {
-            baseUrl: 'http://beacon-chain.holesky.dncore.dappnode:3500:3500', // replace with actual API URL
+            baseUrl: 'http://beacon-chain.holesky.dncore.dappnode:3500', // replace with actual API URL
         };
 
         api = new BeaconchainApi(apiParams, Network.Holesky); // Network matters for number of slots in epoch
