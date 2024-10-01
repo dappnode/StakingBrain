@@ -4,7 +4,7 @@ import { Network } from "@stakingbrain/common";
 import { ApiParams, ValidatorStatus } from '../../../../../src/modules/apiClients/types.js';
 import { BeaconchainApiError } from '../../../../../src/modules/apiClients/beaconchain/error.js';
 
-describe.only('Beaconchain API Tests', function () {
+describe.skip('Beaconchain API Tests', function () {
     let api: BeaconchainApi;
     let validatorIndexes = ['1802459', '1802425']
     before(async function () {
