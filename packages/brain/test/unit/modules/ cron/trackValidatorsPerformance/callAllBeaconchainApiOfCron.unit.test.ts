@@ -6,7 +6,7 @@ import { BeaconchainApiError } from "../../../../../src/modules/apiClients/beaco
 
 describe.skip("Beaconchain API Tests", function () {
   let api: BeaconchainApi;
-  let validatorIndexes = ["1802459", "1802425"];
+  const validatorIndexes = ["1802459", "1802425"];
   before(async function () {
     const apiParams: ApiParams = {
       baseUrl: "http://beacon-chain.holesky.dncore.dappnode:3500" // replace with actual API URL
