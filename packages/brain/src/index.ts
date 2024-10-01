@@ -6,7 +6,8 @@ import {
   BeaconchainApi,
   BlockExplorerApi,
   ValidatorApi,
-  DappnodeSignatureVerifier
+  DappnodeSignatureVerifier,
+  DappmanagerApi
 } from "./modules/apiClients/index.js";
 import { startUiServer, startLaunchpadApi } from "./modules/apiServers/index.js";
 import * as dotenv from "dotenv";
@@ -75,6 +76,7 @@ export const validatorApi = new ValidatorApi(
 );
 export const beaconchainApi = new BeaconchainApi({ baseUrl: beaconchainUrl }, network);
 export const dappnodeSignatureVerifierApi = new DappnodeSignatureVerifier(network, validatorsMonitorUrl);
+export const dappmanagerApi = new DappmanagerApi({ baseUrl: "http://my.dappnode" }, network);
 
 // Create DB instance
 export const brainDb = new BrainDataBase(
@@ -111,7 +113,9 @@ export const trackValidatorsPerformanceCronTask = new CronJob(
       postgresClient,
       beaconchainApi,
       executionClient,
-      consensusClient
+      consensusClient,
+      dappmanagerApi,
+      sendNotification: true
     });
   }
 );
