@@ -36,7 +36,7 @@ export async function trackValidatorsPerformanceCron({
     const currentEpoch = parseInt(
       (
         await beaconchainApi.getStateFinalityCheckpoints({
-          stateId: "finalized"
+          stateId: "head"
         })
       ).data.finalized.epoch
     );

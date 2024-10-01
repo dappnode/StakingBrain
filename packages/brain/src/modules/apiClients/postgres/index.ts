@@ -111,7 +111,7 @@ SELECT pg_total_relation_size('${this.tableName}');
     await this.sql.unsafe(`
     DO $$
     BEGIN
-        CREATE TYPE ${this.EXECUTION_CLIENT} AS ENUM('${ExecutionClient.Besu}', '${ExecutionClient.Nethermind}', '${ExecutionClient.Geth}', '${ExecutionClient.Erigon}', '${ExecutionClient.Unknown}');
+        CREATE TYPE ${this.EXECUTION_CLIENT} AS ENUM('${ExecutionClient.Besu}', '${ExecutionClient.Nethermind}', '${ExecutionClient.Geth}', '${ExecutionClient.Reth}', '${ExecutionClient.Erigon}', '${ExecutionClient.Unknown}');
     EXCEPTION
         WHEN duplicate_object THEN NULL;
     END $$;
