@@ -36,7 +36,7 @@ export async function trackValidatorsPerformanceCron({
     const currentEpoch = parseInt(
       (
         await beaconchainApi.getStateFinalityCheckpoints({
-          stateId: "finalized"
+          stateId: "head"
         })
       ).data.finalized.epoch
     );
@@ -133,7 +133,7 @@ export async function fetchAndInsertPerformanceCron({
 function getValidatorPerformanceError(e: Error): ValidatorPerformanceError {
   if (e instanceof BeaconchainApiError)
     return {
-      code: ValidatorPerformanceErrorCode.EXECUTION_OFFLINE,
+      code: ValidatorPerformanceErrorCode.BEACONCHAIN_API_ERROR,
       message: e.message
     };
   if (e instanceof BrainDbError)

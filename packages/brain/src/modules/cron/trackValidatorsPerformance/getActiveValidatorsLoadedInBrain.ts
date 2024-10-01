@@ -27,7 +27,7 @@ export async function getActiveValidatorsLoadedInBrain({
     await beaconchainApi.postStateValidators({
       body: {
         ids: validatorIndexes,
-        statuses: validatorIndexes.map(() => ValidatorStatus.ACTIVE_ONGOING)
+        statuses: [ValidatorStatus.ACTIVE_ONGOING]
       },
       stateId: "finalized"
     })
