@@ -9,6 +9,7 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
   const images: { [key: string]: string } = {
     erigon: "/assets/erigon.png",
     geth: "/assets/geth.png",
+    reth: "/assets/reth.png",
     besu: "/assets/besu.png",
     nethermind: "/assets/nethermind.png",
     prysm: "/assets/prysm.png",
