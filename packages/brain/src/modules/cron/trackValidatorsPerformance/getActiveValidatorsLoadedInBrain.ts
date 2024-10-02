@@ -77,7 +77,7 @@ async function getValidatorIndexesAndSaveInDb({
       const { pubkey } = validatorData.validator;
       const index = validatorData.index;
       validatorIndexes.push(index);
-      brainDb.updateValidators({ validators: { [pubkey]: { ...brainDbData[pubkey], index: parseInt(index) } } } );
+      brainDb.updateValidators({ validators: { [pubkey]: { ...brainDbData[pubkey], index: parseInt(index) } } });
     }
   }
 
