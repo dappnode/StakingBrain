@@ -11,12 +11,14 @@
     src: url("./modeg.ttf") format("truetype");
   }
   body {
-    @apply m-0 font-poppins bg-stone-100 dark:bg-stone-900 text-black dark:text-white;
+    @apply m-0 font-poppins bg-stone-100 dark:bg-zinc-800 text-black dark:text-white;
   }
   h1 {
     @apply font-modeG;
   }
 }
+
+
 
 body {
   -webkit-font-smoothing: antialiased;

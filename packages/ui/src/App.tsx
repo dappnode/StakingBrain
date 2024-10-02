@@ -23,7 +23,8 @@ function App(): JSX.Element {
   }, [theme]);
   const [userMode, setUserMode] = React.useState<"basic" | "advanced">("basic");
 
-  const [signerStatus, setSignerStatus] = React.useState<Web3SignerStatus>("LOADING");
+  const [signerStatus, setSignerStatus] =
+    React.useState<Web3SignerStatus>("LOADING");
   const [stakerConfig, setStakerConfig] = React.useState<StakerConfig>();
 
   useEffect(() => {
@@ -40,7 +41,8 @@ function App(): JSX.Element {
 
   async function signerGetStatus(): Promise<void> {
     try {
-      const status = (await rpcClient.call("signerGetStatus", undefined)).status;
+      const status = (await rpcClient.call("signerGetStatus", undefined))
+        .status;
       setSignerStatus(status);
     } catch (e) {
       console.error("Error on signerGetStatus", e);
@@ -59,8 +61,9 @@ function App(): JSX.Element {
   }
 
   return (
-    
+    <div className="flex h-full min-h-screen w-full flex-col">
       <BrowserRouter>
+        <CssBaseline />
         <NavBar
           network={stakerConfig?.network}
           theme={theme}
@@ -83,7 +86,7 @@ function App(): JSX.Element {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                height: "100vh"
+                height: "100vh",
               }}
             >
               <CircularProgress />
@@ -95,30 +98,49 @@ function App(): JSX.Element {
                 {signerStatus === "DOWN" ? (
                   <> Its API is responsive, but signer is down. </>
                 ) : (
-                  <> Its API is not responsive. Check if the Web3Signer package is running. </>
+                  <>
+                    {" "}
+                    Its API is not responsive. Check if the Web3Signer package
+                    is running.{" "}
+                  </>
                 )}
                 To avoid slashing, <b>do not upload </b>
                 your validator <b>keystores to another machine</b>.
               </Alert>
               <Alert severity="info" sx={{ m: 2 }} variant="filled">
-                To safely migrate your keystores, remove the Web3Signer package (or its volumes) after you make sure you
-                have a backup of your keystores. Then, wait for at least 2 epochs before you upload your keystores to
-                another machine.
+                To safely migrate your keystores, remove the Web3Signer package
+                (or its volumes) after you make sure you have a backup of your
+                keystores. Then, wait for at least 2 epochs before you upload
+                your keystores to another machine.
               </Alert>
             </>
           )
         ) : (
           stakerConfig && (
             <Routes>
-              <Route path="/" element={<ValidatorList stakerConfig={stakerConfig} userMode={userMode} />} />
+              <Route
+                path="/"
+                element={
+                  <ValidatorList
+                    stakerConfig={stakerConfig}
+                    userMode={userMode}
+                  />
+                }
+              />
               <Route
                 path="import"
-                element={<ImportScreen network={stakerConfig.network} isMevBoostSet={stakerConfig.isMevBoostSet} />}
+                element={
+                  <ImportScreen
+                    network={stakerConfig.network}
+                    isMevBoostSet={stakerConfig.isMevBoostSet}
+                  />
+                }
               />
             </Routes>
           )
         )}
       </BrowserRouter>
+    </div>
   );
 }
 

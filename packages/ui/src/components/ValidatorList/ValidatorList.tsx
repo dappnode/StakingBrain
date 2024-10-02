@@ -14,7 +14,7 @@ import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
 export default function ValidatorList({
   stakerConfig,
-  userMode
+  userMode,
 }: {
   stakerConfig: StakerConfigType;
   userMode: "basic" | "advanced";
@@ -24,9 +24,12 @@ export default function ValidatorList({
   const [editFeesOpen, setEditFeesOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [validatorsGet, setValidatorsGet] = useState<CustomValidatorGetResponse[]>();
+  const [validatorsGet, setValidatorsGet] =
+    useState<CustomValidatorGetResponse[]>();
   const [validatorsGetError, setValidatorsGetError] = useState<string>();
-  const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(BeaconchaUrlBuildingStatus.NotStarted);
+  const [summaryUrlBuildingStatus, setSummaryUrlBuildingStatus] = useState(
+    BeaconchaUrlBuildingStatus.NotStarted,
+  );
 
   const { network, isMevBoostSet } = stakerConfig;
   const smoothAddress = getSmoothAddressByNetwork(network);
@@ -59,10 +62,14 @@ export default function ValidatorList({
     return (
       <Box sx={{ marginBottom: 3 }}>
         <Alert severity="info" variant="filled">
-          🎉 Calling all solo stakers: Smooth has arrived! To join, select your validators and click on the edit fee
-          recipient button. Learn more{" "}
+          🎉 Calling all solo stakers: Smooth has arrived! To join, select your
+          validators and click on the edit fee recipient button. Learn more{" "}
           <strong>
-            <a href="https://smooth.dappnode.io/" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://smooth.dappnode.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               here!
             </a>
           </strong>
@@ -71,104 +78,95 @@ export default function ValidatorList({
     );
   };
 
+  useEffect(() => {
+    console.log(`loading: ${loading}`);
+    console.log(`validatorsGet: ${validatorsGet}`);
+  }, [loading, validatorsGet]);
+
   return (
-    <div>
+    <div className="flex h-full w-full flex-1 flex-col items-center justify-center">
       {userMode === "advanced" && <StakerConfig stakerConfig={stakerConfig} />}
-      <Box
-        sx={{
-          margin: 8,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "left"
-        }}
-      >
-        {(network === "prater" || network === "mainnet") && <SmoothBanner />}
-
-        <Card
+      {(network === "prater" || network === "mainnet") && <SmoothBanner />}
+      {validatorsGetError ? (
+        <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
+          {validatorsGetError}
+        </Alert>
+      ) : loading ? (
+        <CircularProgress
           sx={{
-            padding: 4,
-            borderRadius: 2
+            color: "#9333ea",
           }}
-        >
-          {validatorsGetError ? (
-            <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-              {validatorsGetError}
-            </Alert>
-          ) : loading ? (
-            <CircularProgress
-              sx={{
-                marginBottom: 4
-              }}
-            />
-          ) : validatorsGet ? (
-            <>
-              <KeystoresDataGrid
-                rows={validatorsGet}
-                areRowsSelected={selectedRows.length !== 0}
-                selectedRows={selectedRows}
-                setSelectedRows={setSelectedRows}
-                network={network}
-                userMode={userMode}
-                setDeleteOpen={setDeleteOpen}
-                setEditFeesOpen={setEditFeesOpen}
-                setExitOpen={setExitOpen}
-                summaryUrlBuildingStatus={summaryUrlBuildingStatus}
-                setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
-                mevSpFeeRecipient={smoothAddress}
-              />
+        />
+      ) : validatorsGet ? (
+        <>
+          <KeystoresDataGrid
+            rows={validatorsGet}
+            areRowsSelected={selectedRows.length !== 0}
+            selectedRows={selectedRows}
+            setSelectedRows={setSelectedRows}
+            network={network}
+            userMode={userMode}
+            setDeleteOpen={setDeleteOpen}
+            setEditFeesOpen={setEditFeesOpen}
+            setExitOpen={setExitOpen}
+            summaryUrlBuildingStatus={summaryUrlBuildingStatus}
+            setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
+            mevSpFeeRecipient={smoothAddress}
+          />
 
-              {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Error && (
-                <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-                  There was an error loading the dashboard. The number of API calls allowed by the explorer might have
-                  been exceeded or the network might be invalid. Please wait for a minute and refresh the page.
-                </Alert>
-              )}
-
-              {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NoIndexes && (
-                <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-                  There was an error loading the dashboard. The explorer may not be able to show a dashboard for all
-                  your validators or some of them might not have been indexed yet. Have you done a deposit?
-                </Alert>
-              )}
-
-              {deleteOpen && (
-                <KeystoresDeleteDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  open={deleteOpen}
-                  setOpen={setDeleteOpen}
-                />
-              )}
-
-              {editFeesOpen && (
-                <EditFeesDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  open={editFeesOpen}
-                  setOpen={setEditFeesOpen}
-                  network={network}
-                  isMevBoostSet={isMevBoostSet}
-                />
-              )}
-
-              {exitOpen && (
-                <KeystoresExitDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  open={exitOpen}
-                  setOpen={setExitOpen}
-                />
-              )}
-            </>
-          ) : (
+          {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Error && (
             <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-              There are no keystores to display.
+              There was an error loading the dashboard. The number of API calls
+              allowed by the explorer might have been exceeded or the network
+              might be invalid. Please wait for a minute and refresh the page.
             </Alert>
           )}
-        </Card>
-      </Box>
+
+          {summaryUrlBuildingStatus ===
+            BeaconchaUrlBuildingStatus.NoIndexes && (
+            <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+              There was an error loading the dashboard. The explorer may not be
+              able to show a dashboard for all your validators or some of them
+              might not have been indexed yet. Have you done a deposit?
+            </Alert>
+          )}
+
+          {deleteOpen && (
+            <KeystoresDeleteDialog
+              rows={validatorsGet}
+              selectedRows={selectedRows}
+              setSelectedRows={setSelectedRows}
+              open={deleteOpen}
+              setOpen={setDeleteOpen}
+            />
+          )}
+
+          {editFeesOpen && (
+            <EditFeesDialog
+              rows={validatorsGet}
+              selectedRows={selectedRows}
+              open={editFeesOpen}
+              setOpen={setEditFeesOpen}
+              network={network}
+              isMevBoostSet={isMevBoostSet}
+            />
+          )}
+
+          {exitOpen && (
+            <KeystoresExitDialog
+              rows={validatorsGet}
+              selectedRows={selectedRows}
+              setSelectedRows={setSelectedRows}
+              open={exitOpen}
+              setOpen={setExitOpen}
+            />
+          )}
+        </>
+      ) : (
+        <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+          There are no keystores to display.
+        </Alert>
+      )}
     </div>
   );
 }

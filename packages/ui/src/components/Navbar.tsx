@@ -33,7 +33,7 @@ export default function NavBar({
     console.log(`theme now is ${theme}`);
   }, [theme]);
   return (
-    <div className="flex h-36 w-full flex-row items-center justify-between px-10">
+    <div className="flex h-36 w-full flex-row items-center justify-between px-5">
       <div className="flex flex-row items-center gap-3">
         <img
           src="/assets/dappnode_logo_clean.png"
@@ -41,7 +41,7 @@ export default function NavBar({
           className="h-24 w-24"
         />
         <div className="mt-2 flex flex-col">
-          <h1 className="text-2xl font-bold">Staking Brain</h1>
+          <h1 className="text-2xl font-semibold">Staking Brain</h1>
           <div className="font-light italic">{network}</div>
         </div>
       </div>
