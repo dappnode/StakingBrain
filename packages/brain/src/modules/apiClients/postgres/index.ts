@@ -113,8 +113,8 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
    */
   public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
     const query = `
-INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.executionClient}, ${Columns.consensusClient}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsTotalRewards}, ${Columns.error})
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.executionClient}, ${Columns.consensusClient}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsTotalRewards}, ${Columns.attestationsIdealRewards}, ${Columns.error})
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (${Columns.validatorIndex}, ${Columns.epoch})
 DO UPDATE SET
   ${Columns.executionClient} = EXCLUDED.${Columns.executionClient},
