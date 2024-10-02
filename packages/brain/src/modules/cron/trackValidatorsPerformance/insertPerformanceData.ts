@@ -1,5 +1,5 @@
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
-import { DappmanagerApi, PostgresClient } from "../../apiClients/index.js";
+import { PostgresClient } from "../../apiClients/index.js";
 import {
   BlockProposalStatus,
   ValidatorPerformance,
@@ -9,18 +9,15 @@ import {
 import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
-import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
 
 /**
  * Insert the performance data for the validators in the Postgres DB. On any error
  * inserting the performance of a validator, the error will be logged and the process will continue
  * with the next validator.
  */
-export async function insertPerformanceDataAndSendNotification({
+export async function insertPerformanceData({
   executionClient,
   consensusClient,
-  sendNotification,
-  dappmanagerApi,
   postgresClient,
   currentEpoch,
   activeValidatorsIndexes,
@@ -30,8 +27,6 @@ export async function insertPerformanceDataAndSendNotification({
 }: {
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
-  sendNotification: boolean;
-  dappmanagerApi: DappmanagerApi;
   postgresClient: PostgresClient;
   currentEpoch: number;
   activeValidatorsIndexes: string[];
@@ -102,15 +97,6 @@ export async function insertPerformanceDataAndSendNotification({
         blockProposalStatus,
         attestationsTotalRewards
       }
-    });
-
-    await sendValidatorsPerformanceNotifications({
-      sendNotification,
-      dappmanagerApi,
-      currentEpoch: currentEpoch.toString(),
-      validatorBlockStatusMap,
-      validatorAttestationsRewards,
-      error
     });
   }
 }

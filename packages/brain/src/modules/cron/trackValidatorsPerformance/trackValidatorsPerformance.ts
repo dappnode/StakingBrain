@@ -2,7 +2,7 @@ import { BeaconchainApi } from "../../apiClients/beaconchain/index.js";
 import { PostgresClient } from "../../apiClients/postgres/index.js";
 import logger from "../../logger/index.js";
 import { BrainDataBase } from "../../db/index.js";
-import { insertPerformanceDataAndSendNotification } from "./insertPerformanceDataAndSendNotification.js";
+import { insertPerformanceData } from "./insertPerformanceData.js";
 import { getValidatorAttestationsRewards } from "./getValidatorAttestationsRewards.js";
 import { getBlockProposalStatusMap } from "./getBlockProposalStatusMap.js";
 import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
@@ -18,6 +18,7 @@ import { BeaconchainApiError } from "../../apiClients/beaconchain/error.js";
 import { BrainDbError } from "../../db/error.js";
 import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
 import { DappmanagerApi } from "../../apiClients/index.js";
+import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
 
 let lastProcessedEpoch: number | undefined = undefined;
 let lastEpochProcessedWithError = false;
@@ -127,9 +128,7 @@ export async function fetchAndInsertPerformanceCron({
     lastEpochProcessedWithError = true;
   } finally {
     // Always call storeData in the finally block, regardless of success or failure in try block
-    await insertPerformanceDataAndSendNotification({
-      sendNotification,
-      dappmanagerApi,
+    await insertPerformanceData({
       postgresClient,
       activeValidatorsIndexes,
       currentEpoch,
@@ -139,6 +138,16 @@ export async function fetchAndInsertPerformanceCron({
       executionClient,
       consensusClient
     });
+
+    // Send notifications if the last epoch was processed without an error
+    if (!lastEpochProcessedWithError)
+      await sendValidatorsPerformanceNotifications({
+        sendNotification,
+        dappmanagerApi,
+        currentEpoch: currentEpoch.toString(),
+        validatorBlockStatusMap,
+        validatorAttestationsRewards
+      });
   }
 }
 
