@@ -1,4 +1,34 @@
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
+import { IdealRewards, TotalRewards } from "../beaconchain/types.js";
+
+export enum Columns {
+  validatorIndex = "validator_index",
+  epoch = "epoch",
+  executionClient = "execution_client",
+  consensusClient = "consensus_client",
+  slot = "slot",
+  liveness = "liveness",
+  blockProposalStatus = "block_proposal_status",
+  syncCommitteeRewards = "sync_comittee_rewards",
+  attestationsTotalRewards = "attestations_total_rewards",
+  attestationsIdealRewards = "attestations_ideal_rewards",
+  error = "error"
+}
+
+// Interface data write with Postgres client
+export interface ValidatorPerformancePostgres {
+  [Columns.validatorIndex]: number;
+  [Columns.epoch]: number;
+  [Columns.executionClient]: ExecutionClient;
+  [Columns.consensusClient]: ConsensusClient;
+  [Columns.slot]: number;
+  [Columns.liveness]: boolean;
+  [Columns.blockProposalStatus]: BlockProposalStatus;
+  [Columns.syncCommitteeRewards]: number;
+  [Columns.attestationsTotalRewards]: string;
+  [Columns.attestationsIdealRewards]: string;
+  [Columns.error]: string;
+}
 
 export enum BlockProposalStatus {
   Missed = "Missed",
@@ -7,22 +37,15 @@ export enum BlockProposalStatus {
   Error = "Error"
 }
 
-export interface AttestationsTotalRewards {
-  validator_index: string;
-  head: string;
-  target: string;
-  source: string;
-  inclusion_delay: string;
-  inactivity: string;
-}
-
+// Interface data return from Postgres client
 export interface ValidatorPerformance {
   validatorIndex: number;
   epoch: number;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   blockProposalStatus?: BlockProposalStatus;
-  attestationsTotalRewards?: AttestationsTotalRewards;
+  attestationsTotalRewards?: TotalRewards;
+  attestationsIdealRewards?: IdealRewards;
   slot?: number;
   liveness?: boolean;
   syncCommitteeRewards?: number;

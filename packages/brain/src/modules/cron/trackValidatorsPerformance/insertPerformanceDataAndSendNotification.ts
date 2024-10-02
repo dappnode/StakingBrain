@@ -6,7 +6,7 @@ import {
   ValidatorPerformanceError,
   ValidatorPerformanceErrorCode
 } from "../../apiClients/postgres/types.js";
-import { TotalRewards } from "../../apiClients/types.js";
+import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
 import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
@@ -15,34 +15,28 @@ import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerforma
  * Insert the performance data for the validators in the Postgres DB. On any error
  * inserting the performance of a validator, the error will be logged and the process will continue
  * with the next validator.
- *
- * @param postgresClient - Postgres client to interact with the DB.
- * @param activeValidatorIndexes - Array of validator indexes.
- * @param currentEpoch - The current epoch.
- * @param validatorBlockStatusMap - Map with the block proposal status of each validator.
- * @param validatorsAttestationsTotalRewards - Array of total rewards for the validators.
  */
 export async function insertPerformanceDataAndSendNotification({
+  executionClient,
+  consensusClient,
   sendNotification,
   dappmanagerApi,
   postgresClient,
-  activeValidatorsIndexes,
   currentEpoch,
+  activeValidatorsIndexes,
   validatorBlockStatusMap,
-  validatorsAttestationsTotalRewards,
-  executionClient,
-  consensusClient,
+  validatorAttestationsRewards,
   error
 }: {
+  executionClient: ExecutionClient;
+  consensusClient: ConsensusClient;
   sendNotification: boolean;
   dappmanagerApi: DappmanagerApi;
   postgresClient: PostgresClient;
-  activeValidatorsIndexes: string[];
   currentEpoch: number;
-  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
-  validatorsAttestationsTotalRewards: TotalRewards[];
-  executionClient: ExecutionClient;
-  consensusClient: ConsensusClient;
+  activeValidatorsIndexes: string[];
+  validatorBlockStatusMap?: Map<string, BlockProposalStatus>;
+  validatorAttestationsRewards?: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
   error?: ValidatorPerformanceError;
 }): Promise<void> {
   for (const validatorIndex of activeValidatorsIndexes) {
@@ -60,7 +54,7 @@ export async function insertPerformanceDataAndSendNotification({
       continue;
     }
 
-    const attestationsTotalRewards = validatorsAttestationsTotalRewards.find(
+    const attestationsTotalRewards = validatorAttestationsRewards?.totalRewards.find(
       (attestationReward) => attestationReward.validator_index === validatorIndex
     );
     if (!attestationsTotalRewards) {
@@ -80,7 +74,7 @@ export async function insertPerformanceDataAndSendNotification({
       continue;
     }
 
-    const blockProposalStatus = validatorBlockStatusMap.get(validatorIndex);
+    const blockProposalStatus = validatorBlockStatusMap?.get(validatorIndex);
     if (!blockProposalStatus) {
       await insertDataNotThrow({
         postgresClient,
@@ -115,7 +109,7 @@ export async function insertPerformanceDataAndSendNotification({
       dappmanagerApi,
       currentEpoch: currentEpoch.toString(),
       validatorBlockStatusMap,
-      validatorsAttestationsTotalRewards,
+      validatorAttestationsRewards,
       error
     });
   }

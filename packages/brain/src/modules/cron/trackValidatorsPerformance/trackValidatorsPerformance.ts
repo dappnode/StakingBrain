@@ -3,12 +3,12 @@ import { PostgresClient } from "../../apiClients/postgres/index.js";
 import logger from "../../logger/index.js";
 import { BrainDataBase } from "../../db/index.js";
 import { insertPerformanceDataAndSendNotification } from "./insertPerformanceDataAndSendNotification.js";
-import { getAttestationsTotalRewards } from "./getAttestationsTotalRewards.js";
+import { getValidatorAttestationsRewards } from "./getValidatorAttestationsRewards.js";
 import { getBlockProposalStatusMap } from "./getBlockProposalStatusMap.js";
 import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
-import { TotalRewards } from "../../apiClients/types.js";
+import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 import {
   BlockProposalStatus,
   ValidatorPerformanceError,
@@ -91,20 +91,16 @@ export async function fetchAndInsertPerformanceCron({
 }): Promise<void> {
   let validatorPerformanceError: ValidatorPerformanceError | undefined;
   let activeValidatorsIndexes: string[] = [];
-  let validatorBlockStatusMap: Map<string, BlockProposalStatus> = new Map();
-  let validatorsAttestationsTotalRewards: TotalRewards[] = [];
+  let validatorBlockStatusMap: Map<string, BlockProposalStatus> | undefined;
+  let validatorAttestationsRewards: { totalRewards: TotalRewards[]; idealRewards: IdealRewards } | undefined;
 
   try {
     logger.debug(`${logPrefix}Starting to track performance for epoch: ${currentEpoch}`);
-    try {
-      activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
-      if (activeValidatorsIndexes.length === 0) {
-        logger.info(`${logPrefix}No active validators found`);
-        return; // Exit if no active validators are found
-      }
-    } catch (e) {
-      logger.error(`${logPrefix}Error getting active validators: ${e}`);
-      return; // active validator indexes is crutial for the error handling since each error is indexed by the validator index
+
+    activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
+    if (activeValidatorsIndexes.length === 0) {
+      logger.info(`${logPrefix}No active validators found`);
+      return; // Exit if no active validators are found
     }
 
     const { el_offline, is_syncing } = (await beaconchainApi.getSyncingStatus()).data;
@@ -117,7 +113,7 @@ export async function fetchAndInsertPerformanceCron({
       activeValidatorsIndexes
     });
 
-    validatorsAttestationsTotalRewards = await getAttestationsTotalRewards({
+    validatorAttestationsRewards = await getValidatorAttestationsRewards({
       beaconchainApi,
       epoch: currentEpoch.toString(),
       activeValidatorsIndexes
@@ -128,7 +124,6 @@ export async function fetchAndInsertPerformanceCron({
   } catch (e) {
     logger.error(`${logPrefix}Error tracking validator performance for epoch ${currentEpoch}: ${e}`);
     validatorPerformanceError = getValidatorPerformanceError(e);
-
     lastEpochProcessedWithError = true;
   } finally {
     // Always call storeData in the finally block, regardless of success or failure in try block
@@ -139,7 +134,7 @@ export async function fetchAndInsertPerformanceCron({
       activeValidatorsIndexes,
       currentEpoch,
       validatorBlockStatusMap,
-      validatorsAttestationsTotalRewards,
+      validatorAttestationsRewards,
       error: validatorPerformanceError,
       executionClient,
       consensusClient

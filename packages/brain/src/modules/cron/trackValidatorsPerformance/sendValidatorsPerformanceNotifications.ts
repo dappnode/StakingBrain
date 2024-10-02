@@ -3,7 +3,7 @@ import { NotificationType } from "../../apiClients/dappmanager/types.js";
 import { BlockProposalStatus, ValidatorPerformanceError } from "../../apiClients/postgres/types.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
-import { TotalRewards } from "../../apiClients/types.js";
+import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 
 /**
  * Sends validator performance notification to the dappmanager. The notification will have the following format:
@@ -21,14 +21,14 @@ export async function sendValidatorsPerformanceNotifications({
   dappmanagerApi,
   currentEpoch,
   validatorBlockStatusMap,
-  validatorsAttestationsTotalRewards,
+  validatorAttestationsRewards,
   error
 }: {
   sendNotification: boolean;
   dappmanagerApi: DappmanagerApi;
   currentEpoch: string;
-  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
-  validatorsAttestationsTotalRewards: TotalRewards[];
+  validatorBlockStatusMap?: Map<string, BlockProposalStatus>;
+  validatorAttestationsRewards?: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
   error?: ValidatorPerformanceError;
 }): Promise<void> {
   if (!sendNotification) return;
@@ -38,17 +38,16 @@ export async function sendValidatorsPerformanceNotifications({
       notificationType: NotificationType.Danger,
       body: `Failed to fetch performance data for epoch ${currentEpoch}: ${error}`
     });
-  else {
+  else if (validatorBlockStatusMap && validatorAttestationsRewards)
     await Promise.all([
       sendSuccessNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch }),
       sendWarningNotificationNotThrow({
         dappmanagerApi,
         validatorBlockStatusMap,
-        validatorsAttestationsTotalRewards,
+        validatorAttestationsRewards,
         currentEpoch
       })
     ]);
-  }
 }
 
 /**
@@ -57,8 +56,8 @@ export async function sendValidatorsPerformanceNotifications({
  */
 async function sendSuccessNotificationNotThrow({
   dappmanagerApi,
-  validatorBlockStatusMap,
-  currentEpoch
+  currentEpoch,
+  validatorBlockStatusMap
 }: {
   dappmanagerApi: DappmanagerApi;
   validatorBlockStatusMap: Map<string, BlockProposalStatus>;
@@ -86,19 +85,19 @@ async function sendSuccessNotificationNotThrow({
 async function sendWarningNotificationNotThrow({
   dappmanagerApi,
   validatorBlockStatusMap,
-  validatorsAttestationsTotalRewards,
+  validatorAttestationsRewards,
   currentEpoch
 }: {
   dappmanagerApi: DappmanagerApi;
   validatorBlockStatusMap: Map<string, BlockProposalStatus>;
-  validatorsAttestationsTotalRewards: TotalRewards[];
+  validatorAttestationsRewards: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
   currentEpoch: string;
 }): Promise<void> {
   // Send the warning notification together: block missed and att missed
   const validatorsMissedBlocks = Array.from(validatorBlockStatusMap).filter(
     ([_, blockStatus]) => blockStatus === "Missed"
   );
-  const validatorsMissedAttestations = validatorsAttestationsTotalRewards
+  const validatorsMissedAttestations = validatorAttestationsRewards.totalRewards
     .filter((validator) => parseInt(validator.source) === 0)
     .map((validator) => validator.validator_index);
 

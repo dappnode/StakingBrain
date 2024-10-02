@@ -2,6 +2,7 @@ import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 
 export type ExecutionConsensusConcatenated = `${ExecutionClient}-${ConsensusClient}`;
 
+// TODO: use ideal rewards to return calculated attestation efficiency
 export interface ValidatorsDataProcessed {
   attestationSuccessRate: number; // mean attestationSuccessRate of the validator
   attestationSuccessRatePerClients: Map<ExecutionConsensusConcatenated, number>;
