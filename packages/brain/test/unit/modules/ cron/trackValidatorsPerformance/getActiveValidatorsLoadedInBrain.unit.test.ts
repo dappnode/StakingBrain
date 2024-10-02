@@ -11,6 +11,17 @@ import { StakingBrainDb } from "../../../../../src/modules/db/types.js";
 import { getActiveValidatorsLoadedInBrain } from "../../../../../src/modules/cron/trackValidatorsPerformance/getActiveValidatorsLoadedInBrain.js";
 import { Network } from "@stakingbrain/common";
 
+const validators: { pubkey: string; index: number }[] = [
+  {
+    pubkey: "0x86531f35f71730767e72692442a2020a6f252c15bc73d11e201d658ed90dde0dd15d9614e6c115b2dd0221ce35dcdcb3",
+    index: 1802289
+  },
+  {
+    pubkey: "0x86531f35f71730767e72692442a2020a6f252c15bc73d11e201d658ed90dde0dd15d9614e6c115b2dd0221ce35dcdcb4",
+    index: 1802291
+  }
+];
+
 const validatorIndexOne = 1802289;
 const pubkeyOne = "0x86531f35f71730767e72692442a2020a6f252c15bc73d11e201d658ed90dde0dd15d9614e6c115b2dd0221ce35dcdcb3";
 const validatorIndexTwo = 1802291;
@@ -78,12 +89,12 @@ class BeaconchainApiMock extends BeaconchainApi {
     return {
       execution_optimistic: false,
       finalized: true,
-      data: body.ids.map((id) => ({
-        index: id,
+      data: validators.map((validator) => ({
+        index: validator.index.toString(),
         balance: "0",
         status: ValidatorStatus.ACTIVE_ONGOING,
         validator: {
-          pubkey: "",
+          pubkey: validator.pubkey,
           withdrawal_credentials: "",
           effective_balance: "",
           slashed: false,
