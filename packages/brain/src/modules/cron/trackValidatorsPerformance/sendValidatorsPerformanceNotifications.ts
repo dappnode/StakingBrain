@@ -98,7 +98,7 @@ async function sendWarningNotificationNotThrow({
     ([_, blockStatus]) => blockStatus === "Missed"
   );
   const validatorsMissedAttestations = validatorAttestationsRewards.totalRewards
-    .filter((validator) => parseInt(validator.source) === 0)
+    .filter((validator) => parseInt(validator.source) <= 0)
     .map((validator) => validator.validator_index);
 
   if (validatorsMissedBlocks.length === 0 && validatorsMissedAttestations.length === 0) return;
