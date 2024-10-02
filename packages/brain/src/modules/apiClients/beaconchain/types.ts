@@ -48,18 +48,20 @@ export interface TotalRewards {
   inactivity: string;
 }
 
+export interface IdealRewards {
+  effective_balance: string;
+  head: string;
+  target: string;
+  source: string;
+  inclusion_delay: string;
+  inactivity: string;
+}
+
 export interface BeaconchainAttestationRewardsPostResponse {
   execution_optimistic: boolean;
   finalized: boolean;
   data: {
-    ideal_rewards: {
-      effective_balance: string;
-      head: string;
-      target: string;
-      source: string;
-      inclusion_delay: string;
-      inactivity: string;
-    }[];
+    ideal_rewards: IdealRewards[];
     total_rewards: TotalRewards[];
   };
 }

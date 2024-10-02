@@ -1,53 +1,7 @@
 import postgres from "postgres";
 import logger from "../../logger/index.js";
-import { BlockProposalStatus, ValidatorPerformance } from "./types.js";
+import { BlockProposalStatus, Columns, ValidatorPerformance, ValidatorPerformancePostgres } from "./types.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
-
-// Postgres has a built in class for errors PostgresError. i.e:
-// PostgresError: type "block_proposal_status" already exists
-//     at ErrorResponse (file:///app/node_modules/postgres/src/connection.js:788:26)
-//     at handle (file:///app/node_modules/postgres/src/connection.js:474:6)
-//     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9)
-//     at Socket.emit (node:events:519:28)
-//     at addChunk (node:internal/streams/readable:559:12)
-//     at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
-//     at Readable.push (node:internal/streams/readable:390:5)
-//     at TCP.onStreamRead (node:internal/stream_base_commons:191:23) {
-//   severity_local: 'ERROR',
-//   severity: 'ERROR',
-//   code: '42710',
-//   where: `SQL statement "CREATE TYPE BLOCK_PROPOSAL_STATUS AS ENUM('Missed', 'Proposed', 'Unchosen')"\n` +
-//     'PL/pgSQL function inline_code_block line 5 at SQL statement',
-//   file: 'typecmds.c',
-//   line: '1170',
-//   routine: 'DefineEnum'
-// }
-
-enum Columns {
-  validatorIndex = "validator_index",
-  epoch = "epoch",
-  executionClient = "execution_client",
-  consensusClient = "consensus_client",
-  slot = "slot",
-  liveness = "liveness",
-  blockProposalStatus = "block_proposal_status",
-  syncCommitteeRewards = "sync_comittee_rewards",
-  attestationsTotalRewards = "attestations_total_rewards",
-  error = "error"
-}
-
-interface ValidatorPerformancePostgres {
-  [Columns.validatorIndex]: number;
-  [Columns.epoch]: number;
-  [Columns.executionClient]: ExecutionClient;
-  [Columns.consensusClient]: ConsensusClient;
-  [Columns.slot]: number;
-  [Columns.liveness]: boolean;
-  [Columns.blockProposalStatus]: BlockProposalStatus;
-  [Columns.syncCommitteeRewards]: number;
-  [Columns.attestationsTotalRewards]: string;
-  [Columns.error]: string;
-}
 
 export class PostgresClient {
   private readonly tableName = "validators_performance";
@@ -83,17 +37,7 @@ SELECT pg_total_relation_size('${this.tableName}');
   }
 
   /**
-   * Initializes the database by creating the required table if it does not exist.
-   * The table will have the following columns:
-   * - validator_index: The index of the validator.
-   * - epoch: The epoch number.
-   * - slot: The slot number.
-   * - liveness: The liveness status of the validator.
-   * - block_proposal_status: The status of the block proposal (missed, proposed, unchosen).
-   * - sync_comittee_rewards: The rewards received by the validator for participating in the sync committee.
-   * - attestations_rewards: The rewards received by the validator for participating in the attestations.
-   * - error: Any error message related to the validator's performance fetch.
-   * The primary key will be a combination of validator_index and epoch.
+   * Initializes the database by creating the required table if it does not exist with the required columns.
    */
   public async initialize() {
     // important: enum create types must be broken into separate conditional checks for each ENUM type before trying to create it.
@@ -106,7 +50,6 @@ SELECT pg_total_relation_size('${this.tableName}');
         WHEN duplicate_object THEN NULL;
     END $$;
   `);
-
     // Check and create EXECUTION_CLIENT ENUM type if not exists
     await this.sql.unsafe(`
     DO $$
@@ -139,6 +82,7 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
   ${Columns.blockProposalStatus} ${this.BLOCK_PROPOSAL_STATUS},
   ${Columns.syncCommitteeRewards} BIGINT,
   ${Columns.attestationsTotalRewards} JSONB,
+  ${Columns.attestationsIdealRewards} JSONB,
   ${Columns.error} JSONB NULL,
   PRIMARY KEY (${Columns.validatorIndex}, ${Columns.epoch})
 );
@@ -180,6 +124,7 @@ DO UPDATE SET
   ${Columns.blockProposalStatus} = EXCLUDED.${Columns.blockProposalStatus},
   ${Columns.syncCommitteeRewards} = EXCLUDED.${Columns.syncCommitteeRewards},
   ${Columns.attestationsTotalRewards} = EXCLUDED.${Columns.attestationsTotalRewards},
+  ${Columns.attestationsIdealRewards} = EXCLUDED.${Columns.attestationsIdealRewards},
   ${Columns.error} = EXCLUDED.${Columns.error};
     `;
 
@@ -194,6 +139,7 @@ DO UPDATE SET
       data.blockProposalStatus ?? null,
       data.syncCommitteeRewards ?? null,
       data.attestationsTotalRewards ? JSON.stringify(data.attestationsTotalRewards) : null, // JSONB expects a string or null
+      data.attestationsIdealRewards ? JSON.stringify(data.attestationsIdealRewards) : null, // JSONB expects a string or null
       data.error ? JSON.stringify(data.error) : null // JSONB expects a string or null
     ]);
   }
@@ -222,6 +168,7 @@ WHERE ${Columns.validatorIndex} = ANY($1)
       blockProposalStatus: row.block_proposal_status,
       syncCommitteeRewards: row.sync_comittee_rewards,
       attestationsTotalRewards: JSON.parse(row.attestations_total_rewards),
+      attestationsIdealRewards: JSON.parse(row.attestations_ideal_rewards),
       error: JSON.parse(row.error)
     }));
   }
@@ -270,6 +217,7 @@ AND ${Columns.epoch} <= $3
         blockProposalStatus: row.block_proposal_status,
         syncCommitteeRewards: row.sync_comittee_rewards,
         attestationsTotalRewards: JSON.parse(row.attestations_total_rewards),
+        attestationsIdealRewards: JSON.parse(row.attestations_ideal_rewards),
         error: JSON.parse(row.error)
       };
 
