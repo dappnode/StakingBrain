@@ -12,29 +12,27 @@ import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
  * - danger: validator(s) missed a block
  */
 export async function sendValidatorsPerformanceNotifications({
-  sendNotification,
   dappmanagerApi,
   currentEpoch,
   validatorBlockStatusMap,
   validatorAttestationsRewards
 }: {
-  sendNotification: boolean;
   dappmanagerApi: DappmanagerApi;
   currentEpoch: string;
   validatorBlockStatusMap?: Map<string, BlockProposalStatus>;
   validatorAttestationsRewards?: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
 }): Promise<void> {
-  if (!sendNotification) return;
-  else if (validatorBlockStatusMap && validatorAttestationsRewards)
-    await Promise.all([
-      sendSuccessNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch }),
-      sendWarningNotificationNotThrow({
-        dappmanagerApi,
-        validatorAttestationsRewards,
-        currentEpoch
-      }),
-      sendDangerNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch })
-    ]);
+  if (!validatorBlockStatusMap || !validatorAttestationsRewards) return;
+
+  await Promise.all([
+    sendSuccessNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch }),
+    sendWarningNotificationNotThrow({
+      dappmanagerApi,
+      validatorAttestationsRewards,
+      currentEpoch
+    }),
+    sendDangerNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch })
+  ]);
 }
 
 async function sendSuccessNotificationNotThrow({
@@ -53,7 +51,7 @@ async function sendSuccessNotificationNotThrow({
   if (validatorsProposedBlocks.length === 0) return;
   await dappmanagerApi
     .sendDappmanagerNotification({
-      title: `Validator(s) proposed a block in epoch ${currentEpoch}`,
+      title: `Block proposed in epoch ${currentEpoch}`,
       notificationType: NotificationType.Success,
       body: `Validator(s) ${validatorsProposedBlocks.join(", ")} proposed a block`
     })
@@ -76,7 +74,7 @@ async function sendWarningNotificationNotThrow({
   if (validatorsMissedAttestations.length === 0) return;
   await dappmanagerApi
     .sendDappmanagerNotification({
-      title: `Validator(s) missed attestations in epoch ${currentEpoch}`,
+      title: `Missed attestation in epoch ${currentEpoch}`,
       notificationType: NotificationType.Warning,
       body: `Validator(s) ${validatorsMissedAttestations.join(", ")} missed attestations`
     })
@@ -99,7 +97,7 @@ async function sendDangerNotificationNotThrow({
   if (validatorsMissedBlocks.length === 0) return;
   await dappmanagerApi
     .sendDappmanagerNotification({
-      title: `Validator(s) missed a block in epoch ${currentEpoch}`,
+      title: `Block missed in epoch ${currentEpoch}`,
       notificationType: NotificationType.Danger,
       body: `Validator(s) ${validatorsMissedBlocks.join(", ")} missed a block`
     })

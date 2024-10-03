@@ -21,57 +21,8 @@ import { DappmanagerApi } from "../../apiClients/index.js";
 import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
 
 let lastProcessedEpoch: number | undefined = undefined;
-let lastEpochProcessedWithError = false;
 
-export async function trackValidatorsPerformanceCron({
-  brainDb,
-  postgresClient,
-  beaconchainApi,
-  executionClient,
-  consensusClient,
-  dappmanagerApi,
-  sendNotification
-}: {
-  brainDb: BrainDataBase;
-  postgresClient: PostgresClient;
-  beaconchainApi: BeaconchainApi;
-  executionClient: ExecutionClient;
-  consensusClient: ConsensusClient;
-  dappmanagerApi: DappmanagerApi;
-  sendNotification: boolean;
-}): Promise<void> {
-  try {
-    // Get finalized epoch from finality endpoint instead of from header endpoint.
-    // The header endpoint might jump two epochs in one call (due to missed block proposals), which would cause the cron to skip an epoch.
-    const currentEpoch = parseInt(
-      (
-        await beaconchainApi.getStateFinalityCheckpoints({
-          stateId: "head"
-        })
-      ).data.finalized.epoch
-    );
-
-    // If the current epoch is different from the last processed epoch, or epoch is the same but the last epoch was processed with an error
-    // then fetch and insert the performance data
-    if (currentEpoch !== lastProcessedEpoch || lastEpochProcessedWithError) {
-      await fetchAndInsertPerformanceCron({
-        brainDb,
-        postgresClient,
-        beaconchainApi,
-        executionClient,
-        consensusClient,
-        currentEpoch,
-        dappmanagerApi,
-        sendNotification
-      });
-      lastProcessedEpoch = currentEpoch;
-    }
-  } catch (error) {
-    logger.error(`Failed to fetch or process epoch:`, error);
-  }
-}
-
-export async function fetchAndInsertPerformanceCron({
+export async function fetchAndInsertValidatorsPerformanceData({
   brainDb,
   postgresClient,
   beaconchainApi,
@@ -90,6 +41,8 @@ export async function fetchAndInsertPerformanceCron({
   dappmanagerApi: DappmanagerApi;
   sendNotification: boolean;
 }): Promise<void> {
+  if (currentEpoch === lastProcessedEpoch) return;
+
   let validatorPerformanceError: ValidatorPerformanceError | undefined;
   let activeValidatorsIndexes: string[] = [];
   let validatorBlockStatusMap: Map<string, BlockProposalStatus> | undefined;
@@ -98,15 +51,13 @@ export async function fetchAndInsertPerformanceCron({
   try {
     logger.debug(`${logPrefix}Starting to track performance for epoch: ${currentEpoch}`);
 
+    await ensureNodeStatus({ beaconchainApi });
+
     activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
     if (activeValidatorsIndexes.length === 0) {
       logger.info(`${logPrefix}No active validators found`);
       return; // Exit if no active validators are found
     }
-
-    const { el_offline, is_syncing } = (await beaconchainApi.getSyncingStatus()).data;
-    if (is_syncing) throw new NodeSyncingError("Node is syncing");
-    if (el_offline) throw new ExecutionOfflineError("Execution layer is offline");
 
     validatorBlockStatusMap = await getBlockProposalStatusMap({
       beaconchainApi,
@@ -121,11 +72,10 @@ export async function fetchAndInsertPerformanceCron({
     });
 
     validatorPerformanceError = undefined; // Reset error details
-    lastEpochProcessedWithError = false;
+    lastProcessedEpoch = currentEpoch; // Update last processed epoch
   } catch (e) {
-    logger.error(`${logPrefix}Error tracking validator performance for epoch ${currentEpoch}: ${e}`);
+    logger.warn(`${logPrefix}Error tracking validator performance for epoch ${currentEpoch}: ${e}`);
     validatorPerformanceError = getValidatorPerformanceError(e);
-    lastEpochProcessedWithError = true;
   } finally {
     // Always call storeData in the finally block, regardless of success or failure in try block
     await insertPerformanceData({
@@ -140,15 +90,24 @@ export async function fetchAndInsertPerformanceCron({
     });
 
     // Send notifications if the last epoch was processed without an error
-    if (!lastEpochProcessedWithError)
+    if (sendNotification && !validatorPerformanceError)
       await sendValidatorsPerformanceNotifications({
-        sendNotification,
         dappmanagerApi,
         currentEpoch: currentEpoch.toString(),
         validatorBlockStatusMap,
         validatorAttestationsRewards
       });
   }
+}
+/**
+ * Ensures that the node is not syncing and the execution layer is online.
+ * @throws {NodeSyncingError} if the node is syncing
+ * @throws {ExecutionOfflineError} if the execution layer is offline
+ */
+async function ensureNodeStatus({ beaconchainApi }: { beaconchainApi: BeaconchainApi }): Promise<void> {
+  const { el_offline, is_syncing } = (await beaconchainApi.getSyncingStatus()).data;
+  if (is_syncing) throw new NodeSyncingError("Node is syncing");
+  if (el_offline) throw new ExecutionOfflineError("Execution layer is offline");
 }
 
 function getValidatorPerformanceError(e: Error): ValidatorPerformanceError {
