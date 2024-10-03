@@ -473,7 +473,7 @@ export default function KeystoresDataGrid({
 
   return (
     <>
-      <div className="">
+      <div>
         {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.InProgress ? (
           <Tooltip title="Loading dashboard">
             <CircularProgress size={18} style={{ color: "#808080" }} />
@@ -488,7 +488,7 @@ export default function KeystoresDataGrid({
                 await openDashboardTab();
               }}
             >
-              <LinkIcon className="dark:text-zinc-400"/>
+              <LinkIcon className="dark:text-zinc-400" />
             </IconButton>
           </Tooltip>
         )}
@@ -498,7 +498,7 @@ export default function KeystoresDataGrid({
             disabled={!areRowsSelected || areAllSelectedRowsUneditable()}
             onClick={() => setEditFeesOpen(true)}
           >
-            <EditIcon className="dark:text-zinc-400"/>
+            <EditIcon className="dark:text-zinc-400" />
           </IconButton>
         </Tooltip>
 
@@ -507,7 +507,7 @@ export default function KeystoresDataGrid({
             disabled={!areRowsSelected}
             onClick={() => setDeleteOpen(true)}
           >
-            <DeleteIcon className="dark:text-zinc-400"/>
+            <DeleteIcon className="dark:text-zinc-400" />
           </IconButton>
         </Tooltip>
 
@@ -516,32 +516,32 @@ export default function KeystoresDataGrid({
             disabled={!areRowsSelected || !areAllSelectedRowsExitable()}
             onClick={() => setExitOpen(true)}
           >
-            <LogoutIcon className="dark:text-zinc-400"/>
+            <LogoutIcon className="dark:text-zinc-400" />
           </IconButton>
         </Tooltip>
       </div>
-
-      <div className="h-[calc(100vh-195px)] w-full bg-stone-50 dark:bg-zinc-700 ">
-        <DataGrid
-          rows={customRows}
-          onCellClick={(params) => {
-            if (
-              params.field === "validating_pubkey" ||
-              params.field === "fee_recipient"
-            )
-              navigator.clipboard.writeText(params.value);
-          }}
-          columns={columns}
-          pageSize={pageSize}
-          rowsPerPageOptions={[10, 20, 50, 100]}
-          onPageSizeChange={() => setPageSize(pageSize)}
-          checkboxSelection
-          onSelectionModelChange={(selectionModel: GridSelectionModel) =>
-            setSelectedRows(selectionModel)
-          }
-          className=" dark:text-white"
-
-        />
+      <div className="w-full px-10">
+        <div className="h-[700px] w-full bg-stone-50 dark:bg-zinc-700">
+          <DataGrid
+            rows={customRows}
+            onCellClick={(params) => {
+              if (
+                params.field === "validating_pubkey" ||
+                params.field === "fee_recipient"
+              )
+                navigator.clipboard.writeText(params.value);
+            }}
+            columns={columns}
+            pageSize={pageSize}
+            rowsPerPageOptions={[10, 20, 50, 100]}
+            onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+            checkboxSelection
+            onSelectionModelChange={(selectionModel: GridSelectionModel) =>
+              setSelectedRows(selectionModel)
+            }
+            className="dark:text-white"
+          />
+        </div>
       </div>
     </>
   );

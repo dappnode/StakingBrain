@@ -63,7 +63,6 @@ function App(): JSX.Element {
   return (
     <div className="flex h-full min-h-screen w-full flex-col">
       <BrowserRouter>
-        <CssBaseline />
         <NavBar
           network={stakerConfig?.network}
           theme={theme}

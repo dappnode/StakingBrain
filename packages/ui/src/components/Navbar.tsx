@@ -33,7 +33,7 @@ export default function NavBar({
     console.log(`theme now is ${theme}`);
   }, [theme]);
   return (
-    <div className="flex h-36 w-full flex-row items-center justify-between px-5">
+    <div className="flex h-36 w-full flex-row items-center justify-between px-7">
       <div className="flex flex-row items-center gap-3">
         <img
           src="/assets/dappnode_logo_clean.png"
