@@ -56,6 +56,8 @@ export class PrometheusApi extends StandardApi {
       }, {});
 
       return {
+        startTimestamp,
+        endTimestamp,
         avgCpuTemperature: await this.getPrometheusAvgMetric({
           query: `avg_over_time(dappmanager_cpu_temperature_celsius{app="dappmanager-custom-metrics", instance="dappmanager.dappnode:80", job="manager_sd", package="dappmanager.dnp.dappnode.eth", service="dappmanager", type="current"}[${endTimestamp - startTimestamp}s])`,
           startTimestamp,

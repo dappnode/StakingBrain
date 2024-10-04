@@ -79,6 +79,7 @@ async function sendWarningNotificationNotThrow({
   if (validatorsMissedAttestations.length === 0) return;
 
   const hostMetricsMessage = await getHostMetricsMessage(prometheusApi, currentEpoch);
+
   await dappmanagerApi
     .sendDappmanagerNotification({
       title: `Missed attestation in epoch ${currentEpoch}`,
@@ -115,12 +116,32 @@ async function sendDangerNotificationNotThrow({
 }
 
 async function getHostMetricsMessage(prometheusApi: PrometheusApi, epoch: string): Promise<string> {
-  const { avgCpuTemperature, avgCpuUsage, avgMemoryUsage, ioUtilizationPerDisk } =
+  const { startTimestamp, endTimestamp, avgCpuTemperature, avgCpuUsage, avgMemoryUsage, ioUtilizationPerDisk } =
     await prometheusApi.getPrometheusMetrics({ epoch: parseInt(epoch) });
+
+  // create beautiful message for ioUtilizationPerDisk
+  const ioUtilizationPerDiskMessage = Object.entries(ioUtilizationPerDisk)
+    .map(([disk, utilization]) => {
+      return `  - ${disk}: ${utilization}%\n`;
+    })
+    .join("\n");
 
   return `Host metrics:
 - CPU temperature: ${avgCpuTemperature}°C
 - CPU usage: ${avgCpuUsage}%
 - Memory usage: ${avgMemoryUsage}%
-- Disk I/O utilization: ${JSON.stringify(ioUtilizationPerDisk)}`;
+- Disk I/O utilization:\n${ioUtilizationPerDiskMessage}
+${getDmsDashboardsMessage({ startTimestamp, endTimestamp })}`;
+}
+
+function getDmsDashboardsMessage({
+  startTimestamp,
+  endTimestamp
+}: {
+  startTimestamp: number;
+  endTimestamp: number;
+}): string {
+  return `For more details, check the DMS dashboards:
+- [Host dashboard](http://dms.dappnode/d/dms-host/host?orgId=1&from=${startTimestamp}&to=${endTimestamp})
+- [Docker dashboard](http://dms.dappnode/d/dms-docker/docker?orgId=1&from=${startTimestamp}&to=${endTimestamp})`;
 }
