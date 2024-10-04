@@ -119,18 +119,17 @@ async function getHostMetricsMessage(prometheusApi: PrometheusApi, epoch: string
   const { startTimestamp, endTimestamp, avgCpuTemperature, avgCpuUsage, avgMemoryUsage, ioUtilizationPerDisk } =
     await prometheusApi.getPrometheusMetrics({ epoch: parseInt(epoch) });
 
-  // create beautiful message for ioUtilizationPerDisk
+  // Create a formatted message for Disk I/O utilization
   const ioUtilizationPerDiskMessage = Object.entries(ioUtilizationPerDisk)
-    .map(([disk, utilization]) => {
-      return `  - ${disk}: ${utilization}%`;
-    })
+    .map(([disk, utilization]) => `  - *${disk}*: *${utilization}%*`)
     .join("\n");
 
-  return `Average host metrics within epoch ${epoch}:\n
-- CPU temperature: ${avgCpuTemperature}°C
-- CPU usage: ${avgCpuUsage}%
-- Memory usage: ${avgMemoryUsage}%
-- Disk I/O utilization:\n${ioUtilizationPerDiskMessage}\n\n
+  // Create a structured and formatted message
+  return `⚠️ *Average host metrics within epoch ${epoch}*:\n
+- *CPU temperature*: *${avgCpuTemperature}°C*
+- *CPU usage*: *${avgCpuUsage}%*
+- *Memory usage*: *${avgMemoryUsage}%*
+- *Disk I/O utilization*:\n${ioUtilizationPerDiskMessage}\n
 ${getDmsDashboardsMessage({ startTimestamp, endTimestamp })}`;
 }
 
@@ -141,11 +140,10 @@ function getDmsDashboardsMessage({
   startTimestamp: number;
   endTimestamp: number;
 }): string {
-  // dashboard links must be with timestamps in milliseconds
-  // see https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/manage-dashboard-links/
   const startTimestampInMs = startTimestamp * 1000;
   const endTimestampInMs = endTimestamp * 1000;
-  return `For more details, check the DMS dashboards:\n
+
+  return `🔗 *For more details, check the DMS dashboards:*\n
 - [Host dashboard](http://dms.dappnode/d/dms-host/host?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})
 - [Docker dashboard](http://dms.dappnode/d/dms-docker/docker?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})`;
 }
