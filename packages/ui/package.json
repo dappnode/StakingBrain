@@ -13,6 +13,7 @@
     "@mui/x-data-grid": "^5.1.0",
     "@stakingbrain/brain": "workspace:^0.1.0",
     "@stakingbrain/common": "workspace:^0.1.0",
+    "@tanstack/react-table": "^8.20.5",
     "history": "5",
     "lodash-es": "^4.17.21",
     "react": "^18.3.1",

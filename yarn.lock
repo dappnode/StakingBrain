@@ -3094,6 +3094,7 @@ __metadata:
     "@mui/x-data-grid": "npm:^5.1.0"
     "@stakingbrain/brain": "workspace:^0.1.0"
     "@stakingbrain/common": "workspace:^0.1.0"
+    "@tanstack/react-table": "npm:^8.20.5"
     "@types/lodash-es": "npm:^4.17.6"
     "@types/react": "npm:^17.0.0"
     "@types/react-dom": "npm:^17.0.0"
@@ -3114,6 +3115,25 @@ __metadata:
     vite-tsconfig-paths: "npm:^5.0.1"
   languageName: unknown
   linkType: soft
+
+"@tanstack/react-table@npm:^8.20.5":
+  version: 8.20.5
+  resolution: "@tanstack/react-table@npm:8.20.5"
+  dependencies:
+    "@tanstack/table-core": "npm:8.20.5"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 10c0/574fa62fc6868a3b1113dbd043323f8b73aeb60555609caa164d5137a14636d4502784a961191afde2ec46f33f8c2bbfc4561d27a701c3d084e899a632dda3c8
+  languageName: node
+  linkType: hard
+
+"@tanstack/table-core@npm:8.20.5":
+  version: 8.20.5
+  resolution: "@tanstack/table-core@npm:8.20.5"
+  checksum: 10c0/3c27b5debd61b6bd9bfbb40bfc7c5d5af90873ae1a566b20e3bf2d2f4f2e9a78061c081aacc5259a00e256f8df506ec250eb5472f5c01ff04baf9918b554982b
+  languageName: node
+  linkType: hard
 
 "@types/babel__core@npm:^7.20.5":
   version: 7.20.5

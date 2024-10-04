@@ -6,6 +6,7 @@ import { updateValidators } from "./updateValidators.js";
 import { getValidators } from "./getValidators.js";
 import { signerGetStatus } from "./signerGetStatus.js";
 import { getStakerConfig } from "./getStakerConfig.js";
+import { fetchValidatorsPerformanceData} from "./fetchValidatorsPerformanceData.js"
 
 export const rpcMethods = {
   beaconchaFetchAllValidatorsInfo,
@@ -17,7 +18,8 @@ export const rpcMethods = {
   updateValidators,
   getValidators,
   signerGetStatus,
-  getStakerConfig
+  getStakerConfig,
+  fetchValidatorsPerformanceData
 };
 
 export type RpcMethodNames = keyof typeof rpcMethods;

@@ -50,7 +50,7 @@ export default function ValidatorList({
       setLoading(true);
       setValidatorsGet(await rpcClient.call("getValidators", undefined));
       setValidatorsGetError(undefined);
-      setLoading(false);
+      setLoading(false);   
     } catch (e) {
       console.error(e);
       setValidatorsGetError(e.message);
@@ -77,11 +77,6 @@ export default function ValidatorList({
       </Box>
     );
   };
-
-  useEffect(() => {
-    console.log(`loading: ${loading}`);
-    console.log(`validatorsGet: ${validatorsGet}`);
-  }, [loading, validatorsGet]);
 
   return (
     <div className="flex h-full w-full flex-1 flex-col items-center justify-center">

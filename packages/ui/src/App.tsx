@@ -10,6 +10,7 @@ import { StakerConfig } from "@stakingbrain/common";
 import { rpcClient } from "./socket";
 import type { Web3SignerStatus } from "@stakingbrain/brain";
 import NavBar from "./components/Navbar";
+import PerformanceScreen from "./components/Performance/PerformanceScreen";
 
 function App(): JSX.Element {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -27,6 +28,8 @@ function App(): JSX.Element {
     React.useState<Web3SignerStatus>("LOADING");
   const [stakerConfig, setStakerConfig] = React.useState<StakerConfig>();
 
+  
+  
   useEffect(() => {
     getStakerConfig();
   }, []);
@@ -135,6 +138,7 @@ function App(): JSX.Element {
                   />
                 }
               />
+              <Route path="performance" element={<PerformanceScreen />} />
             </Routes>
           )
         )}

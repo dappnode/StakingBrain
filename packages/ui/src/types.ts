@@ -90,3 +90,18 @@ export interface SmoothStatusProps {
   mevSpFeeRecipient: string | null;
   oracleCallError: string | undefined;
 }
+
+export type PerformanceTableTypes = 'Summary' | 'Rewards' | 'Blocks'
+export interface SummaryTableProps {
+  group: string;
+  validators: number;
+  attestations: number;
+  proposals: number;
+}
+export interface BlocksTableProps {
+  proposer: number;
+  group: string;
+  epoch: number;
+  slot: number;
+  status: 'proposed' | 'missed' | 'unchosen'
+}
