@@ -126,11 +126,11 @@ async function getHostMetricsMessage(prometheusApi: PrometheusApi, epoch: string
     })
     .join("\n");
 
-  return `Host metrics:
+  return `Average host metrics within epoch ${epoch}:\n
 - CPU temperature: ${avgCpuTemperature}°C
 - CPU usage: ${avgCpuUsage}%
 - Memory usage: ${avgMemoryUsage}%
-- Disk I/O utilization:\n${ioUtilizationPerDiskMessage}
+- Disk I/O utilization:\n${ioUtilizationPerDiskMessage}\n
 ${getDmsDashboardsMessage({ startTimestamp, endTimestamp })}`;
 }
 
@@ -141,7 +141,7 @@ function getDmsDashboardsMessage({
   startTimestamp: number;
   endTimestamp: number;
 }): string {
-  return `For more details, check the DMS dashboards:
+  return `For more details, check the DMS dashboards:\n
 - [Host dashboard](http://dms.dappnode/d/dms-host/host?orgId=1&from=${startTimestamp}&to=${endTimestamp})
 - [Docker dashboard](http://dms.dappnode/d/dms-docker/docker?orgId=1&from=${startTimestamp}&to=${endTimestamp})`;
 }
