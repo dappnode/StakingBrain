@@ -1,4 +1,4 @@
-import { DappmanagerApi } from "../../apiClients/index.js";
+import { DappmanagerApi, PrometheusApi } from "../../apiClients/index.js";
 import { NotificationType } from "../../apiClients/dappmanager/types.js";
 import { BlockProposalStatus } from "../../apiClients/postgres/types.js";
 import logger from "../../logger/index.js";
@@ -12,11 +12,13 @@ import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
  * - danger: validator(s) missed a block
  */
 export async function sendValidatorsPerformanceNotifications({
+  prometheusApi,
   dappmanagerApi,
   currentEpoch,
   validatorBlockStatusMap,
   validatorAttestationsRewards
 }: {
+  prometheusApi: PrometheusApi;
   dappmanagerApi: DappmanagerApi;
   currentEpoch: string;
   validatorBlockStatusMap?: Map<string, BlockProposalStatus>;
@@ -27,11 +29,12 @@ export async function sendValidatorsPerformanceNotifications({
   await Promise.all([
     sendSuccessNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch }),
     sendWarningNotificationNotThrow({
+      prometheusApi,
       dappmanagerApi,
       validatorAttestationsRewards,
       currentEpoch
     }),
-    sendDangerNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch })
+    sendDangerNotificationNotThrow({ prometheusApi, dappmanagerApi, validatorBlockStatusMap, currentEpoch })
   ]);
 }
 
@@ -59,10 +62,12 @@ async function sendSuccessNotificationNotThrow({
 }
 
 async function sendWarningNotificationNotThrow({
+  prometheusApi,
   dappmanagerApi,
   validatorAttestationsRewards,
   currentEpoch
 }: {
+  prometheusApi: PrometheusApi;
   dappmanagerApi: DappmanagerApi;
   validatorAttestationsRewards: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
   currentEpoch: string;
@@ -72,20 +77,25 @@ async function sendWarningNotificationNotThrow({
     .map((validator) => validator.validator_index);
 
   if (validatorsMissedAttestations.length === 0) return;
+
+  const hostMetricsMessage = await getHostMetricsMessage(prometheusApi, currentEpoch);
+
   await dappmanagerApi
     .sendDappmanagerNotification({
       title: `Missed attestation in epoch ${currentEpoch}`,
       notificationType: NotificationType.Warning,
-      body: `Validator(s) ${validatorsMissedAttestations.join(", ")} missed attestations`
+      body: `Validator(s) ${validatorsMissedAttestations.join(", ")} missed an attestation\n${hostMetricsMessage}`
     })
     .catch((error) => logger.error(`${logPrefix}Failed to send warning notification to dappmanager`, error));
 }
 
 async function sendDangerNotificationNotThrow({
+  prometheusApi,
   dappmanagerApi,
   currentEpoch,
   validatorBlockStatusMap
 }: {
+  prometheusApi: PrometheusApi;
   dappmanagerApi: DappmanagerApi;
   validatorBlockStatusMap: Map<string, BlockProposalStatus>;
   currentEpoch: string;
@@ -95,11 +105,45 @@ async function sendDangerNotificationNotThrow({
   );
 
   if (validatorsMissedBlocks.length === 0) return;
+  const hostMetricsMessage = await getHostMetricsMessage(prometheusApi, currentEpoch);
   await dappmanagerApi
     .sendDappmanagerNotification({
       title: `Block missed in epoch ${currentEpoch}`,
       notificationType: NotificationType.Danger,
-      body: `Validator(s) ${validatorsMissedBlocks.join(", ")} missed a block`
+      body: `Validator(s) ${validatorsMissedBlocks.join(", ")} missed a block\n${hostMetricsMessage}`
     })
     .catch((error) => logger.error(`${logPrefix}Failed to send danger notification to dappmanager`, error));
+}
+
+async function getHostMetricsMessage(prometheusApi: PrometheusApi, epoch: string): Promise<string> {
+  const { startTimestamp, endTimestamp, avgCpuTemperature, avgCpuUsage, avgMemoryUsage, ioUtilizationPerDisk } =
+    await prometheusApi.getPrometheusMetrics({ epoch: parseInt(epoch) });
+
+  // Create a formatted message for Disk I/O utilization
+  const ioUtilizationPerDiskMessage = Object.entries(ioUtilizationPerDisk)
+    .map(([disk, utilization]) => `  - *${disk}*: *${utilization}%*`)
+    .join("\n");
+
+  // Create a structured and formatted message
+  return `⚠️ *Average host metrics within epoch ${epoch}*:\n
+- *CPU temperature*: *${avgCpuTemperature}°C*
+- *CPU usage*: *${avgCpuUsage}%*
+- *Memory usage*: *${avgMemoryUsage}%*
+- *Disk I/O utilization*:\n${ioUtilizationPerDiskMessage}\n
+${getDmsDashboardsMessage({ startTimestamp, endTimestamp })}`;
+}
+
+function getDmsDashboardsMessage({
+  startTimestamp,
+  endTimestamp
+}: {
+  startTimestamp: number;
+  endTimestamp: number;
+}): string {
+  const startTimestampInMs = startTimestamp * 1000;
+  const endTimestampInMs = endTimestamp * 1000;
+
+  return `🔗 *For more details, check the DMS dashboards:*\n
+- [Host dashboard](http://dms.dappnode/d/dms-host/host?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})
+- [Docker dashboard](http://dms.dappnode/d/dms-docker/docker?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})`;
 }

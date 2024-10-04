@@ -128,9 +128,11 @@ export class StandardApi {
               }
             } else {
               let errorMessage = "";
+
               if (res.headers["content-type"] && res.headers["content-type"].includes("application/json")) {
                 try {
-                  errorMessage = JSON.parse(Buffer.concat(data).toString())?.message;
+                  // if its a error message in JSON we dont know the object format so print it in string format the whole error
+                  errorMessage = Buffer.concat(data).toString();
                 } catch (e) {
                   logger.error(
                     `Error parsing response from ${this.requestOptions.hostname} ${endpoint} ${e.message}`,
