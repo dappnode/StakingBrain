@@ -7,7 +7,8 @@ import {
   BlockExplorerApi,
   ValidatorApi,
   DappnodeSignatureVerifier,
-  DappmanagerApi
+  DappmanagerApi,
+  PrometheusApi
 } from "./modules/apiClients/index.js";
 import { startUiServer, startLaunchpadApi } from "./modules/apiServers/index.js";
 import * as dotenv from "dotenv";
@@ -57,6 +58,13 @@ logger.debug(
 );
 
 // Create API instances. Must preceed db initialization
+export const prometheusApi = new PrometheusApi({
+  baseUrl: executionClientUrl,
+  minGenesisTime,
+  secondsPerSlot,
+  slotsPerEpoch,
+  network
+});
 export const signerApi = new Web3SignerApi(
   {
     baseUrl: signerUrl,
@@ -114,6 +122,7 @@ export const trackValidatorsPerformanceCronTask = new CronJob(
       beaconchainApi,
       executionClient,
       consensusClient,
+      prometheusApi,
       dappmanagerApi,
       sendNotification: true
     });

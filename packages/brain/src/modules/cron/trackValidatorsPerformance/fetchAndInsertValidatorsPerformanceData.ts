@@ -17,7 +17,7 @@ import {
 import { BeaconchainApiError } from "../../apiClients/beaconchain/error.js";
 import { BrainDbError } from "../../db/error.js";
 import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
-import { DappmanagerApi } from "../../apiClients/index.js";
+import { DappmanagerApi, PrometheusApi } from "../../apiClients/index.js";
 import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
 
 let lastProcessedEpoch: number | undefined = undefined;
@@ -29,6 +29,7 @@ export async function fetchAndInsertValidatorsPerformanceData({
   executionClient,
   consensusClient,
   currentEpoch,
+  prometheusApi,
   dappmanagerApi,
   sendNotification
 }: {
@@ -38,6 +39,7 @@ export async function fetchAndInsertValidatorsPerformanceData({
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   currentEpoch: number;
+  prometheusApi: PrometheusApi;
   dappmanagerApi: DappmanagerApi;
   sendNotification: boolean;
 }): Promise<void> {
@@ -92,6 +94,7 @@ export async function fetchAndInsertValidatorsPerformanceData({
     // Send notifications if the last epoch was processed without an error
     if (sendNotification && !validatorPerformanceError)
       await sendValidatorsPerformanceNotifications({
+        prometheusApi,
         dappmanagerApi,
         currentEpoch: currentEpoch.toString(),
         validatorBlockStatusMap,

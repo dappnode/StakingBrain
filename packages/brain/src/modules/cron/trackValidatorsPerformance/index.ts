@@ -1,5 +1,5 @@
 import { ExecutionClient, ConsensusClient } from "@stakingbrain/common";
-import { PostgresClient, BeaconchainApi, DappmanagerApi } from "../../apiClients/index.js";
+import { PostgresClient, BeaconchainApi, DappmanagerApi, PrometheusApi } from "../../apiClients/index.js";
 import { BrainDataBase } from "../../db/index.js";
 import logger from "../../logger/index.js";
 import { fetchAndInsertValidatorsPerformanceData } from "./fetchAndInsertValidatorsPerformanceData.js";
@@ -11,6 +11,7 @@ export async function trackValidatorsPerformanceCron({
   executionClient,
   consensusClient,
   dappmanagerApi,
+  prometheusApi,
   sendNotification
 }: {
   brainDb: BrainDataBase;
@@ -19,6 +20,7 @@ export async function trackValidatorsPerformanceCron({
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   dappmanagerApi: DappmanagerApi;
+  prometheusApi: PrometheusApi;
   sendNotification: boolean;
 }): Promise<void> {
   try {
@@ -39,6 +41,7 @@ export async function trackValidatorsPerformanceCron({
       executionClient,
       consensusClient,
       currentEpoch,
+      prometheusApi,
       dappmanagerApi,
       sendNotification
     });
