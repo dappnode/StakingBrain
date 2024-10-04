@@ -70,7 +70,7 @@ export default function PerformanceScreen(): JSX.Element {
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full">
       {loading ? (
         <CircularProgress
           sx={{
@@ -78,7 +78,7 @@ export default function PerformanceScreen(): JSX.Element {
           }}
         />
       ) : (
-        <div className="flex h-full w-4/5 flex-col">
+        <div className="flex h-full w-full flex-col">
           <div className="flex flex-row">
             {performanceTables.map((tableName) => (
               <div

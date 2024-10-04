@@ -5,7 +5,7 @@ module.exports = {
     extend: {
       colors: {
         "text-purple": "#9333ea",
-        "interface-000": "#fafafa",
+        "interface-000": "#fcfcfc",
         "interface-100": "#f0f0ef",
         "interface-200":"#e7e7e4",
         "interface-300": "#d3d3cf",

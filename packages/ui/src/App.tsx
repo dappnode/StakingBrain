@@ -1,9 +1,6 @@
 import { Alert, CircularProgress } from "@mui/material";
-import TopBar from "./components/TopBar/TopBar";
 import ImportScreen from "./ImportScreen";
 import ValidatorList from "./components/ValidatorList/ValidatorList";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { StakerConfig } from "@stakingbrain/common";
@@ -28,8 +25,6 @@ function App(): JSX.Element {
     React.useState<Web3SignerStatus>("LOADING");
   const [stakerConfig, setStakerConfig] = React.useState<StakerConfig>();
 
-  
-  
   useEffect(() => {
     getStakerConfig();
   }, []);
@@ -73,75 +68,71 @@ function App(): JSX.Element {
           userMode={userMode}
           setUserMode={setUserMode}
         />
-        {/* <TopBar
-          network={stakerConfig?.network}
-          mode={mode}
-          setMode={setMode}
-          userMode={userMode}
-          setUserMode={setUserMode}
-        /> */}
-
-        {signerStatus !== "UP" ? (
-          signerStatus === "LOADING" ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh",
-              }}
-            >
-              <CircularProgress />
-            </div>
-          ) : (
-            <>
-              <Alert severity="error" sx={{ m: 2 }} variant="filled">
-                Web3Signer is not available.
-                {signerStatus === "DOWN" ? (
-                  <> Its API is responsive, but signer is down. </>
-                ) : (
-                  <>
-                    {" "}
-                    Its API is not responsive. Check if the Web3Signer package
-                    is running.{" "}
-                  </>
-                )}
-                To avoid slashing, <b>do not upload </b>
-                your validator <b>keystores to another machine</b>.
-              </Alert>
-              <Alert severity="info" sx={{ m: 2 }} variant="filled">
-                To safely migrate your keystores, remove the Web3Signer package
-                (or its volumes) after you make sure you have a backup of your
-                keystores. Then, wait for at least 2 epochs before you upload
-                your keystores to another machine.
-              </Alert>
-            </>
-          )
-        ) : (
-          stakerConfig && (
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <ValidatorList
-                    stakerConfig={stakerConfig}
-                    userMode={userMode}
+        <div className="flex w-full flex-1 justify-center">
+          <div className="h-full w-3/4">
+            {signerStatus !== "UP" ? (
+              signerStatus === "LOADING" ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "100vh",
+                  }}
+                >
+                  <CircularProgress />
+                </div>
+              ) : (
+                <>
+                  <Alert severity="error" sx={{ m: 2 }} variant="filled">
+                    Web3Signer is not available.
+                    {signerStatus === "DOWN" ? (
+                      <> Its API is responsive, but signer is down. </>
+                    ) : (
+                      <>
+                        {" "}
+                        Its API is not responsive. Check if the Web3Signer
+                        package is running.{" "}
+                      </>
+                    )}
+                    To avoid slashing, <b>do not upload </b>
+                    your validator <b>keystores to another machine</b>.
+                  </Alert>
+                  <Alert severity="info" sx={{ m: 2 }} variant="filled">
+                    To safely migrate your keystores, remove the Web3Signer
+                    package (or its volumes) after you make sure you have a
+                    backup of your keystores. Then, wait for at least 2 epochs
+                    before you upload your keystores to another machine.
+                  </Alert>
+                </>
+              )
+            ) : (
+              stakerConfig && (
+                <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      <ValidatorList
+                        stakerConfig={stakerConfig}
+                        userMode={userMode}
+                      />
+                    }
                   />
-                }
-              />
-              <Route
-                path="import"
-                element={
-                  <ImportScreen
-                    network={stakerConfig.network}
-                    isMevBoostSet={stakerConfig.isMevBoostSet}
+                  <Route
+                    path="import"
+                    element={
+                      <ImportScreen
+                        network={stakerConfig.network}
+                        isMevBoostSet={stakerConfig.isMevBoostSet}
+                      />
+                    }
                   />
-                }
-              />
-              <Route path="performance" element={<PerformanceScreen />} />
-            </Routes>
-          )
-        )}
+                  <Route path="performance" element={<PerformanceScreen />} />
+                </Routes>
+              )
+            )}
+          </div>
+        </div>
       </BrowserRouter>
     </div>
   );

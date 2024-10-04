@@ -520,28 +520,26 @@ export default function KeystoresDataGrid({
           </IconButton>
         </Tooltip>
       </div>
-      <div className="w-full px-10">
-        <div className="h-[700px] w-full bg-stone-50 dark:bg-zinc-700">
-          <DataGrid
-            rows={customRows}
-            onCellClick={(params) => {
-              if (
-                params.field === "validating_pubkey" ||
-                params.field === "fee_recipient"
-              )
-                navigator.clipboard.writeText(params.value);
-            }}
-            columns={columns}
-            pageSize={pageSize}
-            rowsPerPageOptions={[10, 20, 50, 100]}
-            onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-            checkboxSelection
-            onSelectionModelChange={(selectionModel: GridSelectionModel) =>
-              setSelectedRows(selectionModel)
-            }
-            className="dark:text-white"
-          />
-        </div>
+      <div className="h-[700px] w-full bg-stone-50 dark:bg-zinc-700">
+        <DataGrid
+          rows={customRows}
+          onCellClick={(params) => {
+            if (
+              params.field === "validating_pubkey" ||
+              params.field === "fee_recipient"
+            )
+              navigator.clipboard.writeText(params.value);
+          }}
+          columns={columns}
+          pageSize={pageSize}
+          rowsPerPageOptions={[10, 20, 50, 100]}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          checkboxSelection
+          onSelectionModelChange={(selectionModel: GridSelectionModel) =>
+            setSelectedRows(selectionModel)
+          }
+          className="dark:text-white"
+        />
       </div>
     </>
   );
