@@ -122,7 +122,7 @@ async function getHostMetricsMessage(prometheusApi: PrometheusApi, epoch: string
   // create beautiful message for ioUtilizationPerDisk
   const ioUtilizationPerDiskMessage = Object.entries(ioUtilizationPerDisk)
     .map(([disk, utilization]) => {
-      return `  - ${disk}: ${utilization}%\n`;
+      return `  - ${disk}: ${utilization}%`;
     })
     .join("\n");
 
@@ -130,7 +130,7 @@ async function getHostMetricsMessage(prometheusApi: PrometheusApi, epoch: string
 - CPU temperature: ${avgCpuTemperature}°C
 - CPU usage: ${avgCpuUsage}%
 - Memory usage: ${avgMemoryUsage}%
-- Disk I/O utilization:\n${ioUtilizationPerDiskMessage}\n
+- Disk I/O utilization:\n${ioUtilizationPerDiskMessage}\n\n
 ${getDmsDashboardsMessage({ startTimestamp, endTimestamp })}`;
 }
 
