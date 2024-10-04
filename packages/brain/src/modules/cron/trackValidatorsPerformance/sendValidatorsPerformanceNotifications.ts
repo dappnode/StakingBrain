@@ -141,7 +141,11 @@ function getDmsDashboardsMessage({
   startTimestamp: number;
   endTimestamp: number;
 }): string {
+  // dashboard links must be with timestamps in milliseconds
+  // see https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/manage-dashboard-links/
+  const startTimestampInMs = startTimestamp * 1000;
+  const endTimestampInMs = endTimestamp * 1000;
   return `For more details, check the DMS dashboards:\n
-- [Host dashboard](http://dms.dappnode/d/dms-host/host?orgId=1&from=${startTimestamp}&to=${endTimestamp})
-- [Docker dashboard](http://dms.dappnode/d/dms-docker/docker?orgId=1&from=${startTimestamp}&to=${endTimestamp})`;
+- [Host dashboard](http://dms.dappnode/d/dms-host/host?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})
+- [Docker dashboard](http://dms.dappnode/d/dms-docker/docker?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})`;
 }
