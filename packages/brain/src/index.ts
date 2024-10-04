@@ -59,7 +59,7 @@ logger.debug(
 
 // Create API instances. Must preceed db initialization
 export const prometheusApi = new PrometheusApi({
-  baseUrl: executionClientUrl,
+  baseUrl: "http://prometheus.dms.dappnode:9090",
   minGenesisTime,
   secondsPerSlot,
   slotsPerEpoch,
