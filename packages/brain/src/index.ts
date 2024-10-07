@@ -16,10 +16,10 @@ import { params } from "./params.js";
 import {
   CronJob,
   reloadValidators,
-  trackValidatorsPerformanceCron,
+  // trackValidatorsPerformanceCron,
   sendProofsOfValidation
 } from "./modules/cron/index.js";
-import { PostgresClient } from "./modules/apiClients/index.js";
+// import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
 
 logger.info(`Starting brain...`);
@@ -84,8 +84,8 @@ export const brainDb = new BrainDataBase(
 );
 
 // Create postgres client
-export const postgresClient = new PostgresClient(postgresUrl);
-await postgresClient.initialize().catch((err) => logger.error(`Error initializing table in postgres db`, err)); // TODO: handle error. Consider attempting to initialize on every cron iteration
+// export const postgresClient = new PostgresClient(postgresUrl);
+// await postgresClient.initialize().catch((err) => logger.error(`Error initializing table in postgres db`, err)); // TODO: handle error. Consider attempting to initialize on every cron iteration
 
 // Start server APIs
 const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName), network);
@@ -105,30 +105,30 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 proofOfValidationCron.start();
 
 // execute the performance cron task every 1/4 of an epoch
-export const trackValidatorsPerformanceCronTask = new CronJob(
-  ((slotsPerEpoch * secondsPerSlot) / 4) * 1000,
-  async () => {
-    await trackValidatorsPerformanceCron({
-      brainDb,
-      postgresClient,
-      beaconchainApi,
-      executionClient,
-      consensusClient,
-      dappmanagerApi,
-      sendNotification: true
-    });
-  }
-);
-trackValidatorsPerformanceCronTask.start();
+// export const trackValidatorsPerformanceCronTask = new CronJob(
+//   ((slotsPerEpoch * secondsPerSlot) / 4) * 1000,
+//   async () => {
+//     await trackValidatorsPerformanceCron({
+//       brainDb,
+//       postgresClient,
+//       beaconchainApi,
+//       executionClient,
+//       consensusClient,
+//       dappmanagerApi,
+//       sendNotification: true
+//     });
+//   }
+// );
+// trackValidatorsPerformanceCronTask.start();
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCron.stop();
   proofOfValidationCron.stop();
-  trackValidatorsPerformanceCronTask.stop();
+  // trackValidatorsPerformanceCronTask.stop();
   brainDb.close();
-  postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
+  // postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
   uiServer.close();
   launchpadServer.close();
   logger.debug(`Stopped all cron jobs and closed all connections.`);
