@@ -33,7 +33,7 @@ describe.skip("Cron: Prater", () => {
         containerName:
           "DAppNodePackage-validator.prysm-prater.dnp.dappnode.eth",
         token:
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.MxwOozSH-TLbW_XKepjyYDHm2IT8Ki0tD3AHuajfNMg",
+          "0xd59b8238ecaeb255d62c85c6ca8aee185870bd7a27e43f85fd2658267036d94a",
       },*/
       {
         name: "Lighthouse",
