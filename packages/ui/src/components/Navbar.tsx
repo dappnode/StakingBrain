@@ -33,7 +33,7 @@ export default function NavBar({
     console.log(`theme now is ${theme}`);
   }, [theme]);
   return (
-    <div className="bg-interface-000 flex h-24 w-full justify-center border-b dark:bg-dark-interface-300 dark:border-dark-interface-200">
+    <div className="flex h-24 w-full justify-center border-b bg-interface-000 dark:border-dark-interface-200 dark:bg-dark-interface-300">
       <div className="flex h-full w-3/4 flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-3">
           <Link
@@ -71,7 +71,17 @@ export default function NavBar({
         </div>
 
         <div className="flex flex-row gap-5">
-          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit">
+          <IconButton
+            sx={{ ml: 1 }}
+            onClick={() => {
+              toggleTheme();
+              localStorage.setItem(
+                "theme",
+                theme === "dark" ? "light" : "dark",
+              );
+            }}
+            color="inherit"
+          >
             {theme === "dark" ? (
               <LightModeIcon titleAccess="Set Light Mode" />
             ) : (

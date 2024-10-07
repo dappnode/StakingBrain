@@ -10,7 +10,8 @@ import NavBar from "./components/Navbar";
 import PerformanceScreen from "./components/Performance/PerformanceScreen";
 
 function App(): JSX.Element {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+  const [theme, setTheme] = useState<"light" | "dark">(savedTheme ?? "light");
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
@@ -72,14 +73,7 @@ function App(): JSX.Element {
           <div className="h-full w-3/4">
             {signerStatus !== "UP" ? (
               signerStatus === "LOADING" ? (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100vh",
-                  }}
-                >
+                <div className="flex h-full items-center justify-center">
                   <CircularProgress />
                 </div>
               ) : (
