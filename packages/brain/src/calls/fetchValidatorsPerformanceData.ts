@@ -1,16 +1,19 @@
 import { fetchAndProcessValidatorsData } from "../modules/validatorsDataIngest/index.js";
-import { minGenesisTime, postgresClient, secondsPerSlot } from "../index.js";
+import { minGenesisTime, secondsPerSlot } from "../index.js";
 import type {
   ValidatorsDataProcessed,
   Granularity,
   NumberOfDaysToQuery
 } from "../modules/validatorsDataIngest/types.js";
+import { PostgresClient } from "../modules/apiClients/index.js";
 
 export async function fetchValidatorsPerformanceData({
+  postgresClient,
   validatorIndexes,
   numberOfDaysToQuery,
   granularity
 }: {
+  postgresClient: PostgresClient;
   validatorIndexes: string[];
   numberOfDaysToQuery?: NumberOfDaysToQuery;
   granularity?: Granularity;
