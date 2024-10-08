@@ -54,12 +54,12 @@ export default function DefalutTable<T>({
               {headerGroup.headers.map((header) => (
                 <th key={header.id} className="px-4 py-2 text-left text-lg">
                   {header.isPlaceholder ? null : (
-                    <p className="text-left">
+                    <div className="text-left">
                       {flexRender(
                         header.column.columnDef.header,
                         header.getContext(),
                       )}
-                    </p>
+                    </div>
                   )}
                 </th>
               ))}

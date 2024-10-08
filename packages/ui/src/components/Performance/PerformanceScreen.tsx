@@ -9,8 +9,8 @@ import SummaryTable from "./SummaryTable";
 import { PerformanceTableTypes } from "../../types";
 import BlocksTable from "./BlocksTable";
 import ViewInArIcon from "@mui/icons-material/ViewInAr";
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 
 export default function PerformanceScreen(): JSX.Element {
   const [validators, setValidators] = useState<CustomValidatorGetResponse[]>();
@@ -20,7 +20,10 @@ export default function PerformanceScreen(): JSX.Element {
   const [selectedTable, setSelectedTable] =
     useState<PerformanceTableTypes>("Summary");
 
-  const performanceTables: { tableName: PerformanceTableTypes; icon: JSX.Element }[] = [
+  const performanceTables: {
+    tableName: PerformanceTableTypes;
+    icon: JSX.Element;
+  }[] = [
     { tableName: "Summary", icon: <TrendingUpIcon /> },
     { tableName: "Rewards", icon: <MilitaryTechIcon /> },
     { tableName: "Blocks", icon: <ViewInArIcon /> },
@@ -92,7 +95,8 @@ export default function PerformanceScreen(): JSX.Element {
             <div className="flex flex-row">
               {performanceTables.map((table) => (
                 <div
-                  className={`flex cursor-pointer flex-row gap-1 items-center justify-center px-3 py-3 text-lg ${selectedTable === table.tableName ? "dark:border-dark-interface-400 rounded border-l border-r border-t border-interface-300 bg-interface-100 dark:border-dark-interface-200 dark:bg-dark-interface-100" : "text-text-purple hover:text-text-purple/70"} `}
+                  key={table.tableName}
+                  className={`flex cursor-pointer flex-row items-center justify-center gap-1 px-3 py-3 text-lg ${selectedTable === table.tableName ? "dark:border-dark-interface-400 rounded border-l border-r border-t border-interface-300 bg-interface-100 dark:border-dark-interface-200 dark:bg-dark-interface-100" : "text-text-purple hover:text-text-purple/70"} `}
                   onClick={() => {
                     setSelectedTable(table.tableName);
                   }}
