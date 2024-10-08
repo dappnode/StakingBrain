@@ -1,7 +1,8 @@
 import postgres from "postgres";
 import logger from "../../logger/index.js";
-import { BlockProposalStatus, Columns, ValidatorPerformance, ValidatorPerformancePostgres } from "./types.js";
+import { BlockProposalStatus, Columns, EpochData, ValidatorPerformancePostgres } from "./types.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
+import { EpochsValidatorsMap, DataPerEpoch, ValidatorsEpochMap } from "../../validatorsDataIngest/types.js";
 
 export class PostgresClient {
   private readonly tableName = "validators_performance";
@@ -111,7 +112,7 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
    *
    * @param data - The performance data to insert.
    */
-  public async insertPerformanceData(data: ValidatorPerformance): Promise<void> {
+  public async insertPerformanceData(data: EpochData): Promise<void> {
     const query = `
 INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.executionClient}, ${Columns.consensusClient}, ${Columns.slot}, ${Columns.liveness}, ${Columns.blockProposalStatus}, ${Columns.syncCommitteeRewards}, ${Columns.attestationsTotalRewards}, ${Columns.attestationsIdealRewards}, ${Columns.error})
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -151,7 +152,7 @@ DO UPDATE SET
    * @param validatorIndexes - The indexes of the validators to get the data for.
    * @returns The performance data for the given validators.
    */
-  public async getValidatorsDataFromAllEpochs(validatorIndexes: string[]): Promise<ValidatorPerformance[]> {
+  public async getValidatorsDataFromAllEpochs(validatorIndexes: string[]): Promise<EpochData[]> {
     const query = `
 SELECT * FROM ${this.tableName}
 WHERE ${Columns.validatorIndex} = ANY($1)
@@ -174,15 +175,20 @@ WHERE ${Columns.validatorIndex} = ANY($1)
   }
 
   /**
-   * Get the validators data for the given validator indexes and an epoch start and end range. In order to improve data process
-   * it will return a map with the validator index as key and the performance data as value.
+   * Get the validators data for the given validator indexes and an epoch start and end range.
+   * This function will return a nested map where the outer map is indexed by epoch, and
+   * each entry contains another map indexed by validator index. The inner map contains the performance data
+   * for each validator at that epoch.
+   *
+   * The performance data returned will be organized into attestation, block, and sync committee
+   * sections to provide a more structured view of the data per epoch.
    *
    * @param validatorIndexes - The indexes of the validators to get the data for.
    * @param startEpoch - The start epoch number.
    * @param endEpoch - The end epoch number.
-   * @returns The performance data for the given validators.
+   * @returns A nested map with epoch as the key, validator index as the secondary key, and the performance data as value.
    */
-  public async getValidatorsDataMapForEpochRange({
+  public async getEpochsDataMapForEpochRange({
     validatorIndexes,
     startEpoch,
     endEpoch
@@ -190,7 +196,7 @@ WHERE ${Columns.validatorIndex} = ANY($1)
     validatorIndexes: string[];
     startEpoch: number;
     endEpoch: number;
-  }): Promise<Map<number, ValidatorPerformance[]>> {
+  }): Promise<EpochsValidatorsMap> {
     const query = `
 SELECT * FROM ${this.tableName}
 WHERE ${Columns.validatorIndex} = ANY($1)
@@ -204,28 +210,37 @@ AND ${Columns.epoch} <= $3
       endEpoch
     ])) as ValidatorPerformancePostgres[];
 
-    return result.reduce((map: Map<number, ValidatorPerformance[]>, row) => {
-      const key = row.validator_index;
+    return result.reduce((map: EpochsValidatorsMap, row) => {
+      const epoch = row.epoch;
+      const validatorIndex = row.validator_index;
 
-      const performanceData = {
-        validatorIndex: row.validator_index,
-        epoch: row.epoch,
-        executionClient: row.execution_client,
-        consensusClient: row.consensus_client,
-        slot: row.slot,
-        liveness: row.liveness,
-        blockProposalStatus: row.block_proposal_status,
-        syncCommitteeRewards: row.sync_comittee_rewards,
-        attestationsTotalRewards: JSON.parse(row.attestations_total_rewards),
-        attestationsIdealRewards: JSON.parse(row.attestations_ideal_rewards),
-        error: JSON.parse(row.error)
+      // Define the performance data in the new format.
+      const epochData: DataPerEpoch = {
+        attestation: {
+          totalRewards: JSON.parse(row.attestations_total_rewards),
+          idealRewards: JSON.parse(row.attestations_ideal_rewards)
+        },
+        block: {
+          status: row.block_proposal_status, // Assuming row.block_proposal_status will provide either 'proposed' or 'missed'
+          slot: row.slot,
+          graffiti: undefined, // Assuming there's no graffiti info in the existing data
+          reward: undefined // Assuming there's no reward info in the existing data
+        },
+        syncCommittee: {
+          reward: row.sync_comittee_rewards
+        },
+        tag: "solo" // TODO fix this
       };
 
-      if (map.has(key)) map.get(key)?.push(performanceData);
-      else map.set(key, [performanceData]);
+      // If the outer map doesn't have the epoch, add it.
+      if (!map.has(epoch)) map.set(epoch, new Map<number, DataPerEpoch>());
+
+      const validatorsEpochMap = map.get(epoch);
+      // Add or update the validator data for this epoch.
+      if (validatorsEpochMap) validatorsEpochMap.set(validatorIndex, epochData);
 
       return map;
-    }, new Map<number, ValidatorPerformance[]>());
+    }, new Map<number, ValidatorsEpochMap>());
   }
 
   /**

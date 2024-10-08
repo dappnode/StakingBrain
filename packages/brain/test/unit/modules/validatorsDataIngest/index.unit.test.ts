@@ -1,6 +1,5 @@
 import { PostgresClient } from "../../../../src/modules/apiClients/index.js";
 import { fetchAndProcessValidatorsData } from "../../../../src/modules/validatorsDataIngest/index.js";
-import { Granularity } from "../../../../src/modules/validatorsDataIngest/types.js";
 
 // This test must be executed with a real database connection
 
@@ -20,8 +19,7 @@ describe.skip("Validators data ingest", function () {
       postgresClient,
       minGenesisTime,
       secondsPerSlot,
-      numberOfDaysToQuery: 1,
-      granularity: Granularity.Hourly
+      numberOfDaysToQuery: 1
     });
 
     console.log(data);

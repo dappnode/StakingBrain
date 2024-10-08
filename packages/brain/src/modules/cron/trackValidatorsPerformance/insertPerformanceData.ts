@@ -1,11 +1,6 @@
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { PostgresClient } from "../../apiClients/index.js";
-import {
-  BlockProposalStatus,
-  ValidatorPerformance,
-  ValidatorPerformanceError,
-  ValidatorPerformanceErrorCode
-} from "../../apiClients/postgres/types.js";
+import { BlockProposalStatus, EpochData, EpochError, EpochErrorCode } from "../../apiClients/postgres/types.js";
 import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
@@ -32,7 +27,7 @@ export async function insertPerformanceData({
   activeValidatorsIndexes: string[];
   validatorBlockStatusMap?: Map<string, BlockProposalStatus>;
   validatorAttestationsRewards?: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
-  error?: ValidatorPerformanceError;
+  error?: EpochError;
 }): Promise<void> {
   for (const validatorIndex of activeValidatorsIndexes) {
     if (error) {
@@ -61,7 +56,7 @@ export async function insertPerformanceData({
           executionClient,
           consensusClient,
           error: {
-            code: ValidatorPerformanceErrorCode.MISSING_ATT_DATA,
+            code: EpochErrorCode.MISSING_ATT_DATA,
             message: `Missing attestation data for validator ${validatorIndex}`
           }
         }
@@ -79,7 +74,7 @@ export async function insertPerformanceData({
           executionClient,
           consensusClient,
           error: {
-            code: ValidatorPerformanceErrorCode.MISSING_BLOCK_DATA,
+            code: EpochErrorCode.MISSING_BLOCK_DATA,
             message: `Missing block proposal data for validator ${validatorIndex}`
           }
         }
@@ -110,7 +105,7 @@ async function insertDataNotThrow({
   validatorPerformance
 }: {
   postgresClient: PostgresClient;
-  validatorPerformance: ValidatorPerformance;
+  validatorPerformance: EpochData;
 }): Promise<void> {
   try {
     logger.debug(`${logPrefix}Inserting data for validator ${validatorPerformance.validatorIndex}`);

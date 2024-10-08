@@ -1,24 +1,28 @@
-import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
+import { Tag } from "@stakingbrain/common";
+import { BlockProposalStatus } from "../apiClients/postgres/types";
+import { IdealRewards, TotalRewards } from "../apiClients/types";
 
-export type ExecutionConsensusConcatenated = `${ExecutionClient}-${ConsensusClient}`;
+// TODO: index epoch data per slot
 
-// TODO: use ideal rewards to return calculated attestation efficiency
-export interface ValidatorsDataProcessed {
-  attestationSuccessRate: number; // mean attestationSuccessRate of the validator
-  attestationSuccessRatePerClients: Map<ExecutionConsensusConcatenated, number>;
-  // attestationSuccessRate in each interval
-  attestationSuccessRatePerInterval: {
-    startEpoch: number; // start epoch of the interval
-    endEpoch: number; // end epoch of the interval
-    attestationSuccessRate: number | null; // attestationSuccessRate in the interval
-    clientsUsedInInterval: Map<ExecutionConsensusConcatenated, number>; // Map indexed by ["execution-consensus"] (i.e "geth-lighthouse") with the number of epochs the client was used in the interval
-  }[];
-  blocks: {
-    // TODO: add slot { epoch: number, slot: number }
-    proposed: { epoch: number }[];
-    missed: { epoch: number }[];
-    unchosen: { epoch: number }[];
+// Indexed by epoch number
+export type EpochsValidatorsMap = Map<number, ValidatorsEpochMap>;
+// Indexed by validator index
+export type ValidatorsEpochMap = Map<number, DataPerEpoch>;
+export interface DataPerEpoch {
+  attestation: {
+    totalRewards: TotalRewards;
+    idealRewards: IdealRewards;
   };
+  block: {
+    status: BlockProposalStatus; // todo: pick only proposed and missed
+    slot?: number;
+    graffiti?: string;
+    reward?: number;
+  };
+  syncCommittee: {
+    reward: number;
+  };
+  tag: Tag;
 }
 
 export enum Granularity {

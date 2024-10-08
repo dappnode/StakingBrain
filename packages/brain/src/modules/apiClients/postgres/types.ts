@@ -38,7 +38,7 @@ export enum BlockProposalStatus {
 }
 
 // Interface data return from Postgres client
-export interface ValidatorPerformance {
+export interface EpochData {
   validatorIndex: number;
   epoch: number;
   executionClient: ExecutionClient;
@@ -49,10 +49,10 @@ export interface ValidatorPerformance {
   slot?: number;
   liveness?: boolean;
   syncCommitteeRewards?: number;
-  error?: ValidatorPerformanceError;
+  error?: EpochError;
 }
 
-export enum ValidatorPerformanceErrorCode {
+export enum EpochErrorCode {
   BEACONCHAIN_API_ERROR = "BEACONCHAIN_API_ERROR",
   EXECUTION_OFFLINE = "EXECUTION_OFFLINE",
   CONSENSUS_SYNCING = "CONSENSUS_SYNCING",
@@ -62,7 +62,7 @@ export enum ValidatorPerformanceErrorCode {
   UNKNOWN_ERROR = "UNKNOWN_ERROR"
 }
 
-export interface ValidatorPerformanceError {
-  code: ValidatorPerformanceErrorCode;
+export interface EpochError {
+  code: EpochErrorCode;
   message: string;
 }

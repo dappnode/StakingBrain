@@ -9,11 +9,7 @@ import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInB
 import { logPrefix } from "./logPrefix.js";
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
-import {
-  BlockProposalStatus,
-  ValidatorPerformanceError,
-  ValidatorPerformanceErrorCode
-} from "../../apiClients/postgres/types.js";
+import { BlockProposalStatus, EpochError, EpochErrorCode } from "../../apiClients/postgres/types.js";
 import { BeaconchainApiError } from "../../apiClients/beaconchain/error.js";
 import { BrainDbError } from "../../db/error.js";
 import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
@@ -43,7 +39,7 @@ export async function fetchAndInsertValidatorsPerformanceData({
 }): Promise<void> {
   if (currentEpoch === lastProcessedEpoch) return;
 
-  let validatorPerformanceError: ValidatorPerformanceError | undefined;
+  let validatorPerformanceError: EpochError | undefined;
   let activeValidatorsIndexes: string[] = [];
   let validatorBlockStatusMap: Map<string, BlockProposalStatus> | undefined;
   let validatorAttestationsRewards: { totalRewards: TotalRewards[]; idealRewards: IdealRewards } | undefined;
@@ -110,29 +106,29 @@ async function ensureNodeStatus({ beaconchainApi }: { beaconchainApi: Beaconchai
   if (el_offline) throw new ExecutionOfflineError("Execution layer is offline");
 }
 
-function getValidatorPerformanceError(e: Error): ValidatorPerformanceError {
+function getValidatorPerformanceError(e: Error): EpochError {
   if (e instanceof BeaconchainApiError)
     return {
-      code: ValidatorPerformanceErrorCode.BEACONCHAIN_API_ERROR,
+      code: EpochErrorCode.BEACONCHAIN_API_ERROR,
       message: e.message
     };
   if (e instanceof BrainDbError)
     return {
-      code: ValidatorPerformanceErrorCode.BRAINDDB_ERROR,
+      code: EpochErrorCode.BRAINDDB_ERROR,
       message: e.message
     };
   if (e instanceof ExecutionOfflineError)
     return {
-      code: ValidatorPerformanceErrorCode.EXECUTION_OFFLINE,
+      code: EpochErrorCode.EXECUTION_OFFLINE,
       message: e.message
     };
   if (e instanceof NodeSyncingError)
     return {
-      code: ValidatorPerformanceErrorCode.CONSENSUS_SYNCING,
+      code: EpochErrorCode.CONSENSUS_SYNCING,
       message: e.message
     };
   return {
-    code: ValidatorPerformanceErrorCode.UNKNOWN_ERROR,
+    code: EpochErrorCode.UNKNOWN_ERROR,
     message: e.message
   };
 }
