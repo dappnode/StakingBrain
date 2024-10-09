@@ -3,18 +3,21 @@ import { PostgresClient } from "../../apiClients/postgres/index.js";
 import logger from "../../logger/index.js";
 import { BrainDataBase } from "../../db/index.js";
 import { insertPerformanceData } from "./insertPerformanceData.js";
-import { getValidatorAttestationsRewards } from "./getValidatorAttestationsRewards.js";
-import { getBlockProposalStatusMap } from "./getBlockProposalStatusMap.js";
-import { getActiveValidatorsLoadedInBrain } from "./getActiveValidatorsLoadedInBrain.js";
+import { setValidatorAttestationsRewards } from "./setValidatorAttestationsRewards.js";
+import { setBlockProposalStatus } from "./setBlockProposalStatus.js";
+import { setActiveValidatorsLoadedInBrain } from "./setActiveValidatorsLoadedInBrain.js";
 import { logPrefix } from "./logPrefix.js";
-import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
-import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
-import { BlockProposalStatus, EpochError, EpochErrorCode } from "../../apiClients/postgres/types.js";
+import { EpochError, EpochErrorCode } from "../../apiClients/postgres/types.js";
 import { BeaconchainApiError } from "../../apiClients/beaconchain/error.js";
 import { BrainDbError } from "../../db/error.js";
 import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
 import { DappmanagerApi } from "../../apiClients/index.js";
+
+// Internal
 import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
+
+// External
+import type { Clients, ValidatorsDataPerEpochMap } from "../../apiClients/postgres/types.js";
 
 let lastProcessedEpoch: number | undefined = undefined;
 
@@ -22,8 +25,7 @@ export async function fetchAndInsertValidatorsPerformanceData({
   brainDb,
   postgresClient,
   beaconchainApi,
-  executionClient,
-  consensusClient,
+  clients,
   currentEpoch,
   dappmanagerApi,
   sendNotification
@@ -31,43 +33,43 @@ export async function fetchAndInsertValidatorsPerformanceData({
   brainDb: BrainDataBase;
   postgresClient: PostgresClient;
   beaconchainApi: BeaconchainApi;
-  executionClient: ExecutionClient;
-  consensusClient: ConsensusClient;
+  clients: Clients;
   currentEpoch: number;
   dappmanagerApi: DappmanagerApi;
   sendNotification: boolean;
 }): Promise<void> {
   if (currentEpoch === lastProcessedEpoch) return;
 
-  let validatorPerformanceError: EpochError | undefined;
-  let activeValidatorsIndexes: string[] = [];
-  let validatorBlockStatusMap: Map<string, BlockProposalStatus> | undefined;
-  let validatorAttestationsRewards: { totalRewards: TotalRewards[]; idealRewards: IdealRewards } | undefined;
+  const validatorsDataPerEpochMap: ValidatorsDataPerEpochMap = new Map();
 
   try {
     logger.debug(`${logPrefix}Starting to track performance for epoch: ${currentEpoch}`);
 
     await ensureNodeStatus({ beaconchainApi });
 
-    activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({ beaconchainApi, brainDb });
-    if (activeValidatorsIndexes.length === 0) {
+    await setActiveValidatorsLoadedInBrain({
+      beaconchainApi,
+      brainDb,
+      validatorsDataPerEpochMap,
+      clients
+    });
+    if (validatorsDataPerEpochMap.size === 0) {
       logger.info(`${logPrefix}No active validators found`);
-      return; // Exit if no active validators are found
+      return;
     }
 
-    validatorBlockStatusMap = await getBlockProposalStatusMap({
+    await setBlockProposalStatus({
       beaconchainApi,
       epoch: currentEpoch.toString(),
-      activeValidatorsIndexes
+      validatorsDataPerEpochMap
     });
 
-    validatorAttestationsRewards = await getValidatorAttestationsRewards({
+    await setValidatorAttestationsRewards({
       beaconchainApi,
       epoch: currentEpoch.toString(),
-      activeValidatorsIndexes
+      validatorsDataPerEpochMap
     });
 
-    validatorPerformanceError = undefined; // Reset error details
     lastProcessedEpoch = currentEpoch; // Update last processed epoch
   } catch (e) {
     logger.warn(`${logPrefix}Error tracking validator performance for epoch ${currentEpoch}: ${e}`);
@@ -80,9 +82,7 @@ export async function fetchAndInsertValidatorsPerformanceData({
       currentEpoch,
       validatorBlockStatusMap,
       validatorAttestationsRewards,
-      error: validatorPerformanceError,
-      executionClient,
-      consensusClient
+      error: validatorPerformanceError
     });
 
     // Send notifications if the last epoch was processed without an error

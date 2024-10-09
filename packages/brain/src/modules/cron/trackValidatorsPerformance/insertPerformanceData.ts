@@ -1,9 +1,10 @@
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { PostgresClient } from "../../apiClients/index.js";
-import { BlockProposalStatus, EpochData, EpochError, EpochErrorCode } from "../../apiClients/postgres/types.js";
+import { BlockProposalStatus, EpochError, EpochErrorCode } from "../../apiClients/postgres/types.js";
 import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
+import type { DataPerEpochInsert } from "../../apiClients/postgres/types.js";
 
 /**
  * Insert the performance data for the validators in the Postgres DB. On any error
@@ -29,6 +30,8 @@ export async function insertPerformanceData({
   validatorAttestationsRewards?: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
   error?: EpochError;
 }): Promise<void> {
+  const dataPerEpoch: DataPerEpochInsert[] = [];
+
   for (const validatorIndex of activeValidatorsIndexes) {
     if (error) {
       await insertDataNotThrow({
@@ -102,14 +105,14 @@ export async function insertPerformanceData({
  */
 async function insertDataNotThrow({
   postgresClient,
-  validatorPerformance
+  dataPerEpoch
 }: {
   postgresClient: PostgresClient;
-  validatorPerformance: EpochData;
+  dataPerEpoch: DataPerEpochInsert[];
 }): Promise<void> {
   try {
     logger.debug(`${logPrefix}Inserting data for validator ${validatorPerformance.validatorIndex}`);
-    await postgresClient.insertPerformanceData(validatorPerformance);
+    await postgresClient.insertEpochData(dataPerEpoch);
     logger.debug(`${logPrefix}Data inserted for epoch ${validatorPerformance.epoch}`);
   } catch (e) {
     logger.error(`${logPrefix}Error inserting data for validator ${validatorPerformance.validatorIndex}: ${e}`);

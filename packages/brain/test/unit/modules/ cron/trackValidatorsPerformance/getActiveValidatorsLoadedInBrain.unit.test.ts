@@ -8,7 +8,7 @@ import {
 } from "../../../../../src/modules/apiClients/types.js";
 import { BrainDataBase } from "../../../../../src/modules/db/index.js";
 import { StakingBrainDb } from "../../../../../src/modules/db/types.js";
-import { getActiveValidatorsLoadedInBrain } from "../../../../../src/modules/cron/trackValidatorsPerformance/getActiveValidatorsLoadedInBrain.js";
+import { setActiveValidatorsLoadedInBrain } from "../../../../../src/modules/cron/trackValidatorsPerformance/setActiveValidatorsLoadedInBrain.js";
 import { Network } from "@stakingbrain/common";
 
 const validators: { pubkey: string; index: number }[] = [
@@ -142,7 +142,7 @@ describe("Cron - trackValidatorsPerformance - getActiveValidatorsLoadedInBrain",
     );
     const brainDb = new BrainDataBaseMock("test.json");
 
-    const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({
+    const activeValidatorsIndexes = await setActiveValidatorsLoadedInBrain({
       beaconchainApi,
       brainDb
     });

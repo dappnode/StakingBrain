@@ -7,7 +7,7 @@ import type {
 } from "../../../../../src/modules/apiClients/types.js";
 import { BlockProposalStatus } from "../../../../../src/modules/apiClients/postgres/types.js";
 import { Network } from "@stakingbrain/common";
-import { getBlockProposalStatusMap } from "../../../../../src/modules/cron/trackValidatorsPerformance/getBlockProposalStatusMap.js";
+import { setBlockProposalStatus } from "../../../../../src/modules/cron/trackValidatorsPerformance/setBlockProposalStatus.js";
 
 // validator index 1802289 is supposed to propose in slot 1
 // validator index 1802291 is supposed to propose in slot 2
@@ -92,7 +92,7 @@ describe("Cron - trackValidatorsPerformance - getBlockProposalStatusMap", () => 
 
   it("should return the block proposal status of each validator: ", async () => {
     const epoch = "1";
-    const blockProposalStatusMap = await getBlockProposalStatusMap({
+    const blockProposalStatusMap = await setBlockProposalStatus({
       beaconchainApi,
       epoch,
       activeValidatorsIndexes: [

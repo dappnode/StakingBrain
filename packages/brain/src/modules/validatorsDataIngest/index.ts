@@ -1,7 +1,8 @@
 import { PostgresClient } from "../apiClients/index.js";
+import type { EpochsValidatorsMap } from "../apiClients/postgres/types.js";
 import logger from "../logger/index.js";
 import { getStartAndEndEpochs } from "./getStartAndEndEpochs.js";
-import { NumberOfDaysToQuery, EpochsValidatorsMap } from "./types.js";
+import { NumberOfDaysToQuery } from "./types.js";
 
 /**
  * Get the processed data for the validators in the given date range and the given validators indexes.
