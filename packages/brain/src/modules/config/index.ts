@@ -9,13 +9,14 @@ export const brainConfig = (): BrainConfig => {
   const { network, executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode } = loadEnvs();
 
   // Determine the validator URL based on the consensus client and network.
-  // All this logic is needed because Teku has a TLS certificate that points to the old 
+  // All this logic is needed because Teku has a TLS certificate that points to the old
   // https://validator.teku-${network}.dappnode:3500 URL. TODO: update the Teku TLS certificate https://docs.teku.consensys.io/how-to/configure/tls
   let validatorUrl;
   if (consensusClient === "teku") {
-    validatorUrl = network === Network.Mainnet
-      ? `https://validator.teku.dappnode:3500`
-      : `https://validator.teku-${network}.dappnode:3500`;
+    validatorUrl =
+      network === Network.Mainnet
+        ? `https://validator.teku.dappnode:3500`
+        : `https://validator.teku-${network}.dappnode:3500`;
   } else {
     validatorUrl = `http://validator.${network}.dncore.dappnode:3500`;
   }
@@ -39,7 +40,6 @@ export const brainConfig = (): BrainConfig => {
     ...networkConfig(network)
   };
 };
-
 
 const getPostgresUrl = (network: Network): string => {
   switch (network) {
