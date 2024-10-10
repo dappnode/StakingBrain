@@ -8,13 +8,16 @@ import { getTlsCert } from "./getTlsCert.js";
 export const brainConfig = (): BrainConfig => {
   const { network, executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode } = loadEnvs();
 
+  // Determine the protocol based on the consensus client. teku uses https (tls cert)
+  const validatorProtocol = consensusClient === "teku" ? "https" : "http";
+
   return {
     network,
     executionClient,
     consensusClient,
     isMevBoostSet,
     executionClientUrl: `http://execution.${network}.dncore.dappnode:8545`,
-    validatorUrl: `http://validator.${network}.dncore.dappnode:3500}`,
+    validatorUrl: `${validatorProtocol}://validator.${network}.dncore.dappnode:3500}`,
     beaconchainUrl: `http:/beacon-chain.${network}.dncore.dappnode:3500`,
     signerUrl: `http://signer.${network}.dncore.dappnode:9000`,
     token: getValidatorToken(consensusClient),
