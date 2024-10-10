@@ -2,9 +2,9 @@ import { ExecutionClient, ConsensusClient } from "@stakingbrain/common";
 import { PostgresClient, BeaconchainApi, DappmanagerApi } from "../../apiClients/index.js";
 import { BrainDataBase } from "../../db/index.js";
 import logger from "../../logger/index.js";
-import { fetchAndInsertValidatorsPerformanceData } from "./fetchAndInsertValidatorsPerformanceData.js";
+import { fetchAndInsertEpochValidatorsData } from "./fetchAndInsertEpochValidatorsData.js";
 
-export async function trackValidatorsPerformanceCron({
+export async function trackEpochValidatorsDataCron({
   brainDb,
   postgresClient,
   beaconchainApi,
@@ -32,7 +32,7 @@ export async function trackValidatorsPerformanceCron({
       ).data.finalized.epoch
     );
 
-    await fetchAndInsertValidatorsPerformanceData({
+    await fetchAndInsertEpochValidatorsData({
       brainDb,
       postgresClient,
       beaconchainApi,

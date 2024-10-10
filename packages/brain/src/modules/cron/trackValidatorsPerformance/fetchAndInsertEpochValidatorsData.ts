@@ -16,7 +16,7 @@ import type { Clients, ValidatorsDataPerEpochMap } from "../../apiClients/postgr
 
 let lastProcessedEpoch: number | undefined = undefined;
 
-export async function fetchAndInsertValidatorsPerformanceData({
+export async function fetchAndInsertEpochValidatorsData({
   brainDb,
   postgresClient,
   beaconchainApi,
