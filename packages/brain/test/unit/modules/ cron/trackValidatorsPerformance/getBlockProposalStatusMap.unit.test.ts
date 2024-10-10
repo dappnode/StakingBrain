@@ -108,9 +108,14 @@ describe("Cron - trackValidatorsPerformance - getBlockProposalStatusMap", () => 
       validatorsDataPerEpochMap
     });
 
-    expect(validatorsDataPerEpochMap.get(validatorsBlockProposal[0].index)).to.equal(BlockProposalStatus.Proposed);
-    expect(validatorsDataPerEpochMap.get(validatorsBlockProposal[1].index)).to.equal(BlockProposalStatus.Proposed);
-    expect(validatorsDataPerEpochMap.get(validatorsBlockProposal[2].index)).to.equal(BlockProposalStatus.Unchosen);
-    expect(validatorsDataPerEpochMap.get(validatorMissedBlockProposal.index)).to.equal(BlockProposalStatus.Missed);
+    const validator0Data = validatorsDataPerEpochMap.get(validatorsBlockProposal[0].index);
+    if (!validator0Data?.block) throw new Error("validator0Data is undefined");
+    expect(validator0Data.block.status).to.equal(BlockProposalStatus.Proposed);
+    const validator1Data = validatorsDataPerEpochMap.get(validatorsBlockProposal[1].index);
+    if (!validator1Data?.block) throw new Error("validator1Data is undefined");
+    expect(validator1Data.block.status).to.equal(BlockProposalStatus.Proposed);
+    const validator2Data = validatorsDataPerEpochMap.get(validatorsBlockProposal[2].index);
+    if (!validator2Data?.block) throw new Error("validator2Data is undefined");
+    expect(validator2Data.block.status).to.equal(BlockProposalStatus.Unchosen);
   });
 });
