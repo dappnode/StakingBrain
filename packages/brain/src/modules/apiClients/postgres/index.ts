@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
 INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.clients}, ${Columns.attestation}, ${Columns.block}, ${Columns.syncCommittee}, ${Columns.slot}, ${Columns.error})
 VALUES ${Array.from(validatorsDataPerEpochMap.entries())
       .map(([validatorIndex, data]) => {
-        return `(${validatorIndex}, ${epoch}, '${JSON.stringify(data.clients)}', '${JSON.stringify(data.attestation)}', '${JSON.stringify(data.block)}', '${JSON.stringify(data.syncCommittee)}', ${data.slot}, '${JSON.stringify(data.error)}')`;
+        return `(${validatorIndex}, ${epoch}, '${JSON.stringify(data.clients)}', '${JSON.stringify(data.attestation) || null}', '${JSON.stringify(data.block) || null}', '${JSON.stringify(data.syncCommittee) || null}', ${data.slot || null}, '${JSON.stringify(data.error) || null}')`;
       })
       .join(", ")}
 ON CONFLICT (${Columns.validatorIndex}, ${Columns.epoch})
