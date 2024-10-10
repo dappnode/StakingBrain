@@ -8,8 +8,18 @@ import { getTlsCert } from "./getTlsCert.js";
 export const brainConfig = (): BrainConfig => {
   const { network, executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode } = loadEnvs();
 
-  // Determine the protocol based on the consensus client. teku uses https (tls cert)
-  const validatorProtocol = consensusClient === "teku" ? "https" : "http";
+  // Determine the validator URL based on the consensus client and network.
+  // All this logic is needed because Teku has a TLS certificate that points to the old
+  // https://validator.teku-${network}.dappnode:3500 URL. TODO: update the Teku TLS certificate https://docs.teku.consensys.io/how-to/configure/tls
+  let validatorUrl;
+  if (consensusClient === "teku") {
+    validatorUrl =
+      network === Network.Mainnet
+        ? `https://validator.teku.dappnode:3500`
+        : `https://validator.teku-${network}.dappnode:3500`;
+  } else {
+    validatorUrl = `http://validator.${network}.dncore.dappnode:3500`;
+  }
 
   return {
     network,
@@ -17,7 +27,7 @@ export const brainConfig = (): BrainConfig => {
     consensusClient,
     isMevBoostSet,
     executionClientUrl: `http://execution.${network}.dncore.dappnode:8545`,
-    validatorUrl: `${validatorProtocol}://validator.${network}.dncore.dappnode:3500`,
+    validatorUrl,
     beaconchainUrl: `http:/beacon-chain.${network}.dncore.dappnode:3500`,
     signerUrl: `http://signer.${network}.dncore.dappnode:9000`,
     token: getValidatorToken(consensusClient),
