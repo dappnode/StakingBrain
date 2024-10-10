@@ -2,32 +2,50 @@ import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { IdealRewards, TotalRewards } from "../beaconchain/types.js";
 
 export enum Columns {
-  validatorIndex = "validator_index",
+  validatorIndex = "validatorIndex",
   epoch = "epoch",
-  executionClient = "execution_client",
-  consensusClient = "consensus_client",
+  clients = "clients",
+  attestation = "attestation",
+  block = "block",
+  syncCommittee = "syncCommittee",
   slot = "slot",
-  liveness = "liveness",
-  blockProposalStatus = "block_proposal_status",
-  syncCommitteeRewards = "sync_comittee_rewards",
-  attestationsTotalRewards = "attestations_total_rewards",
-  attestationsIdealRewards = "attestations_ideal_rewards",
   error = "error"
 }
 
-// Interface data write with Postgres client
-export interface ValidatorPerformancePostgres {
-  [Columns.validatorIndex]: number;
-  [Columns.epoch]: number;
-  [Columns.executionClient]: ExecutionClient;
-  [Columns.consensusClient]: ConsensusClient;
-  [Columns.slot]: number;
-  [Columns.liveness]: boolean;
-  [Columns.blockProposalStatus]: BlockProposalStatus;
-  [Columns.syncCommitteeRewards]: number;
-  [Columns.attestationsTotalRewards]: string;
-  [Columns.attestationsIdealRewards]: string;
-  [Columns.error]: string;
+// Indexed by epoch number
+export type EpochsValidatorsMap = Map<number, ValidatorsDataPerEpochMap>;
+
+// Indexed by validator index
+export type ValidatorsDataPerEpochMap = Map<string, DataPerEpoch>;
+
+export interface DataPerEpoch {
+  [Columns.clients]: Clients;
+  [Columns.attestation]?: Attestation;
+  [Columns.block]?: Block;
+  [Columns.syncCommittee]?: SyncCommittee;
+  [Columns.slot]?: number;
+  [Columns.error]?: EpochError;
+}
+
+export interface SyncCommittee {
+  reward: number;
+}
+
+export interface Clients {
+  execution: ExecutionClient;
+  consensus: ConsensusClient;
+}
+
+export interface Attestation {
+  totalRewards: TotalRewards;
+  idealRewards: IdealRewards;
+}
+
+export interface Block {
+  status: BlockProposalStatus;
+  slot?: number;
+  graffiti?: string;
+  reward?: number;
 }
 
 export enum BlockProposalStatus {
@@ -37,22 +55,7 @@ export enum BlockProposalStatus {
   Error = "Error"
 }
 
-// Interface data return from Postgres client
-export interface ValidatorPerformance {
-  validatorIndex: number;
-  epoch: number;
-  executionClient: ExecutionClient;
-  consensusClient: ConsensusClient;
-  blockProposalStatus?: BlockProposalStatus;
-  attestationsTotalRewards?: TotalRewards;
-  attestationsIdealRewards?: IdealRewards;
-  slot?: number;
-  liveness?: boolean;
-  syncCommitteeRewards?: number;
-  error?: ValidatorPerformanceError;
-}
-
-export enum ValidatorPerformanceErrorCode {
+export enum EpochErrorCode {
   BEACONCHAIN_API_ERROR = "BEACONCHAIN_API_ERROR",
   EXECUTION_OFFLINE = "EXECUTION_OFFLINE",
   CONSENSUS_SYNCING = "CONSENSUS_SYNCING",
@@ -62,7 +65,7 @@ export enum ValidatorPerformanceErrorCode {
   UNKNOWN_ERROR = "UNKNOWN_ERROR"
 }
 
-export interface ValidatorPerformanceError {
-  code: ValidatorPerformanceErrorCode;
+export interface EpochError {
+  code: EpochErrorCode;
   message: string;
 }

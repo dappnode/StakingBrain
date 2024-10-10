@@ -24,6 +24,6 @@ describe.skip("Postgres client", function () {
   });
 
   it("should delete the table and its enum types", async () => {
-    await postgresClient.deleteDatabaseTableAndEnumTypes();
+    await postgresClient.deleteDatabaseTable();
   });
 });

@@ -1,24 +1,8 @@
 import { PostgresClient } from "../apiClients/index.js";
+import type { EpochsValidatorsMap } from "../apiClients/postgres/types.js";
 import logger from "../logger/index.js";
 import { getStartAndEndEpochs } from "./getStartAndEndEpochs.js";
-import { getAttestationSuccessRate } from "./getAttestationSuccessRate.js";
-import { Granularity, NumberOfDaysToQuery, ValidatorsDataProcessed } from "./types.js";
-import { getIntervalsEpochs } from "./getIntervalsEpochs.js";
-import { getAttestationSuccessRatePerClients } from "./getAttestationSuccessRatePerClients.js";
-import { getClientsUsedPerIntervalsMap } from "./getClientsUsedPerIntervalsMap.js";
-
-// Module in charge of querying and processin the data of the validators to get the performance metrics:
-// - Attestation success rate
-// - Blocks proposed success rate
-// - Mean attestation success rate
-// - Mean blocks proposed success rate
-
-// Note: It is overkill to store in db the attestation success rate for each epoch since it is only useful froma a global perspective
-// taking into account the historical data. As for now we will calculate dynamicall the attestation success rate with the arguments: epoch start and epoch end.
-
-// TODO: return current validator balance: 2 ways of doing it: 1) **get the balance from the beaconchain API**, 2) store the ideal rewards with the effective balance and get the balance from the postgres DB. The second option is more efficient but it is not real time.
-// TODO: return to the frontend the remaining seconds to next epoch. In the frontend use this parameter to query the backend every time the epoch changes.
-// TODO: add to block proposed epoch and slot
+import { NumberOfDaysToQuery } from "./types.js";
 
 /**
  * Get the processed data for the validators in the given date range and the given validators indexes.
@@ -35,23 +19,15 @@ export async function fetchAndProcessValidatorsData({
   postgresClient,
   minGenesisTime,
   secondsPerSlot,
-  numberOfDaysToQuery = 1,
-  granularity = Granularity.Hourly
+  numberOfDaysToQuery = 1
 }: {
   validatorIndexes: string[];
   postgresClient: PostgresClient; // import from backend index
   minGenesisTime: number; // import from backend index
   secondsPerSlot: number; // immport from backend index
   numberOfDaysToQuery?: NumberOfDaysToQuery;
-  granularity?: Granularity;
-}): Promise<
-  Map<
-    number, // validatorIndex
-    ValidatorsDataProcessed // processed data of the validator
-  >
-> {
-  logger.info("Processing validators data");
-  const mapValidatorPerformance = new Map<number, ValidatorsDataProcessed>();
+}): Promise<EpochsValidatorsMap> {
+  logger.info("Processing epochs data");
 
   // Get start timestamp and end timestamp
   const endDate = new Date();
@@ -61,42 +37,9 @@ export async function fetchAndProcessValidatorsData({
   // Calculate the epochs for the given dates
   const { startEpoch, endEpoch } = getStartAndEndEpochs({ minGenesisTime, secondsPerSlot, startDate, endDate });
 
-  // Get the start and end epochs for each interval
-  const intervals = getIntervalsEpochs({ startDate, endDate, granularity, minGenesisTime, secondsPerSlot });
-
-  // Get the validators data from the postgres database with the start and end epoch
-  const validatorsDataMap = await postgresClient.getValidatorsDataMapForEpochRange({
-    validatorIndexes,
+  return await postgresClient.getEpochsDataMapForEpochRange({
     startEpoch,
-    endEpoch
+    endEpoch,
+    validatorIndexes
   });
-
-  // Calculate the attestation success rate for each validator
-  for (const [validatorIndex, validatorData] of validatorsDataMap.entries())
-    mapValidatorPerformance.set(validatorIndex, {
-      attestationSuccessRate: getAttestationSuccessRate({ validatorData, startEpoch, endEpoch }),
-      attestationSuccessRatePerClients: getAttestationSuccessRatePerClients({ validatorData, startEpoch, endEpoch }),
-      attestationSuccessRatePerInterval: intervals.map(({ startEpoch, endEpoch }) => {
-        return {
-          startEpoch,
-          endEpoch,
-          attestationSuccessRate: getAttestationSuccessRate({ validatorData, startEpoch, endEpoch }),
-          clientsUsedInInterval: getClientsUsedPerIntervalsMap({ validatorData, startEpoch, endEpoch })
-        };
-      }),
-      blocks: {
-        proposed: validatorData
-          .filter((data) => data.blockProposalStatus === "Proposed")
-          .map((data) => ({ epoch: data.epoch })),
-        missed: validatorData
-          .filter((data) => data.blockProposalStatus === "Missed")
-          .map((data) => ({ epoch: data.epoch })),
-        unchosen: validatorData
-          .filter((data) => data.blockProposalStatus === "Unchosen")
-          .map((data) => ({ epoch: data.epoch }))
-      }
-    });
-
-  // Return the processed data
-  return mapValidatorPerformance;
 }
