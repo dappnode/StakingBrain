@@ -14,7 +14,7 @@ export const brainConfig = (): BrainConfig => {
     consensusClient,
     isMevBoostSet,
     executionClientUrl: `http://execution.${network}.dncore.dappnode:8545`,
-    validatorUrl: `${consensusClient === "teku" ? "https://validator.teku-holesky.dappnode:3500" : `http://validator.${network}.dncore.dappnode:3500`}`,
+    validatorUrl: `http://validator.${network}.dncore.dappnode:3500}`,
     beaconchainUrl: `http:/beacon-chain.${network}.dncore.dappnode:3500`,
     signerUrl: `http://signer.${network}.dncore.dappnode:9000`,
     token: getValidatorToken(consensusClient),
