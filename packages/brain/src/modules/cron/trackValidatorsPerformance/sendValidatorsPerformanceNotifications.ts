@@ -1,9 +1,8 @@
 import { DappmanagerApi } from "../../apiClients/index.js";
 import { NotificationType } from "../../apiClients/dappmanager/types.js";
-import { BlockProposalStatus } from "../../apiClients/postgres/types.js";
+import { BlockProposalStatus, ValidatorsDataPerEpochMap } from "../../apiClients/postgres/types.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
-import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 
 /**
  * Sends validator performance notification to the dappmanager. The notifications available are:
@@ -14,38 +13,34 @@ import { IdealRewards, TotalRewards } from "../../apiClients/types.js";
 export async function sendValidatorsPerformanceNotifications({
   dappmanagerApi,
   currentEpoch,
-  validatorBlockStatusMap,
-  validatorAttestationsRewards
+  validatorsDataPerEpochMap
 }: {
   dappmanagerApi: DappmanagerApi;
   currentEpoch: string;
-  validatorBlockStatusMap?: Map<string, BlockProposalStatus>;
-  validatorAttestationsRewards?: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
+  validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
 }): Promise<void> {
-  if (!validatorBlockStatusMap || !validatorAttestationsRewards) return;
-
   await Promise.all([
-    sendSuccessNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch }),
+    sendSuccessNotificationNotThrow({ dappmanagerApi, validatorsDataPerEpochMap, currentEpoch }),
     sendWarningNotificationNotThrow({
       dappmanagerApi,
-      validatorAttestationsRewards,
+      validatorsDataPerEpochMap,
       currentEpoch
     }),
-    sendDangerNotificationNotThrow({ dappmanagerApi, validatorBlockStatusMap, currentEpoch })
+    sendDangerNotificationNotThrow({ dappmanagerApi, validatorsDataPerEpochMap, currentEpoch })
   ]);
 }
 
 async function sendSuccessNotificationNotThrow({
   dappmanagerApi,
   currentEpoch,
-  validatorBlockStatusMap
+  validatorsDataPerEpochMap
 }: {
   dappmanagerApi: DappmanagerApi;
-  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
+  validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
   currentEpoch: string;
 }): Promise<void> {
-  const validatorsProposedBlocks = Array.from(validatorBlockStatusMap).filter(
-    ([_, blockStatus]) => blockStatus === "Proposed"
+  const validatorsProposedBlocks = Array.from(validatorsDataPerEpochMap).filter(
+    ([_, data]) => data.block && data.block.status === BlockProposalStatus.Proposed
   );
 
   if (validatorsProposedBlocks.length === 0) return;
@@ -60,16 +55,16 @@ async function sendSuccessNotificationNotThrow({
 
 async function sendWarningNotificationNotThrow({
   dappmanagerApi,
-  validatorAttestationsRewards,
+  validatorsDataPerEpochMap,
   currentEpoch
 }: {
   dappmanagerApi: DappmanagerApi;
-  validatorAttestationsRewards: { totalRewards: TotalRewards[]; idealRewards: IdealRewards };
+  validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
   currentEpoch: string;
 }): Promise<void> {
-  const validatorsMissedAttestations = validatorAttestationsRewards.totalRewards
-    .filter((validator) => parseInt(validator.source) <= 0)
-    .map((validator) => validator.validator_index);
+  const validatorsMissedAttestations = Array.from(validatorsDataPerEpochMap).filter(
+    ([_, data]) => data.attestation && parseInt(data.attestation.totalRewards.source) <= 0
+  );
 
   if (validatorsMissedAttestations.length === 0) return;
   await dappmanagerApi
@@ -83,15 +78,15 @@ async function sendWarningNotificationNotThrow({
 
 async function sendDangerNotificationNotThrow({
   dappmanagerApi,
-  currentEpoch,
-  validatorBlockStatusMap
+  validatorsDataPerEpochMap,
+  currentEpoch
 }: {
   dappmanagerApi: DappmanagerApi;
-  validatorBlockStatusMap: Map<string, BlockProposalStatus>;
+  validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
   currentEpoch: string;
 }): Promise<void> {
-  const validatorsMissedBlocks = Array.from(validatorBlockStatusMap).filter(
-    ([_, blockStatus]) => blockStatus === "Missed"
+  const validatorsMissedBlocks = Array.from(validatorsDataPerEpochMap).filter(
+    ([_, data]) => data.block && data.block.status === BlockProposalStatus.Missed
   );
 
   if (validatorsMissedBlocks.length === 0) return;

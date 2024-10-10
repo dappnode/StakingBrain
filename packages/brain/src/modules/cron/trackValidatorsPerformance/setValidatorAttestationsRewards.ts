@@ -1,5 +1,5 @@
 import { BeaconchainApi } from "../../apiClients/index.js";
-import { ValidatorsDataPerEpochMap } from "../../apiClients/postgres/types.js";
+import { EpochErrorCode, ValidatorsDataPerEpochMap } from "../../apiClients/postgres/types.js";
 import logger from "../../logger/index.js";
 
 /**
@@ -30,6 +30,13 @@ export async function setValidatorAttestationsRewards({
     const totalRewards = total_rewards.find((reward) => reward.validator_index === index);
     if (!totalRewards) {
       logger.warn(`Total rewards not found for validator index: ${index}`);
+      validatorsDataPerEpochMap.set(index, {
+        ...epochData,
+        error: {
+          code: EpochErrorCode.MISSING_ATT_DATA,
+          message: `Missing attestation data for validator ${index}`
+        }
+      });
       continue;
     }
     validatorsDataPerEpochMap.set(index, {

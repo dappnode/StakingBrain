@@ -27,12 +27,6 @@ export interface DataPerEpoch {
   [Columns.error]?: EpochError;
 }
 
-// interface to insert data in the DB
-export interface DataPerEpochInsert extends DataPerEpoch {
-  validatorIndex: number;
-  epoch: number;
-}
-
 export interface SyncCommittee {
   reward: number;
 }

@@ -36,8 +36,10 @@ export async function trackValidatorsPerformanceCron({
       brainDb,
       postgresClient,
       beaconchainApi,
-      executionClient,
-      consensusClient,
+      clients: {
+        execution: executionClient,
+        consensus: consensusClient
+      },
       currentEpoch,
       dappmanagerApi,
       sendNotification

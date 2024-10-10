@@ -1,6 +1,6 @@
 import postgres from "postgres";
 import logger from "../../logger/index.js";
-import { EpochsValidatorsMap, DataPerEpoch, Columns, DataPerEpochInsert } from "./types.js";
+import { EpochsValidatorsMap, DataPerEpoch, Columns, ValidatorsDataPerEpochMap } from "./types.js";
 
 export class PostgresClient {
   private readonly tableName = "epochs_data";
@@ -64,26 +64,25 @@ CREATE TABLE IF NOT EXISTS ${this.tableName} (
   /**
    * Inserts epoch data into the database. If the data already exists for the given validator index and epoch it will be updated.
    */
-  public async insertEpochData(dataPerEpoch: DataPerEpochInsert[]): Promise<void> {
+  public async insertValidatorDataPerEpoch(
+    epoch: number,
+    validatorsDataPerEpochMap: ValidatorsDataPerEpochMap
+  ): Promise<void> {
     const query = `
 INSERT INTO ${this.tableName} (${Columns.validatorIndex}, ${Columns.epoch}, ${Columns.clients}, ${Columns.attestation}, ${Columns.block}, ${Columns.syncCommittee}, ${Columns.slot}, ${Columns.error})
-VALUES ${dataPerEpoch
-      .map(
-        (data) =>
-          `(${data.validatorIndex}, ${data.epoch}, '${JSON.stringify(data.clients)}', '${JSON.stringify(
-            data.attestation
-          )}', '${JSON.stringify(data.block)}', '${JSON.stringify(data.syncCommittee)}', ${
-            data.slot ?? "NULL"
-          }, '${JSON.stringify(data.error)}')`
-      )
-      .join(",")}
-ON CONFLICT (${Columns.validatorIndex}, ${Columns.epoch}) DO UPDATE
-SET ${Columns.clients} = EXCLUDED.${Columns.clients},
-    ${Columns.attestation} = EXCLUDED.${Columns.attestation},
-    ${Columns.block} = EXCLUDED.${Columns.block},
-    ${Columns.syncCommittee} = EXCLUDED.${Columns.syncCommittee},
-    ${Columns.slot} = EXCLUDED.${Columns.slot},
-    ${Columns.error} = EXCLUDED.${Columns.error}
+VALUES ${Array.from(validatorsDataPerEpochMap.entries())
+      .map(([validatorIndex, data]) => {
+        return `(${validatorIndex}, ${epoch}, '${JSON.stringify(data.clients)}', '${JSON.stringify(data.attestation)}', '${JSON.stringify(data.block)}', '${JSON.stringify(data.syncCommittee)}', ${data.slot}, '${JSON.stringify(data.error)}')`;
+      })
+      .join(", ")}
+ON CONFLICT (${Columns.validatorIndex}, ${Columns.epoch})
+DO UPDATE SET
+${Columns.clients} = EXCLUDED.${Columns.clients},
+${Columns.attestation} = EXCLUDED.${Columns.attestation},
+${Columns.block} = EXCLUDED.${Columns.block},
+${Columns.syncCommittee} = EXCLUDED.${Columns.syncCommittee},
+${Columns.slot} = EXCLUDED.${Columns.slot},
+${Columns.error} = EXCLUDED.${Columns.error}
     `;
 
     await this.sql.unsafe(query);

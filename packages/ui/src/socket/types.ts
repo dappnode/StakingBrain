@@ -10,8 +10,7 @@ import type {
   Web3signerHealthcheckResponse,
   Web3signerPostResponse,
   EpochsValidatorsMap,
-  NumberOfDaysToQuery,
-  Granularity
+  NumberOfDaysToQuery
 } from "@stakingbrain/brain";
 import { StakerConfig } from "@stakingbrain/common";
 
@@ -30,12 +29,10 @@ export interface RpcMethods {
   exitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<ValidatorExitExecute[]>;
   fetchValidatorsPerformanceData: ({
     validatorIndexes,
-    numberOfDaysToQuery,
-    granularity
+    numberOfDaysToQuery
   }: {
     validatorIndexes: string[];
     numberOfDaysToQuery?: NumberOfDaysToQuery;
-    granularity?: Granularity;
   }) => Promise<EpochsValidatorsMap>;
   // Network
   getStakerConfig: () => Promise<StakerConfig>;

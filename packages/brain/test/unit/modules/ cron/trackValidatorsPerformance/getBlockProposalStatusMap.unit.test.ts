@@ -3,10 +3,11 @@ import { BeaconchainApi } from "../../../../../src/modules/apiClients/index.js";
 import type {
   BeaconchainBlockHeaderGetResponse,
   BeaconchainProposerDutiesGetResponse,
-  BlockId
+  BlockId,
+  ValidatorsDataPerEpochMap
 } from "../../../../../src/modules/apiClients/types.js";
 import { BlockProposalStatus } from "../../../../../src/modules/apiClients/postgres/types.js";
-import { Network } from "@stakingbrain/common";
+import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 import { setBlockProposalStatus } from "../../../../../src/modules/cron/trackValidatorsPerformance/setBlockProposalStatus.js";
 
 // validator index 1802289 is supposed to propose in slot 1
@@ -92,18 +93,24 @@ describe("Cron - trackValidatorsPerformance - getBlockProposalStatusMap", () => 
 
   it("should return the block proposal status of each validator: ", async () => {
     const epoch = "1";
-    const blockProposalStatusMap = await setBlockProposalStatus({
+    const validatorsDataPerEpochMap: ValidatorsDataPerEpochMap = new Map(
+      validatorsBlockProposal.map((validator) => [
+        validator.index,
+        {
+          clients: { execution: ExecutionClient.Geth, consensus: ConsensusClient.Lighthouse },
+          block: { status: BlockProposalStatus.Unchosen }
+        }
+      ])
+    );
+    await setBlockProposalStatus({
       beaconchainApi,
       epoch,
-      activeValidatorsIndexes: [
-        ...validatorsBlockProposal.map((validator) => validator.index),
-        validatorMissedBlockProposal.index
-      ]
+      validatorsDataPerEpochMap
     });
 
-    expect(blockProposalStatusMap.get(validatorsBlockProposal[0].index)).to.equal(BlockProposalStatus.Proposed);
-    expect(blockProposalStatusMap.get(validatorsBlockProposal[1].index)).to.equal(BlockProposalStatus.Proposed);
-    expect(blockProposalStatusMap.get(validatorsBlockProposal[2].index)).to.equal(BlockProposalStatus.Unchosen);
-    expect(blockProposalStatusMap.get(validatorMissedBlockProposal.index)).to.equal(BlockProposalStatus.Missed);
+    expect(validatorsDataPerEpochMap.get(validatorsBlockProposal[0].index)).to.equal(BlockProposalStatus.Proposed);
+    expect(validatorsDataPerEpochMap.get(validatorsBlockProposal[1].index)).to.equal(BlockProposalStatus.Proposed);
+    expect(validatorsDataPerEpochMap.get(validatorsBlockProposal[2].index)).to.equal(BlockProposalStatus.Unchosen);
+    expect(validatorsDataPerEpochMap.get(validatorMissedBlockProposal.index)).to.equal(BlockProposalStatus.Missed);
   });
 });

@@ -1,22 +1,17 @@
-import { BeaconchainApi } from "../../apiClients/beaconchain/index.js";
-import { PostgresClient } from "../../apiClients/postgres/index.js";
-import logger from "../../logger/index.js";
-import { BrainDataBase } from "../../db/index.js";
-import { insertPerformanceData } from "./insertPerformanceData.js";
+// Internal
+import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
+import { logPrefix } from "./logPrefix.js";
 import { setValidatorAttestationsRewards } from "./setValidatorAttestationsRewards.js";
 import { setBlockProposalStatus } from "./setBlockProposalStatus.js";
 import { setActiveValidatorsLoadedInBrain } from "./setActiveValidatorsLoadedInBrain.js";
-import { logPrefix } from "./logPrefix.js";
+import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
+// External
+import { BeaconchainApi, PostgresClient, DappmanagerApi } from "../../apiClients/index.js";
+import { BrainDbError } from "../../db/error.js";
+import logger from "../../logger/index.js";
+import { BrainDataBase } from "../../db/index.js";
 import { EpochError, EpochErrorCode } from "../../apiClients/postgres/types.js";
 import { BeaconchainApiError } from "../../apiClients/beaconchain/error.js";
-import { BrainDbError } from "../../db/error.js";
-import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
-import { DappmanagerApi } from "../../apiClients/index.js";
-
-// Internal
-import { sendValidatorsPerformanceNotifications } from "./sendValidatorsPerformanceNotifications.js";
-
-// External
 import type { Clients, ValidatorsDataPerEpochMap } from "../../apiClients/postgres/types.js";
 
 let lastProcessedEpoch: number | undefined = undefined;
@@ -70,28 +65,30 @@ export async function fetchAndInsertValidatorsPerformanceData({
       validatorsDataPerEpochMap
     });
 
-    lastProcessedEpoch = currentEpoch; // Update last processed epoch
+    // Update last processed epoch
+    lastProcessedEpoch = currentEpoch;
+    // everything went well, reset the error in each validator from the map
+    validatorsDataPerEpochMap.forEach((value) => {
+      value.error = undefined;
+    });
   } catch (e) {
     logger.warn(`${logPrefix}Error tracking validator performance for epoch ${currentEpoch}: ${e}`);
-    validatorPerformanceError = getValidatorPerformanceError(e);
+    // update errors in each validator from the map
+    const error = getValidatorEpochDataError(e);
+    validatorsDataPerEpochMap.forEach((value) => {
+      value.error = error;
+    });
   } finally {
     // Always call storeData in the finally block, regardless of success or failure in try block
-    await insertPerformanceData({
-      postgresClient,
-      activeValidatorsIndexes,
-      currentEpoch,
-      validatorBlockStatusMap,
-      validatorAttestationsRewards,
-      error: validatorPerformanceError
-    });
+    await postgresClient.insertValidatorDataPerEpoch(currentEpoch, validatorsDataPerEpochMap);
 
     // Send notifications if the last epoch was processed without an error
-    if (sendNotification && !validatorPerformanceError)
+    // TODO: dont send if error otherwise we will send the same error multiple times
+    if (sendNotification)
       await sendValidatorsPerformanceNotifications({
         dappmanagerApi,
         currentEpoch: currentEpoch.toString(),
-        validatorBlockStatusMap,
-        validatorAttestationsRewards
+        validatorsDataPerEpochMap
       });
   }
 }
@@ -106,7 +103,7 @@ async function ensureNodeStatus({ beaconchainApi }: { beaconchainApi: Beaconchai
   if (el_offline) throw new ExecutionOfflineError("Execution layer is offline");
 }
 
-function getValidatorPerformanceError(e: Error): EpochError {
+function getValidatorEpochDataError(e: Error): EpochError {
   if (e instanceof BeaconchainApiError)
     return {
       code: EpochErrorCode.BEACONCHAIN_API_ERROR,
