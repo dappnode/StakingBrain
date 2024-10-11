@@ -79,6 +79,7 @@ export async function fetchAndInsertEpochValidatorsData({
       value.error = error;
     });
   } finally {
+    logger.debug(`${logPrefix}Storing validator data for epoch ${currentEpoch}`);
     // Always call storeData in the finally block, regardless of success or failure in try block
     await postgresClient.insertValidatorDataPerEpoch(currentEpoch, validatorsDataPerEpochMap);
 
