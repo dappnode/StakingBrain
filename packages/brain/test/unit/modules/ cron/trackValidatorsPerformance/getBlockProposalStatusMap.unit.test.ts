@@ -95,7 +95,7 @@ describe("Cron - trackValidatorsPerformance - getBlockProposalStatusMap", () => 
     const epoch = "1";
     const validatorsDataPerEpochMap: ValidatorsDataPerEpochMap = new Map(
       validatorsBlockProposal.map((validator) => [
-        validator.index,
+        parseInt(validator.index),
         {
           clients: { execution: ExecutionClient.Geth, consensus: ConsensusClient.Lighthouse },
           block: { status: BlockProposalStatus.Unchosen }
@@ -108,13 +108,13 @@ describe("Cron - trackValidatorsPerformance - getBlockProposalStatusMap", () => 
       validatorsDataPerEpochMap
     });
 
-    const validator0Data = validatorsDataPerEpochMap.get(validatorsBlockProposal[0].index);
+    const validator0Data = validatorsDataPerEpochMap.get(parseInt(validatorsBlockProposal[0].index));
     if (!validator0Data?.block) throw new Error("validator0Data is undefined");
     expect(validator0Data.block.status).to.equal(BlockProposalStatus.Proposed);
-    const validator1Data = validatorsDataPerEpochMap.get(validatorsBlockProposal[1].index);
+    const validator1Data = validatorsDataPerEpochMap.get(parseInt(validatorsBlockProposal[1].index));
     if (!validator1Data?.block) throw new Error("validator1Data is undefined");
     expect(validator1Data.block.status).to.equal(BlockProposalStatus.Proposed);
-    const validator2Data = validatorsDataPerEpochMap.get(validatorsBlockProposal[2].index);
+    const validator2Data = validatorsDataPerEpochMap.get(parseInt(validatorsBlockProposal[2].index));
     if (!validator2Data?.block) throw new Error("validator2Data is undefined");
     expect(validator2Data.block.status).to.equal(BlockProposalStatus.Unchosen);
   });
