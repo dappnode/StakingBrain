@@ -17,7 +17,7 @@ describe.skip("Postgres client", function () {
     console.log("Table size: ", tableSize);
   });
 
-  it.only("should get validators data from the db", async () => {
+  it("should get validators data from the db", async () => {
     const validatorIndexes = ["1802289", "1802258"];
     const data = await postgresClient.getEpochsDataMapForEpochRange({
       validatorIndexes,
