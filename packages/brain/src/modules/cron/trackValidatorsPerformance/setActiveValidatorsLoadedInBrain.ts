@@ -32,7 +32,7 @@ export async function setActiveValidatorsLoadedInBrain({
   });
 
   // set validator indexes in map
-  for (const { index } of response.data) validatorsDataPerEpochMap.set(index, { clients });
+  for (const { index } of response.data) validatorsDataPerEpochMap.set(parseInt(index), { clients });
 }
 
 /**

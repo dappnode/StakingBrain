@@ -1,13 +1,14 @@
 import { ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { IdealRewards, TotalRewards } from "../beaconchain/types.js";
 
+// The postgres DB columns may not be camel case sensitive
 export enum Columns {
-  validatorIndex = "validatorIndex",
+  validatorindex = "validatorindex",
   epoch = "epoch",
   clients = "clients",
   attestation = "attestation",
   block = "block",
-  syncCommittee = "syncCommittee",
+  synccommittee = "synccommittee",
   slot = "slot",
   error = "error"
 }
@@ -16,15 +17,21 @@ export enum Columns {
 export type EpochsValidatorsMap = Map<number, ValidatorsDataPerEpochMap>;
 
 // Indexed by validator index
-export type ValidatorsDataPerEpochMap = Map<string, DataPerEpoch>;
+export type ValidatorsDataPerEpochMap = Map<number, DataPerEpoch>;
 
 export interface DataPerEpoch {
   [Columns.clients]: Clients;
   [Columns.attestation]?: Attestation;
   [Columns.block]?: Block;
-  [Columns.syncCommittee]?: SyncCommittee;
+  [Columns.synccommittee]?: SyncCommittee;
   [Columns.slot]?: number;
   [Columns.error]?: EpochError;
+}
+
+// Postgres library returns data in string format even if the column was set with BIGINT
+export interface PostgresDataRow extends DataPerEpoch {
+  [Columns.validatorindex]: string;
+  [Columns.epoch]: string;
 }
 
 export interface SyncCommittee {
