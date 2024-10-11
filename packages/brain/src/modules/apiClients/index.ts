@@ -1,5 +1,6 @@
 export { BlockExplorerApi } from "./blockExplorer/index.js";
 export { DappmanagerApi } from "./dappmanager/index.js";
+export { PrometheusApi } from "./prometheus/index.js";
 export { BeaconchainApi } from "./beaconchain/index.js";
 export { ValidatorApi } from "./validator/index.js";
 export { StandardApi } from "./standard.js";

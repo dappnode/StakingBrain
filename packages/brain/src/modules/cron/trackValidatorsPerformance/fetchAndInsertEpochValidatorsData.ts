@@ -6,7 +6,7 @@ import { setBlockProposalStatus } from "./setBlockProposalStatus.js";
 import { setActiveValidatorsLoadedInBrain } from "./setActiveValidatorsLoadedInBrain.js";
 import { ExecutionOfflineError, NodeSyncingError } from "./error.js";
 // External
-import { BeaconchainApi, PostgresClient, DappmanagerApi } from "../../apiClients/index.js";
+import { BeaconchainApi, PostgresClient, DappmanagerApi, PrometheusApi } from "../../apiClients/index.js";
 import { BrainDbError } from "../../db/error.js";
 import logger from "../../logger/index.js";
 import { BrainDataBase } from "../../db/index.js";
@@ -23,6 +23,7 @@ export async function fetchAndInsertEpochValidatorsData({
   clients,
   currentEpoch,
   dappmanagerApi,
+  prometheusApi,
   sendNotification
 }: {
   brainDb: BrainDataBase;
@@ -31,6 +32,7 @@ export async function fetchAndInsertEpochValidatorsData({
   clients: Clients;
   currentEpoch: number;
   dappmanagerApi: DappmanagerApi;
+  prometheusApi: PrometheusApi;
   sendNotification: boolean;
 }): Promise<void> {
   if (currentEpoch === lastProcessedEpoch) return;
@@ -88,6 +90,7 @@ export async function fetchAndInsertEpochValidatorsData({
     if (sendNotification)
       await sendValidatorsPerformanceNotifications({
         dappmanagerApi,
+        prometheusApi,
         currentEpoch: currentEpoch.toString(),
         validatorsDataPerEpochMap
       });
