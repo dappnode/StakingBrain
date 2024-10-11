@@ -5,6 +5,7 @@ import { getValidators } from "../../../../../calls/getValidators.js";
 import { BrainPubkeysFeeRecipients } from "../../types.js";
 import { validateUpdateFeeRecipientRequestBody } from "./validation.js";
 import type { CustomValidatorGetResponse } from "../../../../../calls/types.js";
+import logger from "../../../../logger/index.js";
 
 const feeRecipientsRouter = express.Router();
 
@@ -49,21 +50,26 @@ feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
         }))
       };
 
-      return res.status(200).json(response);
+      res.status(200).json(response);
+      return;
     }
 
     const pubkeys = pubkeysParam.split(",").map((pubkey) => pubkey.toLowerCase());
     const invalidPubkeys = pubkeys.filter((pubkey) => !isValidBlsPubkey(pubkey));
 
-    if (invalidPubkeys.length > 0)
-      return res.status(400).send({
+    if (invalidPubkeys.length > 0) {
+      res.status(400).send({
         message: `Invalid pubkey format: ${invalidPubkeys.join(", ")}. Pubkeys should follow BLS format (beginning with 0x)`
       });
+      return;
+    }
 
     const filteredValidators = validators.filter((validator) => pubkeys.includes(validator.pubkey.toLowerCase()));
 
-    if (filteredValidators.length === 0)
-      return res.status(404).send({ message: "No validators found for the provided pubkeys" });
+    if (filteredValidators.length === 0) {
+      res.status(404).send({ message: "No validators found for the provided pubkeys" });
+      return;
+    }
 
     const response: BrainPubkeysFeeRecipients = {
       validators: filteredValidators.map((validator) => ({
@@ -72,10 +78,10 @@ feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
       }))
     };
 
-    return res.status(200).json(response);
+    res.status(200).json(response);
   } catch (error) {
-    console.error("Failed to retrieve validators:", error);
-    return res.status(500).send({ message: "Internal server error" });
+    logger.error("Failed to retrieve validators:", error);
+    res.status(500).send({ message: "Internal server error" });
   }
 });
 
@@ -102,16 +108,16 @@ feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
  * validation process result in a 400 Bad Request response detailing the issues found.
  */
 feeRecipientsRouter.post(feeRecipientsEndpoint, async (req, res) => {
+  const requestBody: BrainPubkeysFeeRecipients = req.body;
+
   try {
-    const requestBody: BrainPubkeysFeeRecipients = req.body;
+    validateUpdateFeeRecipientRequestBody(requestBody);
+  } catch (e) {
+    res.status(400).send({ message: `Bad request: ${e}` });
+    return;
+  }
 
-    try {
-      validateUpdateFeeRecipientRequestBody(requestBody);
-    } catch (e) {
-      res.status(400).send({ message: `Bad request: ${e}` });
-      return;
-    }
-
+  try {
     const currentValidators: CustomValidatorGetResponse[] = await getValidators();
 
     const validatorsToUpdate = currentValidators.filter((validator) =>
@@ -131,10 +137,10 @@ feeRecipientsRouter.post(feeRecipientsEndpoint, async (req, res) => {
 
     await updateValidators(validatorsToUpdate, "api");
 
-    return res.status(200).send();
+    res.status(200).send();
   } catch (error) {
-    console.error("Failed to update validators:", error);
-    return res.status(500).send({ message: "Internal server error" });
+    logger.error("Failed to update validators:", error);
+    res.status(500).send({ message: "Internal server error" });
   }
 });
 
