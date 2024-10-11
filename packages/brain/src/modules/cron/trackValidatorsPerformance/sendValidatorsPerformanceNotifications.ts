@@ -1,4 +1,4 @@
-import { DappmanagerApi } from "../../apiClients/index.js";
+import { DappmanagerApi, PrometheusApi } from "../../apiClients/index.js";
 import { NotificationType } from "../../apiClients/dappmanager/types.js";
 import { BlockProposalStatus, ValidatorsDataPerEpochMap } from "../../apiClients/postgres/types.js";
 import logger from "../../logger/index.js";
@@ -12,10 +12,12 @@ import { logPrefix } from "./logPrefix.js";
  */
 export async function sendValidatorsPerformanceNotifications({
   dappmanagerApi,
+  prometheusApi,
   currentEpoch,
   validatorsDataPerEpochMap
 }: {
   dappmanagerApi: DappmanagerApi;
+  prometheusApi: PrometheusApi;
   currentEpoch: string;
   validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
 }): Promise<void> {
@@ -23,10 +25,11 @@ export async function sendValidatorsPerformanceNotifications({
     sendSuccessNotificationNotThrow({ dappmanagerApi, validatorsDataPerEpochMap, currentEpoch }),
     sendWarningNotificationNotThrow({
       dappmanagerApi,
+      prometheusApi,
       validatorsDataPerEpochMap,
       currentEpoch
     }),
-    sendDangerNotificationNotThrow({ dappmanagerApi, validatorsDataPerEpochMap, currentEpoch })
+    sendDangerNotificationNotThrow({ dappmanagerApi, prometheusApi, validatorsDataPerEpochMap, currentEpoch })
   ]);
 }
 
@@ -55,10 +58,12 @@ async function sendSuccessNotificationNotThrow({
 
 async function sendWarningNotificationNotThrow({
   dappmanagerApi,
+  prometheusApi,
   validatorsDataPerEpochMap,
   currentEpoch
 }: {
   dappmanagerApi: DappmanagerApi;
+  prometheusApi: PrometheusApi;
   validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
   currentEpoch: string;
 }): Promise<void> {
@@ -67,21 +72,24 @@ async function sendWarningNotificationNotThrow({
   );
 
   if (validatorsMissedAttestations.length === 0) return;
+  const hostMetricsMessage = await getHostMetricsMessage(prometheusApi, currentEpoch);
   await dappmanagerApi
     .sendDappmanagerNotification({
       title: `Missed attestation in epoch ${currentEpoch}`,
       notificationType: NotificationType.Warning,
-      body: `Validator(s) ${validatorsMissedAttestations.join(", ")} missed attestations`
+      body: `Validator(s) ${validatorsMissedAttestations.join(", ")} missed an attestation\n${hostMetricsMessage}`
     })
     .catch((error) => logger.error(`${logPrefix}Failed to send warning notification to dappmanager`, error));
 }
 
 async function sendDangerNotificationNotThrow({
   dappmanagerApi,
+  prometheusApi,
   validatorsDataPerEpochMap,
   currentEpoch
 }: {
   dappmanagerApi: DappmanagerApi;
+  prometheusApi: PrometheusApi;
   validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
   currentEpoch: string;
 }): Promise<void> {
@@ -90,11 +98,45 @@ async function sendDangerNotificationNotThrow({
   );
 
   if (validatorsMissedBlocks.length === 0) return;
+  const hostMetricsMessage = await getHostMetricsMessage(prometheusApi, currentEpoch);
   await dappmanagerApi
     .sendDappmanagerNotification({
       title: `Block missed in epoch ${currentEpoch}`,
       notificationType: NotificationType.Danger,
-      body: `Validator(s) ${validatorsMissedBlocks.join(", ")} missed a block`
+      body: `Validator(s) ${validatorsMissedBlocks.join(", ")} missed a block\n${hostMetricsMessage}`
     })
     .catch((error) => logger.error(`${logPrefix}Failed to send danger notification to dappmanager`, error));
+}
+
+async function getHostMetricsMessage(prometheusApi: PrometheusApi, epoch: string): Promise<string> {
+  const { startTimestamp, endTimestamp, avgCpuTemperature, avgCpuUsage, avgMemoryUsage, ioUtilizationPerDisk } =
+    await prometheusApi.getPrometheusMetrics({ epoch: parseInt(epoch) });
+
+  // Create a formatted message for Disk I/O utilization
+  const ioUtilizationPerDiskMessage = Object.entries(ioUtilizationPerDisk)
+    .map(([disk, utilization]) => `  - *${disk}*: *${utilization}%*`)
+    .join("\n");
+
+  // Create a structured and formatted message
+  return `⚠️ *Average host metrics within epoch ${epoch}*:\n
+- *CPU temperature*: *${avgCpuTemperature}°C*
+- *CPU usage*: *${avgCpuUsage}%*
+- *Memory usage*: *${avgMemoryUsage}%*
+- *Disk I/O utilization*:\n${ioUtilizationPerDiskMessage}\n
+${getDmsDashboardsMessage({ startTimestamp, endTimestamp })}`;
+}
+
+function getDmsDashboardsMessage({
+  startTimestamp,
+  endTimestamp
+}: {
+  startTimestamp: number;
+  endTimestamp: number;
+}): string {
+  const startTimestampInMs = startTimestamp * 1000;
+  const endTimestampInMs = endTimestamp * 1000;
+
+  return `🔗 *For more details, check the DMS dashboards:*\n
+- [Host dashboard](http://dms.dappnode/d/dms-host/host?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})
+- [Docker dashboard](http://dms.dappnode/d/dms-docker/docker?orgId=1&from=${startTimestampInMs}&to=${endTimestampInMs})`;
 }
