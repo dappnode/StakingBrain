@@ -2,9 +2,11 @@ import { ExecutionClient, ConsensusClient } from "@stakingbrain/common";
 import { PostgresClient, BeaconchainApi, DappmanagerApi } from "../../apiClients/index.js";
 import { BrainDataBase } from "../../db/index.js";
 import logger from "../../logger/index.js";
-import { fetchAndInsertValidatorsPerformanceData } from "./fetchAndInsertValidatorsPerformanceData.js";
+import { fetchAndInsertEpochValidatorsData } from "./fetchAndInsertEpochValidatorsData.js";
 
-export async function trackValidatorsPerformanceCron({
+let dbInitialized = false;
+
+export async function trackEpochValidatorsDataCron({
   brainDb,
   postgresClient,
   beaconchainApi,
@@ -22,6 +24,11 @@ export async function trackValidatorsPerformanceCron({
   sendNotification: boolean;
 }): Promise<void> {
   try {
+    if (!dbInitialized) {
+      await postgresClient.initialize();
+      dbInitialized = true;
+    }
+
     // Get finalized epoch from finality endpoint instead of from header endpoint.
     // The header endpoint might jump two epochs in one call (due to missed block proposals), which would cause the cron to skip an epoch.
     const currentEpoch = parseInt(
@@ -32,12 +39,14 @@ export async function trackValidatorsPerformanceCron({
       ).data.finalized.epoch
     );
 
-    await fetchAndInsertValidatorsPerformanceData({
+    await fetchAndInsertEpochValidatorsData({
       brainDb,
       postgresClient,
       beaconchainApi,
-      executionClient,
-      consensusClient,
+      clients: {
+        execution: executionClient,
+        consensus: consensusClient
+      },
       currentEpoch,
       dappmanagerApi,
       sendNotification

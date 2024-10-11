@@ -4,12 +4,13 @@ import {
   BeaconchainValidatorFromStateGetResponse,
   BeaconchainValidatorStatePostResponse,
   BlockId,
+  ValidatorsDataPerEpochMap,
   ValidatorStatus
 } from "../../../../../src/modules/apiClients/types.js";
 import { BrainDataBase } from "../../../../../src/modules/db/index.js";
 import { StakingBrainDb } from "../../../../../src/modules/db/types.js";
-import { getActiveValidatorsLoadedInBrain } from "../../../../../src/modules/cron/trackValidatorsPerformance/getActiveValidatorsLoadedInBrain.js";
-import { Network } from "@stakingbrain/common";
+import { setActiveValidatorsLoadedInBrain } from "../../../../../src/modules/cron/trackValidatorsPerformance/setActiveValidatorsLoadedInBrain.js";
+import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 
 const validators: { pubkey: string; index: number }[] = [
   {
@@ -141,15 +142,18 @@ describe("Cron - trackValidatorsPerformance - getActiveValidatorsLoadedInBrain",
       Network.Holesky
     );
     const brainDb = new BrainDataBaseMock("test.json");
+    const validatorsDataPerEpochMap: ValidatorsDataPerEpochMap = new Map();
 
-    const activeValidatorsIndexes = await getActiveValidatorsLoadedInBrain({
+    await setActiveValidatorsLoadedInBrain({
       beaconchainApi,
-      brainDb
+      brainDb,
+      validatorsDataPerEpochMap,
+      clients: {
+        execution: ExecutionClient.Geth,
+        consensus: ConsensusClient.Lighthouse
+      }
     });
 
-    expect(activeValidatorsIndexes).to.be.an("array").that.includes(validatorIndexOne.toString());
-    expect(activeValidatorsIndexes).to.be.an("array").that.includes(validatorIndexTwo.toString());
-    expect(activeValidatorsIndexes.length).to.be.equal(2);
     expect(brainDb.getData()[pubkeyOne].index).to.be.equal(validatorIndexOne);
     expect(brainDb.getData()[pubkeyTwo].index).to.be.equal(validatorIndexTwo);
   });

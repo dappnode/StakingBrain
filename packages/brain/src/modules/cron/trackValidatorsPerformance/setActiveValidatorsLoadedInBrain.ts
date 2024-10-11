@@ -4,24 +4,25 @@ import { ValidatorStatus } from "../../apiClients/types.js";
 import { BrainDataBase } from "../../db/index.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
+import type { Clients, ValidatorsDataPerEpochMap } from "../../apiClients/postgres/types.js";
 
 /**
- * Get the active validators from the beaconchain API. To do so, it will get the validator indexes from the brain db.
+ * Set the active validators from the beaconchain API. To do so, it will get the validator indexes from the brain db.
  * If there are no indexes, it will get them from the beaconchain API and update the brain db with the indexes for further use.
- *
- * @param {BeaconchainApi} beaconchainApi - Beaconchain API client.
- * @param {BrainDataBase} brainDb - Brain DB client.
- * @returns {string[]} - Array of active validator indexes.
  */
-export async function getActiveValidatorsLoadedInBrain({
+export async function setActiveValidatorsLoadedInBrain({
   beaconchainApi,
-  brainDb
+  brainDb,
+  validatorsDataPerEpochMap,
+  clients
 }: {
   beaconchainApi: BeaconchainApi;
   brainDb: BrainDataBase;
-}): Promise<string[]> {
+  validatorsDataPerEpochMap: ValidatorsDataPerEpochMap;
+  clients: Clients;
+}): Promise<void> {
   const validatorIndexes = await getValidatorIndexesAndSaveInDb({ beaconchainApi, brainDb });
-  if (validatorIndexes.length === 0) return [];
+  if (validatorIndexes.length === 0) return;
   const response = await beaconchainApi.postStateValidators({
     body: {
       ids: validatorIndexes,
@@ -30,7 +31,8 @@ export async function getActiveValidatorsLoadedInBrain({
     stateId: "finalized"
   });
 
-  return response.data.map((validator) => validator.index.toString());
+  // set validator indexes in map
+  for (const { index } of response.data) validatorsDataPerEpochMap.set(parseInt(index), { clients });
 }
 
 /**
