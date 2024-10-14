@@ -18,17 +18,16 @@ validatorsRouter.get(validatorsEndpoint, validateQueryParams, async (req: Reques
     const tagValidatorsMap = new Map<Tag, string[]>();
 
     for (const [pubkey, details] of Object.entries(validators)) {
-      // if tag not provided, include all validators. If tag provided, include only validators with that tag
       if (tag && !tag.includes(details.tag)) continue;
 
       const tagList = tagValidatorsMap.get(details.tag) || [];
 
       if (format === "index") {
         if (!details.index) {
-          res.status(404).send({
-            message: `Validator index not found for validator ${pubkey}. It might be not active. Consider using format pubkey`
-          });
-          return;
+          logger.warn(
+            `Validator ${pubkey} does not have an index, a possible cause is that the deposit has not been processed yet`
+          );
+          continue;
         }
         tagList.push(details.index.toString());
       } else tagList.push(pubkey);
@@ -36,7 +35,6 @@ validatorsRouter.get(validatorsEndpoint, validateQueryParams, async (req: Reques
       tagValidatorsMap.set(details.tag, tagList);
     }
 
-    logger.debug(`tagValidatorsMap ${tagValidatorsMap}`);
     res.send(Object.fromEntries(tagValidatorsMap));
   } catch (e) {
     logger.error(e);
