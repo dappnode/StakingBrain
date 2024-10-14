@@ -6,8 +6,10 @@ import type {
   ValidatorExitExecute,
   BeaconchainPoolVoluntaryExitsPostRequest,
   Web3signerPostResponse,
-  Web3signerHealthcheckResponse
+  Web3signerHealthcheckResponse,
+  EpochsValidatorsMap
 } from "../../../apiClients/types.js";
+import { NumberOfDaysToQuery } from "../../../validatorsDataIngest/types.js";
 
 // Define the type for RPC methods
 export interface RpcMethods {
@@ -24,6 +26,10 @@ export interface RpcMethods {
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   getStakerConfig: () => Promise<StakerConfig>;
+  fetchValidatorsPerformanceData: (
+    validatorIndexes: string[],
+    numberOfDaysToQuery?: NumberOfDaysToQuery
+  ) => Promise<EpochsValidatorsMap>;
 }
 
 export type ActionRequestOrigin = "ui" | "api";
