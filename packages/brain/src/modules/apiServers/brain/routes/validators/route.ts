@@ -1,21 +1,16 @@
 import { Tag } from "@stakingbrain/common";
 import express from "express";
-import { getAndValidateQueryParameters } from "./validation.js";
 import logger from "../../../../logger/index.js";
 import { brainDb } from "../../../../../index.js";
+import { validateQueryParams } from "./validation.js";
+import { RequestParsed } from "./types.js";
 
 const validatorsRouter = express.Router();
 
 const validatorsEndpoint = "/api/v0/brain/validators";
 
-validatorsRouter.get(validatorsEndpoint, async (req, res) => {
-  const result = getAndValidateQueryParameters(req.query);
-  if (result instanceof Error) {
-    res.status(400).send({ message: `Bad request: ${result}` });
-    return;
-  }
-
-  const { format, tag } = result;
+validatorsRouter.get(validatorsEndpoint, validateQueryParams, async (req: RequestParsed, res) => {
+  const { format, tag } = req.query;
 
   try {
     const validators = brainDb.getData();
@@ -23,7 +18,8 @@ validatorsRouter.get(validatorsEndpoint, async (req, res) => {
     const tagValidatorsMap = new Map<Tag, string[]>();
 
     for (const [pubkey, details] of Object.entries(validators)) {
-      if (!tag?.includes(details.tag)) continue;
+      // if tag not provided, include all validators. If tag provided, include only validators with that tag
+      if (tag && !tag.includes(details.tag)) continue;
 
       const tagList = tagValidatorsMap.get(details.tag) || [];
 
@@ -40,6 +36,7 @@ validatorsRouter.get(validatorsEndpoint, async (req, res) => {
       tagValidatorsMap.set(details.tag, tagList);
     }
 
+    logger.debug(`tagValidatorsMap ${tagValidatorsMap}`);
     res.send(Object.fromEntries(tagValidatorsMap));
   } catch (e) {
     logger.error(e);

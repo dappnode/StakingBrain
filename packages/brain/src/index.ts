@@ -18,11 +18,9 @@ import { params } from "./params.js";
 import {
   CronJob,
   reloadValidators,
-  // trackValidatorsPerformanceCron,
   sendProofsOfValidation,
   trackValidatorsPerformanceCron
 } from "./modules/cron/index.js";
-// import { PostgresClient } from "./modules/apiClients/index.js";
 import { brainConfig } from "./modules/config/index.js";
 
 logger.info(`Starting brain...`);

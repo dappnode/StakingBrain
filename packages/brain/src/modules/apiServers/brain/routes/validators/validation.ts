@@ -1,40 +1,36 @@
-// import from express querystring
+import { Response, NextFunction } from "express";
 import { Tag, tags } from "@stakingbrain/common";
-import QueryString from "qs";
+import { RequestReceived } from "./types.js";
 
-export function getAndValidateQueryParameters(requestQuery: QueryString.ParsedQs):
-  | {
-      format: "pubkey" | "index";
-      tag?: Tag[];
+// Validation middleware for query parameters
+export function validateQueryParams(req: RequestReceived, res: Response, next: NextFunction): void {
+  const { format, tag } = req.query;
+
+  // Validate format
+  if (!format || (format !== "pubkey" && format !== "index")) {
+    res.status(400).json({ message: "format is required and must be either 'pubkey' or 'index'" });
+    return;
+  }
+
+  // Validate tag
+  if (tag) {
+    // tag may be of type string or array of strings otherwise return 400
+    if (typeof tag !== "string" && !Array.isArray(tag)) {
+      res.status(400).json({ message: "tag must be a string or an array of strings" });
     }
-  | Error {
-  const { tag, format } = requestQuery;
-  try {
-    return {
-      format: getAndValidateFormat(format),
-      tag: getAndValidateTag(tag)
-    };
-  } catch (e) {
-    return e;
-  }
-}
 
-function getAndValidateFormat(
-  format: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined
-): "pubkey" | "index" {
-  if (!format) throw Error("format is required");
-  if (format !== "pubkey" && format !== "index") throw Error("format must be pubkey or index");
-  return format as "pubkey" | "index";
-}
+    // if tag is a string, convert it to an array
+    const tagsArray = Array.isArray(tag) ? tag : [tag];
+    const invalidTag = tagsArray.find((t) => !tags.includes(t as Tag));
 
-function getAndValidateTag(tag: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined): Tag[] {
-  if (!tag) return [];
-  if (typeof tag === "string") {
-    if (!tags.includes(tag as Tag)) throw Error("Invalid tag");
-    return [tag as Tag];
-  } else {
-    if (!Array.isArray(tag)) throw Error("tag must be an array");
-    for (const t of tag) if (!tags.includes(t as Tag)) throw Error("Invalid tag");
-    return tag as Tag[];
+    if (invalidTag) {
+      res.status(400).json({ message: `invalid tag received: ${invalidTag}. Allowed tags are ${tags.join(", ")}` });
+      return;
+    }
+
+    // If validation passed, update req.query.tag to ensure it is always an array for downstream middleware
+    req.query.tag = tagsArray;
   }
+
+  next(); // Continue to the next middleware or route handler
 }
