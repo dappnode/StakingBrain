@@ -1,3 +1,5 @@
+import { Tag } from "@stakingbrain/common";
+
 /**
  * DbSlot represents the line in the database for a given public key:
  * @param pubkey - the public key
@@ -25,13 +27,6 @@ export interface PubkeyDetails {
   index?: number; // index of the validator. Only available if the validator is active.
 }
 
-export const tags = ["obol", "diva", "ssv", "rocketpool", "stakewise", "stakehouse", "solo", "stader", "lido"] as const;
-
 export const nonEditableFeeRecipientTags = ["rocketpool", "stader", "stakewise", "lido"] as const;
 
 export type NonEditableFeeRecipientTag = (typeof nonEditableFeeRecipientTags)[number];
-
-/**
- * Tag describes the protocol of the public key imported
- */
-export type Tag = (typeof tags)[number];

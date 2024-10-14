@@ -11,7 +11,7 @@ import {
   PostgresClient,
   PrometheusApi
 } from "./modules/apiClients/index.js";
-import { startUiServer, startLaunchpadApi } from "./modules/apiServers/index.js";
+import { startUiServer, startLaunchpadApi, startBrainApi } from "./modules/apiServers/index.js";
 import * as dotenv from "dotenv";
 import process from "node:process";
 import { params } from "./params.js";
@@ -99,6 +99,7 @@ export const postgresClient = new PostgresClient(postgresUrl);
 // Start server APIs
 const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName), network);
 const launchpadServer = startLaunchpadApi();
+const brainApiServer = startBrainApi();
 
 await brainDb.initialize(signerApi, validatorApi);
 logger.debug(brainDb.data);
@@ -141,6 +142,7 @@ function handle(signal: string): void {
   postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
   uiServer.close();
   launchpadServer.close();
+  brainApiServer.close();
   logger.debug(`Stopped all cron jobs and closed all connections.`);
   process.exit(0);
 }
