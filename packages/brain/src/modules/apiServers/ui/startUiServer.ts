@@ -9,7 +9,13 @@ import fs from "fs";
 import { params } from "../../../params.js";
 import { RpcMethods } from "./calls/types.js";
 import { createRpcMethods } from "./calls/index.js";
-import { Web3SignerApi, ValidatorApi, BlockExplorerApi, BeaconchainApi } from "../../apiClients/index.js";
+import {
+  Web3SignerApi,
+  ValidatorApi,
+  BlockExplorerApi,
+  BeaconchainApi,
+  PostgresClient
+} from "../../apiClients/index.js";
 import { CronJob } from "../../cron/cron.js";
 import { BrainDataBase } from "../../db/index.js";
 
@@ -38,6 +44,9 @@ export interface UiServerParams {
   consensusClient: ConsensusClient;
   blockExplorerApi: BlockExplorerApi;
   beaconchainApi: BeaconchainApi;
+  minGenesisTime: number;
+  secondsPerSlot: number;
+  postgresClient: PostgresClient;
 }
 
 export function startUiServer(UiServerParams: UiServerParams): http.Server {
@@ -56,13 +65,19 @@ export function startUiServer(UiServerParams: UiServerParams): http.Server {
     executionClient,
     consensusClient,
     blockExplorerApi,
-    beaconchainApi
+    beaconchainApi,
+    minGenesisTime,
+    secondsPerSlot,
+    postgresClient
   } = UiServerParams;
   // create index.html modified with network
   injectNetworkInHtmmlIfNeeded(uiBuildPath, network);
 
   // Initialize RPC methods
   const rpcMethods = createRpcMethods({
+    postgresClient,
+    minGenesisTime,
+    secondsPerSlot,
     blockExplorerApi,
     beaconchainApi,
     validatorApi,

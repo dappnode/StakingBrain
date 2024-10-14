@@ -135,7 +135,10 @@ const uiServer = startUiServer({
   executionClient,
   consensusClient,
   blockExplorerApi,
-  beaconchainApi
+  beaconchainApi,
+  minGenesisTime,
+  secondsPerSlot,
+  postgresClient
 });
 const launchpadServer = startLaunchpadApi({
   beaconchainApi,
