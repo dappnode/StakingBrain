@@ -1,4 +1,4 @@
-import { Tag } from "../modules/db/types.js";
+import { Tag } from "@stakingbrain/common";
 
 export type ActionRequestOrigin = "ui" | "api";
 

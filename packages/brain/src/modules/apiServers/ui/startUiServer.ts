@@ -78,7 +78,10 @@ export function startUiServer(uiBuildPath: string, network: Network): http.Serve
   );
   app.use(express.json());
   app.use(express.static(uiBuildPath));
-  app.get("*", (req, res) => {
+  // path-to-regexp (used by express >=5.0.0) has a breaking change
+  // where it does not allow to use wildcard among other characters
+  // https://github.com/pillarjs/path-to-regexp?tab=readme-ov-file#errors
+  app.get("/", (_, res) => {
     logger.debug("request received");
     res.sendFile(path.join(uiBuildPath, "index.html"));
   });

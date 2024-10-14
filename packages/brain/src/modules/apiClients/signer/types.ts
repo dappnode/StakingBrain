@@ -1,4 +1,4 @@
-import { Tag } from "../../db/types.js";
+import { Tag } from "@stakingbrain/common";
 
 export type Web3SignerStatus = "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
 
