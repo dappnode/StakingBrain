@@ -1,3 +1,1 @@
-import keystoresRouter from "./route.js";
-
-export { keystoresRouter };
+export { createKeystoresRouter } from "./route.js";

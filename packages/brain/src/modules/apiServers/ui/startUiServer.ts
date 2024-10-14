@@ -1,4 +1,4 @@
-import { BRAIN_UI_DOMAIN, Network } from "@stakingbrain/common";
+import { BRAIN_UI_DOMAIN, ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -7,20 +7,77 @@ import logger from "../../logger/index.js";
 import http from "http";
 import fs from "fs";
 import { params } from "../../../params.js";
-import { rpcMethods, RpcMethodNames } from "../../../calls/index.js";
+import { RpcMethods } from "./calls/types.js";
+import { createRpcMethods } from "./calls/index.js";
+import { Web3SignerApi, ValidatorApi, BlockExplorerApi, BeaconchainApi } from "../../apiClients/index.js";
+import { CronJob } from "../../cron/cron.js";
+import { BrainDataBase } from "../../db/index.js";
 
 // Define the type for the RPC request
 interface RpcRequest {
   jsonrpc: string;
-  method: RpcMethodNames;
+  method: keyof RpcMethods;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params?: any;
   id: string | number | null;
 }
 
-export function startUiServer(uiBuildPath: string, network: Network): http.Server {
+export interface UiServerParams {
+  uiBuildPath: string;
+  network: Network;
+  brainDb: BrainDataBase;
+  reloadValidatorsCron: CronJob;
+  signerApi: Web3SignerApi;
+  validatorApi: ValidatorApi;
+  signerUrl: string;
+  beaconchainUrl: string;
+  isMevBoostSet: boolean;
+  executionClientUrl: string;
+  validatorUrl: string;
+  executionClient: ExecutionClient;
+  consensusClient: ConsensusClient;
+  blockExplorerApi: BlockExplorerApi;
+  beaconchainApi: BeaconchainApi;
+}
+
+export function startUiServer(UiServerParams: UiServerParams): http.Server {
+  const {
+    uiBuildPath,
+    network,
+    brainDb,
+    reloadValidatorsCron,
+    signerApi,
+    validatorApi,
+    signerUrl,
+    beaconchainUrl,
+    isMevBoostSet,
+    executionClientUrl,
+    validatorUrl,
+    executionClient,
+    consensusClient,
+    blockExplorerApi,
+    beaconchainApi
+  } = UiServerParams;
   // create index.html modified with network
   injectNetworkInHtmmlIfNeeded(uiBuildPath, network);
+
+  // Initialize RPC methods
+  const rpcMethods = createRpcMethods({
+    blockExplorerApi,
+    beaconchainApi,
+    validatorApi,
+    signerApi,
+    brainDb,
+    reloadValidatorsCron,
+    network,
+    signerUrl,
+    beaconchainUrl,
+    isMevBoostSet,
+    executionClientUrl,
+    validatorUrl,
+    executionClient,
+    consensusClient
+  });
 
   const app = express();
   const server = http.createServer(app);

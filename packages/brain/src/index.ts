@@ -26,13 +26,13 @@ import { brainConfig } from "./modules/config/index.js";
 logger.info(`Starting brain...`);
 
 dotenv.config();
-export const mode = process.env.NODE_ENV || "development";
+const mode = process.env.NODE_ENV || "development";
 logger.debug(`Running app in mode: ${mode}`);
 
-export const __dirname = process.cwd();
+const __dirname = process.cwd();
 
 // Load staker config
-export const {
+const {
   network,
   executionClient,
   consensusClient,
@@ -58,14 +58,14 @@ logger.debug(
 );
 
 // Create API instances. Must preceed db initialization
-export const prometheusApi = new PrometheusApi({
+const prometheusApi = new PrometheusApi({
   baseUrl: "http://prometheus.dms.dappnode:9090",
   minGenesisTime,
   secondsPerSlot,
   slotsPerEpoch,
   network
 });
-export const signerApi = new Web3SignerApi(
+const signerApi = new Web3SignerApi(
   {
     baseUrl: signerUrl,
     authToken: token,
@@ -73,8 +73,8 @@ export const signerApi = new Web3SignerApi(
   },
   network
 );
-export const blockExplorerApi = new BlockExplorerApi({ baseUrl: blockExplorerUrl }, network);
-export const validatorApi = new ValidatorApi(
+const blockExplorerApi = new BlockExplorerApi({ baseUrl: blockExplorerUrl }, network);
+const validatorApi = new ValidatorApi(
   {
     baseUrl: validatorUrl,
     authToken: token,
@@ -82,28 +82,20 @@ export const validatorApi = new ValidatorApi(
   },
   network
 );
-export const beaconchainApi = new BeaconchainApi({ baseUrl: beaconchainUrl }, network);
-export const dappnodeSignatureVerifierApi = new DappnodeSignatureVerifier(network, validatorsMonitorUrl);
-export const dappmanagerApi = new DappmanagerApi({ baseUrl: "http://my.dappnode" }, network);
+const beaconchainApi = new BeaconchainApi({ baseUrl: beaconchainUrl }, network);
+const dappnodeSignatureVerifierApi = new DappnodeSignatureVerifier(network, validatorsMonitorUrl);
+const dappmanagerApi = new DappmanagerApi({ baseUrl: "http://my.dappnode" }, network);
 
 // Create DB instance
-export const brainDb = new BrainDataBase(
+const brainDb = new BrainDataBase(
   mode === "production" ? path.resolve("data", params.brainDbName) : params.brainDbName
 );
 
 // Create postgres client
-export const postgresClient = new PostgresClient(postgresUrl);
-
-// Start server APIs
-const uiServer = startUiServer(path.resolve(__dirname, params.uiBuildDirName), network);
-const launchpadServer = startLaunchpadApi();
-const brainApiServer = startBrainApi();
-
-await brainDb.initialize(signerApi, validatorApi);
-logger.debug(brainDb.data);
+const postgresClient = new PostgresClient(postgresUrl);
 
 // CRON
-export const reloadValidatorsCron = new CronJob(60 * 1000, () =>
+const reloadValidatorsCron = new CronJob(60 * 1000, () =>
   reloadValidators(signerApi, signerUrl, validatorApi, brainDb)
 );
 reloadValidatorsCron.start();
@@ -113,22 +105,51 @@ const proofOfValidationCron = new CronJob(shareCronInterval, () =>
 proofOfValidationCron.start();
 
 // execute the performance cron task every 1/4 of an epoch
-export const trackValidatorsPerformanceCronTask = new CronJob(
-  ((slotsPerEpoch * secondsPerSlot) / 4) * 1000,
-  async () => {
-    await trackValidatorsPerformanceCron({
-      brainDb,
-      postgresClient,
-      beaconchainApi,
-      executionClient,
-      consensusClient,
-      dappmanagerApi,
-      prometheusApi,
-      sendNotification: true
-    });
-  }
-);
+const trackValidatorsPerformanceCronTask = new CronJob(((slotsPerEpoch * secondsPerSlot) / 4) * 1000, async () => {
+  await trackValidatorsPerformanceCron({
+    brainDb,
+    postgresClient,
+    beaconchainApi,
+    executionClient,
+    consensusClient,
+    dappmanagerApi,
+    prometheusApi,
+    sendNotification: true
+  });
+});
 trackValidatorsPerformanceCronTask.start();
+
+// Start server APIs
+const uiServer = startUiServer({
+  network,
+  uiBuildPath: path.resolve(__dirname, params.uiBuildDirName),
+  brainDb,
+  reloadValidatorsCron,
+  signerApi,
+  validatorApi,
+  signerUrl,
+  beaconchainUrl,
+  isMevBoostSet,
+  executionClientUrl,
+  validatorUrl,
+  executionClient,
+  consensusClient,
+  blockExplorerApi,
+  beaconchainApi
+});
+const launchpadServer = startLaunchpadApi({
+  beaconchainApi,
+  brainDb,
+  network,
+  reloadValidatorsCron,
+  signerApi,
+  signerUrl,
+  validatorApi
+});
+const brainApiServer = startBrainApi({ brainDb });
+
+await brainDb.initialize(signerApi, validatorApi);
+logger.debug(brainDb.data);
 
 // Graceful shutdown
 function handle(signal: string): void {

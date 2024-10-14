@@ -1,6 +1,10 @@
-import { beaconchainApi, signerApi } from "../index.js";
-import logger from "../modules/logger/index.js";
-import { BeaconchainPoolVoluntaryExitsPostRequest, ValidatorExitExecute, ValidatorExitGet } from "../types.js";
+import { BeaconchainApi, Web3SignerApi } from "../../../apiClients/index.js";
+import {
+  BeaconchainPoolVoluntaryExitsPostRequest,
+  ValidatorExitExecute,
+  ValidatorExitGet
+} from "../../../apiClients/types.js";
+import logger from "../../../logger/index.js";
 
 /**
  * Get exit validators info signed
@@ -8,11 +12,15 @@ import { BeaconchainPoolVoluntaryExitsPostRequest, ValidatorExitExecute, Validat
  * @returns The exit data signed of each validator
  */
 export async function getExitValidators({
+  beaconchainApi,
+  signerApi,
   pubkeys
 }: {
+  beaconchainApi: BeaconchainApi;
+  signerApi: Web3SignerApi;
   pubkeys: string[];
 }): Promise<BeaconchainPoolVoluntaryExitsPostRequest[]> {
-  const validatorsExit = await _getExitValidators(pubkeys);
+  const validatorsExit = await _getExitValidators(beaconchainApi, signerApi, pubkeys);
   logger.debug(validatorsExit);
   return validatorsExit;
 }
@@ -22,8 +30,16 @@ export async function getExitValidators({
  * @param pubkeys The public keys of the validators to exit
  * @returns The exit status of each validator
  */
-export async function exitValidators({ pubkeys }: { pubkeys: string[] }): Promise<ValidatorExitExecute[]> {
-  const validatorsToExit = await _getExitValidators(pubkeys);
+export async function exitValidators({
+  signerApi,
+  beaconchainApi,
+  pubkeys
+}: {
+  signerApi: Web3SignerApi;
+  beaconchainApi: BeaconchainApi;
+  pubkeys: string[];
+}): Promise<ValidatorExitExecute[]> {
+  const validatorsToExit = await _getExitValidators(beaconchainApi, signerApi, pubkeys);
   const exitValidatorsResponses: ValidatorExitExecute[] = [];
   for (const validatorToExit of validatorsToExit) {
     try {
@@ -62,7 +78,11 @@ export async function exitValidators({ pubkeys }: { pubkeys: string[] }): Promis
  * @param pubkeys The public keys of the validators to exit
  * @returns The exit validators info signed
  */
-async function _getExitValidators(pubkeys: string[]): Promise<ValidatorExitGet[]> {
+async function _getExitValidators(
+  beaconchainApi: BeaconchainApi,
+  signerApi: Web3SignerApi,
+  pubkeys: string[]
+): Promise<ValidatorExitGet[]> {
   // Get the current epoch from the beaconchain API to exit the validators
   const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "head" });
 

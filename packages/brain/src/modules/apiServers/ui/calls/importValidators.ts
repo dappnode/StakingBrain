@@ -11,11 +11,13 @@ import {
   LIDO_FEE_RECIPIENT_HOLESKY,
   LIDO_FEE_RECIPIENT_MAINNET
 } from "@stakingbrain/common";
-import { reloadValidatorsCron, network, signerApi, validatorApi, signerUrl, brainDb } from "../index.js";
-import logger from "../modules/logger/index.js";
 import { CustomImportRequest } from "./types.js";
-import { Web3signerPostResponse } from "../types.js";
-import { PubkeyDetails } from "../modules/db/types.js";
+import { Web3SignerApi, ValidatorApi } from "../../../apiClients/index.js";
+import { CronJob } from "../../../cron/cron.js";
+import { BrainDataBase } from "../../../db/index.js";
+import { Web3signerPostResponse } from "../../../apiClients/types.js";
+import { PubkeyDetails } from "../../../db/types.js";
+import logger from "../../../logger/index.js";
 
 type ValidatorImportRequest = {
   keystore: string;
@@ -34,7 +36,23 @@ type ValidatorImportRequest = {
  * @param postRequest
  * @returns Web3signerPostResponse
  */
-export async function importValidators(postRequest: CustomImportRequest): Promise<Web3signerPostResponse> {
+export async function importValidators({
+  postRequest,
+  reloadValidatorsCron,
+  network,
+  signerApi,
+  validatorApi,
+  signerUrl,
+  brainDb
+}: {
+  postRequest: CustomImportRequest;
+  reloadValidatorsCron: CronJob;
+  network: Network;
+  signerApi: Web3SignerApi;
+  validatorApi: ValidatorApi;
+  signerUrl: string;
+  brainDb: BrainDataBase;
+}): Promise<Web3signerPostResponse> {
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
