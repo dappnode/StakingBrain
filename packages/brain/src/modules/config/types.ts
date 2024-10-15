@@ -1,26 +1,30 @@
 import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 
-export interface BrainConfig extends NetworkConfig {
+export interface BrainConfig {
+  chain: ChainConfig;
+  apis: ApisConfig;
+}
+
+export interface ApisConfig {
+  prometheusUrl: string;
+  signerUrl: string;
+  blockExplorerUrl: string;
+  validatorUrl: string;
+  beaconchainUrl: string;
+  executionClientUrl: string;
+  dappmanagerUrl: string;
+  postgresUrl: string;
+  token: string;
+  tlsCert: Buffer | null;
+  host: string;
+}
+
+export interface ChainConfig {
+  minGenesisTime: number;
+  secondsPerSlot: number;
+  slotsPerEpoch: number;
   network: Network;
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   isMevBoostSet: boolean;
-  executionClientUrl: string;
-  validatorUrl: string;
-  beaconchainUrl: string;
-  signerUrl: string;
-  token: string;
-  host: string;
-  shareDataWithDappnode: boolean;
-  validatorsMonitorUrl: string;
-  shareCronInterval: number;
-  postgresUrl: string;
-  tlsCert: Buffer | null;
-}
-
-export interface NetworkConfig {
-  minGenesisTime: number;
-  secondsPerSlot: number;
-  slotsPerEpoch: number;
-  blockExplorerUrl: string;
 }

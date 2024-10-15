@@ -5,7 +5,7 @@ import { execSync } from "node:child_process";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
 import path from "path";
-import { reloadValidators } from "../../../../src/modules/cron/index.js";
+import { reloadValidators } from "../../../../src/modules/cron/reloadValidators/index.js";
 import { Network } from "@stakingbrain/common";
 import { PubkeyDetails } from "../../../../src/modules/db/types.js";
 

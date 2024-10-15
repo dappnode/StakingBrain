@@ -1,8 +1,10 @@
 import { prefix0xPubkey, isFeeRecipientEditable, ActionRequestOrigin } from "@stakingbrain/common";
-import { reloadValidatorsCron, brainDb, validatorApi } from "../index.js";
-import logger from "../modules/logger/index.js";
+import logger from "../../../../modules/logger/index.js";
 import { CustomValidatorUpdateRequest } from "./types.js";
-import { PubkeyDetails } from "../modules/db/types.js";
+import { PubkeyDetails } from "../../../../modules/db/types.js";
+import { CronJob } from "../../../cron/cron.js";
+import { BrainDataBase } from "../../../db/index.js";
+import { ValidatorApi } from "../../../apiClients/validator/index.js";
 
 /**
  * Updates validators on DB:
@@ -10,14 +12,23 @@ import { PubkeyDetails } from "../modules/db/types.js";
  * 2. Import feeRecipient on Validator API
  * @param param0
  */
-export async function updateValidators(
-  customValidatorUpdateRequest: CustomValidatorUpdateRequest[],
-  requestFrom?: ActionRequestOrigin
-): Promise<void> {
+export async function updateValidators({
+  reloadValidatorsCronTask,
+  brainDb,
+  validatorApi,
+  customValidatorUpdateRequest,
+  requestFrom
+}: {
+  reloadValidatorsCronTask: CronJob;
+  brainDb: BrainDataBase;
+  validatorApi: ValidatorApi;
+  customValidatorUpdateRequest: CustomValidatorUpdateRequest[];
+  requestFrom?: ActionRequestOrigin;
+}): Promise<void> {
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    reloadValidatorsCron.stop();
+    reloadValidatorsCronTask.stop();
 
     const dbData = brainDb.getData();
 
@@ -52,9 +63,9 @@ export async function updateValidators(
         .catch((err) => logger.error(`Error setting validator feeRecipient`, err));
 
     // IMPORTANT: start the cron
-    reloadValidatorsCron.start();
+    reloadValidatorsCronTask.start();
   } catch (e) {
-    reloadValidatorsCron.restart();
+    reloadValidatorsCronTask.restart();
     throw e;
   }
 }

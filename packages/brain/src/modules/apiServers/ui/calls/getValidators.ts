@@ -1,7 +1,8 @@
 import { isValidWithdrawableBlsAddress, isValidNonWithdrawableBlsAddress } from "@stakingbrain/common";
-import { brainDb, validatorApi, signerApi, beaconchainApi } from "../index.js";
-import logger from "../modules/logger/index.js";
 import { CustomValidatorGetResponse, WithdrawalCredentialsFormat } from "./types.js";
+import { BrainDataBase } from "../../../db/index.js";
+import { ValidatorApi, Web3SignerApi, BeaconchainApi } from "../../../apiClients/index.js";
+import logger from "../../../logger/index.js";
 
 /**
  * Get all validators from db
@@ -9,7 +10,17 @@ import { CustomValidatorGetResponse, WithdrawalCredentialsFormat } from "./types
  * validatorImported and validatorFeeRecipientCorrect checks from the validator API
  * @returns
  */
-export async function getValidators(): Promise<CustomValidatorGetResponse[]> {
+export async function getValidators({
+  brainDb,
+  validatorApi,
+  signerApi,
+  beaconchainApi
+}: {
+  brainDb: BrainDataBase;
+  validatorApi: ValidatorApi;
+  signerApi: Web3SignerApi;
+  beaconchainApi: BeaconchainApi;
+}): Promise<CustomValidatorGetResponse[]> {
   const data = brainDb.data;
   if (!data) return [];
 

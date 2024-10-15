@@ -6,7 +6,7 @@ import { getValidatorToken } from "./getValidatorToken.js";
 import { getTlsCert } from "./getTlsCert.js";
 
 export const brainConfig = (): BrainConfig => {
-  const { network, executionClient, consensusClient, isMevBoostSet, shareDataWithDappnode } = loadEnvs();
+  const { network, executionClient, consensusClient, isMevBoostSet } = loadEnvs();
 
   // Determine the validator URL based on the consensus client and network.
   // All this logic is needed because Teku has a TLS certificate that points to the old
@@ -21,23 +21,31 @@ export const brainConfig = (): BrainConfig => {
     validatorUrl = `http://validator.${network}.dncore.dappnode:3500`;
   }
 
+  const { blockExplorerUrl, minGenesisTime, secondsPerSlot, slotsPerEpoch } = networkConfig(network);
+
   return {
-    network,
-    executionClient,
-    consensusClient,
-    isMevBoostSet,
-    executionClientUrl: `http://execution.${network}.dncore.dappnode:8545`,
-    validatorUrl,
-    beaconchainUrl: `http:/beacon-chain.${network}.dncore.dappnode:3500`,
-    signerUrl: `http://signer.${network}.dncore.dappnode:9000`,
-    token: getValidatorToken(consensusClient),
-    host: network === "mainnet" ? `brain.web3signer.dappnode` : `brain.web3signer-${network}.dappnode`,
-    shareDataWithDappnode,
-    validatorsMonitorUrl: `http://validators-monitor.${network}.dncore.dappnode:3000`,
-    shareCronInterval: 24 * 60 * 60 * 1000, // 24 hours
-    postgresUrl: getPostgresUrl(network),
-    tlsCert: getTlsCert(consensusClient, network), // To avoid Teku edge case it is necessary to update TLS certificate in both: validator and brain
-    ...networkConfig(network)
+    chain: {
+      network,
+      executionClient,
+      consensusClient,
+      isMevBoostSet,
+      minGenesisTime,
+      secondsPerSlot,
+      slotsPerEpoch
+    },
+    apis: {
+      prometheusUrl: "http://prometheus.dms.dappnode:9090",
+      dappmanagerUrl: "http://my.dappnode:9000",
+      blockExplorerUrl,
+      executionClientUrl: `http://execution.${network}.dncore.dappnode:8545`,
+      validatorUrl,
+      beaconchainUrl: `http:/beacon-chain.${network}.dncore.dappnode:3500`,
+      signerUrl: `http://signer.${network}.dncore.dappnode:9000`,
+      postgresUrl: getPostgresUrl(network),
+      token: getValidatorToken(consensusClient),
+      host: network === "mainnet" ? `brain.web3signer.dappnode` : `brain.web3signer-${network}.dappnode`,
+      tlsCert: getTlsCert(consensusClient, network) // To avoid Teku edge case it is necessary to update TLS certificate in both: validator and brain
+    }
   };
 };
 

@@ -1,6 +1,4 @@
-import type { NetworkConfig } from "../types.js";
-
-export const gnosisBrainConfig = (): NetworkConfig => {
+export const gnosisBrainConfig = () => {
   return {
     blockExplorerUrl: "https://gnosischa.in",
     minGenesisTime: 1638968400, // Dec 8, 2021, 13:00 UTC

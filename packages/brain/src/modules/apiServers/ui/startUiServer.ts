@@ -7,20 +7,64 @@ import logger from "../../logger/index.js";
 import http from "http";
 import fs from "fs";
 import { params } from "../../../params.js";
-import { rpcMethods, RpcMethodNames } from "../../../calls/index.js";
+import { RpcMethods } from "./calls/types.js";
+import { createRpcMethods } from "./calls/index.js";
+import { CronJob } from "../../cron/cron.js";
+import { BrainDataBase } from "../../db/index.js";
+import { BrainConfig } from "../../config/types.js";
+import {
+  BeaconchainApi,
+  BlockExplorerApi,
+  PostgresClient,
+  ValidatorApi,
+  Web3SignerApi
+} from "../../apiClients/index.js";
 
 // Define the type for the RPC request
 interface RpcRequest {
   jsonrpc: string;
-  method: RpcMethodNames;
+  method: keyof RpcMethods;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params?: any;
   id: string | number | null;
 }
 
-export function startUiServer(uiBuildPath: string, network: Network): http.Server {
+export function startUiServer({
+  brainDb,
+  blockExplorerApi,
+  beaconchainApi,
+  validatorApi,
+  signerApi,
+  postgresClient,
+  uiBuildPath,
+  brainConfig,
+  reloadValidatorsCronTask
+}: {
+  brainDb: BrainDataBase;
+  blockExplorerApi: BlockExplorerApi;
+  beaconchainApi: BeaconchainApi;
+  validatorApi: ValidatorApi;
+  signerApi: Web3SignerApi;
+  postgresClient: PostgresClient;
+  uiBuildPath: string;
+  brainConfig: BrainConfig;
+  reloadValidatorsCronTask: CronJob;
+}): http.Server {
+  const { network } = brainConfig.chain;
   // create index.html modified with network
   injectNetworkInHtmmlIfNeeded(uiBuildPath, network);
+
+  // Initialize RPC methods
+  const rpcMethods = createRpcMethods({
+    postgresClient,
+    blockExplorerApi,
+    beaconchainApi,
+    validatorApi,
+    signerApi,
+    brainDb,
+    reloadValidatorsCronTask,
+    brainConfig
+  });
 
   const app = express();
   const server = http.createServer(app);

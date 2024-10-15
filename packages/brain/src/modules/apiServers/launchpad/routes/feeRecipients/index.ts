@@ -1,3 +1,1 @@
-import feeRecipientsRouter from "./route.js";
-
-export { feeRecipientsRouter };
+export { createFeeRecipientsRouter } from "./route.js";

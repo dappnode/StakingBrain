@@ -1,6 +1,4 @@
-import type { NetworkConfig } from "../types.js";
-
-export const holeskyBrainConfig = (): NetworkConfig => {
+export const holeskyBrainConfig = () => {
   return {
     blockExplorerUrl: "https://holesky.beaconcha.in",
     minGenesisTime: 1695902100, // Sep-28-2023 11:55:00 +UTC

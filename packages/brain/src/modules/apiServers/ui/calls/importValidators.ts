@@ -11,11 +11,13 @@ import {
   LIDO_FEE_RECIPIENT_HOLESKY,
   LIDO_FEE_RECIPIENT_MAINNET
 } from "@stakingbrain/common";
-import { reloadValidatorsCron, network, signerApi, validatorApi, signerUrl, brainDb } from "../index.js";
-import logger from "../modules/logger/index.js";
 import { CustomImportRequest } from "./types.js";
-import { Web3signerPostResponse } from "../types.js";
-import { PubkeyDetails } from "../modules/db/types.js";
+import { CronJob } from "../../../cron/cron.js";
+import { BrainDataBase } from "../../../db/index.js";
+import { Web3signerPostResponse } from "../../../apiClients/types.js";
+import { PubkeyDetails } from "../../../db/types.js";
+import logger from "../../../logger/index.js";
+import { Web3SignerApi, ValidatorApi } from "../../../apiClients/index.js";
 
 type ValidatorImportRequest = {
   keystore: string;
@@ -34,11 +36,27 @@ type ValidatorImportRequest = {
  * @param postRequest
  * @returns Web3signerPostResponse
  */
-export async function importValidators(postRequest: CustomImportRequest): Promise<Web3signerPostResponse> {
+export async function importValidators({
+  postRequest,
+  reloadValidatorsCronTask,
+  network,
+  signerApi,
+  validatorApi,
+  signerUrl,
+  brainDb
+}: {
+  postRequest: CustomImportRequest;
+  reloadValidatorsCronTask: CronJob;
+  network: Network;
+  signerApi: Web3SignerApi;
+  validatorApi: ValidatorApi;
+  signerUrl: string;
+  brainDb: BrainDataBase;
+}): Promise<Web3signerPostResponse> {
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    reloadValidatorsCron.stop();
+    reloadValidatorsCronTask.stop();
 
     const validators: ValidatorImportRequest[] = [];
     const validatorsToPost: ValidatorImportRequest[] = [];
@@ -113,7 +131,7 @@ export async function importValidators(postRequest: CustomImportRequest): Promis
     web3signerPostResponse.data.push(...wrongFeeRecipientResponse);
 
     if (validatorsToPost.length === 0) {
-      reloadValidatorsCron.start();
+      reloadValidatorsCronTask.start();
       return web3signerPostResponse;
     }
 
@@ -160,10 +178,10 @@ export async function importValidators(postRequest: CustomImportRequest): Promis
     logger.debug(`Written on db: ${validatorsToPost.map((v) => v.pubkey).join(", ")}`);
 
     // IMPORTANT: start the cron
-    reloadValidatorsCron.start();
+    reloadValidatorsCronTask.start();
     return web3signerPostResponse;
   } catch (e) {
-    reloadValidatorsCron.restart();
+    reloadValidatorsCronTask.restart();
     throw e;
   }
 }

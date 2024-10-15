@@ -1,3 +1,1 @@
-import validatorsRouter from "./route.js";
-
-export { validatorsRouter };
+export { createBrainValidatorsRouter } from "./route.js";

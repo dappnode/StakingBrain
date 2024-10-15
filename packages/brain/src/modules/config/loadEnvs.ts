@@ -5,7 +5,6 @@ export function loadEnvs(): {
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   isMevBoostSet: boolean;
-  shareDataWithDappnode: boolean;
 } {
   const network = getNetwork();
 
@@ -13,14 +12,12 @@ export function loadEnvs(): {
   const consensusClient = getConsensusClient(network);
 
   const isMevBoostSet = process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`] === "true";
-  const shareDataWithDappnode = process.env.SHARE_DATA_WITH_DAPPNODE === "true";
 
   return {
     network: network as Network,
     executionClient,
     consensusClient,
-    isMevBoostSet,
-    shareDataWithDappnode
+    isMevBoostSet
   };
 }
 

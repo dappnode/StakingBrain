@@ -1,45 +1,46 @@
 import { Tag } from "@stakingbrain/common";
 import express from "express";
 import logger from "../../../../logger/index.js";
-import { brainDb } from "../../../../../index.js";
 import { validateQueryParams } from "./validation.js";
 import { RequestParsed } from "./types.js";
+import { BrainDataBase } from "../../../../db/index.js";
 
-const validatorsRouter = express.Router();
+export const createBrainValidatorsRouter = ({ brainDb }: { brainDb: BrainDataBase }) => {
+  const validatorsRouter = express.Router();
+  const validatorsEndpoint = "/api/v0/brain/validators";
 
-const validatorsEndpoint = "/api/v0/brain/validators";
+  validatorsRouter.get(validatorsEndpoint, validateQueryParams, async (req: RequestParsed, res) => {
+    const { format, tag } = req.query;
 
-validatorsRouter.get(validatorsEndpoint, validateQueryParams, async (req: RequestParsed, res) => {
-  const { format, tag } = req.query;
+    try {
+      const validators = brainDb.getData();
 
-  try {
-    const validators = brainDb.getData();
+      const tagValidatorsMap = new Map<Tag, string[]>();
 
-    const tagValidatorsMap = new Map<Tag, string[]>();
+      for (const [pubkey, details] of Object.entries(validators)) {
+        if (tag && !tag.includes(details.tag)) continue;
 
-    for (const [pubkey, details] of Object.entries(validators)) {
-      if (tag && !tag.includes(details.tag)) continue;
+        const tagList = tagValidatorsMap.get(details.tag) || [];
 
-      const tagList = tagValidatorsMap.get(details.tag) || [];
+        if (format === "index") {
+          if (!details.index) {
+            logger.warn(
+              `Validator ${pubkey} does not have an index, a possible cause is that the deposit has not been processed yet`
+            );
+            continue;
+          }
+          tagList.push(details.index.toString());
+        } else tagList.push(pubkey);
 
-      if (format === "index") {
-        if (!details.index) {
-          logger.warn(
-            `Validator ${pubkey} does not have an index, a possible cause is that the deposit has not been processed yet`
-          );
-          continue;
-        }
-        tagList.push(details.index.toString());
-      } else tagList.push(pubkey);
+        tagValidatorsMap.set(details.tag, tagList);
+      }
 
-      tagValidatorsMap.set(details.tag, tagList);
+      res.send(Object.fromEntries(tagValidatorsMap));
+    } catch (e) {
+      logger.error(e);
+      res.status(500).send({ message: "Internal server error" });
     }
+  });
 
-    res.send(Object.fromEntries(tagValidatorsMap));
-  } catch (e) {
-    logger.error(e);
-    res.status(500).send({ message: "Internal server error" });
-  }
-});
-
-export default validatorsRouter;
+  return validatorsRouter;
+};
