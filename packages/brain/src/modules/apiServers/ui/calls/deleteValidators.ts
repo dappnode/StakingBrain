@@ -1,4 +1,4 @@
-import { ValidatorApi, Web3SignerApi } from "../../../apiClients/index.js";
+import { Web3SignerApi, ValidatorApi } from "../../../apiClients/index.js";
 import { Web3signerDeleteRequest, Web3signerDeleteResponse } from "../../../apiClients/types.js";
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
@@ -14,13 +14,13 @@ import logger from "../../../logger/index.js";
  * @returns
  */
 export async function deleteValidators({
-  reloadValidatorsCron,
+  reloadValidatorsCronTask,
   validatorApi,
   signerApi,
   brainDb,
   deleteRequest
 }: {
-  reloadValidatorsCron: CronJob;
+  reloadValidatorsCronTask: CronJob;
   validatorApi: ValidatorApi;
   signerApi: Web3SignerApi;
   brainDb: BrainDataBase;
@@ -29,7 +29,7 @@ export async function deleteValidators({
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are deleting validators
-    reloadValidatorsCron.stop();
+    reloadValidatorsCronTask.stop();
 
     // Delete feeRecipient on Validator API
     for (const pubkey of deleteRequest.pubkeys)
@@ -50,10 +50,10 @@ export async function deleteValidators({
     brainDb.deleteValidators(deleteRequest.pubkeys);
 
     // IMPORTANT: start the cron
-    reloadValidatorsCron.start();
+    reloadValidatorsCronTask.start();
     return web3signerDeleteResponse;
   } catch (e) {
-    reloadValidatorsCron.restart();
+    reloadValidatorsCronTask.restart();
     throw e;
   }
 }

@@ -1,4 +1,4 @@
-import { BRAIN_UI_DOMAIN, ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
+import { BRAIN_UI_DOMAIN, Network } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -9,15 +9,16 @@ import fs from "fs";
 import { params } from "../../../params.js";
 import { RpcMethods } from "./calls/types.js";
 import { createRpcMethods } from "./calls/index.js";
-import {
-  Web3SignerApi,
-  ValidatorApi,
-  BlockExplorerApi,
-  BeaconchainApi,
-  PostgresClient
-} from "../../apiClients/index.js";
 import { CronJob } from "../../cron/cron.js";
 import { BrainDataBase } from "../../db/index.js";
+import { BrainConfig } from "../../config/types.js";
+import {
+  BeaconchainApi,
+  BlockExplorerApi,
+  PostgresClient,
+  ValidatorApi,
+  Web3SignerApi
+} from "../../apiClients/index.js";
 
 // Define the type for the RPC request
 interface RpcRequest {
@@ -28,70 +29,41 @@ interface RpcRequest {
   id: string | number | null;
 }
 
-export interface UiServerParams {
-  uiBuildPath: string;
-  network: Network;
+export function startUiServer({
+  brainDb,
+  blockExplorerApi,
+  beaconchainApi,
+  validatorApi,
+  signerApi,
+  postgresClient,
+  uiBuildPath,
+  brainConfig,
+  reloadValidatorsCronTask
+}: {
   brainDb: BrainDataBase;
-  reloadValidatorsCron: CronJob;
-  signerApi: Web3SignerApi;
-  validatorApi: ValidatorApi;
-  signerUrl: string;
-  beaconchainUrl: string;
-  isMevBoostSet: boolean;
-  executionClientUrl: string;
-  validatorUrl: string;
-  executionClient: ExecutionClient;
-  consensusClient: ConsensusClient;
   blockExplorerApi: BlockExplorerApi;
   beaconchainApi: BeaconchainApi;
-  minGenesisTime: number;
-  secondsPerSlot: number;
+  validatorApi: ValidatorApi;
+  signerApi: Web3SignerApi;
   postgresClient: PostgresClient;
-}
-
-export function startUiServer(UiServerParams: UiServerParams): http.Server {
-  const {
-    uiBuildPath,
-    network,
-    brainDb,
-    reloadValidatorsCron,
-    signerApi,
-    validatorApi,
-    signerUrl,
-    beaconchainUrl,
-    isMevBoostSet,
-    executionClientUrl,
-    validatorUrl,
-    executionClient,
-    consensusClient,
-    blockExplorerApi,
-    beaconchainApi,
-    minGenesisTime,
-    secondsPerSlot,
-    postgresClient
-  } = UiServerParams;
+  uiBuildPath: string;
+  brainConfig: BrainConfig;
+  reloadValidatorsCronTask: CronJob;
+}): http.Server {
+  const { network } = brainConfig.chain;
   // create index.html modified with network
   injectNetworkInHtmmlIfNeeded(uiBuildPath, network);
 
   // Initialize RPC methods
   const rpcMethods = createRpcMethods({
     postgresClient,
-    minGenesisTime,
-    secondsPerSlot,
     blockExplorerApi,
     beaconchainApi,
     validatorApi,
     signerApi,
     brainDb,
-    reloadValidatorsCron,
-    network,
-    signerUrl,
-    beaconchainUrl,
-    isMevBoostSet,
-    executionClientUrl,
-    validatorUrl,
-    executionClient,
-    consensusClient
+    reloadValidatorsCronTask,
+    brainConfig
   });
 
   const app = express();

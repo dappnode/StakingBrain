@@ -3,10 +3,9 @@ import { holeskyBrainConfig } from "./holesky.js";
 import { luksoBrainConfig } from "./lukso.js";
 import { mainnetBrainConfig } from "./mainnet.js";
 import { praterBrainConfig } from "./prater.js";
-import type { NetworkConfig } from "../types.js";
 import { Network } from "@stakingbrain/common";
 
-export const networkConfig = (network: Network): NetworkConfig => {
+export const networkConfig = (network: Network) => {
   switch (network) {
     case Network.Holesky:
       return holeskyBrainConfig();

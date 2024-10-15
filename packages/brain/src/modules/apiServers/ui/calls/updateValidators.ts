@@ -4,7 +4,7 @@ import { CustomValidatorUpdateRequest } from "./types.js";
 import { PubkeyDetails } from "../../../../modules/db/types.js";
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
-import { ValidatorApi } from "../../../apiClients/index.js";
+import { ValidatorApi } from "../../../apiClients/validator/index.js";
 
 /**
  * Updates validators on DB:
@@ -13,13 +13,13 @@ import { ValidatorApi } from "../../../apiClients/index.js";
  * @param param0
  */
 export async function updateValidators({
-  reloadValidatorsCron,
+  reloadValidatorsCronTask,
   brainDb,
   validatorApi,
   customValidatorUpdateRequest,
   requestFrom
 }: {
-  reloadValidatorsCron: CronJob;
+  reloadValidatorsCronTask: CronJob;
   brainDb: BrainDataBase;
   validatorApi: ValidatorApi;
   customValidatorUpdateRequest: CustomValidatorUpdateRequest[];
@@ -28,7 +28,7 @@ export async function updateValidators({
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    reloadValidatorsCron.stop();
+    reloadValidatorsCronTask.stop();
 
     const dbData = brainDb.getData();
 
@@ -63,9 +63,9 @@ export async function updateValidators({
         .catch((err) => logger.error(`Error setting validator feeRecipient`, err));
 
     // IMPORTANT: start the cron
-    reloadValidatorsCron.start();
+    reloadValidatorsCronTask.start();
   } catch (e) {
-    reloadValidatorsCron.restart();
+    reloadValidatorsCronTask.restart();
     throw e;
   }
 }

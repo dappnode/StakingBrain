@@ -12,12 +12,12 @@ import {
   LIDO_FEE_RECIPIENT_MAINNET
 } from "@stakingbrain/common";
 import { CustomImportRequest } from "./types.js";
-import { Web3SignerApi, ValidatorApi } from "../../../apiClients/index.js";
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
 import { Web3signerPostResponse } from "../../../apiClients/types.js";
 import { PubkeyDetails } from "../../../db/types.js";
 import logger from "../../../logger/index.js";
+import { Web3SignerApi, ValidatorApi } from "../../../apiClients/index.js";
 
 type ValidatorImportRequest = {
   keystore: string;
@@ -38,7 +38,7 @@ type ValidatorImportRequest = {
  */
 export async function importValidators({
   postRequest,
-  reloadValidatorsCron,
+  reloadValidatorsCronTask,
   network,
   signerApi,
   validatorApi,
@@ -46,7 +46,7 @@ export async function importValidators({
   brainDb
 }: {
   postRequest: CustomImportRequest;
-  reloadValidatorsCron: CronJob;
+  reloadValidatorsCronTask: CronJob;
   network: Network;
   signerApi: Web3SignerApi;
   validatorApi: ValidatorApi;
@@ -56,7 +56,7 @@ export async function importValidators({
   try {
     // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
     // and prevents the cron from running while we are importing validators
-    reloadValidatorsCron.stop();
+    reloadValidatorsCronTask.stop();
 
     const validators: ValidatorImportRequest[] = [];
     const validatorsToPost: ValidatorImportRequest[] = [];
@@ -131,7 +131,7 @@ export async function importValidators({
     web3signerPostResponse.data.push(...wrongFeeRecipientResponse);
 
     if (validatorsToPost.length === 0) {
-      reloadValidatorsCron.start();
+      reloadValidatorsCronTask.start();
       return web3signerPostResponse;
     }
 
@@ -178,10 +178,10 @@ export async function importValidators({
     logger.debug(`Written on db: ${validatorsToPost.map((v) => v.pubkey).join(", ")}`);
 
     // IMPORTANT: start the cron
-    reloadValidatorsCron.start();
+    reloadValidatorsCronTask.start();
     return web3signerPostResponse;
   } catch (e) {
-    reloadValidatorsCron.restart();
+    reloadValidatorsCronTask.restart();
     throw e;
   }
 }

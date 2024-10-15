@@ -6,20 +6,21 @@ import { BrainKeystoreImportRequest } from "../../types.js";
 import { validateDeleteRequestBody, validateImportKeystoresRequestBody } from "./validation.js";
 import logger from "../../../../logger/index.js";
 import { Web3signerDeleteRequest } from "../../../../apiClients/types.js";
-import { ValidatorApi, Web3SignerApi } from "../../../../apiClients/index.js";
 import { CronJob } from "../../../../cron/cron.js";
 import { BrainDataBase } from "../../../../db/index.js";
+import { Web3SignerApi } from "../../../../apiClients/signer/index.js";
+import { ValidatorApi } from "../../../../apiClients/validator/index.js";
 
 export const createKeystoresRouter = ({
   signerApi,
-  reloadValidatorsCron,
+  reloadValidatorsCronTask,
   network,
   validatorApi,
   signerUrl,
   brainDb
 }: {
   signerApi: Web3SignerApi;
-  reloadValidatorsCron: CronJob;
+  reloadValidatorsCronTask: CronJob;
   network: Network;
   validatorApi: ValidatorApi;
   signerUrl: string;
@@ -51,7 +52,7 @@ export const createKeystoresRouter = ({
           })),
           slashing_protection: importRequest.slashing_protection
         },
-        reloadValidatorsCron,
+        reloadValidatorsCronTask,
         network,
         signerApi,
         validatorApi,
@@ -80,7 +81,7 @@ export const createKeystoresRouter = ({
     try {
       const deleteResponse = await deleteValidators({
         deleteRequest,
-        reloadValidatorsCron,
+        reloadValidatorsCronTask,
         validatorApi,
         signerApi,
         brainDb

@@ -6,9 +6,11 @@ import { BrainPubkeysFeeRecipients } from "../../types.js";
 import { validateUpdateFeeRecipientRequestBody } from "./validation.js";
 import type { CustomValidatorGetResponse } from "../../../ui/calls/types.js";
 import logger from "../../../../logger/index.js";
-import { Web3SignerApi, ValidatorApi, BeaconchainApi } from "../../../../apiClients/index.js";
 import { BrainDataBase } from "../../../../db/index.js";
 import { CronJob } from "../../../../cron/cron.js";
+import { BeaconchainApi } from "../../../../apiClients/beaconchain/index.js";
+import { Web3SignerApi } from "../../../../apiClients/signer/index.js";
+import { ValidatorApi } from "../../../../apiClients/validator/index.js";
 
 /**
  * Retrieves fee recipient information for specified validators via GET request.
@@ -41,13 +43,13 @@ export const createFeeRecipientsRouter = ({
   signerApi,
   validatorApi,
   beaconchainApi,
-  reloadValidatorsCron
+  reloadValidatorsCronTask
 }: {
   brainDb: BrainDataBase;
   signerApi: Web3SignerApi;
   validatorApi: ValidatorApi;
   beaconchainApi: BeaconchainApi;
-  reloadValidatorsCron: CronJob;
+  reloadValidatorsCronTask: CronJob;
 }) => {
   const feeRecipientsRouter = express.Router();
   const feeRecipientsEndpoint = "/eth/v1/feeRecipients";
@@ -162,7 +164,7 @@ export const createFeeRecipientsRouter = ({
       });
 
       await updateValidators({
-        reloadValidatorsCron,
+        reloadValidatorsCronTask,
         brainDb,
         validatorApi,
         customValidatorUpdateRequest: validatorsToUpdate,

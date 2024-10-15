@@ -1,6 +1,4 @@
-import type { NetworkConfig } from "../types.js";
-
-export const mainnetBrainConfig = (): NetworkConfig => {
+export const mainnetBrainConfig = () => {
   return {
     blockExplorerUrl: "https://beaconcha.in",
     minGenesisTime: 1606824000,
