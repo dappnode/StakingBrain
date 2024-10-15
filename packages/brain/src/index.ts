@@ -20,10 +20,7 @@ const __dirname = process.cwd();
 // Load staker config
 const config = brainConfig();
 logger.debug(`Brain config:\n`);
-for (const [key, value] of Object.entries(config)) {
-  logger.debug(`\n- ${key}\n`);
-  for (const [k, v] of Object.entries(value)) logger.debug(`  - ${k}: ${v}\n`);
-}
+for (const [key, value] of Object.entries(config)) logger.debug(`${key}: ${value}`);
 
 // Create API instances. Must preceed db initialization
 const { prometheusApi, signerApi, blockExplorerApi, validatorApi, beaconchainApi, dappmanagerApi, postgresClient } =
