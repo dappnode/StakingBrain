@@ -10,6 +10,7 @@ import { BeaconchainApi } from "../apiClients/beaconchain/index.js";
 import { CronJob } from "../cron/cron.js";
 import { startLaunchpadApi } from "./launchpad/index.js";
 import http from "http";
+import { startIndexerApi } from "./indexer/index.js";
 
 export const getServers = ({
   brainConfig,
@@ -35,6 +36,7 @@ export const getServers = ({
   uiServer: http.Server;
   launchpadServer: http.Server;
   brainApiServer: http.Server;
+  indexerApi: http.Server;
 } => {
   return {
     uiServer: startUiServer({
@@ -59,6 +61,10 @@ export const getServers = ({
     }),
     brainApiServer: startBrainApi({
       brainDb
+    }),
+    indexerApi: startIndexerApi({
+      brainDb,
+      postgresClient
     })
   };
 };

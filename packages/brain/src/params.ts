@@ -9,6 +9,7 @@ export const params = {
   uiPort: 80,
   launchpadPort: 3000,
   brainPort: 5000,
+  indexerPort: 7000,
   defaultValidatorsMonitorUrl: "https://validators-proofs.dappnode.io",
   defaultProofsOfValidationCron: 24 * 60 * 60 * 1000 // 1 day in ms
 };
