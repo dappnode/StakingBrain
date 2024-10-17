@@ -4,8 +4,8 @@ import { validateQueryParams } from "./validation.js";
 import { RequestParsed } from "./types.js";
 import { BrainDataBase } from "../../../../db/index.js";
 import { PostgresClient } from "../../../../apiClients/index.js";
-import { Tag } from "@stakingbrain/common";
-import { ValidatorsDataPerEpochMap } from "../../../../apiClients/types.js";
+import { Tag, tags } from "@stakingbrain/common";
+import { DataPerEpoch, ValidatorsDataPerEpochMap } from "../../../../apiClients/types.js";
 import { StakingBrainDb } from "../../../../db/types.js";
 
 export const createIndexerEpochsRouter = ({
@@ -33,7 +33,8 @@ export const createIndexerEpochsRouter = ({
 
       const tagsEpochsMap = await getTagsEpochsMap({ postgresClient, validatorsTagIndexesMap, start, end });
 
-      res.send(tagsEpochsMap);
+      // serialize the map to an object
+      res.send(convertMapIntoObject(tagsEpochsMap));
     } catch (e) {
       logger.error(e);
       res.status(500).send({ message: "Internal server error" });
@@ -50,20 +51,28 @@ function getValidatorsTagsIndexesMap({
   brainDbData: StakingBrainDb;
   tag?: Tag[];
 }): Map<Tag, number[]> {
-  const validatorsTagIndexesMap = new Map<Tag, number[]>();
-  if (tag) {
-    for (const t of tag) {
-      if (!brainDbData[t]) continue;
-      const index = brainDbData[t].index;
-      if (!index) continue;
-      if (!validatorsTagIndexesMap.has(t)) validatorsTagIndexesMap.set(t, []);
-      validatorsTagIndexesMap.get(t)!.push(index);
-    }
-  } else {
-    for (const [_, details] of Object.entries(brainDbData)) {
-      if (!details.index) continue;
-      if (!validatorsTagIndexesMap.has(details.tag)) validatorsTagIndexesMap.set(details.tag, []);
-      validatorsTagIndexesMap.get(details.tag)!.push(details.index);
+  const validatorsTagIndexesMap = new Map<Tag, number[]>([["solo", [1234]]]);
+
+  // Filter the tags to consider, based on whether the `tag` parameter is provided
+  const tagsToConsider = tag ? tag : tags;
+
+  // Initialize an empty array for each tag in the map
+  for (const t of tagsToConsider) validatorsTagIndexesMap.set(t, []);
+
+  // Iterate over brainDbData to populate the map with the indexes
+  for (const [_, details] of Object.entries(brainDbData)) {
+    const validatorTag = details.tag;
+    const validatorIndex = details.index;
+
+    // Check if the validator tag is in the tags to consider and if an index exists
+    if (tagsToConsider.includes(validatorTag) && validatorIndex !== undefined) {
+      // Initialize the array if it doesn't exist in the map
+      if (!validatorsTagIndexesMap.has(validatorTag)) {
+        validatorsTagIndexesMap.set(validatorTag, []);
+      }
+
+      // Push the validator's index into the corresponding array
+      validatorsTagIndexesMap.get(validatorTag)!.push(validatorIndex);
     }
   }
 
@@ -94,12 +103,39 @@ async function getTagsEpochsMap({
     for (const [epoch, validatorsDataMap] of epochsValidatorsMap) {
       if (!tagsEpochsMap.has(epoch)) tagsEpochsMap.set(epoch, new Map());
 
-      if (!tagsEpochsMap.get(epoch)!.has(tag)) tagsEpochsMap.get(epoch)!.set(tag, new Map());
-
-      for (const [validatorIndex, data] of validatorsDataMap)
-        tagsEpochsMap.get(epoch)!.get(tag)!.set(validatorIndex, data);
+      tagsEpochsMap.get(epoch)!.set(tag, validatorsDataMap);
     }
   }
 
   return tagsEpochsMap;
+}
+
+function convertMapIntoObject(map: Map<number, Map<Tag, ValidatorsDataPerEpochMap>>): {
+  [epoch: number]: {
+    [tag: string]: {
+      [validatorIndex: number]: DataPerEpoch;
+    };
+  };
+} {
+  const object: {
+    [epoch: number]: {
+      [tag: string]: {
+        [validatorIndex: number]: DataPerEpoch;
+      };
+    };
+  } = {};
+
+  for (const [epoch, tagsValidatorsMap] of map) {
+    object[epoch] = {};
+
+    for (const [tag, validatorsDataMap] of tagsValidatorsMap) {
+      object[epoch][tag] = {};
+
+      for (const [validatorIndex, data] of validatorsDataMap) {
+        object[epoch][tag][validatorIndex] = data;
+      }
+    }
+  }
+
+  return object;
 }
