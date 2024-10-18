@@ -9,7 +9,7 @@ import type {
   Web3signerDeleteResponse,
   Web3signerHealthcheckResponse,
   Web3signerPostResponse,
-  EpochsValidatorsMap,
+  EpochsValidatorsData,
   NumberOfDaysToQuery
 } from "@stakingbrain/brain";
 import { StakerConfig } from "@stakingbrain/common";
@@ -33,7 +33,7 @@ export interface RpcMethods {
   }: {
     validatorIndexes: string[];
     numberOfDaysToQuery?: NumberOfDaysToQuery;
-  }) => Promise<EpochsValidatorsMap>;
+  }) => Promise<EpochsValidatorsData>;
   // Network
   getStakerConfig: () => Promise<StakerConfig>;
 }

@@ -1,5 +1,5 @@
 import { PostgresClient } from "../apiClients/index.js";
-import type { EpochsValidatorsMap } from "../apiClients/postgres/types.js";
+import type { EpochsValidatorsData } from "../apiClients/postgres/types.js";
 import logger from "../logger/index.js";
 import { getStartAndEndEpochs } from "./getStartAndEndEpochs.js";
 import { NumberOfDaysToQuery } from "./types.js";
@@ -26,7 +26,7 @@ export async function fetchAndProcessValidatorsData({
   minGenesisTime: number; // import from backend index
   secondsPerSlot: number; // immport from backend index
   numberOfDaysToQuery?: NumberOfDaysToQuery;
-}): Promise<EpochsValidatorsMap> {
+}): Promise<EpochsValidatorsData> {
   logger.info("Processing epochs data");
 
   // Get start timestamp and end timestamp

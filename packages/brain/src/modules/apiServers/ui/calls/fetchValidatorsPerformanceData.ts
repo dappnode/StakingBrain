@@ -1,6 +1,6 @@
 import { PostgresClient } from "../../../../modules/apiClients/index.js";
 import type { NumberOfDaysToQuery } from "../../../../modules/validatorsDataIngest/types.js";
-import type { EpochsValidatorsMap } from "../../../../modules/apiClients/postgres/types.js";
+import type { EpochsValidatorsData } from "../../../../modules/apiClients/postgres/types.js";
 import { fetchAndProcessValidatorsData } from "../../../validatorsDataIngest/index.js";
 
 export async function fetchValidatorsPerformanceData({
@@ -15,7 +15,7 @@ export async function fetchValidatorsPerformanceData({
   numberOfDaysToQuery?: NumberOfDaysToQuery;
   minGenesisTime: number;
   secondsPerSlot: number;
-}): Promise<EpochsValidatorsMap> {
+}): Promise<EpochsValidatorsData> {
   return await fetchAndProcessValidatorsData({
     validatorIndexes,
     postgresClient,

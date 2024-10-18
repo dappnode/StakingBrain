@@ -13,8 +13,11 @@ export enum Columns {
   error = "error"
 }
 
-// Indexed by epoch number
-export type EpochsValidatorsMap = Map<number, ValidatorsDataPerEpochMap>;
+export interface EpochsValidatorsData {
+  [epoch: number]: {
+    [validatorIndex: number]: DataPerEpoch;
+  };
+}
 
 // Indexed by validator index
 export type ValidatorsDataPerEpochMap = Map<number, DataPerEpoch>;

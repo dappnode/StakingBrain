@@ -51,7 +51,7 @@ reloadValidatorsCronTask.start();
 //trackValidatorsPerformanceCronTask.start();
 
 // Start server APIs
-const { uiServer, launchpadServer, brainApiServer } = getServers({
+const { uiServer, launchpadServer, brainApiServer, indexerApi } = getServers({
   brainConfig: config,
   uiBuildPath: path.resolve(__dirname, params.uiBuildDirName),
   signerApi,
@@ -73,6 +73,7 @@ function handle(signal: string): void {
   uiServer.close();
   launchpadServer.close();
   brainApiServer.close();
+  indexerApi.close();
   logger.debug(`Stopped all cron jobs and closed all connections.`);
   process.exit(0);
 }
