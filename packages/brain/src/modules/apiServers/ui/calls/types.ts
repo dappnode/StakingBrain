@@ -7,7 +7,7 @@ import type {
   BeaconchainPoolVoluntaryExitsPostRequest,
   Web3signerPostResponse,
   Web3signerHealthcheckResponse,
-  EpochsValidatorsMap
+  EpochsValidatorsData
 } from "../../../apiClients/types.js";
 import { NumberOfDaysToQuery } from "../../../validatorsDataIngest/types.js";
 
@@ -29,7 +29,7 @@ export interface RpcMethods {
   fetchValidatorsPerformanceData: (
     validatorIndexes: string[],
     numberOfDaysToQuery?: NumberOfDaysToQuery
-  ) => Promise<EpochsValidatorsMap>;
+  ) => Promise<EpochsValidatorsData>;
 }
 
 export type ActionRequestOrigin = "ui" | "api";

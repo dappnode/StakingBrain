@@ -5,8 +5,16 @@ import { RequestParsed } from "./types.js";
 import { BrainDataBase } from "../../../../db/index.js";
 import { PostgresClient } from "../../../../apiClients/index.js";
 import { Tag, tags } from "@stakingbrain/common";
-import { DataPerEpoch, ValidatorsDataPerEpochMap } from "../../../../apiClients/types.js";
+import { DataPerEpoch } from "../../../../apiClients/types.js";
 import { StakingBrainDb } from "../../../../db/types.js";
+
+interface EpochsTagsValidatorsData {
+  [epoch: number]: {
+    [tag: string]: {
+      [validatorIndex: number]: DataPerEpoch;
+    };
+  };
+}
 
 export const createIndexerEpochsRouter = ({
   postgresClient,
@@ -31,10 +39,14 @@ export const createIndexerEpochsRouter = ({
         return;
       }
 
-      const tagsEpochsMap = await getTagsEpochsMap({ postgresClient, validatorsTagIndexesMap, start, end });
+      const epochsTagsValidatorsData = await getEpochsTagsValidatorsData({
+        postgresClient,
+        validatorsTagIndexesMap,
+        start,
+        end
+      });
 
-      // serialize the map to an object
-      res.send(convertMapIntoObject(tagsEpochsMap));
+      res.send(epochsTagsValidatorsData);
     } catch (e) {
       logger.error(e);
       res.status(500).send({ message: "Internal server error" });
@@ -79,7 +91,7 @@ function getValidatorsTagsIndexesMap({
   return validatorsTagIndexesMap;
 }
 
-async function getTagsEpochsMap({
+async function getEpochsTagsValidatorsData({
   postgresClient,
   validatorsTagIndexesMap,
   start,
@@ -89,53 +101,26 @@ async function getTagsEpochsMap({
   validatorsTagIndexesMap: Map<Tag, number[]>;
   start: number;
   end: number;
-}): Promise<Map<number, Map<Tag, ValidatorsDataPerEpochMap>>> {
-  const tagsEpochsMap: Map<number, Map<Tag, ValidatorsDataPerEpochMap>> = new Map();
+}): Promise<EpochsTagsValidatorsData> {
+  const epochsTagsValidatorsData: EpochsTagsValidatorsData = Object.create(null);
 
   // Get epochs data for each tag
   for (const [tag, indexes] of validatorsTagIndexesMap) {
-    const epochsValidatorsMap = await postgresClient.getEpochsDataMapForEpochRange({
+    const epochsValidatorsData = await postgresClient.getEpochsDataMapForEpochRange({
       validatorIndexes: indexes.map((index) => index.toString()),
       startEpoch: start,
       endEpoch: end
     });
 
-    for (const [epoch, validatorsDataMap] of epochsValidatorsMap) {
-      if (!tagsEpochsMap.has(epoch)) tagsEpochsMap.set(epoch, new Map());
+    // Add the data to the object
+    for (const [epoch, data] of Object.entries(epochsValidatorsData)) {
+      const epochNumber = parseInt(epoch);
 
-      tagsEpochsMap.get(epoch)!.set(tag, validatorsDataMap);
+      if (!epochsTagsValidatorsData[epochNumber]) epochsTagsValidatorsData[epochNumber] = Object.create(null);
+
+      epochsTagsValidatorsData[epochNumber][tag] = data;
     }
   }
 
-  return tagsEpochsMap;
-}
-
-function convertMapIntoObject(map: Map<number, Map<Tag, ValidatorsDataPerEpochMap>>): {
-  [epoch: number]: {
-    [tag: string]: {
-      [validatorIndex: number]: DataPerEpoch;
-    };
-  };
-} {
-  const object: {
-    [epoch: number]: {
-      [tag: string]: {
-        [validatorIndex: number]: DataPerEpoch;
-      };
-    };
-  } = {};
-
-  for (const [epoch, tagsValidatorsMap] of map) {
-    object[epoch] = {};
-
-    for (const [tag, validatorsDataMap] of tagsValidatorsMap) {
-      object[epoch][tag] = {};
-
-      for (const [validatorIndex, data] of validatorsDataMap) {
-        object[epoch][tag][validatorIndex] = data;
-      }
-    }
-  }
-
-  return object;
+  return epochsTagsValidatorsData;
 }
