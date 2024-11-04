@@ -1,6 +1,6 @@
 import postgres from "postgres";
 import logger from "../../logger/index.js";
-import { EpochsValidatorsMap, DataPerEpoch, Columns, ValidatorsDataPerEpochMap, PostgresDataRow } from "./types.js";
+import { DataPerEpoch, Columns, ValidatorsDataPerEpochMap, PostgresDataRow, EpochsValidatorsData } from "./types.js";
 
 export class PostgresClient {
   private readonly tableName = "epochs_data";
@@ -99,7 +99,7 @@ ${Columns.error} = EXCLUDED.${Columns.error}
     validatorIndexes: string[];
     startEpoch: number;
     endEpoch: number;
-  }): Promise<EpochsValidatorsMap> {
+  }): Promise<EpochsValidatorsData> {
     const query = `
 SELECT * FROM ${this.tableName}
 WHERE ${Columns.validatorindex} = ANY($1)
@@ -109,7 +109,7 @@ AND ${Columns.epoch} <= $3
 
     const result: PostgresDataRow[] = await this.sql.unsafe(query, [validatorIndexes, startEpoch, endEpoch]);
 
-    const epochsValidatorsMap: EpochsValidatorsMap = new Map();
+    const epochsValidatorData: EpochsValidatorsData = Object.create(null);
 
     for (const row of result) {
       const { validatorindex, epoch, clients, attestation, block, synccommittee, slot, error } = row;
@@ -124,12 +124,12 @@ AND ${Columns.epoch} <= $3
         [Columns.error]: error
       };
 
-      if (!epochsValidatorsMap.has(epochNumber)) epochsValidatorsMap.set(epochNumber, new Map());
+      if (!epochsValidatorData[epochNumber]) epochsValidatorData[epochNumber] = Object.create(null);
 
-      epochsValidatorsMap.get(epochNumber)!.set(validatorIndexNumber, data);
+      epochsValidatorData[epochNumber][validatorIndexNumber] = data;
     }
 
-    return epochsValidatorsMap;
+    return epochsValidatorData;
   }
 
   /**
