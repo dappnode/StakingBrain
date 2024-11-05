@@ -6,12 +6,12 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import { useEffect } from "react";
+import { Switch } from "@headlessui/react";
 
 const routes: { name: string; path: string }[] = [
   { name: "Validators", path: "/" },
   { name: "Import", path: "/import" },
   { name: "Performance", path: "/performance" },
-  { name: "Notifications", path: "/notifications" },
 ];
 
 export default function NavBar({
@@ -70,24 +70,27 @@ export default function NavBar({
           ))}
         </div>
 
-        <div className="flex flex-row gap-5">
-          <IconButton
-            sx={{ ml: 1 }}
-            onClick={() => {
+        <div className="flex flex-row gap-5 items-center">
+          <Switch
+            checked={theme === "dark"}
+            onChange={() => {
               toggleTheme();
               localStorage.setItem(
                 "theme",
                 theme === "dark" ? "light" : "dark",
               );
             }}
-            color="inherit"
+            className="group inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition data-[checked]:bg-text-purple"
           >
-            {theme === "dark" ? (
-              <LightModeIcon titleAccess="Set Light Mode" />
-            ) : (
-              <DarkModeIcon titleAccess="Set Dark Mode" />
-            )}
-          </IconButton>
+            <span className="size-4 translate-x-1 transition-transform group-data-[checked]:translate-x-6 flex items-center justify-center ease-in-out">
+              {theme === "dark" ? (
+                <DarkModeIcon titleAccess="Set Dark Mode" style={{fontSize: "18px"}} />
+              ) : (
+                <LightModeIcon titleAccess="Set Light Mode" style={{fontSize: "18px"}}/>
+              )}
+            </span>
+          </Switch>
+
           <IconButton
             sx={{ ml: 1 }}
             onClick={() =>

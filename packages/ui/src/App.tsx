@@ -70,7 +70,7 @@ function App(): JSX.Element {
           setUserMode={setUserMode}
         />
         <div className="flex w-full flex-grow justify-center">
-          <div className=" w-3/4 ">
+          <div className=" w-3/4">
             {signerStatus !== "UP" ? (
               signerStatus === "LOADING" ? (
                 <div className="flex h-full items-center justify-center">

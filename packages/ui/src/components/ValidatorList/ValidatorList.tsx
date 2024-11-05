@@ -11,6 +11,7 @@ import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
 import { getSmoothAddressByNetwork } from "../../utils/addresses";
 import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
+import DeleteDialog from "../Dialogs/DeleteDialog";
 
 export default function ValidatorList({
   stakerConfig,
@@ -50,7 +51,7 @@ export default function ValidatorList({
       setLoading(true);
       setValidatorsGet(await rpcClient.call("getValidators", undefined));
       setValidatorsGetError(undefined);
-      setLoading(false);   
+      setLoading(false);
     } catch (e) {
       console.error(e);
       setValidatorsGetError(e.message);
@@ -126,6 +127,14 @@ export default function ValidatorList({
             </Alert>
           )}
 
+          <DeleteDialog
+            rows={validatorsGet}
+            selectedRows={selectedRows}
+            setSelectedRows={setSelectedRows}
+            isOpen={deleteOpen}
+            setIsOpen={setDeleteOpen}
+          />
+{/* 
           {deleteOpen && (
             <KeystoresDeleteDialog
               rows={validatorsGet}
@@ -134,7 +143,7 @@ export default function ValidatorList({
               open={deleteOpen}
               setOpen={setDeleteOpen}
             />
-          )}
+          )} */}
 
           {editFeesOpen && (
             <EditFeesDialog
@@ -146,7 +155,6 @@ export default function ValidatorList({
               isMevBoostSet={isMevBoostSet}
             />
           )}
-
           {exitOpen && (
             <KeystoresExitDialog
               rows={validatorsGet}

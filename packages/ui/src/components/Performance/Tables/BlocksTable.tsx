@@ -1,10 +1,7 @@
 import { Column, createColumnHelper } from "@tanstack/react-table";
-import { BlocksTableProps } from "../../types";
+import { BlocksTableProps } from "../../../types";
 import DefalutTable from "./DefaultTable";
-import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { ReactNode } from "react";
+import { getSortIndicator, toggleSort } from "./sortingUtils";
 
 export default function BlocksTable({
   blocksData,
@@ -12,38 +9,6 @@ export default function BlocksTable({
   blocksData: BlocksTableProps[];
 }): JSX.Element {
   const columnHelper = createColumnHelper<BlocksTableProps>();
-
-  const getSortIndicator = ({
-    column,
-  }: {
-    column: Column<any, any>;
-  }): ReactNode => {
-    let sortIndicator: ReactNode = null;
-
-    if (column?.getIsSorted()) {
-      sortIndicator =
-        column.getIsSorted() === "desc" ? (
-          <KeyboardArrowDownIcon />
-        ) : (
-          <KeyboardArrowUpIcon />
-        );
-    } else if (column?.getCanSort()) {
-      sortIndicator = <UnfoldMoreIcon />;
-    }
-
-    return sortIndicator;
-  };
-
-  const toggleSort = (
-    event: React.MouseEvent | React.KeyboardEvent,
-    column: Column<any, any>,
-  ) => {
-    // Check if getToggleSortingHandler exists and then call the returned function with the event
-    const toggleHandler = column.getToggleSortingHandler();
-    if (toggleHandler) {
-      toggleHandler(event);
-    }
-  };
 
   const getSummaryColumns = () => [
     columnHelper.accessor("proposer", {
@@ -61,7 +26,7 @@ export default function BlocksTable({
       enableSorting: true,
     }),
     columnHelper.accessor("group", {
-      header:  ({ column }) => {
+      header: ({ column }) => {
         return (
           <div onClick={(e) => toggleSort(e, column)}>
             Group <span>{getSortIndicator({ column })}</span>
@@ -74,7 +39,7 @@ export default function BlocksTable({
       },
     }),
     columnHelper.accessor("epoch", {
-      header:  ({ column }) => {
+      header: ({ column }) => {
         return (
           <div onClick={(e) => toggleSort(e, column)}>
             Epoch <span>{getSortIndicator({ column })}</span>
@@ -87,7 +52,7 @@ export default function BlocksTable({
       },
     }),
     columnHelper.accessor("slot", {
-      header:  ({ column }) => {
+      header: ({ column }) => {
         return (
           <div onClick={(e) => toggleSort(e, column)}>
             Slot <span>{getSortIndicator({ column })}</span>
@@ -100,7 +65,7 @@ export default function BlocksTable({
       },
     }),
     columnHelper.accessor("status", {
-      header:  ({ column }) => {
+      header: ({ column }) => {
         return (
           <div onClick={(e) => toggleSort(e, column)}>
             Status <span>{getSortIndicator({ column })}</span>

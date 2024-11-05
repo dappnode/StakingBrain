@@ -97,6 +97,8 @@ export interface SummaryTableProps {
   validators: number;
   attestations: number;
   proposals: number;
+  efficiency: number;
+  clRewards: number;
 }
 export interface BlocksTableProps {
   proposer: number;

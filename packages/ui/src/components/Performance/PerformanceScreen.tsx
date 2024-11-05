@@ -5,9 +5,9 @@ import {
   ValidatorsDataProcessed,
 } from "@stakingbrain/brain";
 import { CircularProgress } from "@mui/material";
-import SummaryTable from "./SummaryTable";
+import SummaryTable from "./Tables/SummaryTable";
 import { PerformanceTableTypes } from "../../types";
-import BlocksTable from "./BlocksTable";
+import BlocksTable from "./Tables/BlocksTable";
 import ViewInArIcon from "@mui/icons-material/ViewInAr";
 import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -86,12 +86,12 @@ export default function PerformanceScreen(): JSX.Element {
           />
         </div>
       ) : (
-        <div className="my-20 flex h-full w-full flex-col gap-10">
+        <div className="pt-20 mb-5 flex h-full w-full flex-col gap-10">
           <div className="dark:border-dark-interface-400 flex flex-row justify-between rounded border border-interface-300 bg-interface-100 px-4 py-5 text-lg dark:border-dark-interface-200 dark:bg-dark-interface-100">
             <div>Online Validators</div>
             <div>Rewards</div>
           </div>
-          <div className="flex h-full w-full flex-col">
+          <div className="flex w-full flex-col">
             <div className="flex flex-row">
               {performanceTables.map((table) => (
                 <div
@@ -113,13 +113,17 @@ export default function PerformanceScreen(): JSX.Element {
                     group: "All Validators",
                     attestations: 15,
                     proposals: 0,
-                    validators: 2,
+                    validators: 5,
+                    efficiency: 80,
+                    clRewards: 0.005
                   },
                   {
                     group: "Lido",
                     attestations: 15,
                     proposals: 0,
                     validators: 2,
+                    efficiency: 90,
+                    clRewards: 0.002
                   },
                 ]}
               />
