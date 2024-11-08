@@ -51,7 +51,7 @@ export function startUiServer({
   uiBuildPath: string;
   brainConfig: BrainConfig;
   reloadValidatorsCronTask: CronJob;
-  allowedOriginsFromEnv: string[] | null;
+  allowedOriginsFromEnv: string | string[] | null;
 }): http.Server {
   const { network } = brainConfig.chain;
   // create index.html modified with network

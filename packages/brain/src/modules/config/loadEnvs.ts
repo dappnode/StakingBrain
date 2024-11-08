@@ -5,7 +5,7 @@ export function loadEnvs(): {
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   isMevBoostSet: boolean;
-  cors: string[] | null;
+  cors: string | string[] | null;
 } {
   const network = getNetwork();
 
@@ -14,12 +14,19 @@ export function loadEnvs(): {
 
   const isMevBoostSet = process.env[`_DAPPNODE_GLOBAL_MEVBOOST_${network.toUpperCase()}`] === "true";
 
+  const origins = process.env.CORS ? process.env.CORS.split(",") : null;
+  let cors: string | string[] | null = null;
+  if (origins) {
+    if (origins.length > 1) cors = origins;
+    else if (origins.length === 1) cors = origins[0];
+  }
+
   return {
     network: network as Network,
     executionClient,
     consensusClient,
     isMevBoostSet,
-    cors: process.env.CORS ? process.env.CORS.split(",") : null
+    cors
   };
 }
 

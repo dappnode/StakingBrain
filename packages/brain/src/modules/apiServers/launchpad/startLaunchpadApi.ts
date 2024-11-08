@@ -29,7 +29,7 @@ export function startLaunchpadApi({
   brainDb: BrainDataBase;
   network: Network;
   signerUrl: string;
-  allowedOriginsFromEnv: string[] | null;
+  allowedOriginsFromEnv: string | string[] | null;
 }): http.Server {
   const app = express();
   app.use(express.json());
