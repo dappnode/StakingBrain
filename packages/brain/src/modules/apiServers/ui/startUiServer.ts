@@ -1,4 +1,4 @@
-import { BRAIN_UI_DOMAIN, Network } from "@stakingbrain/common";
+import { Network } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -19,6 +19,7 @@ import {
   ValidatorApi,
   Web3SignerApi
 } from "../../apiClients/index.js";
+import { allowedOrigins } from "./config.js";
 
 // Define the type for the RPC request
 interface RpcRequest {
@@ -38,7 +39,8 @@ export function startUiServer({
   postgresClient,
   uiBuildPath,
   brainConfig,
-  reloadValidatorsCronTask
+  reloadValidatorsCronTask,
+  allowedOriginsFromEnv
 }: {
   brainDb: BrainDataBase;
   blockExplorerApi: BlockExplorerApi;
@@ -49,6 +51,7 @@ export function startUiServer({
   uiBuildPath: string;
   brainConfig: BrainConfig;
   reloadValidatorsCronTask: CronJob;
+  allowedOriginsFromEnv: string[] | null;
 }): http.Server {
   const { network } = brainConfig.chain;
   // create index.html modified with network
@@ -114,10 +117,9 @@ export function startUiServer({
   });
 
   // Express
-  const allowedOrigins = ["http://my.dappnode", `http://${BRAIN_UI_DOMAIN(network)}`];
   app.use(
     cors({
-      origin: allowedOrigins
+      origin: allowedOriginsFromEnv ?? allowedOrigins(network)
     })
   );
   app.use(express.json());

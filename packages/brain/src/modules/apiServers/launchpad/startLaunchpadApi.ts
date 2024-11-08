@@ -3,7 +3,7 @@ import cors from "cors";
 import logger from "../../logger/index.js";
 import http from "node:http";
 import { params } from "../../../params.js";
-import { corsOptions } from "./config.js";
+import { allowedOrigins } from "./config.js";
 import { createKeystoresRouter, createFeeRecipientsRouter } from "./routes/index.js";
 import { CronJob } from "../../cron/cron.js";
 import { BrainDataBase } from "../../db/index.js";
@@ -19,7 +19,8 @@ export function startLaunchpadApi({
   reloadValidatorsCronTask,
   brainDb,
   network,
-  signerUrl
+  signerUrl,
+  allowedOriginsFromEnv
 }: {
   signerApi: Web3SignerApi;
   validatorApi: ValidatorApi;
@@ -28,10 +29,11 @@ export function startLaunchpadApi({
   brainDb: BrainDataBase;
   network: Network;
   signerUrl: string;
+  allowedOriginsFromEnv: string[] | null;
 }): http.Server {
   const app = express();
   app.use(express.json());
-  app.use(cors(corsOptions));
+  app.use(cors({ origin: allowedOriginsFromEnv ?? allowedOrigins }));
 
   app.use(createKeystoresRouter({ reloadValidatorsCronTask, brainDb, network, validatorApi, signerApi, signerUrl }));
   app.use(
