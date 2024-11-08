@@ -60,7 +60,8 @@ const { uiServer, launchpadServer, brainApiServer } = getServers({
   validatorApi,
   beaconchainApi,
   brainDb,
-  reloadValidatorsCronTask
+  reloadValidatorsCronTask,
+  allowedOriginsFromEnv: config.apis.cors
 });
 
 // Graceful shutdown

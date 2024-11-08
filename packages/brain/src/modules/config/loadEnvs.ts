@@ -5,6 +5,7 @@ export function loadEnvs(): {
   executionClient: ExecutionClient;
   consensusClient: ConsensusClient;
   isMevBoostSet: boolean;
+  cors: string[] | null;
 } {
   const network = getNetwork();
 
@@ -17,7 +18,8 @@ export function loadEnvs(): {
     network: network as Network,
     executionClient,
     consensusClient,
-    isMevBoostSet
+    isMevBoostSet,
+    cors: process.env.CORS ? process.env.CORS.split(",") : null
   };
 }
 

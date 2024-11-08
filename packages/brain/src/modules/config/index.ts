@@ -6,7 +6,7 @@ import { getValidatorToken } from "./getValidatorToken.js";
 import { getTlsCert } from "./getTlsCert.js";
 
 export const brainConfig = (): BrainConfig => {
-  const { network, executionClient, consensusClient, isMevBoostSet } = loadEnvs();
+  const { network, executionClient, consensusClient, isMevBoostSet, cors } = loadEnvs();
 
   // Determine the validator URL based on the consensus client and network.
   // All this logic is needed because Teku has a TLS certificate that points to the old
@@ -44,7 +44,8 @@ export const brainConfig = (): BrainConfig => {
       postgresUrl: getPostgresUrl(network),
       token: getValidatorToken(consensusClient),
       host: network === "mainnet" ? `brain.web3signer.dappnode` : `brain.web3signer-${network}.dappnode`,
-      tlsCert: getTlsCert(consensusClient, network) // To avoid Teku edge case it is necessary to update TLS certificate in both: validator and brain
+      tlsCert: getTlsCert(consensusClient, network), // To avoid Teku edge case it is necessary to update TLS certificate in both: validator and brain
+      cors
     }
   };
 };

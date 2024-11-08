@@ -1,3 +1,1 @@
-export const corsOptions = {
-  origin: ["http://csm-lido.dappnode", "http://csm-lido.testnet.dappnode"] // TODO: update with DAppNodePackage-lido-csm.dnp.dappnode.eth domains
-};
+export const allowedOrigins = ["http://ui.lido-csm-holesky.dappnode", "http://ui.lido-csm-mainnet.dappnode"];

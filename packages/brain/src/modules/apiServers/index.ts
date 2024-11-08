@@ -20,7 +20,8 @@ export const getServers = ({
   validatorApi,
   beaconchainApi,
   brainDb,
-  reloadValidatorsCronTask
+  reloadValidatorsCronTask,
+  allowedOriginsFromEnv
 }: {
   brainConfig: BrainConfig;
   uiBuildPath: string;
@@ -31,6 +32,7 @@ export const getServers = ({
   beaconchainApi: BeaconchainApi;
   brainDb: BrainDataBase;
   reloadValidatorsCronTask: CronJob;
+  allowedOriginsFromEnv: string[] | null;
 }): {
   uiServer: http.Server;
   launchpadServer: http.Server;
@@ -46,7 +48,8 @@ export const getServers = ({
       validatorApi,
       blockExplorerApi,
       beaconchainApi,
-      postgresClient
+      postgresClient,
+      allowedOriginsFromEnv
     }),
     launchpadServer: startLaunchpadApi({
       brainDb,
@@ -55,10 +58,12 @@ export const getServers = ({
       beaconchainApi,
       reloadValidatorsCronTask,
       network: brainConfig.chain.network,
-      signerUrl: brainConfig.apis.signerUrl
+      signerUrl: brainConfig.apis.signerUrl,
+      allowedOriginsFromEnv
     }),
     brainApiServer: startBrainApi({
-      brainDb
+      brainDb,
+      allowedOriginsFromEnv
     })
   };
 };

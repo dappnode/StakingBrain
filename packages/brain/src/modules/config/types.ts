@@ -17,6 +17,7 @@ export interface ApisConfig {
   token: string;
   tlsCert: Buffer | null;
   host: string;
+  cors: string[] | null;
 }
 
 export interface ChainConfig {
