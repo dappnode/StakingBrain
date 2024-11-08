@@ -32,7 +32,7 @@ export const getServers = ({
   beaconchainApi: BeaconchainApi;
   brainDb: BrainDataBase;
   reloadValidatorsCronTask: CronJob;
-  allowedOriginsFromEnv: string[] | null;
+  allowedOriginsFromEnv: string | string[] | null;
 }): {
   uiServer: http.Server;
   launchpadServer: http.Server;
