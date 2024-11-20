@@ -50,8 +50,10 @@ export const createRpcMethods = ({
       await beaconchaFetchValidatorsInfo({ blockExplorerApi, pubkeys }),
     deleteValidators: async (deleteRequest: Web3signerDeleteRequest) =>
       await deleteValidators({ brainDb, reloadValidatorsCronTask, validatorApi, signerApi, deleteRequest }),
-    exitValidators: async (pubkeys: string[]) => await exitValidators({ pubkeys, beaconchainApi, signerApi }),
-    getExitValidators: async (pubkeys: string[]) => await getExitValidators({ beaconchainApi, signerApi, pubkeys }),
+    exitValidators: async ({ pubkeys }: { pubkeys: string[] }) =>
+      await exitValidators({ pubkeys, beaconchainApi, signerApi }),
+    getExitValidators: async ({ pubkeys }: { pubkeys: string[] }) =>
+      await getExitValidators({ beaconchainApi, signerApi, pubkeys }),
     importValidators: async (postRequest: CustomImportRequest) =>
       await importValidators({
         postRequest,

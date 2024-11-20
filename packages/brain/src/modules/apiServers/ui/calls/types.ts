@@ -16,8 +16,8 @@ export interface RpcMethods {
   beaconchaFetchAllValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse[]>;
   beaconchaFetchValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse>;
   deleteValidators: (deleteRequest: Web3signerDeleteRequest) => Promise<Web3signerDeleteResponse>;
-  exitValidators: (pubkeys: string[]) => Promise<ValidatorExitExecute[]>;
-  getExitValidators: (pubkeys: string[]) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
+  exitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<ValidatorExitExecute[]>;
+  getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
   importValidators: (postRequest: CustomImportRequest) => Promise<Web3signerPostResponse>;
   updateValidators: (
     customValidatorUpdateRequest: CustomValidatorUpdateRequest[],

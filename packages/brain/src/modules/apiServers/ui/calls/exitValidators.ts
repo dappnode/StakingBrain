@@ -20,7 +20,7 @@ export async function getExitValidators({
   signerApi: Web3SignerApi;
   pubkeys: string[];
 }): Promise<BeaconchainPoolVoluntaryExitsPostRequest[]> {
-  const validatorsExit = await _getExitValidators(beaconchainApi, signerApi, pubkeys);
+  const validatorsExit = await _getExitValidators({ beaconchainApi, signerApi, pubkeys });
   logger.debug(validatorsExit);
   return validatorsExit;
 }
@@ -39,7 +39,7 @@ export async function exitValidators({
   beaconchainApi: BeaconchainApi;
   pubkeys: string[];
 }): Promise<ValidatorExitExecute[]> {
-  const validatorsToExit = await _getExitValidators(beaconchainApi, signerApi, pubkeys);
+  const validatorsToExit = await _getExitValidators({ beaconchainApi, signerApi, pubkeys });
   const exitValidatorsResponses: ValidatorExitExecute[] = [];
   for (const validatorToExit of validatorsToExit) {
     try {
@@ -78,11 +78,15 @@ export async function exitValidators({
  * @param pubkeys The public keys of the validators to exit
  * @returns The exit validators info signed
  */
-async function _getExitValidators(
-  beaconchainApi: BeaconchainApi,
-  signerApi: Web3SignerApi,
-  pubkeys: string[]
-): Promise<ValidatorExitGet[]> {
+async function _getExitValidators({
+  beaconchainApi,
+  signerApi,
+  pubkeys
+}: {
+  beaconchainApi: BeaconchainApi;
+  signerApi: Web3SignerApi;
+  pubkeys: string[];
+}): Promise<ValidatorExitGet[]> {
   // Get the current epoch from the beaconchain API to exit the validators
   const currentEpoch = await beaconchainApi.getEpochHeader({ blockId: "head" });
 
