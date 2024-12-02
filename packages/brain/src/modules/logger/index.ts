@@ -38,14 +38,17 @@ class Logger {
     if (this.print("error")) {
       const errorColor = "\x1b[31m\x1b[0m";
       console.log(`${errorColor}[ERROR]${errorColor} ${this.parseMessage(message)}`);
-      if (error) console.error(error);
+      if (error) console.error(this.parseMessage(error));
     }
   }
 
   private parseMessage(message: string | object | null): string {
     if (typeof message === "string") return message;
+    if (message instanceof Error) {
+      return `${message.name}: ${message.message}\n${message.stack}`;
+    }
     if (typeof message === "object") return JSON.stringify(message, null, 2);
-    return message;
+    return String(message);
   }
 
   private print(logger: "debug" | "info" | "warn" | "error"): boolean {
