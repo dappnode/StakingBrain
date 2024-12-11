@@ -45,6 +45,12 @@ export class Web3SignerApi extends StandardApi {
   private serverStatusEndpoint = "/healthcheck";
 
   /**
+   * Server status endpoint
+   * @see https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Status/operation/UPCHECK
+   */
+  private serverUpcheckEndpoint = "/upcheck";
+
+  /**
    * Origine header required by web3signer
    */
   private originHeader = {
@@ -173,6 +179,22 @@ export class Web3SignerApi extends StandardApi {
       });
     } catch (e) {
       throw new SignerApiError(`Error getting (GET) server status. Is Web3Signer running?: ${e.message}`);
+    }
+  }
+
+  /**
+   * Checks the Web3Signer server status. Confirms if Web3Signer is connected and running. Not used by the validator client.
+   * @see https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Server-Status/operation/UPCHECK
+   */
+  public async upcheck(): Promise<void> {
+    try {
+      await this.request({
+        method: "GET",
+        endpoint: this.serverUpcheckEndpoint,
+        headers: this.originHeader
+      });
+    } catch (e) {
+      throw new SignerApiError(`Error getting (GET) server upcheck. Is Web3Signer running?: ${e.message}`);
     }
   }
 }
