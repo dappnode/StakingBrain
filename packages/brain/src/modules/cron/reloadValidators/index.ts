@@ -28,18 +28,8 @@ export async function reloadValidators(
   try {
     logger.debug(`${logPrefix}Reloading data...`);
 
-    // 0. GET status
-    const signerApiStatus = await signerApi.getStatus();
-
-    // If web3signer API is not UP, skip data reload and further steps.
-    // This is done to avoid unintended DB modifications when the API is down.
-    // Status can be "UP" | "DOWN" | "UNKNOWN" | "LOADING" | "ERROR";
-    if (signerApiStatus.status !== "UP") {
-      logger.warn(
-        `${logPrefix}Web3Signer is ${signerApiStatus.status}. Skipping data reload until Web3Signer is UP. Trying again in next jobexecution`
-      );
-      return;
-    }
+    // 0. Check signer API upcheck endpoint
+    await signerApi.upcheck();
 
     // 1. GET data
     const dbPubkeys = Object.keys(brainDb.getData());
@@ -80,6 +70,6 @@ export async function reloadValidators(
 
     logger.debug(`${logPrefix}Finished reloading data`);
   } catch (e) {
-    logger.error(`${logPrefix}Unknown error reloading data`, e);
+    logger.error(`${logPrefix}Error reloading data`, e);
   }
 }
