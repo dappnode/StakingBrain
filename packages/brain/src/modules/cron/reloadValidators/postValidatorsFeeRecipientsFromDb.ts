@@ -16,7 +16,10 @@ export async function postValidatorsFeeRecipientsFromDb({
   validatorPubkeysFeeRecipients: { pubkey: string; feeRecipient: string }[];
 }): Promise<void> {
   const feeRecipientsToPost = validatorPubkeysFeeRecipients
-    .filter((validator) => validator.feeRecipient !== dbData[validator.pubkey].feeRecipient)
+    .filter(
+      (validator) =>
+        validator.feeRecipient.toLocaleLowerCase() !== dbData[validator.pubkey].feeRecipient.toLocaleLowerCase()
+    )
     .map((validator) => ({
       pubkey: validator.pubkey,
       feeRecipient: dbData[validator.pubkey].feeRecipient
