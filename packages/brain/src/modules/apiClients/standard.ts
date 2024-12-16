@@ -8,6 +8,8 @@ import type { Network } from "@stakingbrain/common";
 export class StandardApi {
   private useTls = false;
   private requestOptions: https.RequestOptions;
+  private authToken?: string; // Store auth token for headers
+  private host?: string; // Store optional host for headers
   protected network: Network;
 
   constructor(apiParams: ApiParams, network: Network) {
@@ -22,12 +24,10 @@ export class StandardApi {
       protocol: urlOptions.protocol
     };
 
-    this.requestOptions.headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: "Bearer " + apiParams.authToken,
-      ...(apiParams.host && { Host: apiParams.host })
-    };
+    this.authToken = apiParams.authToken;
+    if (apiParams.host) {
+      this.host = apiParams.host; // Save host for later use
+    }
 
     if (apiParams.tlsCert) {
       this.requestOptions.pfx = apiParams.tlsCert;
@@ -35,7 +35,9 @@ export class StandardApi {
       this.useTls = true;
     }
 
-    if (this.requestOptions.protocol?.includes("https")) this.useTls = true;
+    if (this.requestOptions.protocol?.includes("https")) {
+      this.useTls = true;
+    }
   }
 
   /**
@@ -50,7 +52,7 @@ export class StandardApi {
     method,
     endpoint,
     body,
-    headers,
+    headers = {}, // Default to an empty object
     timeout
   }: {
     method: AllowedMethods;
@@ -65,22 +67,38 @@ export class StandardApi {
     this.requestOptions.method = method;
     this.requestOptions.path = endpoint;
 
+    // Add default headers only if they are not provided in `headers`
+    const defaultHeaders: Record<string, string> = {
+      ...(headers["Content-Type"] ? {} : { "Content-Type": "application/json" }),
+      ...(headers["Accept"] ? {} : { Accept: "application/json" }),
+      Authorization: `Bearer ${this.authToken}`
+    };
+
+    // Add optional host header if it exists
+    if (this.host) {
+      defaultHeaders.Host = this.host;
+    }
+
+    // Merge headers (custom headers take precedence for defaults)
+    const mergedHeaders = {
+      ...defaultHeaders,
+      ...headers
+    };
+
+    this.requestOptions.headers = mergedHeaders;
+
     if (this.useTls) {
       this.requestOptions.rejectUnauthorized = false;
       req = https.request(this.requestOptions);
-    } else req = http.request(this.requestOptions);
+    } else {
+      req = http.request(this.requestOptions);
+    }
 
     if (timeout) {
       req.setTimeout(timeout, () => {
         const error = new ApiError(`Request to ${endpoint} timed out`);
         req.destroy(error);
       });
-    }
-
-    if (headers) {
-      for (const [key, value] of Object.entries(headers)) {
-        req.setHeader(key, value);
-      }
     }
 
     if (body) {
