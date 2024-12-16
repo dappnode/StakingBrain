@@ -191,7 +191,7 @@ export class Web3SignerApi extends StandardApi {
       await this.request({
         method: "GET",
         endpoint: this.serverUpcheckEndpoint,
-        headers: this.originHeader
+        headers: { ...this.originHeader, "Content-Type": "text/plain; charset=utf-8" }
       });
     } catch (e) {
       throw new SignerApiError(`Error getting (GET) server upcheck. Is Web3Signer running?: ${e.message}`);
