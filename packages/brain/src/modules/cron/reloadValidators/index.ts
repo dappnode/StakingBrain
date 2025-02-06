@@ -4,7 +4,6 @@ import logger from "../../logger/index.js";
 import { deleteDbPubkeysNotInSigner } from "./deleteDbPubkeysNotInSigner.js";
 import { deleteSignerPubkeysNotInDb } from "./deleteSignerPubkeysNotInDb.js";
 import { deleteValidatorPubkeysNotInDB } from "./deleteValidatorPubkeysNotInDb.js";
-import { getValidatorsFeeRecipients } from "./getValidatorsFeeRecipients.js";
 import { logPrefix } from "./logPrefix.js";
 import { postValidatorPubkeysFromDb } from "./postValidatorPubkeysFromDb.js";
 import { postValidatorsFeeRecipientsFromDb } from "./postValidatorsFeeRecipientsFromDb.js";
@@ -58,14 +57,10 @@ export async function reloadValidators(
       validatorPubkeysToRemove: validatorPubkeys.filter((pubkey) => !dbPubkeys.includes(pubkey))
     });
 
-    // 6. POST to validator API fee recipients that are in DB and not in validator API
+    // 6. POST to validator API fee recipients that are in DB in validator API
     await postValidatorsFeeRecipientsFromDb({
       validatorApi,
-      dbData: brainDb.getData(),
-      validatorPubkeysFeeRecipients: await getValidatorsFeeRecipients({
-        validatorApi,
-        validatorPubkeys
-      })
+      dbData: brainDb.getData()
     });
 
     logger.debug(`${logPrefix}Finished reloading data`);
