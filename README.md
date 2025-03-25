@@ -2,7 +2,7 @@
 
 Staking Brain is a critical logical component for Staking in DAppNode. It provides a user interface and a Launchpad API that allow manual and automatic keystore management. Designed to support not only solo stakers, but also DVT/LSD technologies, Staking Brain streamlines the staking process for all users.
 
-Within the Dappnode environment, Staking Brain is incorporated into the Web3Signer packages (gnosis, mainnet, prater, lukso and holesky). It ensures that user configurations for validators are reliably maintained. Please note that Staking Brain does not store keystores itself, but ensures their storage in the web3signer. It also maintains consistency between the validator service and web3signer service, as the validator must recognize all the pubkeys of validators whose keystores have been imported into the signer.
+Within the Dappnode environment, Staking Brain is incorporated into the Web3Signer packages (gnosis, mainnet, prater, lukso, holesky, hoodi). It ensures that user configurations for validators are reliably maintained. Please note that Staking Brain does not store keystores itself, but ensures their storage in the web3signer. It also maintains consistency between the validator service and web3signer service, as the validator must recognize all the pubkeys of validators whose keystores have been imported into the signer.
 
 Each Web3Signer package includes four services:
 

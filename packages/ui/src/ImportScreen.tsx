@@ -213,7 +213,7 @@ export default function ImportScreen({
 
   const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(network)
     ? [{ value: "solo", label: "Solo" }]
-    : ["holesky"].includes(network)
+    : ["holesky", "hoodi"].includes(network)
       ? [
           { value: "solo", label: "Solo" },
           { value: "rocketpool", label: "Rocketpool" },
@@ -432,7 +432,13 @@ export default function ImportScreen({
             Lido Node Operator, it is your responsibility to ensure that your validators use MEV boost. <br /> Please
             install the MEV Boost package from{" "}
             <Link
-              to={network === "holesky" ? "http://my.dappnode/stakers/holesky" : "http://my.dappnode/stakers/ethereum"}
+              to={
+                network === "holesky"
+                  ? "http://my.dappnode/stakers/holesky"
+                  : network === "hoodi"
+                    ? "http://my.dappnode/stakers/hoodi"
+                    : "http://my.dappnode/stakers/ethereum"
+              }
             >
               your stakers tab
             </Link>{" "}

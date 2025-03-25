@@ -12,7 +12,8 @@ export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
       apiPath: "/api/v1/"
     }
   ],
-  ["holesky", { baseUrl: "https://holesky.beaconcha.in", apiPath: "/api/v1/" }]
+  ["holesky", { baseUrl: "https://holesky.beaconcha.in", apiPath: "/api/v1/" }],
+  ["hoodi", { baseUrl: "https://hoodi.beaconcha.in", apiPath: "/api/v1/" }]
 ]);
 
 export interface AppParams {
