@@ -3,7 +3,8 @@ export enum Network {
   Gnosis = "gnosis",
   Prater = "prater",
   Lukso = "lukso",
-  Holesky = "holesky"
+  Holesky = "holesky",
+  Hoodi = "hoodi"
 }
 
 export enum ExecutionClient {

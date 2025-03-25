@@ -9,7 +9,8 @@ import {
   STADER_POOL_FEE_RECIPIENT_MAINNET,
   STADER_POOL_FEE_RECIPIENT_PRATER,
   LIDO_FEE_RECIPIENT_HOLESKY,
-  LIDO_FEE_RECIPIENT_MAINNET
+  LIDO_FEE_RECIPIENT_MAINNET,
+  LIDO_FEE_RECIPIENT_HOODI
 } from "@stakingbrain/common";
 import { CustomImportRequest } from "./types.js";
 import { CronJob } from "../../../cron/cron.js";
@@ -201,6 +202,7 @@ function getNonEditableFeeRecipient(
     case "lido":
       if (network === "mainnet") return LIDO_FEE_RECIPIENT_MAINNET;
       else if (network === "holesky") return LIDO_FEE_RECIPIENT_HOLESKY;
+      else if (network === "hoodi") return suggestedFeeRecipient ?? LIDO_FEE_RECIPIENT_HOODI;
       else throw Error(`Fee recipient not found for tag: ${tag} and network: ${network}`);
 
     // Stader FR cannot be known in advance

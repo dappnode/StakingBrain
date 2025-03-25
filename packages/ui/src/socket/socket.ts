@@ -42,4 +42,4 @@ class RpcClient {
   }
 }
 
-export const rpcClient = new RpcClient(`http://${BRAIN_UI_DOMAIN(window.env?.NETWORK || Network.Holesky)}:80`);
+export const rpcClient = new RpcClient(`http://${BRAIN_UI_DOMAIN(window.env?.NETWORK || Network.Hoodi)}:80`);

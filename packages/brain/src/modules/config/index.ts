@@ -52,6 +52,8 @@ export const brainConfig = (): BrainConfig => {
 
 const getPostgresUrl = (network: Network): string => {
   switch (network) {
+    case Network.Hoodi:
+      return "postgres://postgres:password@postgres.web3signer-hoodi.dappnode:5432/web3signer";
     case Network.Holesky:
       return "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer";
     case Network.Mainnet:
