@@ -12,6 +12,7 @@ import { NotificationsApi } from "./notifications/index.js";
 export {
   BlockExplorerApi,
   DappmanagerApi,
+  NotificationsApi,
   PrometheusApi,
   BeaconchainApi,
   ValidatorApi,

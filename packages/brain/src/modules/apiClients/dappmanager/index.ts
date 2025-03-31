@@ -6,7 +6,7 @@ export class DappmanagerApi extends StandardApi {
   /**
    * Fetches the notification settings from the dappmanager.
    */
-  public async getCustomNotifications({ dnpName }: { dnpName: string }): Promise<Manifest> {
+  public async getPackageManifest({ dnpName }: { dnpName: string }): Promise<Manifest> {
     try {
       const response = await this.request({
         method: "GET",
