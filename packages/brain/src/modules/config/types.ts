@@ -13,6 +13,7 @@ export interface ApisConfig {
   beaconchainUrl: string;
   executionClientUrl: string;
   dappmanagerUrl: string;
+  notificationsUrl: string;
   postgresUrl: string;
   token: string;
   tlsCert: Buffer | null;
