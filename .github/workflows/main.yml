@@ -14,12 +14,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      # Docker
-      - name: Docker production
-        run: docker build .
+      # Set up Docker Buildx for multi-arch support
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+     # Build multi-arch image
+      - name: Build Docker image (multi-arch)
+        run: |
+          docker buildx create --use
+          docker buildx build --platform linux/amd64,linux/arm64 .
       # Docker development
       - name: Docker development
-        run: docker build -f Dockerfile.brain.dev .
+        run: docker build -f Dockerfile.brain.dev --platform linux/amd64,linux/arm64 .
   build:
     runs-on: ubuntu-latest
     steps:
