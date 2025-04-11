@@ -24,7 +24,7 @@ jobs:
           docker buildx build --platform linux/amd64,linux/arm64 .
       # Docker development
       - name: Docker development
-        run: docker buildx build -f Dockerfile.brain.dev --platform linux/amd64,linux/arm64 --load .
+        run: docker buildx build -f Dockerfile.brain.dev --platform linux/amd64,linux/arm64 .
   build:
     runs-on: ubuntu-latest
     steps:
