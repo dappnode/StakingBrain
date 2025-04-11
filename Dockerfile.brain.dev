@@ -1,5 +1,5 @@
 ARG DOCKER_IMAGE=node:20.17.0-alpine3.20
-FROM ${DOCKER_IMAGE} as build-stage
+FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE} as build-stage
 
 ENV NODE_ENV=development
 WORKDIR /app
