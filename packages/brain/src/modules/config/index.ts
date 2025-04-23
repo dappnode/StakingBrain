@@ -12,7 +12,14 @@ export const brainConfig = (): BrainConfig => {
   // All this logic is needed because Teku has a TLS certificate that points to the old
   // https://validator.teku-${network}.dappnode:3500 URL. TODO: update the Teku TLS certificate https://docs.teku.consensys.io/how-to/configure/tls
   let validatorUrl;
-  if (consensusClient === "teku") {
+  let beaconchainUrl;
+
+  // Special case for Nimbus on Gnosis since it is not yet separated into two services.
+  // TODO: remove this if when Gnosis is migrated to generic repos
+  if (consensusClient === "nimbus" && network === Network.Gnosis) {
+    validatorUrl = `http://beacon-validator.nimbus-gnosis.dappnode:3500`;
+    beaconchainUrl = `http://beacon-validator.nimbus-gnosis.dappnode:4500`;
+  } else if (consensusClient === "teku") {
     validatorUrl =
       network === Network.Mainnet
         ? `https://validator.teku.dappnode:3500`
@@ -22,6 +29,11 @@ export const brainConfig = (): BrainConfig => {
   }
 
   const { blockExplorerUrl, minGenesisTime, secondsPerSlot, slotsPerEpoch } = networkConfig(network);
+
+  // Default beaconchainUrl if not already set
+  if (!beaconchainUrl) {
+    beaconchainUrl = `http://beacon-chain.${network}.dncore.dappnode:3500`;
+  }
 
   return {
     chain: {
@@ -39,7 +51,7 @@ export const brainConfig = (): BrainConfig => {
       blockExplorerUrl,
       executionClientUrl: `http://execution.${network}.dncore.dappnode:8545`,
       validatorUrl,
-      beaconchainUrl: `http:/beacon-chain.${network}.dncore.dappnode:3500`,
+      beaconchainUrl,
       signerUrl: `http://signer.${network}.dncore.dappnode:9000`,
       postgresUrl: getPostgresUrl(network),
       token: getValidatorToken(consensusClient),
