@@ -19,14 +19,12 @@ export const brainConfig = (): BrainConfig => {
   if (consensusClient === "nimbus" && network === Network.Gnosis) {
     validatorUrl = `http://beacon-validator.nimbus-gnosis.dappnode:3500`;
     beaconchainUrl = `http://beacon-validator.nimbus-gnosis.dappnode:4500`;
-  }
-  else if (consensusClient === "teku") {
+  } else if (consensusClient === "teku") {
     validatorUrl =
       network === Network.Mainnet
         ? `https://validator.teku.dappnode:3500`
         : `https://validator.teku-${network}.dappnode:3500`;
-  }
-  else {
+  } else {
     validatorUrl = `http://validator.${network}.dncore.dappnode:3500`;
   }
 
