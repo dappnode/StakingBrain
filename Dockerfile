@@ -1,7 +1,7 @@
 ARG DOCKER_IMAGE=node:20.17.0-alpine3.20
 
 # Build
-FROM ${DOCKER_IMAGE} AS build-stage
+FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE} AS build-stage
 
 WORKDIR /app
 COPY package.json yarn.lock tsconfig.json .yarnrc.yml ./
@@ -19,7 +19,7 @@ RUN yarn install --immutable && \
   yarn workspaces focus --all --production
 
 # Production
-FROM ${DOCKER_IMAGE}
+FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE}
 ENV NODE_ENV=production
 WORKDIR /app
 COPY ./packages/brain/tls ./tls
