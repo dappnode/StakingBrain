@@ -35,7 +35,7 @@ await brainDb.initialize(signerApi, validatorApi);
 logger.debug(brainDb.data);
 
 // CRON
-const { reloadValidatorsCronTask } = getCrons({
+const { reloadValidatorsCronTask, removeExitedValidatorsCronTask } = getCrons({
   sendNotification: true,
   postgresClient,
   prometheusApi,
@@ -48,6 +48,7 @@ const { reloadValidatorsCronTask } = getCrons({
   dappmanagerApi
 });
 reloadValidatorsCronTask.start();
+removeExitedValidatorsCronTask.start();
 //trackValidatorsPerformanceCronTask.start();
 
 // Start server APIs
@@ -68,6 +69,7 @@ const { uiServer, launchpadServer, brainApiServer } = getServers({
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCronTask.stop();
+  removeExitedValidatorsCronTask.stop();
   //trackValidatorsPerformanceCronTask.stop();
   brainDb.close();
   postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed
