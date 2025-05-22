@@ -20,7 +20,7 @@ export function isValidBlsPubkey(pubkey: string): boolean {
 }
 
 export function isValidWithdrawableBlsAddress(address: string): boolean {
-  return /^0x01[0]{22}[a-fA-F0-9]{40}$/.test(address);
+  return /^0x0[12]0{22}[a-fA-F0-9]{40}$/.test(address);
 }
 
 export function isValidNonWithdrawableBlsAddress(address: string): boolean {
