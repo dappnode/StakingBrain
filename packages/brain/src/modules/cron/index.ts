@@ -9,6 +9,7 @@ import { PrometheusApi } from "../apiClients/prometheus/index.js";
 import { PostgresClient } from "../apiClients/postgres/index.js";
 import { BeaconchainApi } from "../apiClients/beaconchain/index.js";
 import { DappmanagerApi } from "../apiClients/dappmanager/index.js";
+import { removeExitedValidators } from "./removeExitedValidators/index.js";
 
 export const getCrons = ({
   sendNotification,
@@ -50,6 +51,10 @@ export const getCrons = ({
     }),
     reloadValidatorsCronTask: new CronJob(60 * 1000, () =>
       reloadValidators(signerApi, signerUrl, validatorApi, brainDb)
+    ),
+
+    removeExitedValidatorsCronTask: new CronJob(60 * 1000 * 60 * 24, () =>
+      removeExitedValidators(brainDb, signerApi, validatorApi, beaconchainApi)
     )
   };
 };
