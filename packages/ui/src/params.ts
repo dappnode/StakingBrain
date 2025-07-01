@@ -25,8 +25,8 @@ export interface AppParams {
 }
 
 export const getSmoothUrlByNetwork = (network: Network): string => {
-  if (network == "prater") {
-    return "https://smooth-goerli.dappnode.io/";
+  if (network == "hoodi") {
+    return "https://smooth-hoodi.dappnode.io/";
   } else if (network == "mainnet") {
     return "https://smooth.dappnode.io/";
   } else {

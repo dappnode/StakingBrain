@@ -185,8 +185,8 @@ export default function KeystoresDataGrid({
       headerClassName: "tableHeader",
       width: 360
     },
-    // Only render Smooth column if mevSpFeeRecipient is not null (mainnet or prater)
-    ...(mevSpFeeRecipient != null && (network === "mainnet" || network === "prater")
+    // Only render Smooth column if mevSpFeeRecipient is not null (mainnet or hoodi)
+    ...(mevSpFeeRecipient != null && (network === "mainnet" || network === "hoodi")
       ? [
           {
             field: "spSubscription",
