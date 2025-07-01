@@ -82,7 +82,7 @@ export default function ValidatorList({
           alignItems: "left"
         }}
       >
-        {(network === "prater" || network === "mainnet") && <SmoothBanner />}
+        {(network === "hoodi" || network === "mainnet") && <SmoothBanner />}
 
         <Card
           sx={{
