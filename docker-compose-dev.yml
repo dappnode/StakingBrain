@@ -4,19 +4,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.brain.dev
-    container_name: DAppNodePackage-brain.web3signer-holesky.dnp.dappnode.eth
+    container_name: DAppNodePackage-brain.web3signer-hoodi.dnp.dappnode.eth
     volumes:
       - .:/app
     environment:
-      - NETWORK=holesky
-      - _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOLESKY=lighthouse-holesky.dnp.dappnode.eth
-      - _DAPPNODE_GLOBAL_EXECUTION_CLIENT_HOLESKY=holesky-geth.dnp.dappnode.eth
-      - _DAPPNODE_GLOBAL_MEVBOOST_HOLESKY=true
+      - NETWORK=hoodi
+      - _DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOODI=lighthouse-hoodi.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_EXECUTION_CLIENT_HOODI=hoodi-geth.dnp.dappnode.eth
+      - _DAPPNODE_GLOBAL_MEVBOOST_HOODI=true
 
     networks:
       dncore_network:
         aliases:
-          - brain.web3signer-holesky.dappnode
+          - brain.web3signer-hoodi.dappnode
 
 networks:
   dncore_network:
