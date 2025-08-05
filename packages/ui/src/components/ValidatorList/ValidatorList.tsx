@@ -1,7 +1,7 @@
 import KeystoresDataGrid from "./KeystoresDataGrid";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
-import { Alert, Box, CircularProgress, Card } from "@mui/material";
+import { Alert, Box, CircularProgress } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
@@ -76,7 +76,7 @@ export default function ValidatorList({
       {userMode === "advanced" && <StakerConfig stakerConfig={stakerConfig} />}
       <Box
         sx={{
-          margin: 8,
+          margin: { xs: 2, sm: 3, md: 5 },
           display: "flex",
           flexDirection: "column",
           alignItems: "left"
@@ -84,12 +84,7 @@ export default function ValidatorList({
       >
         {(network === "hoodi" || network === "mainnet") && <SmoothBanner />}
 
-        <Card
-          sx={{
-            padding: 4,
-            borderRadius: 2
-          }}
-        >
+        <Box>
           {validatorsGetError ? (
             <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
               {validatorsGetError}
@@ -167,7 +162,7 @@ export default function ValidatorList({
               There are no keystores to display.
             </Alert>
           )}
-        </Card>
+        </Box>
       </Box>
     </div>
   );
