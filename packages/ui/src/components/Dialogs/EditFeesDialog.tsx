@@ -39,6 +39,7 @@ import { SlideTransition } from "./Transitions";
 import { AlertType, NonEcdsaValidatorsData } from "../../types";
 import { getSmoothUrlByNetwork, getStakersLink } from "../../params";
 import { getSmoothAddressByNetwork } from "../../utils/addresses";
+import { useTheme, useMediaQuery } from "@mui/material";
 
 export default function FeeRecipientDialog({
   open,
@@ -65,6 +66,8 @@ export default function FeeRecipientDialog({
   const [nonEcdsaValidatorsData, setNonEcdsaValidatorsData] = useState<NonEcdsaValidatorsData[]>([]);
   const [smoothValidatorsPubkeys, setSmoothValidatorsPubkeys] = useState<string[]>([]);
   const [withdrawalAccessCheck, setWithdrawalAccessCheck] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     isAnyWithdrawalCredentialsDiff("ecdsa") && getNonEcdsaValidatorsData();
@@ -601,7 +604,8 @@ export default function FeeRecipientDialog({
     <Dialog
       disableEscapeKeyDown={true}
       open={open}
-      fullWidth={true}
+      fullScreen={isMobile}
+      fullWidth={!isMobile}
       onClose={(event, reason) => {
         if (!reason) {
           handleClose();
