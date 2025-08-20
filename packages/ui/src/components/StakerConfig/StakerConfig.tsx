@@ -36,10 +36,7 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
     >
       <Card
         sx={{
-          py: 1,
-          px: 3,
-          mt: 2,
-          mb: -5,
+          marginTop: { xs: 4, sm: 8 },
           border: "none",
           boxShadow: "none",
           backgroundColor: "transparent",
@@ -51,7 +48,7 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
             display: "flex",
             alignItems: "center",
             justifyContent: "space-evenly",
-            gap: 2
+            gap: { xs: 1, sm: 2 }
           }}
         >
           <Box
@@ -65,11 +62,11 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
               <Box
                 component="img"
                 sx={{
-                  height: 80,
-                  width: 80,
+                  height: { xs: 60, sm: 80 },
+                  width: { xs: 60, sm: 80 },
                   padding: 1
                 }}
-                alt="erigon-goerli"
+                alt="execution-client"
                 src={
                   Object.keys(images).includes(stakerConfig.executionClient)
                     ? images[stakerConfig.executionClient]
@@ -77,7 +74,7 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                 }
               />
             </Card>
-            <Typography sx={{ fontWeight: "bold", mt: 2 }}>
+            <Typography sx={{ fontWeight: "bold", mt: 2, fontSize: { xs: "12px", sm: "16px" } }}>
               {prettyClientDnpName(stakerConfig.executionClient)}
             </Typography>
           </Box>
@@ -88,7 +85,7 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
               alignItems: "center"
             }}
           >
-            <SyncAltRoundedIcon sx={{ mb: 4, fontSize: 48 }} />
+            <SyncAltRoundedIcon sx={{ mb: 4, fontSize: { xs: 24, sm: 48 } }} />
           </Box>
 
           <Box
@@ -102,11 +99,11 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
               <Box
                 component="img"
                 sx={{
-                  height: 80,
-                  width: 80,
+                  height: { xs: 60, sm: 80 },
+                  width: { xs: 60, sm: 80 },
                   padding: 1
                 }}
-                alt="erigon-goerli"
+                alt="consensus-client"
                 src={
                   Object.keys(images).includes(stakerConfig.consensusClient)
                     ? images[stakerConfig.consensusClient]
@@ -114,7 +111,7 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
                 }
               />
             </Card>
-            <Typography sx={{ fontWeight: "bold", mt: 2 }}>
+            <Typography sx={{ fontWeight: "bold", mt: 2, fontSize: { xs: "12px", sm: "16px" } }}>
               {prettyClientDnpName(stakerConfig.consensusClient)}
             </Typography>
           </Box>
@@ -126,7 +123,7 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
               alignItems: "center"
             }}
           >
-            <TrendingFlatRoundedIcon sx={{ mb: 4, fontSize: 48 }} />
+            <TrendingFlatRoundedIcon sx={{ mb: 4, fontSize: { xs: 24, sm: 48 } }} />
           </Box>
 
           <Box
@@ -140,15 +137,15 @@ export default function StakerConfig({ stakerConfig }: { stakerConfig: StakerCon
               <Box
                 component="img"
                 sx={{
-                  height: 80,
-                  width: 80,
+                  height: { xs: 60, sm: 80 },
+                  width: { xs: 60, sm: 80 },
                   padding: 1
                 }}
                 alt="signer"
                 src={images["default"]}
               />
             </Card>
-            <Typography sx={{ fontWeight: "bold", mt: 2 }}>Signer</Typography>
+            <Typography sx={{ fontWeight: "bold", mt: 2, fontSize: { xs: "12px", sm: "16px" } }}>Signer</Typography>
           </Box>
         </Box>
       </Card>

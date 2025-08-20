@@ -1,6 +1,6 @@
 import Toolbar from "@mui/material/Toolbar";
 import { HeaderTypography } from "../../Styles/Typographies";
-import { Box, Chip } from "@mui/material";
+import { Box, capitalize, Typography } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -23,23 +23,37 @@ export default function ToolBar({
 }): JSX.Element {
   return (
     <Toolbar>
-      <div
-        style={{
+      <Box
+        sx={{
           alignItems: "center",
           display: "flex",
           justifyContent: "center",
           lineHeight: "50px"
         }}
       >
-        <img src="/assets/dappnode_logo.png" alt="logo" height={50} />
-        <HeaderTypography sx={{ flexGrow: 1, fontWeight: "bold" }} text={"Staking Brain"} />
-        {network && (
-          <>
-            &nbsp;&nbsp;
-            <Chip color="secondary" label={network} />
-          </>
-        )}
-      </div>
+        <img src="/assets/dappnode_logo_clean.png" alt="logo" height={50} style={{ marginRight: "5px" }} />
+
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "flex-start", sm: "center" }
+          }}
+        >
+          <HeaderTypography
+            sx={{ flexGrow: 1, fontWeight: "bold", fontSize: { xs: "14px", sm: "20px" } }}
+            text={"Staking Brain"}
+          />
+          {network && (
+            <Typography
+              sx={{ fontStyle: "italic", fontSize: { xs: "14px", sm: "20px" }, marginLeft: { xs: 0, sm: 1 } }}
+            >
+              {capitalize(network)}
+            </Typography>
+          )}
+        </Box>
+      </Box>
       <div style={{ marginLeft: "auto" }}>
         <Box
           sx={{

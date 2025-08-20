@@ -19,6 +19,7 @@ import { rpcClient } from "../../socket";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
 import type { CustomValidatorGetResponse, Web3signerDeleteResponse } from "@stakingbrain/brain";
+import { useTheme, useMediaQuery } from "@mui/material";
 
 export default function KeystoresDeleteDialog({
   rows,
@@ -36,6 +37,8 @@ export default function KeystoresDeleteDialog({
   const [keystoresDelete, setKeystoresDelete] = useState<Web3signerDeleteResponse>();
   const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
   const [loading, setLoading] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   async function deleteSelectedKeystores() {
     try {
@@ -62,7 +65,8 @@ export default function KeystoresDeleteDialog({
     <Dialog
       disableEscapeKeyDown={true}
       open={open}
-      fullWidth={true}
+      fullScreen={isMobile}
+      fullWidth={!isMobile}
       onClose={(event, reason) => {
         if (!reason) {
           handleClose();

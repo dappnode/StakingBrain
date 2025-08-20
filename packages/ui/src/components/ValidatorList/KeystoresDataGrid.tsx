@@ -169,8 +169,9 @@ export default function KeystoresDataGrid({
       headerName: "Public Key",
       description: "Validating Public Key",
       disableColumnMenu: true,
+      headerClassName: "tableHeader",
       flex: 1,
-      headerClassName: "tableHeader"
+      minWidth: 120
     },
     {
       field: "feeRecipient",
@@ -183,7 +184,8 @@ export default function KeystoresDataGrid({
       align: "center",
       headerAlign: "center",
       headerClassName: "tableHeader",
-      width: 360
+      flex: 1,
+      minWidth: 120
     },
     // Only render Smooth column if mevSpFeeRecipient is not null (mainnet or hoodi)
     ...(mevSpFeeRecipient != null && (network === "mainnet" || network === "hoodi")

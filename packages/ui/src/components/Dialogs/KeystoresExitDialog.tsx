@@ -19,6 +19,7 @@ import { rpcClient } from "../../socket";
 import { SlideTransition } from "./Transitions";
 import { getEmoji } from "../../utils/dataUtils";
 import type { CustomValidatorGetResponse, ValidatorExitExecute } from "@stakingbrain/brain";
+import { useTheme, useMediaQuery } from "@mui/material";
 
 export default function KeystoresExitDialog({
   rows,
@@ -37,6 +38,8 @@ export default function KeystoresExitDialog({
   const [validatorsExitError, setValidatorsExitError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [userConfirmText, setUserConfirmText] = useState("");
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const exitConfirmationMessage = "I want to exit";
 
@@ -89,7 +92,8 @@ export default function KeystoresExitDialog({
     <Dialog
       disableEscapeKeyDown={true}
       open={open}
-      fullWidth={true}
+      fullScreen={isMobile}
+      fullWidth={!isMobile}
       onClose={(event, reason) => {
         if (!reason) {
           handleClose();

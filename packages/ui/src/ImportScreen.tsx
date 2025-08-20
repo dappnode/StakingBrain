@@ -233,26 +233,21 @@ export default function ImportScreen({
     <div>
       <Box
         sx={{
-          margin: 8,
+          margin: { xs: 2, sm: 3, md: 5 },
           display: "flex",
           flexDirection: "column",
           alignItems: "left"
         }}
       >
+        <Typography variant="h5" sx={{ marginBottom: 2, fontSize: { xs: 20, sm: 24 } }}>
+          <b>Import Validator Keystore(s)</b>
+        </Typography>
         <Card
           sx={{
-            padding: 4,
+            padding: { xs: 2, sm: 4 },
             borderRadius: 2
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              marginBottom: 4
-            }}
-          >
-            <b>Import Validator Keystore(s)</b>
-          </Typography>
           <Typography>Upload any keystore JSON file(s).</Typography>
 
           <SecondaryInfoTypography
@@ -264,162 +259,166 @@ export default function ImportScreen({
           <FileDrop callback={keystoreFilesCallback} />
 
           <SecondaryInfoTypography
-            sx={{ marginBottom: 2, marginTop: 4 }}
+            sx={{ marginTop: 4 }}
             text="Remember you need to introduce the password you set during
                 creation of the keystore files."
           />
+        </Card>
 
-          {acceptedFiles.length > 1 && (
-            <>
-              <FormGroup sx={{ marginTop: "6px" }}>
-                <FormControlLabel
-                  control={<Switch onChange={() => handleSwitchToggle("password")} />}
-                  label="Use same password for every file"
-                />
-                <FormControlLabel
-                  control={<Switch onChange={() => handleSwitchToggle("feerecipient")} />}
-                  label="Use same fee recipient for every file"
-                />
-                <FormControlLabel
-                  control={<Switch onChange={() => handleSwitchToggle("tag")} />}
-                  label="Use same tag for every file"
-                />
-              </FormGroup>
-              {(useSameTag || useSameFeerecipient || useSamePassword) && (
-                <FormControl sx={{ marginTop: 2, width: "100%" }}>
-                  {useSamePassword && (
-                    <>
-                      <TextField
-                        id={`outlined-password-input`}
-                        label="Keystore Password"
-                        type="password"
-                        sx={{ marginTop: 2 }}
-                        onChange={(e) => setPasswords(Array(acceptedFiles.length).fill(e.target.value))}
-                        helperText={"Password to decrypt the keystore(s)"}
-                      />
-                    </>
-                  )}
-                  {useSameTag && (
-                    <>
-                      <Select
-                        id="outlined-tag-input"
-                        label="Tag"
-                        value={tags[0]}
-                        type="text"
-                        sx={{ marginTop: 2 }}
-                        onChange={(e) => {
-                          setTags(Array(acceptedFiles.length).fill(e.target.value));
-                          if (!isFeeRecipientEditable(tags[0])) {
-                            setFeeRecipients(Array(acceptedFiles.length).fill(""));
-                          }
-                        }}
-                      >
-                        {tagSelectOptions.map((option) => (
-                          <MenuItem value={option.value}>{option.label}</MenuItem>
-                        ))}
-                      </Select>
-                      <FormHelperText>Staking protocol</FormHelperText>
-                    </>
-                  )}
-                  {useSameFeerecipient && (
-                    <>
-                      <TextField
-                        id={`outlined-fee-recipient-input`}
-                        label={
-                          tags[0] === undefined || isFeeRecipientEditable(tags[0])
-                            ? "Fee Recipient"
-                            : "For this protocol, fee recipient will be set automatically"
+        {acceptedFiles.length > 1 && (
+          <>
+            <FormGroup sx={{ marginTop: "6px" }}>
+              <FormControlLabel
+                control={<Switch onChange={() => handleSwitchToggle("password")} />}
+                label="Use same password for every file"
+              />
+              <FormControlLabel
+                control={<Switch onChange={() => handleSwitchToggle("feerecipient")} />}
+                label="Use same fee recipient for every file"
+              />
+              <FormControlLabel
+                control={<Switch onChange={() => handleSwitchToggle("tag")} />}
+                label="Use same tag for every file"
+              />
+            </FormGroup>
+            {(useSameTag || useSameFeerecipient || useSamePassword) && (
+              <FormControl sx={{ marginTop: 2, width: "100%" }}>
+                {useSamePassword && (
+                  <>
+                    <TextField
+                      id={`outlined-password-input`}
+                      label="Keystore Password"
+                      type="password"
+                      sx={{ marginTop: 2 }}
+                      onChange={(e) => setPasswords(Array(acceptedFiles.length).fill(e.target.value))}
+                      helperText={"Password to decrypt the keystore(s)"}
+                    />
+                  </>
+                )}
+                {useSameTag && (
+                  <>
+                    <Select
+                      id="outlined-tag-input"
+                      label="Tag"
+                      value={tags[0]}
+                      type="text"
+                      sx={{ marginTop: 2 }}
+                      onChange={(e) => {
+                        setTags(Array(acceptedFiles.length).fill(e.target.value));
+                        if (!isFeeRecipientEditable(tags[0])) {
+                          setFeeRecipients(Array(acceptedFiles.length).fill(""));
                         }
-                        type="text"
-                        sx={{ marginTop: 2 }}
-                        onChange={(e) => {
-                          setFeeRecipients(Array(acceptedFiles.length).fill(e.target.value));
-                        }}
-                        error={isFeeRecipientFieldWrong(0)}
-                        helperText={getFeeRecipientFieldHelperText(0)}
-                        value={feeRecipients[0]}
-                        disabled={!isFeeRecipientEditable(tags[0])}
-                      />
-                      {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
-                        <Alert severity="info">This field will only apply to the editable fee recipients</Alert>
-                      )}
-                    </>
-                  )}
-                </FormControl>
-              )}
-            </>
-          )}
+                      }}
+                    >
+                      {tagSelectOptions.map((option) => (
+                        <MenuItem value={option.value}>{option.label}</MenuItem>
+                      ))}
+                    </Select>
+                    <FormHelperText>Staking protocol</FormHelperText>
+                  </>
+                )}
+                {useSameFeerecipient && (
+                  <>
+                    <TextField
+                      id={`outlined-fee-recipient-input`}
+                      label={
+                        tags[0] === undefined || isFeeRecipientEditable(tags[0])
+                          ? "Fee Recipient"
+                          : "For this protocol, fee recipient will be set automatically"
+                      }
+                      type="text"
+                      sx={{ marginTop: 2 }}
+                      onChange={(e) => {
+                        setFeeRecipients(Array(acceptedFiles.length).fill(e.target.value));
+                      }}
+                      error={isFeeRecipientFieldWrong(0)}
+                      helperText={getFeeRecipientFieldHelperText(0)}
+                      value={feeRecipients[0]}
+                      disabled={!isFeeRecipientEditable(tags[0])}
+                    />
+                    {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
+                      <Alert severity="info">This field will only apply to the editable fee recipients</Alert>
+                    )}
+                  </>
+                )}
+              </FormControl>
+            )}
+          </>
+        )}
 
-          {FileCardList(
-            acceptedFiles,
-            setAcceptedFiles,
-            passwords,
-            setPasswords,
-            useSamePassword,
-            tags,
-            setTags,
-            useSameTag,
-            feeRecipients,
-            setFeeRecipients,
-            useSameFeerecipient,
-            getFeeRecipientFieldHelperText,
-            isFeeRecipientFieldWrong,
-            tagSelectOptions
-          )}
+        {FileCardList(
+          acceptedFiles,
+          setAcceptedFiles,
+          passwords,
+          setPasswords,
+          useSamePassword,
+          tags,
+          setTags,
+          useSameTag,
+          feeRecipients,
+          setFeeRecipients,
+          useSameFeerecipient,
+          getFeeRecipientFieldHelperText,
+          isFeeRecipientFieldWrong,
+          tagSelectOptions
+        )}
 
-          <Box
+        <Box
+          sx={{
+            marginTop: 8,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "left"
+          }}
+        >
+          <Typography variant="h5" sx={{ marginBottom: 2, fontSize: { xs: 20, sm: 24 } }}>
+            <b>Import slashing protection data? (recommended)</b>
+          </Typography>
+          <Switch defaultChecked onChange={onSlashingChecked} />
+        </Box>
+        {slashingProtectionIncluded ? (
+          <Card
             sx={{
-              marginTop: 8,
-              marginBottom: 2,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "left"
+              padding: { xs: 2, sm: 4 },
+              borderRadius: 2
             }}
           >
-            <Typography variant="h5" sx={{ marginRight: 2 }}>
-              <b>Import slashing protection data? (recommended)</b>
-            </Typography>
-            <Switch defaultChecked onChange={onSlashingChecked} />
-          </Box>
-          {slashingProtectionIncluded ? (
-            <div>
-              <Typography>Upload your slashing protection file to protect your keystore(s).</Typography>
+            <Typography>Upload your slashing protection file to protect your keystore(s).</Typography>
 
-              <SecondaryInfoTypography sx={{ marginBottom: 4 }} text="Only for previously-used keystores" />
-              {slashingFile ? (
-                <Card
-                  key={slashingFile.name}
-                  raised
+            <SecondaryInfoTypography sx={{ marginBottom: 4 }} text="Only for previously-used keystores" />
+            {slashingFile ? (
+              <Card
+                key={slashingFile.name}
+                raised
+                sx={{
+                  padding: 2,
+                  marginTop: 4,
+                  borderRadius: 2
+                }}
+              >
+                <Box
                   sx={{
-                    padding: 2,
-                    marginTop: 4,
-                    borderRadius: 2
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "left",
+                    justifyContent: "space-between"
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "left",
-                      justifyContent: "space-between"
-                    }}
-                  >
-                    <Typography variant="h6">
-                      <b>✅ {slashingFile.name}</b>
-                      <br />
-                    </Typography>
+                  <Typography variant="h6">
+                    <b>✅ {slashingFile.name}</b>
+                    <br />
+                  </Typography>
 
-                    <button onClick={() => setSlashingFile(undefined)}>
-                      <CloseIcon color="action" />
-                    </button>
-                  </Box>
-                </Card>
-              ) : (
-                <FileDrop callback={slashingFilesCallback} />
-              )}
-            </div>
-          ) : null}
-        </Card>
+                  <button onClick={() => setSlashingFile(undefined)}>
+                    <CloseIcon color="action" />
+                  </button>
+                </Box>
+              </Card>
+            ) : (
+              <FileDrop callback={slashingFilesCallback} />
+            )}
+          </Card>
+        ) : null}
         {showMevWarning && (
           <Alert
             severity="warning"
@@ -451,14 +450,15 @@ export default function ImportScreen({
           sx={{
             marginTop: 4,
             display: "flex",
-            justifyContent: "space-between"
+            justifyContent: "space-between",
+            gap: 2
           }}
         >
           <Link to={{ pathname: "/", search: window.location.search }} style={{ textDecoration: "none" }}>
             <Button
               variant="outlined"
-              size="large"
-              sx={{ marginRight: 4, borderRadius: 2 }}
+              size="medium"
+              sx={{ borderRadius: 2 }}
               startIcon={<ArrowCircleLeftOutlinedIcon />}
             >
               Back to Accounts
@@ -467,11 +467,11 @@ export default function ImportScreen({
 
           <Button
             variant="contained"
-            size="large"
+            size="medium"
             endIcon={<BackupIcon />}
             disabled={isButtonDisabled}
             onClick={importKeystores}
-            sx={{ borderRadius: 3 }}
+            sx={{ borderRadius: 2 }}
           >
             Submit Keystores
           </Button>
