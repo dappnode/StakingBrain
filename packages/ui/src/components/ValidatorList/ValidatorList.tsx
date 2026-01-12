@@ -72,19 +72,20 @@ export default function ValidatorList({
   };
 
   return (
-    <div>
+    <div style={{ height: "90vh" }}>
       {userMode === "advanced" && <StakerConfig stakerConfig={stakerConfig} />}
       <Box
         sx={{
           margin: { xs: 2, sm: 3, md: 5 },
           display: "flex",
           flexDirection: "column",
-          alignItems: "left"
+          alignItems: "left",
+          height: "100%"
         }}
       >
         {(network === "hoodi" || network === "mainnet") && <SmoothBanner />}
 
-        <Box>
+        <Box sx={{ flexGrow: 1 }}>
           {validatorsGetError ? (
             <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
               {validatorsGetError}
