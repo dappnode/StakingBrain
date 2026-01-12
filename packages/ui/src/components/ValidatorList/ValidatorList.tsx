@@ -91,11 +91,20 @@ export default function ValidatorList({
               {validatorsGetError}
             </Alert>
           ) : loading ? (
-            <CircularProgress
+            <Box
               sx={{
-                marginBottom: 4
+                display: "flex",
+                justifyContent: "center",
+                height: "100%",
+                alignItems: "center"
               }}
-            />
+            >
+              <CircularProgress
+                sx={{
+                  marginBottom: 4
+                }}
+              />
+            </Box>
           ) : validatorsGet ? (
             <>
               <KeystoresDataGrid
