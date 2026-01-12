@@ -486,7 +486,7 @@ export default function KeystoresDataGrid({
           columns={columns}
           pageSize={pageSize}
           rowsPerPageOptions={[10, 20, 50, 100]}
-          onPageSizeChange={() => setPageSize(pageSize)}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
           checkboxSelection
           onSelectionModelChange={(selectionModel: GridSelectionModel) => setSelectedRows(selectionModel)}
           sx={{ borderRadius: 2 }}
