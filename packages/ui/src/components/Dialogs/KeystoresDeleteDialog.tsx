@@ -37,6 +37,7 @@ export default function KeystoresDeleteDialog({
   const [keystoresDelete, setKeystoresDelete] = useState<Web3signerDeleteResponse>();
   const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
   const [loading, setLoading] = useState(false);
+  const [deletedPubkeys, setDeletedPubkeys] = useState<string[]>([]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -44,9 +45,11 @@ export default function KeystoresDeleteDialog({
     try {
       setKeystoresDelete(undefined);
       setLoading(true);
+      const pubkeysToDelete = selectedRows.map((row) => rows[parseInt(row.toString())]?.pubkey);
+      setDeletedPubkeys(pubkeysToDelete);
       setKeystoresDelete(
         await rpcClient.call("deleteValidators", {
-          pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
+          pubkeys: pubkeysToDelete
         })
       );
       setLoading(false);
@@ -61,6 +64,7 @@ export default function KeystoresDeleteDialog({
   const handleClose = () => {
     setOpen(false);
   };
+
   return (
     <Dialog
       disableEscapeKeyDown={true}
@@ -76,28 +80,33 @@ export default function KeystoresDeleteDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle id="alert-dialog-title">{keystoresDelete ? "Done" : "Delete Keystores?"}</DialogTitle>
+      <DialogTitle id="alert-dialog-title">
+        {keystoresDelete ? "Keys deleted successfully" : "Delete Keystores?"}
+      </DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {keystoresDeleteError ? (
             `Error: ${keystoresDeleteError}`
           ) : keystoresDelete?.data ? (
             <div>
-              {keystoresDelete.data.map((result, index) => (
-                <div style={{ marginBottom: "20px" }}>
-                  <Typography variant="h5" color="GrayText">
-                    {shortenPubkey(rows[index]?.pubkey)}
-                  </Typography>
-                  <Typography variant="h6">
-                    <b>Status:</b> {result.status} {getEmoji(result.status)}
-                  </Typography>
-                  {result.message ? (
-                    <Typography variant="h6">
-                      <b>Message:</b> {result.message}
+              {keystoresDelete.data.map((result, index) => {
+                const pubkey = deletedPubkeys[index];
+                return (
+                  <div style={{ marginBottom: "20px" }} key={pubkey || index}>
+                    <Typography variant="h5" color="GrayText">
+                      {shortenPubkey(pubkey)}
                     </Typography>
-                  ) : null}
-                </div>
-              ))}
+                    <Typography variant="h6">
+                      <b>Status:</b> {result.status} {getEmoji(result.status)}
+                    </Typography>
+                    {result.message ? (
+                      <Typography variant="h6">
+                        <b>Message:</b> {result.message}
+                      </Typography>
+                    ) : null}
+                  </div>
+                );
+              })}
               {keystoresDelete.slashing_protection ? (
                 <div>
                   <Alert severity="warning" sx={{ marginTop: 2, marginBottom: 2 }} variant="filled">
