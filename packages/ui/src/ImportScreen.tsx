@@ -374,7 +374,7 @@ export default function ImportScreen({
           <Typography variant="h5" sx={{ marginBottom: 2, fontSize: { xs: 20, sm: 24 } }}>
             <b>Import slashing protection data? (recommended)</b>
           </Typography>
-          <Switch defaultChecked onChange={onSlashingChecked} />
+          <Switch onChange={onSlashingChecked} />
         </Box>
         {slashingProtectionIncluded ? (
           <Card
