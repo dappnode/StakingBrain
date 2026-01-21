@@ -7,10 +7,12 @@ import { Web3SignerApi } from "./signer/index.js";
 import { PostgresClient } from "./postgres/index.js";
 import { BrainConfig } from "../config/types.js";
 import { DappnodeSignatureVerifier } from "./signatureVerifier/index.js";
+import { NotificationsApi } from "./notifications/index.js";
 
 export {
   BlockExplorerApi,
   DappmanagerApi,
+  NotificationsApi,
   PrometheusApi,
   BeaconchainApi,
   ValidatorApi,
@@ -27,6 +29,7 @@ export const getApiClients = (brainConfig: BrainConfig) => {
     validatorUrl,
     beaconchainUrl,
     dappmanagerUrl,
+    notificationsUrl,
     postgresUrl,
     token,
     tlsCert,
@@ -60,6 +63,7 @@ export const getApiClients = (brainConfig: BrainConfig) => {
     ),
     beaconchainApi: new BeaconchainApi({ baseUrl: beaconchainUrl }, network),
     dappmanagerApi: new DappmanagerApi({ baseUrl: dappmanagerUrl }, network),
-    postgresClient: new PostgresClient(postgresUrl)
+    postgresClient: new PostgresClient(postgresUrl),
+    notificationsApi: new NotificationsApi({ baseUrl: notificationsUrl }, network)
   };
 };

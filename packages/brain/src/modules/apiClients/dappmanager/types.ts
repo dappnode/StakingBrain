@@ -1,7 +1,17 @@
-// Must be in sync with dappmanager
-export enum NotificationType {
-  Success = "success",
-  Info = "info",
-  Warning = "warning",
-  Danger = "danger"
+export interface Manifest {
+  notifications?: {
+    customEndpoints?: CustomEndpoint[];
+  };
+}
+
+export interface CustomEndpoint {
+  name: string;
+  enabled: boolean;
+  description: string;
+  metric?: {
+    treshold: number;
+    min: number;
+    max: number;
+    unit: string;
+  };
 }
