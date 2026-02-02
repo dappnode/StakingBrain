@@ -49,7 +49,7 @@ export const getCrons = ({
       });
     }),
     reloadValidatorsCronTask: new CronJob(60 * 1000, () =>
-      reloadValidators(signerApi, signerUrl, validatorApi, brainDb)
+      reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb)
     )
   };
 };
