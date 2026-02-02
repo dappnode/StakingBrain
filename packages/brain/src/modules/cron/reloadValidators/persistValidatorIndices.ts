@@ -4,19 +4,23 @@ import { ValidatorStatus } from "../../apiClients/beaconchain/types.js";
 import { shortenPubkey } from "@stakingbrain/common";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
+import { StakingBrainDb } from "../../db/types.js";
+
+interface ValidatorUpdate {
+  index: number;
+  status: ValidatorStatus;
+  feeRecipient: string;
+}
+
+interface UpdateResult {
+  validatorsToUpdate: Record<string, ValidatorUpdate>;
+  newIndicesCount: number;
+  statusChangesCount: number;
+}
 
 /**
- * Fetches validator indices and statuses from the Beacon API for all validators in the database
- * and persists them.
- *
- * This function:
- * - Fetches all validator pubkeys from the database
- * - Makes a single batch API call to retrieve data for all validators
- * - Updates the database with the retrieved indices and statuses
- * - Handles failures gracefully without throwing errors
- *
- * @param beaconchainApi - The Beacon API client
- * @param brainDb - The database instance
+ * Fetches validator indices and statuses from the Beacon API for all validators
+ * in the database and persists any changes.
  */
 export async function persistValidatorIndices({
   beaconchainApi,
@@ -34,77 +38,74 @@ export async function persistValidatorIndices({
       return;
     }
 
-    logger.debug(`${logPrefix}Fetching indices and statuses for ${allPubkeys.length} validators using batch API`);
+    logger.debug(`${logPrefix}Fetching indices and statuses for ${allPubkeys.length} validators`);
 
-    // Fetch all validator data in a single batch API call
     const response = await beaconchainApi.postStateValidators({
       stateId: "head",
-      body: {
-        ids: allPubkeys,
-        statuses: [] // Empty array means all statuses
-      }
+      body: { ids: allPubkeys, statuses: [] }
     });
 
-    // Collect successfully fetched data and track changes
-    const validatorsToUpdate: {
-      [pubkey: string]: {
-        index: number;
-        status: ValidatorStatus;
-        feeRecipient: string;
-      }
-    } = {};
-
-    let newIndicesCount = 0;
-    let statusChangesCount = 0;
-
-    for (const validatorData of response.data) {
-      const pubkey = validatorData.validator.pubkey;
-      if (dbData[pubkey]) {
-        const newIndex = parseInt(validatorData.index);
-        const newStatus = validatorData.status;
-        const existingIndex = dbData[pubkey].index;
-        const existingStatus = dbData[pubkey].status;
-
-        // Only update if index or status has changed
-        const indexChanged = existingIndex !== newIndex;
-        const statusChanged = existingStatus !== newStatus;
-
-        if (indexChanged || statusChanged) {
-          validatorsToUpdate[pubkey] = {
-            index: newIndex,
-            status: newStatus,
-            feeRecipient: dbData[pubkey].feeRecipient
-          };
-
-          // Log when index is set for the first time
-          if (existingIndex === undefined && newIndex !== undefined) {
-            newIndicesCount++;
-            logger.info(
-              `${logPrefix}Validator ${shortenPubkey(pubkey)} assigned index ${newIndex} with status ${newStatus}`
-            );
-          }
-
-          // Log when status changes
-          if (existingStatus !== undefined && statusChanged) {
-            statusChangesCount++;
-            logger.info(
-              `${logPrefix}Validator ${shortenPubkey(pubkey)} (index ${newIndex}) status changed: ${existingStatus} → ${newStatus}`
-            );
-          }
-        }
-      }
-    }
+    const { validatorsToUpdate, newIndicesCount, statusChangesCount } = processValidatorResponse(
+      response.data,
+      dbData
+    );
 
     const updateCount = Object.keys(validatorsToUpdate).length;
-
     if (updateCount > 0) {
       brainDb.updateValidators({ validators: validatorsToUpdate });
       logger.debug(
         `${logPrefix}Persisted ${updateCount} validator updates (${newIndicesCount} new indices, ${statusChangesCount} status changes)`
       );
     }
-
   } catch (e) {
     logger.error(`${logPrefix}Error persisting validator indices and statuses`, e);
   }
+}
+
+/**
+ * Processes the beacon API response and identifies validators that need updating.
+ */
+function processValidatorResponse(
+  responseData: { index: string; status: ValidatorStatus; validator: { pubkey: string } }[],
+  dbData: StakingBrainDb
+): UpdateResult {
+  const validatorsToUpdate: Record<string, ValidatorUpdate> = {};
+  let newIndicesCount = 0;
+  let statusChangesCount = 0;
+
+  for (const validatorData of responseData) {
+    const pubkey = validatorData.validator.pubkey;
+    const dbEntry = dbData[pubkey];
+
+    if (!dbEntry) continue;
+
+    const newIndex = parseInt(validatorData.index);
+    const newStatus = validatorData.status;
+    const indexChanged = dbEntry.index !== newIndex;
+    const statusChanged = dbEntry.status !== newStatus;
+
+    if (!indexChanged && !statusChanged) continue;
+
+    validatorsToUpdate[pubkey] = {
+      index: newIndex,
+      status: newStatus,
+      feeRecipient: dbEntry.feeRecipient
+    };
+
+    if (dbEntry.index === undefined) {
+      newIndicesCount++;
+      logger.info(
+        `${logPrefix}Validator ${shortenPubkey(pubkey)} assigned index ${newIndex} with status ${newStatus}`
+      );
+    }
+
+    if (dbEntry.status !== undefined && statusChanged) {
+      statusChangesCount++;
+      logger.info(
+        `${logPrefix}Validator ${shortenPubkey(pubkey)} (index ${newIndex}) status changed: ${dbEntry.status} → ${newStatus}`
+      );
+    }
+  }
+
+  return { validatorsToUpdate, newIndicesCount, statusChangesCount };
 }
