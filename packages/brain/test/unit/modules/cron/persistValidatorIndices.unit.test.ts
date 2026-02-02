@@ -6,14 +6,19 @@ import { persistValidatorIndices } from "../../../../src/modules/cron/reloadVali
 import { ValidatorStatus } from "../../../../src/modules/apiClients/beaconchain/types.js";
 import fs from "fs";
 
+type MockBeaconchainApi = Pick<BeaconchainApi, "postStateValidators">;
+
 describe("persistValidatorIndices", () => {
   const testDbName = "test-persist-validator-indices.json";
   let brainDb: BrainDataBase;
 
   // Use valid BLS pubkeys from the integration tests
-  const mockPubkey1 = "0xa2cc280ce811bb680cba309103e23dc3c9902f2a08541c6737e8adfe8198e796023b959fc8aadfad39499b56ec3dd184";
-  const mockPubkey2 = "0x86d25af52627204ab822a20ac70da6767952841edbcb0b83c84a395205313661de5f7f76efa475a46f45fa89d95c1dd7";
-  const mockPubkey3 = "0x821a80380122281580ba8a56cd21956933d43c62fdc8f5b4ec31b2c620e8534e80b6b816c9a2cc8d25568dc4ebcfd47a";
+  const mockPubkey1 =
+    "0xa2cc280ce811bb680cba309103e23dc3c9902f2a08541c6737e8adfe8198e796023b959fc8aadfad39499b56ec3dd184";
+  const mockPubkey2 =
+    "0x86d25af52627204ab822a20ac70da6767952841edbcb0b83c84a395205313661de5f7f76efa475a46f45fa89d95c1dd7";
+  const mockPubkey3 =
+    "0x821a80380122281580ba8a56cd21956933d43c62fdc8f5b4ec31b2c620e8534e80b6b816c9a2cc8d25568dc4ebcfd47a";
 
   beforeEach(() => {
     // Clean up test database
@@ -48,8 +53,8 @@ describe("persistValidatorIndices", () => {
     });
 
     // Mock BeaconchainApi
-    const mockBeaconchainApi = {
-      postStateValidators: async ({ stateId, body }: any) => {
+    const mockBeaconchainApi: MockBeaconchainApi = {
+      postStateValidators: async ({ stateId, body }) => {
         expect(stateId).to.equal("head");
         expect(body.ids).to.deep.equal([mockPubkey1, mockPubkey2]);
         expect(body.statuses).to.deep.equal([]);
@@ -91,11 +96,11 @@ describe("persistValidatorIndices", () => {
           ]
         };
       }
-    } as any;
+    };
 
     // Call the function
     await persistValidatorIndices({
-      beaconchainApi: mockBeaconchainApi,
+      beaconchainApi: mockBeaconchainApi as BeaconchainApi,
       brainDb
     });
 
@@ -135,7 +140,7 @@ describe("persistValidatorIndices", () => {
     });
 
     // Mock BeaconchainApi with updated status
-    const mockBeaconchainApi = {
+    const mockBeaconchainApi: MockBeaconchainApi = {
       postStateValidators: async () => ({
         execution_optimistic: false,
         finalized: true,
@@ -157,11 +162,11 @@ describe("persistValidatorIndices", () => {
           }
         ]
       })
-    } as any;
+    };
 
     // Call the function
     await persistValidatorIndices({
-      beaconchainApi: mockBeaconchainApi,
+      beaconchainApi: mockBeaconchainApi as BeaconchainApi,
       brainDb
     });
 
@@ -189,7 +194,7 @@ describe("persistValidatorIndices", () => {
     });
 
     // Mock BeaconchainApi - only returns one validator
-    const mockBeaconchainApi = {
+    const mockBeaconchainApi: MockBeaconchainApi = {
       postStateValidators: async () => ({
         execution_optimistic: false,
         finalized: true,
@@ -212,11 +217,11 @@ describe("persistValidatorIndices", () => {
           // mockPubkey2 not returned (not deposited yet)
         ]
       })
-    } as any;
+    };
 
     // Call the function
     await persistValidatorIndices({
-      beaconchainApi: mockBeaconchainApi,
+      beaconchainApi: mockBeaconchainApi as BeaconchainApi,
       brainDb
     });
 
@@ -233,15 +238,15 @@ describe("persistValidatorIndices", () => {
 
   it("should handle empty database gracefully", async () => {
     // Mock BeaconchainApi
-    const mockBeaconchainApi = {
+    const mockBeaconchainApi: MockBeaconchainApi = {
       postStateValidators: async () => {
         throw new Error("Should not be called with empty database");
       }
-    } as any;
+    };
 
     // Call the function with empty database (should return early)
     await persistValidatorIndices({
-      beaconchainApi: mockBeaconchainApi,
+      beaconchainApi: mockBeaconchainApi as BeaconchainApi,
       brainDb
     });
 
@@ -262,15 +267,15 @@ describe("persistValidatorIndices", () => {
     });
 
     // Mock BeaconchainApi that throws an error
-    const mockBeaconchainApi = {
+    const mockBeaconchainApi: MockBeaconchainApi = {
       postStateValidators: async () => {
         throw new Error("Beacon API connection failed");
       }
-    } as any;
+    };
 
     // Call the function (should not throw)
     await persistValidatorIndices({
-      beaconchainApi: mockBeaconchainApi,
+      beaconchainApi: mockBeaconchainApi as BeaconchainApi,
       brainDb
     });
 
@@ -305,13 +310,13 @@ describe("persistValidatorIndices", () => {
 
     let updateValidatorsCalled = false;
     const originalUpdateValidators = brainDb.updateValidators.bind(brainDb);
-    brainDb.updateValidators = function(...args) {
+    brainDb.updateValidators = function (...args) {
       updateValidatorsCalled = true;
       return originalUpdateValidators(...args);
     };
 
     // Mock BeaconchainApi returns same data (no changes)
-    const mockBeaconchainApi = {
+    const mockBeaconchainApi: MockBeaconchainApi = {
       postStateValidators: async () => ({
         execution_optimistic: false,
         finalized: true,
@@ -333,11 +338,11 @@ describe("persistValidatorIndices", () => {
           }
         ]
       })
-    } as any;
+    };
 
     // Call the function
     await persistValidatorIndices({
-      beaconchainApi: mockBeaconchainApi,
+      beaconchainApi: mockBeaconchainApi as BeaconchainApi,
       brainDb
     });
 
@@ -363,7 +368,7 @@ describe("persistValidatorIndices", () => {
     });
 
     // Mock BeaconchainApi returns a different pubkey
-    const mockBeaconchainApi = {
+    const mockBeaconchainApi: MockBeaconchainApi = {
       postStateValidators: async () => ({
         execution_optimistic: false,
         finalized: true,
@@ -385,11 +390,11 @@ describe("persistValidatorIndices", () => {
           }
         ]
       })
-    } as any;
+    };
 
     // Call the function
     await persistValidatorIndices({
-      beaconchainApi: mockBeaconchainApi,
+      beaconchainApi: mockBeaconchainApi as BeaconchainApi,
       brainDb
     });
 

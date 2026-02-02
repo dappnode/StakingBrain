@@ -45,10 +45,7 @@ export async function persistValidatorIndices({
       body: { ids: allPubkeys, statuses: [] }
     });
 
-    const { validatorsToUpdate, newIndicesCount, statusChangesCount } = processValidatorResponse(
-      response.data,
-      dbData
-    );
+    const { validatorsToUpdate, newIndicesCount, statusChangesCount } = processValidatorResponse(response.data, dbData);
 
     const updateCount = Object.keys(validatorsToUpdate).length;
     if (updateCount > 0) {
@@ -94,9 +91,7 @@ function processValidatorResponse(
 
     if (dbEntry.index === undefined) {
       newIndicesCount++;
-      logger.info(
-        `${logPrefix}Validator ${shortenPubkey(pubkey)} assigned index ${newIndex} with status ${newStatus}`
-      );
+      logger.info(`${logPrefix}Validator ${shortenPubkey(pubkey)} assigned index ${newIndex} with status ${newStatus}`);
     }
 
     if (dbEntry.status !== undefined && statusChanged) {

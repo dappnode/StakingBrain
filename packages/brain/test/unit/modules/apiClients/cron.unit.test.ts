@@ -105,7 +105,7 @@ describe.skip("Cron: Prater", () => {
             finalized: true,
             data: [] // No validators found on beacon chain yet
           })
-        } as any;
+        } as unknown as BeaconchainApi;
 
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);
