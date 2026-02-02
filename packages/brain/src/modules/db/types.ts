@@ -1,4 +1,5 @@
 import { Tag } from "@stakingbrain/common";
+import { ValidatorStatus } from "../apiClients/beaconchain/types.js";
 
 /**
  * DbSlot represents the line in the database for a given public key:
@@ -25,6 +26,7 @@ export interface PubkeyDetails {
   feeRecipient: string;
   automaticImport: boolean;
   index?: number; // index of the validator. Only available if the validator is active.
+  status?: ValidatorStatus; // status of the validator from the Beacon API.
 }
 
 export const nonEditableFeeRecipientTags = ["rocketpool", "stader", "stakewise", "lido"] as const;
