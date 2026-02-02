@@ -476,7 +476,7 @@ export default function KeystoresDataGrid({
           </Tooltip>
         </div>
       </div>
-      <div style={{ height: 400, width: "100%" }}>
+      <div style={{ width: "100%", height: "80%" }}>
         <DataGrid
           rows={customRows}
           onCellClick={(params) => {
