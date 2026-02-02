@@ -65,39 +65,43 @@ export async function persistValidatorIndices({
         const existingIndex = dbData[pubkey].index;
         const existingStatus = dbData[pubkey].status;
 
-        validatorsToUpdate[pubkey] = {
-          index: newIndex,
-          status: newStatus,
-          feeRecipient: dbData[pubkey].feeRecipient
-        };
+        // Only update if index or status has changed
+        const indexChanged = existingIndex !== newIndex;
+        const statusChanged = existingStatus !== newStatus;
 
-        // Log when index is set for the first time
-        if (existingIndex === undefined && newIndex !== undefined) {
-          newIndicesCount++;
-          logger.info(
-            `${logPrefix}Validator ${shortenPubkey(pubkey)} assigned index ${newIndex} with status ${newStatus}`
-          );
-        }
+        if (indexChanged || statusChanged) {
+          validatorsToUpdate[pubkey] = {
+            index: newIndex,
+            status: newStatus,
+            feeRecipient: dbData[pubkey].feeRecipient
+          };
 
-        // Log when status changes
-        if (existingStatus !== undefined && existingStatus !== newStatus) {
-          statusChangesCount++;
-          logger.info(
-            `${logPrefix}Validator ${shortenPubkey(pubkey)} (index ${newIndex}) status changed: ${existingStatus} → ${newStatus}`
-          );
+          // Log when index is set for the first time
+          if (existingIndex === undefined && newIndex !== undefined) {
+            newIndicesCount++;
+            logger.info(
+              `${logPrefix}Validator ${shortenPubkey(pubkey)} assigned index ${newIndex} with status ${newStatus}`
+            );
+          }
+
+          // Log when status changes
+          if (existingStatus !== undefined && statusChanged) {
+            statusChangesCount++;
+            logger.info(
+              `${logPrefix}Validator ${shortenPubkey(pubkey)} (index ${newIndex}) status changed: ${existingStatus} → ${newStatus}`
+            );
+          }
         }
       }
     }
 
-    const successCount = Object.keys(validatorsToUpdate).length;
+    const updateCount = Object.keys(validatorsToUpdate).length;
 
-    if (successCount > 0) {
+    if (updateCount > 0) {
       brainDb.updateValidators({ validators: validatorsToUpdate });
       logger.debug(
-        `${logPrefix}Successfully persisted ${successCount} validator indices and statuses (${newIndicesCount} new, ${statusChangesCount} status changes)`
+        `${logPrefix}Persisted ${updateCount} validator updates (${newIndicesCount} new indices, ${statusChangesCount} status changes)`
       );
-    } else {
-      logger.debug(`${logPrefix}No validator data returned from Beacon API`);
     }
 
   } catch (e) {

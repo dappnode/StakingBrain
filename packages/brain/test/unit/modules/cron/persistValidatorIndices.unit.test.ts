@@ -280,6 +280,76 @@ describe("persistValidatorIndices", () => {
     expect(dbData[mockPubkey1].status).to.be.undefined;
   });
 
+  it("should not update validators when index and status haven't changed", async () => {
+    // Add validators with existing indices and statuses
+    brainDb.addValidators({
+      validators: {
+        [mockPubkey1]: {
+          tag: "solo",
+          feeRecipient: "0x1111111111111111111111111111111111111111",
+          automaticImport: true
+        }
+      }
+    });
+
+    // Set initial index and status
+    brainDb.updateValidators({
+      validators: {
+        [mockPubkey1]: {
+          feeRecipient: "0x1111111111111111111111111111111111111111",
+          index: 123456,
+          status: ValidatorStatus.ACTIVE_ONGOING
+        }
+      }
+    });
+
+    let updateValidatorsCalled = false;
+    const originalUpdateValidators = brainDb.updateValidators.bind(brainDb);
+    brainDb.updateValidators = function(...args) {
+      updateValidatorsCalled = true;
+      return originalUpdateValidators(...args);
+    };
+
+    // Mock BeaconchainApi returns same data (no changes)
+    const mockBeaconchainApi = {
+      postStateValidators: async () => ({
+        execution_optimistic: false,
+        finalized: true,
+        data: [
+          {
+            index: "123456", // Same index
+            balance: "32000000000",
+            status: ValidatorStatus.ACTIVE_ONGOING, // Same status
+            validator: {
+              pubkey: mockPubkey1,
+              withdrawal_credentials: "0x010000000000000000000000abcdef1234567890abcdef1234567890abcdef12",
+              effective_balance: "32000000000",
+              slashed: false,
+              activation_eligibility_epoch: "0",
+              activation_epoch: "100",
+              exit_epoch: "9999999999",
+              withdrawable_epoch: "9999999999"
+            }
+          }
+        ]
+      })
+    } as any;
+
+    // Call the function
+    await persistValidatorIndices({
+      beaconchainApi: mockBeaconchainApi,
+      brainDb
+    });
+
+    // Verify updateValidators was NOT called (no changes to persist)
+    expect(updateValidatorsCalled).to.be.false;
+
+    // Verify data remains the same
+    const dbData = brainDb.getData();
+    expect(dbData[mockPubkey1].index).to.equal(123456);
+    expect(dbData[mockPubkey1].status).to.equal(ValidatorStatus.ACTIVE_ONGOING);
+  });
+
   it("should handle response with unknown pubkeys gracefully", async () => {
     // Add validators to database
     brainDb.addValidators({
