@@ -103,16 +103,23 @@ export function startUiServer({
         return;
       }
 
+      if (!(method in rpcMethods)) {
+        callback({
+          jsonrpc: "2.0",
+          error: { code: -32601, message: "Method not found" },
+          id
+        });
+        return;
+      }
+
       try {
-        if (method in rpcMethods) {
-          const result = await rpcMethods[method](params);
-          callback({ jsonrpc: "2.0", result, id });
-        } else throw new Error("Method not found");
+        const result = await rpcMethods[method](params);
+        callback({ jsonrpc: "2.0", result, id });
       } catch (error) {
         logger.error(error);
         callback({
           jsonrpc: "2.0",
-          error: { code: -32601, message: toRpcErrorMessage(error) },
+          error: { code: -32000, message: toRpcErrorMessage(error) },
           id
         });
       }
