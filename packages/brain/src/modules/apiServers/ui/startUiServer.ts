@@ -30,6 +30,17 @@ interface RpcRequest {
   id: string | number | null;
 }
 
+function toRpcErrorMessage(error: unknown): string {
+  if (error == null) return "Unknown error";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message || error.name || "Unknown error";
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 export function startUiServer({
   brainDb,
   blockExplorerApi,
@@ -92,16 +103,23 @@ export function startUiServer({
         return;
       }
 
+      if (!(method in rpcMethods)) {
+        callback({
+          jsonrpc: "2.0",
+          error: { code: -32601, message: "Method not found" },
+          id
+        });
+        return;
+      }
+
       try {
-        if (method in rpcMethods) {
-          const result = await rpcMethods[method](params);
-          callback({ jsonrpc: "2.0", result, id });
-        } else throw new Error("Method not found");
+        const result = await rpcMethods[method](params);
+        callback({ jsonrpc: "2.0", result, id });
       } catch (error) {
         logger.error(error);
         callback({
           jsonrpc: "2.0",
-          error: { code: -32601, message: error },
+          error: { code: -32000, message: toRpcErrorMessage(error) },
           id
         });
       }
