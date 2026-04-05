@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { before } from "mocha";
-import { ValidatorApi, Web3SignerApi } from "../../../../src/modules/apiClients/index.js";
+import { ValidatorApi, Web3SignerApi, BeaconchainApi } from "../../../../src/modules/apiClients/index.js";
 import { execSync } from "node:child_process";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import fs from "fs";
@@ -60,6 +60,7 @@ describe.skip("Cron: Prater", () => {
     describe(`Consensus client: ${consensusClient.name}`, () => {
       let validatorApi: ValidatorApi;
       let signerApi: Web3SignerApi;
+      let beaconchainApi: BeaconchainApi;
       let brainDb: BrainDataBase;
       let signerUrl: string;
 
@@ -97,6 +98,15 @@ describe.skip("Cron: Prater", () => {
         );
         signerUrl = `http://${signerIp}:9000`;
 
+        // Mock BeaconchainApi - postStateValidators returns empty array (validators not active yet)
+        beaconchainApi = {
+          postStateValidators: async () => ({
+            execution_optimistic: false,
+            finalized: true,
+            data: [] // No validators found on beacon chain yet
+          })
+        } as unknown as BeaconchainApi;
+
         if (fs.existsSync(testDbName)) fs.unlinkSync(testDbName);
         brainDb = new BrainDataBase(testDbName);
       });
@@ -132,7 +142,7 @@ describe.skip("Cron: Prater", () => {
         });
 
         //Check that fee recipient has changed in validator
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb);
 
         const validatorFeeRecipient = await validatorApi.getFeeRecipient(pubkeyToTest);
 
@@ -144,7 +154,7 @@ describe.skip("Cron: Prater", () => {
         addSampleValidatorsToDB(1);
         await addSampleKeystoresToSigner(2);
 
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb);
 
         const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -159,7 +169,7 @@ describe.skip("Cron: Prater", () => {
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(1);
 
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb);
 
         const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -177,7 +187,7 @@ describe.skip("Cron: Prater", () => {
         brainDb.deleteValidators([pubkeys[0]]);
         await signerApi.deleteRemoteKeys({ pubkeys: [pubkeys[1]] });
 
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb);
 
         const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -190,7 +200,7 @@ describe.skip("Cron: Prater", () => {
         addSampleValidatorsToDB(2);
         await addSampleKeystoresToSigner(2);
 
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb);
 
         const signerPubkeys = await signerApi.listRemoteKeys();
         const dbPubkeys = Object.keys(brainDb.getData());
@@ -208,7 +218,7 @@ describe.skip("Cron: Prater", () => {
 
         console.log("Added pubkeys to validator");
 
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb);
 
         console.log("Validators reloaded");
 
@@ -225,7 +235,7 @@ describe.skip("Cron: Prater", () => {
 
         const pubkeysToTest = pubkeys.slice(0, 2);
 
-        await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+        await reloadValidators(signerApi, signerUrl, validatorApi, beaconchainApi, brainDb);
 
         const validatorPubkeys = await validatorApi.getRemoteKeys();
 

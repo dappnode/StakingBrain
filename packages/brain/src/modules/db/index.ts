@@ -96,7 +96,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Updates 1 or more validators in db. The fields available to update are feeRecipient and index
+   * Updates 1 or more validators in db. The fields available to update are feeRecipient, index, and status
    */
   public updateValidators({ validators }: { validators: StakingBrainDbUpdate }): void {
     try {
@@ -110,7 +110,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             delete validators[pubkey];
           } else {
             this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
-            this.data[pubkey].index = validators[pubkey].index;
+            // Optional fields. Only update if provided so we dont overwrite existing data with undefined
+            // Index cant change once defined by ethereum and status should change only a few times in a validator lifetime
+            if (validators[pubkey].index !== undefined) {
+              this.data[pubkey].index = validators[pubkey].index;
+            }
+            if (validators[pubkey].status !== undefined) {
+              this.data[pubkey].status = validators[pubkey].status;
+            }
           }
         }
 
