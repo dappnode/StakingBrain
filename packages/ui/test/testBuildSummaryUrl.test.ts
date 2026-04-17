@@ -24,12 +24,12 @@ describe("Test the building of a unique URL for all the validators", () => {
     }
 
     const network = "mainnet";
-    const summaryValidatorURL = buildValidatorSummaryURL({
+    const summaryValidatorURLs = buildValidatorSummaryURL({
       allValidatorsInfo,
       network
     });
-    expect(summaryValidatorURL).to.equal(
+    expect(summaryValidatorURLs).to.deep.equal([
       "https://beaconcha.in/dashboard?validators=" + "1,".repeat(100) + "101,102,103"
-    );
+    ]);
   });
 });

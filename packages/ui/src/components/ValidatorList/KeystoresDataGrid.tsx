@@ -57,16 +57,16 @@ export default function KeystoresDataGrid({
 }): JSX.Element {
   const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
-  const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
+  const [validatorSummaryURLs, setValidatorSummaryURLs] = useState<string[]>([]);
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-    setValidatorSummaryURL("");
+    setValidatorSummaryURLs([]);
   }, [selectedRows]);
 
   useEffect(() => {
     openDashboardTab();
-  }, [validatorSummaryURL]);
+  }, [validatorSummaryURLs]);
 
   const [validatorsSubscriptionMap, setValidatorsSubscriptionMap] = useState<SmoothStatusByPubkey | null>(null);
 
@@ -384,7 +384,7 @@ export default function KeystoresDataGrid({
 
   async function getValidatorSummaryURL() {
     if (!beaconchaApiParamsMap?.get(network)) {
-      setValidatorSummaryURL("");
+      setValidatorSummaryURLs([]);
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
       return;
     }
@@ -401,22 +401,22 @@ export default function KeystoresDataGrid({
     } catch (e) {
       console.error(`Error fetching all validators info: ${e}`);
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
-      setValidatorSummaryURL("");
+      setValidatorSummaryURLs([]);
       return;
     }
 
-    const summaryUrlBuilt = buildValidatorSummaryURL({
+    const summaryUrlsBuilt = buildValidatorSummaryURL({
       allValidatorsInfo,
       network
     });
 
-    setValidatorSummaryURL(summaryUrlBuilt);
+    setValidatorSummaryURLs(summaryUrlsBuilt);
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
   }
 
   async function openDashboardTab() {
-    if (validatorSummaryURL) {
-      window.open(validatorSummaryURL, "_blank", "noopener, noreferrer");
+    for (const url of validatorSummaryURLs) {
+      window.open(url, "_blank", "noopener, noreferrer");
     }
   }
 

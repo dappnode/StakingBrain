@@ -95,7 +95,7 @@ const beaconchaApiParamsMap = new Map<string, ApiParams>([
   [
     "gnosis",
     {
-      baseUrl: "https://gnosischa.in",
+      baseUrl: "https://beacon.gnosisscan.io",
       apiPath: "/api/v1/"
     }
   ],
