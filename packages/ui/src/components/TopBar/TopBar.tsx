@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { AppBar } from "@mui/material";
 import ToolBar from "./ToolBar";
 import { Network } from "@stakingbrain/common";

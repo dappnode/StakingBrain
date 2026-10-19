@@ -1,9 +1,7 @@
 export enum Network {
   Mainnet = "mainnet",
   Gnosis = "gnosis",
-  Prater = "prater",
   Lukso = "lukso",
-  Holesky = "holesky",
   Hoodi = "hoodi"
 }
 

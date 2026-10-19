@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { useState } from "react";
 import {
   Dialog,
@@ -10,7 +11,7 @@ import {
   DialogActions,
   TextField
 } from "@mui/material";
-import { GridSelectionModel } from "@mui/x-data-grid";
+import type { GridRowId } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import ExitWarning from "./ExitWarning";
@@ -29,8 +30,8 @@ export default function KeystoresExitDialog({
   setOpen
 }: {
   rows: CustomValidatorGetResponse[];
-  selectedRows: GridSelectionModel;
-  setSelectedRows: (selectedRows: GridSelectionModel) => void;
+  selectedRows: GridRowId[];
+  setSelectedRows: (selectedRows: GridRowId[]) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
 }): JSX.Element {

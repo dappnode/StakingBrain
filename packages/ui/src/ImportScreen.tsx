@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import FileDrop from "./components/FileDrop/FileDrop";
 import { SecondaryInfoTypography } from "./Styles/Typographies";
 import {
@@ -213,7 +214,7 @@ export default function ImportScreen({
 
   const tagSelectOptions: TagSelectOption[] = ["gnosis", "lukso"].includes(network)
     ? [{ value: "solo", label: "Solo" }]
-    : ["holesky", "hoodi"].includes(network)
+    : network === "hoodi"
       ? [
           { value: "solo", label: "Solo" },
           { value: "rocketpool", label: "Rocketpool" },
@@ -430,15 +431,7 @@ export default function ImportScreen({
             You are importing one or more "Lido" validators, but don't have the MEV Boost package up & running. As a
             Lido Node Operator, it is your responsibility to ensure that your validators use MEV boost. <br /> Please
             install the MEV Boost package from{" "}
-            <Link
-              to={
-                network === "holesky"
-                  ? "http://my.dappnode/stakers/holesky"
-                  : network === "hoodi"
-                    ? "http://my.dappnode/stakers/hoodi"
-                    : "http://my.dappnode/stakers/ethereum"
-              }
-            >
+            <Link to={network === "hoodi" ? "http://my.dappnode/stakers/hoodi" : "http://my.dappnode/stakers/ethereum"}>
               your stakers tab
             </Link>{" "}
             before importing your Lido validator. Visit{" "}

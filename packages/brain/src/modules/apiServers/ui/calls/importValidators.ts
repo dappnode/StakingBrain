@@ -7,8 +7,6 @@ import {
   Network,
   ROCKET_POOL_FEE_RECIPIENT,
   STADER_POOL_FEE_RECIPIENT_MAINNET,
-  STADER_POOL_FEE_RECIPIENT_PRATER,
-  LIDO_FEE_RECIPIENT_HOLESKY,
   LIDO_FEE_RECIPIENT_MAINNET,
   LIDO_FEE_RECIPIENT_HOODI
 } from "@stakingbrain/common";
@@ -201,7 +199,6 @@ function getNonEditableFeeRecipient(
 
     case "lido":
       if (network === "mainnet") return LIDO_FEE_RECIPIENT_MAINNET;
-      else if (network === "holesky") return LIDO_FEE_RECIPIENT_HOLESKY;
       else if (network === "hoodi") return suggestedFeeRecipient ?? LIDO_FEE_RECIPIENT_HOODI;
       else throw Error(`Fee recipient not found for tag: ${tag} and network: ${network}`);
 
@@ -211,7 +208,6 @@ function getNonEditableFeeRecipient(
       // Set fee recipient to socializing pool adddress if it is not defined
       else {
         if (network === "mainnet") return STADER_POOL_FEE_RECIPIENT_MAINNET;
-        else if (network === "prater") return STADER_POOL_FEE_RECIPIENT_PRATER;
         else throw Error(`Fee recipient not found for tag: ${tag} and network: ${network}`);
       }
     default:

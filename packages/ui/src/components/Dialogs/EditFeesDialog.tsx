@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 //External components
 import {
   Alert,
@@ -19,7 +20,7 @@ import {
   Checkbox
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { GridSelectionModel } from "@mui/x-data-grid";
+import type { GridRowId } from "@mui/x-data-grid";
 import { BURN_ADDRESS, isValidEcdsaPubkey, areAllFeeRecipientsEditable, Network } from "@stakingbrain/common";
 import React from "react";
 import type {
@@ -52,7 +53,7 @@ export default function FeeRecipientDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
   rows: CustomValidatorGetResponse[];
-  selectedRows: GridSelectionModel;
+  selectedRows: GridRowId[];
   network: Network;
   isMevBoostSet: boolean;
 }): JSX.Element {

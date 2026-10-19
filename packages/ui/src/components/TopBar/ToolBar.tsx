@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import Toolbar from "@mui/material/Toolbar";
 import { HeaderTypography } from "../../Styles/Typographies";
 import { Box, capitalize, Typography } from "@mui/material";

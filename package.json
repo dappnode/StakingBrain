@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "engines": {
-    "node": ">=20.11.0"
+    "node": ">=24.11.0"
   },
   "workspaces": [
     "packages/*"
@@ -13,34 +13,38 @@
   "author": "DappNode Association",
   "license": "MIT",
   "devDependencies": {
-    "@types/chai": "^4.3.19",
-    "@types/mocha": "^10.0.7",
-    "@types/node": "^22.5.3",
-    "@typescript-eslint/eslint-plugin": "^8.4.0",
-    "@typescript-eslint/parser": "^8.4.0",
-    "chai": "^5.1.1",
-    "eslint": "^9.9.1",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-import": "^2.30.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "mocha": "^10.7.3",
-    "prettier": "^3.3.3",
-    "rimraf": "^4.1.1",
-    "tsx": "^4.19.0",
-    "typescript": "^5.5.4"
+    "@eslint/js": "^10.0.1",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.19.2",
+    "chai": "^6.3.0",
+    "dotenv": "^18.0.8",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.7",
+    "mocha": "^12.0.3",
+    "prettier": "^3.9.10",
+    "rimraf": "^6.1.3",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.2"
   },
   "scripts": {
     "build": "yarn workspaces foreach --all -pt run build",
     "test": "yarn workspaces foreach --all -pt run test",
     "dev": "yarn workspaces foreach --all -pi -j unlimited run dev",
-    "lint": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
-    "lint:fix": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --fix --ignore-pattern 'packages/common/src/validation/schemas/**/*.{js,ts,tsx}'",
+    "lint": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}'",
+    "lint:fix": "eslint 'packages/**/src/**/*.{js,ts,tsx}' 'packages/**/test/**/*.{js,ts,tsx}' --fix",
     "format": "prettier --write 'packages/**/src/**/*.{js,ts,tsx,json,md}' 'packages/**/test/**/*.{js,ts,tsx,json,md}'",
     "clean": "yarn run clean:build && yarn run clean:libraries",
-    "clean:libraries": "rimraf packages/**/node_modules && rimraf node_modules",
-    "clean:build": "rimraf packages/**/dist && rimraf packages/**/build"
+    "clean:libraries": "rimraf --glob 'packages/*/node_modules' node_modules",
+    "clean:build": "rimraf --glob 'packages/*/dist' 'packages/*/build'",
+    "format:check": "prettier --check 'packages/**/src/**/*.{js,ts,tsx,json,md}' 'packages/**/test/**/*.{js,ts,tsx,json,md}'"
   },
-  "packageManager": "yarn@4.4.1"
+  "packageManager": "yarn@4.18.1",
+  "dependenciesMeta": {
+    "esbuild": {
+      "built": true
+    }
+  }
 }

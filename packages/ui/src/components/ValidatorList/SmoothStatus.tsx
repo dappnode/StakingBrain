@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import Tooltip from "@mui/material/Tooltip";
 import { HourglassTop, CrisisAlert, CheckCircle, Warning, Close, Help, Block } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";

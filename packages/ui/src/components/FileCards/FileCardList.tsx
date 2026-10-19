@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { Card, Box, Typography, TextField, MenuItem, Select, FormControl, FormHelperText } from "@mui/material";
 import { KeystoreInfo, TagSelectOption } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";

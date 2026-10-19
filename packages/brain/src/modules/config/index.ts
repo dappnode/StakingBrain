@@ -66,15 +66,11 @@ const getPostgresUrl = (network: Network): string => {
   switch (network) {
     case Network.Hoodi:
       return "postgres://postgres:password@postgres.web3signer-hoodi.dappnode:5432/web3signer";
-    case Network.Holesky:
-      return "postgres://postgres:password@postgres.web3signer-holesky.dappnode:5432/web3signer";
     case Network.Mainnet:
       return "postgres://postgres:mainnet@postgres.web3signer.dappnode:5432/web3signer-mainnet";
     case Network.Gnosis:
       return "postgres://postgres:gnosis@postgres.web3signer-gnosis.dappnode:5432/web3signer-gnosis";
     case Network.Lukso:
       return "postgres://postgres:password@postgres.web3signer-lukso.dappnode:5432/web3signer";
-    case Network.Prater:
-      return "postgres://postgres:password@postgres.web3signer-prater.dappnode:5432/web3signer";
   }
 };

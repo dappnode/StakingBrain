@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { Box, CircularProgress, DialogContentText } from "@mui/material";
 
 export default function WaitBox(): JSX.Element {

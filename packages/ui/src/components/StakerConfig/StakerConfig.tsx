@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import React from "react";
 import { StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { Card, Box, Container, Typography } from "@mui/material";

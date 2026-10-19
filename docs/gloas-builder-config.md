@@ -47,6 +47,9 @@ IPv6; it is left omitted in storage and requests for the client to resolve.
 
 Each validator may have a `builderConfig` in the existing database:
 
+Database writes retain owner-only read/write permissions (`0600`), including
+after the JSON adapter atomically replaces the file.
+
 | Stored value | Meaning on application |
 | --- | --- |
 | Property absent | Unmanaged: no builder endpoint calls, including for older database records and newly imported keys |

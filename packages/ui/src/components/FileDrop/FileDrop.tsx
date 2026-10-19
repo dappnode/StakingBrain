@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { DropEvent, useDropzone } from "react-dropzone";
 import { useMemo } from "react";
 import { baseStyle, acceptStyle, activeStyle, rejectStyle } from "../../Styles/fileDropStyles";
@@ -9,7 +10,7 @@ interface Props {
 export default function FileDrop({ callback }: Props): JSX.Element {
   const { getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject } = useDropzone({
     onDropAccepted: callback,
-    accept: "application/json"
+    accept: { "application/json": [".json"] }
   });
 
   const style = useMemo(

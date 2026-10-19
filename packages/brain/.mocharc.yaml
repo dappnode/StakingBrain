@@ -4,5 +4,4 @@ extension: [ts]
 require:
   - dotenv/config
 node-option:
-  - experimental-specifier-resolution=node
-  - import=tsx/esm
+  - import=tsx

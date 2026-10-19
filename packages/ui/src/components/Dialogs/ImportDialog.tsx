@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { Dialog, DialogTitle, DialogContent, Box, Typography, Button, DialogActions } from "@mui/material";
 import { Link } from "react-router-dom";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";

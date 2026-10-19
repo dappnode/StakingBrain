@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { Alert, CircularProgress } from "@mui/material";
 import TopBar from "./components/TopBar/TopBar";
 import ImportScreen from "./ImportScreen";

@@ -1,4 +1,5 @@
-import { GridSelectionModel } from "@mui/x-data-grid";
+import type { JSX } from "react";
+import type { GridRowId } from "@mui/x-data-grid";
 import { shortenPubkey } from "@stakingbrain/common";
 import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
@@ -6,7 +7,7 @@ export default function DeletionWarning({
   selectedRows,
   rows
 }: {
-  selectedRows: GridSelectionModel;
+  selectedRows: GridRowId[];
   rows: CustomValidatorGetResponse[];
 }): JSX.Element {
   return (

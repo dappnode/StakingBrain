@@ -1,4 +1,5 @@
-import { DataGrid, GridAlignment, GridSelectionModel } from "@mui/x-data-grid";
+import type { JSX } from "react";
+import { DataGrid, GridAlignment, GridRowId } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
 import {
@@ -25,6 +26,7 @@ import { BeaconchaUrlBuildingStatus, SmoothStatusByPubkey } from "../../types";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { rpcClient } from "../../socket";
+import { selectedGridRowIds } from "../../utils/dataUtils";
 import type { BeaconchaGetResponse, CustomValidatorGetResponse } from "@stakingbrain/brain";
 import { SmoothValidatorByIndexApiResponse, SmoothValidator, MevSpSubscriptionStatus } from "../../types";
 
@@ -45,8 +47,8 @@ export default function KeystoresDataGrid({
 }: {
   rows: CustomValidatorGetResponse[];
   areRowsSelected: boolean;
-  selectedRows: GridSelectionModel;
-  setSelectedRows: (selectedRows: GridSelectionModel) => void;
+  selectedRows: GridRowId[];
+  setSelectedRows: (selectedRows: GridRowId[]) => void;
   network: string;
   userMode: "basic" | "advanced";
   setDeleteOpen(open: boolean): void;
@@ -57,7 +59,7 @@ export default function KeystoresDataGrid({
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
   mevSpFeeRecipient: string | null;
 }): JSX.Element {
-  const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
   const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
 
@@ -503,14 +505,18 @@ export default function KeystoresDataGrid({
           rows={customRows}
           onCellClick={(params) => {
             if (params.field === "validating_pubkey" || params.field === "fee_recipient")
-              navigator.clipboard.writeText(params.value);
+              navigator.clipboard.writeText(String(params.value));
           }}
           columns={columns}
-          pageSize={pageSize}
-          rowsPerPageOptions={[10, 20, 50, 100]}
-          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          paginationModel={paginationModel}
+          pageSizeOptions={[10, 20, 50, 100]}
+          onPaginationModelChange={setPaginationModel}
           checkboxSelection
-          onSelectionModelChange={(selectionModel: GridSelectionModel) => setSelectedRows(selectionModel)}
+          disableRowSelectionExcludeModel
+          rowSelectionModel={{ type: "include", ids: new Set(selectedRows) }}
+          onRowSelectionModelChange={(selectionModel) =>
+            setSelectedRows(selectedGridRowIds(selectionModel, customRows))
+          }
           sx={{ borderRadius: 2 }}
         />
       </div>

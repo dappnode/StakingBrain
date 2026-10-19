@@ -3,7 +3,6 @@ import type { ApiParams } from "@stakingbrain/brain";
 
 export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
   ["mainnet", { baseUrl: "https://beaconcha.in", apiPath: "/api/v1/" }],
-  ["prater", { baseUrl: "https://prater.beaconcha.in", apiPath: "/api/v1/" }],
   ["gnosis", { baseUrl: "https://gnosischa.in", apiPath: "/api/v1/" }],
   [
     "lukso",
@@ -12,7 +11,6 @@ export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
       apiPath: "/api/v1/"
     }
   ],
-  ["holesky", { baseUrl: "https://holesky.beaconcha.in", apiPath: "/api/v1/" }],
   ["hoodi", { baseUrl: "https://hoodi.beaconcha.in", apiPath: "/api/v1/" }]
 ]);
 
@@ -35,5 +33,5 @@ export const getSmoothUrlByNetwork = (network: Network): string => {
 };
 
 export const getStakersLink = (network: Network): string => {
-  return network === "prater" ? "http://my.dappnode/stakers/prater" : "http://my.dappnode/stakers/ethereum";
+  return network === Network.Hoodi ? "http://my.dappnode/stakers/hoodi" : "http://my.dappnode/stakers/ethereum";
 };

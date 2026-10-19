@@ -1,14 +1,12 @@
-ARG DOCKER_IMAGE=node:20.17.0-alpine3.20
+ARG DOCKER_IMAGE=node:24.21.0-alpine
 
 # Build
-FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE} AS build-stage
+FROM ${DOCKER_IMAGE} AS build-stage
 
 WORKDIR /app
 COPY package.json yarn.lock tsconfig.json .yarnrc.yml ./
 COPY packages packages
 
-# Required to build with vite
-RUN apk update && apk add --no-cache python3 py3-pip build-base
 # Enable corepack to use modern package manager
 RUN corepack enable
 
@@ -16,10 +14,10 @@ RUN corepack enable
 RUN yarn install --immutable && \
   yarn build && \
   yarn clean:libraries && \
-  yarn workspaces focus --all --production
+  yarn workspaces focus @stakingbrain/brain --production
 
 # Production
-FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE}
+FROM ${DOCKER_IMAGE}
 ENV NODE_ENV=production
 WORKDIR /app
 COPY ./packages/brain/tls ./tls
@@ -36,4 +34,4 @@ COPY --from=build-stage /app/packages/ui/build ./uiBuild
 COPY --from=build-stage /app/packages/brain/dist /app/packages/brain/dist
 COPY --from=build-stage /app/packages/brain/package.json /app/packages/brain/package.json
 
-CMD [ "node", "packages/brain/dist/index" ]
+CMD [ "node", "packages/brain/dist/index.js" ]

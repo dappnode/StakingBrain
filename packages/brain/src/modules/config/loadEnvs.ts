@@ -35,10 +35,8 @@ function getNetwork(): Network {
   if (!network) throw Error("NETWORK env is required");
 
   if (network === Network.Mainnet) return Network.Mainnet;
-  if (network === Network.Prater) return Network.Prater;
   if (network === Network.Gnosis) return Network.Gnosis;
   if (network === Network.Lukso) return Network.Lukso;
-  if (network === Network.Holesky) return Network.Holesky;
   if (network === Network.Hoodi) return Network.Hoodi;
 
   throw Error(`NETWORK env must be one of ${Object.values(Network).join(", ")}`);

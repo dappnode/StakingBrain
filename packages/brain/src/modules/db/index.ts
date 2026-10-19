@@ -7,7 +7,6 @@ import { Web3SignerApi, ValidatorApi } from "../apiClients/index.js";
 import { params } from "../../params.js";
 import { isValidTag } from "./utils.js";
 import { shortenPubkey, isValidBlsPubkey, isValidEcdsaPubkey, validateBuilderConfig } from "@stakingbrain/common";
-import { isEmpty } from "lodash-es";
 import { BrainDbError } from "./error.js";
 
 // TODO:
@@ -34,6 +33,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     this.dbName = dbName;
   }
 
+  public override write(): void {
+    super.write();
+    // The JSON adapter replaces the file atomically; restore the private mode on
+    // the replacement too, since records may contain builder authorization data.
+    this.setOwnerWriteRead();
+  }
+
   /**
    * Returns the database content.
    * - If the database is empty, it will return an empty object
@@ -57,7 +63,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be empty object
       this.read();
       // If db.json doesn't exist, db.data will be an empty object
-      if (isEmpty(this.data)) await this.databaseMigration(signerApi, validatorApi);
+      if (Object.keys(this.data ?? {}).length === 0) await this.databaseMigration(signerApi, validatorApi);
       else this.setOwnerWriteRead();
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
@@ -180,7 +186,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   private validateDb(): void {
     try {
       this.read();
-      if (isEmpty(this.data)) {
+      if (Object.keys(this.data ?? {}).length === 0) {
         logger.warn(`Database file ${this.dbName} not found. Creating it...`);
         this.createJsonFileAndPermissions();
       }

@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { SxProps } from "@mui/material";
 import Typography from "@mui/material/Typography";
 
