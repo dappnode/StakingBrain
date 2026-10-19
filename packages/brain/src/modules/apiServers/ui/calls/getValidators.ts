@@ -74,13 +74,21 @@ export async function getValidators({
       index,
       tag,
       feeRecipient,
+      builderConfig: data[pubkey].builderConfig,
+      builderConfigStatus:
+        validatorApi.getBuilderConfigStatus(pubkey) ??
+        (data[pubkey].builderConfig === undefined ? undefined : { status: "pending" }),
       withdrawalCredentials: {
         address: withdrawalAddress,
         format
       },
       validatorImported: validatorPubkeys.includes(pubkey),
       signerImported: signerPubkeys.includes(pubkey),
-      validatorFeeRecipientCorrect: validatorsFeeRecipients.some((feeRecipient) => feeRecipient === feeRecipient)
+      validatorFeeRecipientCorrect: validatorsFeeRecipients.some(
+        (response) =>
+          response.data.pubkey.toLowerCase() === pubkey.toLowerCase() &&
+          response.data.ethaddress.toLowerCase() === feeRecipient.toLowerCase()
+      )
     });
   }
 

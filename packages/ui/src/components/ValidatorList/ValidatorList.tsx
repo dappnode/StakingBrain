@@ -1,6 +1,7 @@
 import KeystoresDataGrid from "./KeystoresDataGrid";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
+import BuilderConfigDialog from "../Dialogs/BuilderConfigDialog";
 import { Alert, Box, CircularProgress } from "@mui/material";
 import { GridSelectionModel } from "@mui/x-data-grid";
 import { StakerConfig as StakerConfigType } from "@stakingbrain/common";
@@ -22,6 +23,7 @@ export default function ValidatorList({
   const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFeesOpen, setEditFeesOpen] = useState(false);
+  const [builderConfigOpen, setBuilderConfigOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validatorsGet, setValidatorsGet] = useState<CustomValidatorGetResponse[]>();
@@ -36,11 +38,11 @@ export default function ValidatorList({
 
   // Re-render table after delete/update validators
   useEffect(() => {
-    if (!deleteOpen && !editFeesOpen && !exitOpen) {
+    if (!deleteOpen && !editFeesOpen && !exitOpen && !builderConfigOpen) {
       getValidators();
       setSelectedRows([]);
     }
-  }, [deleteOpen, editFeesOpen, exitOpen]);
+  }, [deleteOpen, editFeesOpen, exitOpen, builderConfigOpen]);
 
   async function getValidators() {
     try {
@@ -116,6 +118,7 @@ export default function ValidatorList({
                 userMode={userMode}
                 setDeleteOpen={setDeleteOpen}
                 setEditFeesOpen={setEditFeesOpen}
+                setBuilderConfigOpen={setBuilderConfigOpen}
                 setExitOpen={setExitOpen}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
@@ -154,6 +157,13 @@ export default function ValidatorList({
                   setOpen={setEditFeesOpen}
                   network={network}
                   isMevBoostSet={isMevBoostSet}
+                />
+              )}
+
+              {builderConfigOpen && (
+                <BuilderConfigDialog
+                  validators={selectedRows.map((row) => validatorsGet[row as number])}
+                  setOpen={setBuilderConfigOpen}
                 />
               )}
 

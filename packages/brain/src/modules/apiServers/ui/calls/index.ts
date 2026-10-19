@@ -5,6 +5,7 @@ import { exitValidators, getExitValidators } from "./exitValidators.js";
 import { importValidators } from "./importValidators.js";
 import { updateValidators } from "./updateValidators.js";
 import { getValidators } from "./getValidators.js";
+import { getBuilderConfigs } from "./getBuilderConfigs.js";
 import { signerGetStatus } from "./signerGetStatus.js";
 import { getStakerConfig } from "./getStakerConfig.js";
 import { BrainDataBase } from "../../../db/index.js";
@@ -44,6 +45,7 @@ export const createRpcMethods = ({
   const { minGenesisTime, secondsPerSlot, network, isMevBoostSet, executionClient, consensusClient } =
     brainConfig.chain;
   return {
+    getBuilderConfigs: async (pubkeys: string[]) => await getBuilderConfigs({ pubkeys, brainDb, validatorApi }),
     beaconchaFetchAllValidatorsInfo: async (pubkeys: string[]) =>
       await beaconchaFetchAllValidatorsInfo({ blockExplorerApi, pubkeys }),
     beaconchaFetchValidatorsInfo: async (pubkeys: string[]) =>

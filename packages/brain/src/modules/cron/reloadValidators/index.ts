@@ -7,6 +7,7 @@ import { deleteValidatorPubkeysNotInDB } from "./deleteValidatorPubkeysNotInDb.j
 import { logPrefix } from "./logPrefix.js";
 import { postValidatorPubkeysFromDb } from "./postValidatorPubkeysFromDb.js";
 import { postValidatorsFeeRecipientsFromDb } from "./postValidatorsFeeRecipientsFromDb.js";
+import { postValidatorsBuilderConfigsFromDb } from "./postValidatorsBuilderConfigsFromDb.js";
 
 /**
  * Reload db data based on truth sources: validator and signer APIs:
@@ -63,6 +64,8 @@ export async function reloadValidators(
       dbData: brainDb.getData()
     });
 
+    // Independently retry managed configuration after key imports and fee destinations.
+    await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: brainDb.getData() });
     logger.debug(`${logPrefix}Finished reloading data`);
   } catch (e) {
     logger.error(`${logPrefix}Error reloading data`, e);

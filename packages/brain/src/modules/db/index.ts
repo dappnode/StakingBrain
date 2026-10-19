@@ -6,7 +6,7 @@ import logger from "../logger/index.js";
 import { Web3SignerApi, ValidatorApi } from "../apiClients/index.js";
 import { params } from "../../params.js";
 import { isValidTag } from "./utils.js";
-import { shortenPubkey, isValidBlsPubkey, isValidEcdsaPubkey } from "@stakingbrain/common";
+import { shortenPubkey, isValidBlsPubkey, isValidEcdsaPubkey, validateBuilderConfig } from "@stakingbrain/common";
 import { isEmpty } from "lodash-es";
 import { BrainDbError } from "./error.js";
 
@@ -96,12 +96,13 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Updates 1 or more validators in db. The fields available to update are feeRecipient and index
+   * Update supplied validator settings without erasing omitted settings.
    */
   public updateValidators({ validators }: { validators: StakingBrainDbUpdate }): void {
     try {
       this.validateDb();
       this.validateUpdateValidators(validators);
+      const updatedData = { ...this.data };
       if (this.data)
         for (const pubkey of Object.keys(validators)) {
           if (!this.data[pubkey]) {
@@ -109,11 +110,11 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
             logger.warn(`Pubkey ${pubkey} not found in the database`);
             delete validators[pubkey];
           } else {
-            this.data[pubkey].feeRecipient = validators[pubkey].feeRecipient;
-            this.data[pubkey].index = validators[pubkey].index;
+            updatedData[pubkey] = { ...this.data[pubkey], ...validators[pubkey] };
           }
         }
-
+      this.ensureDbMaxSize(updatedData, true);
+      this.data = updatedData;
       this.write();
     } catch (e) {
       throw new BrainDbError(`Unable to update pubkeys ${Object.keys(validators).join(", ")}. ${e.message}`);
@@ -202,10 +203,10 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
    * - 1 pubkey: 4KB
    * Average pubkey size to be added: 213 bytes
    */
-  private ensureDbMaxSize(validators: StakingBrainDb): void {
+  private ensureDbMaxSize(validators: StakingBrainDb, replace = false): void {
     const MAX_DB_SIZE = 6 * 1024 * 1024;
-    const dbSize = fs.statSync(this.dbName).size;
-    const pubkeysSize = Buffer.byteLength(JSON.stringify(validators));
+    const dbSize = replace ? 0 : fs.statSync(this.dbName).size;
+    const pubkeysSize = Buffer.byteLength(JSON.stringify(validators, null, 2));
     if (dbSize + pubkeysSize > MAX_DB_SIZE)
       throw new BrainDbError(
         `The database is too big. Max size is ${MAX_DB_SIZE} bytes. Current size is ${dbSize} bytes. Data to be added is ${pubkeysSize} bytes. `
@@ -308,15 +309,16 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       }
 
       // FeeRecipient
-      if (!pubkeyDetails.feeRecipient) {
-        errors.push(`\n  pubkey ${pubkeySubstr}: feeRecipient address is missing`);
-      } else {
+      if ("feeRecipient" in pubkeyDetails) {
         if (typeof pubkeyDetails.feeRecipient !== "string")
           errors.push(`\n  pubkey ${pubkeySubstr}: feeRecipient address is invalid, must be in string format`);
-        if (!isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
+        if (typeof pubkeyDetails.feeRecipient !== "string" || !isValidEcdsaPubkey(pubkeyDetails.feeRecipient))
           errors.push(`\n  pubkey ${pubkeySubstr}: fee recipient is invalid`);
       }
+      if ("builderConfig" in pubkeyDetails && pubkeyDetails.builderConfig !== null)
+        validateBuilderConfig(pubkeyDetails.builderConfig);
     });
+    if (errors.length > 0) throw new BrainDbError(errors.join("\n"));
   }
 
   private validateAddValidators(validators: StakingBrainDb): void {
@@ -355,6 +357,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       }
 
       // AutomaticImport
+      if ("builderConfig" in pubkeyDetails && pubkeyDetails.builderConfig !== null)
+        validateBuilderConfig(pubkeyDetails.builderConfig);
       if (typeof pubkeyDetails.automaticImport === "undefined") {
         errors.push(`\n  pubkey ${pubkeySubstr}: automaticImport is missing`);
       } else {

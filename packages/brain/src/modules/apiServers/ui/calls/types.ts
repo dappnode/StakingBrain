@@ -1,4 +1,4 @@
-import { StakerConfig, Tag } from "@stakingbrain/common";
+import { BuilderConfig, BuilderConfigStatus, StakerConfig, Tag } from "@stakingbrain/common";
 import type {
   BeaconchaGetResponse,
   Web3signerDeleteRequest,
@@ -24,6 +24,7 @@ export interface RpcMethods {
     requestFrom?: ActionRequestOrigin
   ) => Promise<void>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
+  getBuilderConfigs: (pubkeys: string[]) => Promise<ValidatorBuilderConfigResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   getStakerConfig: () => Promise<StakerConfig>;
   fetchValidatorsPerformanceData: (
@@ -48,7 +49,17 @@ export interface CustomValidatorImportRequest {
 
 export interface CustomValidatorUpdateRequest {
   pubkey: string;
-  feeRecipient: string;
+  feeRecipient?: string;
+  builderConfig?: BuilderConfig | null;
+}
+
+export interface ValidatorBuilderConfigResponse {
+  pubkey: string;
+  builderConfig?: BuilderConfig | null;
+  resolved?: BuilderConfig;
+  application?: BuilderConfigStatus;
+  status: "success" | "error";
+  message?: string;
 }
 
 export type WithdrawalCredentialsFormat = "ecdsa" | "bls" | "unknown" | "error";
@@ -64,4 +75,6 @@ export interface CustomValidatorGetResponse {
   signerImported?: boolean;
   validatorImported?: boolean;
   validatorFeeRecipientCorrect?: boolean;
+  builderConfig?: BuilderConfig | null;
+  builderConfigStatus?: BuilderConfigStatus;
 }

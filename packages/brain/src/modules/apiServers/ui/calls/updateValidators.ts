@@ -1,17 +1,13 @@
 import { prefix0xPubkey, isFeeRecipientEditable, ActionRequestOrigin } from "@stakingbrain/common";
 import logger from "../../../../modules/logger/index.js";
 import { CustomValidatorUpdateRequest } from "./types.js";
-import { PubkeyDetails } from "../../../../modules/db/types.js";
+import { StakingBrainDbUpdate } from "../../../../modules/db/types.js";
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
 import { ValidatorApi } from "../../../apiClients/validator/index.js";
+import { applyValidatorBuilderConfig } from "../../../cron/reloadValidators/postValidatorsBuilderConfigsFromDb.js";
 
-/**
- * Updates validators on DB:
- * 1. Write on db MUST goes first because if signerApi fails, cron will try to delete them
- * 2. Import feeRecipient on Validator API
- * @param param0
- */
+/** Persist desired settings first. Periodic reload retries client failures. */
 export async function updateValidators({
   reloadValidatorsCronTask,
   brainDb,
@@ -25,47 +21,49 @@ export async function updateValidators({
   customValidatorUpdateRequest: CustomValidatorUpdateRequest[];
   requestFrom?: ActionRequestOrigin;
 }): Promise<void> {
+  reloadValidatorsCronTask.stop();
   try {
-    // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
-    // and prevents the cron from running while we are importing validators
-    reloadValidatorsCronTask.stop();
-
+    if (!Array.isArray(customValidatorUpdateRequest) || customValidatorUpdateRequest.length === 0)
+      throw new Error("Select at least one validator to update");
     const dbData = brainDb.getData();
-
-    // Only update validators with editable fee recipient
-    const editableValidators: CustomValidatorUpdateRequest[] = customValidatorUpdateRequest.filter(
-      (validator) =>
-        dbData[prefix0xPubkey(validator.pubkey)] &&
-        isFeeRecipientEditable(dbData[prefix0xPubkey(validator.pubkey)].tag, requestFrom)
-    );
-
-    if (editableValidators.length === 0) {
-      throw new Error("The fee recipient can't be updated for these validators");
+    const updates: StakingBrainDbUpdate = {};
+    for (const validator of customValidatorUpdateRequest) {
+      if (!validator || typeof validator.pubkey !== "string") throw new Error("Validator public key is required");
+      const pubkey = prefix0xPubkey(validator.pubkey);
+      if (!dbData[pubkey]) throw new Error(`Validator ${pubkey} is not in the database`);
+      if (updates[pubkey]) throw new Error(`Duplicate validator ${pubkey}`);
+      if (Object.keys(validator).some((field) => !["pubkey", "feeRecipient", "builderConfig"].includes(field)))
+        throw new Error("Unsupported validator setting");
+      const update: StakingBrainDbUpdate[string] = {};
+      if ("feeRecipient" in validator && isFeeRecipientEditable(dbData[pubkey].tag, requestFrom))
+        update.feeRecipient = validator.feeRecipient;
+      if ("builderConfig" in validator) update.builderConfig = validator.builderConfig;
+      if (Object.keys(update).length > 0) updates[pubkey] = update;
     }
+    if (Object.keys(updates).length === 0) throw new Error("The fee recipient can't be updated for these validators");
 
-    brainDb.updateValidators({
-      validators: editableValidators.reduce(
-        (acc, validator) => {
-          acc[validator.pubkey] = {
-            feeRecipient: validator.feeRecipient
-          };
-          return acc;
-        },
-        {} as { [pubkey: string]: Omit<PubkeyDetails, "automaticImport" | "tag"> }
-      )
-    });
-
-    // Import feeRecipient on Validator API
-    for (const validator of editableValidators)
-      await validatorApi
-        .setFeeRecipient(validator.feeRecipient, validator.pubkey)
-        .then(() => logger.debug(`Added feeRecipient to validator API`))
-        .catch((err) => logger.error(`Error setting validator feeRecipient`, err));
-
-    // IMPORTANT: start the cron
+    // Validate the entire batch before changing any persisted settings.
+    brainDb.updateValidators({ validators: updates });
+    const failures: string[] = [];
+    for (const [pubkey, update] of Object.entries(updates)) {
+      if (update.feeRecipient !== undefined)
+        await validatorApi
+          .setFeeRecipient(update.feeRecipient, pubkey)
+          .catch((err) => logger.error("Error setting validator feeRecipient", err));
+      if ("builderConfig" in update) {
+        try {
+          await applyValidatorBuilderConfig(validatorApi, pubkey, update.builderConfig);
+        } catch (error) {
+          logger.error(error);
+          failures.push(error.message);
+        }
+      }
+    }
+    if (failures.length > 0)
+      throw new Error(
+        `Settings saved; builder configuration application failed and will be retried on reload. ${failures.join("; ")}`
+      );
+  } finally {
     reloadValidatorsCronTask.start();
-  } catch (e) {
-    reloadValidatorsCronTask.restart();
-    throw e;
   }
 }

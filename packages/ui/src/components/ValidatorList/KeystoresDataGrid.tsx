@@ -37,6 +37,7 @@ export default function KeystoresDataGrid({
   userMode,
   setDeleteOpen,
   setEditFeesOpen,
+  setBuilderConfigOpen,
   setExitOpen,
   summaryUrlBuildingStatus,
   setSummaryUrlBuildingStatus,
@@ -50,6 +51,7 @@ export default function KeystoresDataGrid({
   userMode: "basic" | "advanced";
   setDeleteOpen(open: boolean): void;
   setEditFeesOpen(open: boolean): void;
+  setBuilderConfigOpen(open: boolean): void;
   setExitOpen(open: boolean): void;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
@@ -261,11 +263,27 @@ export default function KeystoresDataGrid({
     pubkeyInValidator: row.validatorImported,
     pubkeyInSigner: row.signerImported,
     feeRecipientImported: row.validatorFeeRecipientCorrect,
+    builderConfig: row.builderConfig,
+    builderConfigStatus: row.builderConfigStatus,
     id: index
   }));
 
   if (userMode === "advanced")
     columns.push(
+      {
+        field: "builderConfigStatus",
+        headerName: "Builder config",
+        description: "Last application attempt; open Builder config to inspect client values and refresh status",
+        width: 180,
+        sortable: false,
+        renderCell: ({ row }) => (
+          <Tooltip title={row.builderConfigStatus?.message ?? "Open Builder config for details"}>
+            <span>
+              {row.builderConfigStatus?.status ?? (row.builderConfig === undefined ? "Unmanaged" : "Pending")}
+            </span>
+          </Tooltip>
+        )
+      },
       {
         field: "beaconchaUrl",
         headerName: "URL",
@@ -462,6 +480,10 @@ export default function KeystoresDataGrid({
               <EditIcon />
             </IconButton>
           </Tooltip>
+
+          <Button disabled={!areRowsSelected} onClick={() => setBuilderConfigOpen(true)}>
+            Builder config
+          </Button>
 
           <Tooltip title="Delete validators">
             <IconButton disabled={!areRowsSelected} onClick={() => setDeleteOpen(true)}>

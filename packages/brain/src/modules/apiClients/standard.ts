@@ -1,6 +1,6 @@
 import https from "node:https";
 import http from "node:http";
-import { ApiError } from "./error.js";
+import { ApiError, HttpApiError } from "./error.js";
 import logger from "../logger/index.js";
 import type { ApiParams, AllowedMethods, ErrnoException } from "./types.js";
 import type { Network } from "@stakingbrain/common";
@@ -159,7 +159,10 @@ export class StandardApi {
               } else errorMessage = Buffer.concat(data).toString();
 
               reject(
-                new ApiError(`Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `)
+                new HttpApiError(
+                  res.statusCode || 0,
+                  `Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `
+                )
               );
             }
           });

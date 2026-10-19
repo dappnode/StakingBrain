@@ -4,6 +4,7 @@ import type {
   CustomImportRequest,
   CustomValidatorGetResponse,
   CustomValidatorUpdateRequest,
+  ValidatorBuilderConfigResponse,
   ValidatorExitExecute,
   Web3signerDeleteRequest,
   Web3signerDeleteResponse,
@@ -24,6 +25,7 @@ export interface RpcMethods {
   updateValidators: (updateRequest: CustomValidatorUpdateRequest[]) => Promise<void>;
   deleteValidators: (deleteRequest: Web3signerDeleteRequest) => Promise<Web3signerDeleteResponse>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
+  getBuilderConfigs: (pubkeys: string[]) => Promise<ValidatorBuilderConfigResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
   exitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<ValidatorExitExecute[]>;
