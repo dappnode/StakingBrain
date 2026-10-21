@@ -484,7 +484,7 @@ export default function KeystoresDataGrid({
           </Tooltip>
 
           <Button disabled={!areRowsSelected} onClick={() => setBuilderConfigOpen(true)}>
-            Builder config
+            Builder settings
           </Button>
 
           <Tooltip title="Delete validators">

@@ -74,24 +74,45 @@ builder overrides; builder updates preserve fee recipients, index and tags.
 
 ## UI and RPC
 
-Select one or more validators and choose **Builder config**. A single selection
-loads its saved overrides. Bulk editing starts blank and explicitly replaces all
-selected validators' overrides. Blank scalar fields and a blank builders editor
-omit those fields; `[]` explicitly supplies an empty list. Numeric JSON fields
-must be quoted decimal strings. Reset saves DELETE intent. Resolved values are
-available separately as a read-only inspection.
+Select one or more validators and choose **Builder settings**. A single selection
+loads its saved overrides into labeled fields and builder cards. Bulk editing
+starts with client defaults and explicitly replaces all selected validators'
+overrides. Default switches omit numeric fields. Brain is the management point
+for direct builders: the selector offers a custom list or no direct builders.
+Every normal UI save sends an explicit `builders` list, so client-level builder
+lists cannot silently become effective. Older omitted lists remain unchanged
+until a user saves; the editor explains that saving replaces the inherited list
+and starts with no direct builders selected. Resolved values never seed the list.
+The backend still preserves omitted lists for API compatibility, and **Restore
+client defaults** retains DELETE semantics (including restoring any client-level
+builder list), explained by its tooltip and success message.
+Add or remove builder cards and public-key fields without
+editing JSON. Advanced settings start collapsed (validation errors open them) and
+expose per-builder limits and authorization. Minimum bid and boost explicitly
+inherit the global preferences above; their helper text previews those form values.
+Numbers remain strings internally, including zero and the full uint64 range.
+Restore client defaults saves DELETE intent. A compact table compares saved
+choices with effective client values, with per-builder details collapsed. Entries
+are matched by exact URL and effective authorization bytes, independently of GET
+ordering. These values never fill inherited form fields, and the comparison
+excludes unsaved edits. Unavailable reads and saved-only/client-only entries are
+shown explicitly.
 
 - `min_bid`: payment floor in Gwei; top-level value covers P2P bids and entries
   without their own floor.
 - `builder_boost_factor`: percentage preference, `100` for profit maximization;
   zero prefers local building subject to upstream error/fallback semantics.
-  Entries can supply their own floor and boost.
+  Entries can supply their own floor and boost. The UI displays the maximum uint64
+  as **MAX**, preserving the exact string internally. Other percentages weight bid
+  comparison (50 = half, 150 = 1.5 times); they do not change the actual payment.
 - An empty direct-builder list leaves P2P bids and local building available.
 - `max_execution_payment`: per-builder cap in Gwei on trusted execution payment
   counted when selecting a bid: `value + min(execution_payment, cap)`. Zero counts
   none; it does not prove no additional execution payment can arrive.
 - `builder_pubkeys`: empty or omitted accepts any builder; otherwise restricts
-  accepted bid signatures to the given 48-byte keys.
+  accepted bid signatures to the given 48-byte keys. These are builder signing
+  identities obtained from the builder, distinct from validator keys. A filter
+  applies to its URL entry, leaving other entries and public P2P bids unaffected.
 - `auth_data`: opaque 1–4096 bytes, stored as hex and turned into signed
   authorization **inside the validator client**. Omission derives a hostname
   identity there. Authorization values can be inspected in the explicit builder
