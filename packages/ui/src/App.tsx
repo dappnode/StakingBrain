@@ -11,7 +11,9 @@ import { rpcClient } from "./socket";
 import type { Web3SignerStatus } from "@stakingbrain/brain";
 
 function App(): JSX.Element {
-  const [mode, setMode] = React.useState<"dark" | "light">("light");
+  const [mode, setMode] = React.useState<"dark" | "light">(                                                                                                       
+          () => (localStorage.getItem("ui-mode") as "dark" | "light") || "light"
+        );
   const [userMode, setUserMode] = React.useState<"basic" | "advanced">("basic");
 
   const [signerStatus, setSignerStatus] = React.useState<Web3SignerStatus>("LOADING");
@@ -20,7 +22,11 @@ function App(): JSX.Element {
   useEffect(() => {
     getStakerConfig();
   }, []);
-
+  
+  useEffect(() => {                                                                                                                                               
+    localStorage.setItem("ui-mode", mode);
+  }, [mode]);
+  
   useEffect(() => {
     signerGetStatus();
     const interval = setInterval(() => {
