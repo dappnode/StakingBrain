@@ -78,6 +78,19 @@ describe("Builder settings form", () => {
     expect(builderFormToConfig(form).builder_boost_factor).to.equal(maximum);
   });
 
+  it("creates unique builder ids without crypto.randomUUID in non-secure contexts", () => {
+    // DAppNode serves the UI over http://my.dappnode, where crypto.randomUUID is unavailable
+    const original = globalThis.crypto.randomUUID;
+    Object.defineProperty(globalThis.crypto, "randomUUID", { value: undefined, configurable: true });
+    try {
+      const ids = Array.from({ length: 100 }, () => createBuilderInput().id);
+      expect(new Set(ids).size).to.equal(ids.length);
+      expect(builderFormErrors(builderConfigToForm())).to.deep.equal({});
+    } finally {
+      Object.defineProperty(globalThis.crypto, "randomUUID", { value: original, configurable: true });
+    }
+  });
+
   it("retains omitted authorization and public keys until the user explicitly configures them", () => {
     const form = builderConfigToForm({ builders: [{ url }] });
     const entry = form.builders[0];

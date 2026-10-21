@@ -28,13 +28,27 @@ export function splitBuilderPublicKeys(value: string): string[] {
   return value.split(/[,;\s]+/).filter(Boolean);
 }
 
+let builderIdSeed = 0;
+
+/**
+ * Browser ids are only used as React keys and error-field keys.
+ * crypto.randomUUID is exposed in secure contexts only, and the DAppNode UI is
+ * served over plain HTTP, so fall back to a per-session unique id.
+ */
+export function createBuilderId(): string {
+  const cryptoApi = globalThis.crypto;
+  if (typeof cryptoApi?.randomUUID === "function") return cryptoApi.randomUUID();
+  builderIdSeed += 1;
+  return `builder-${builderIdSeed.toString(36)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 function override(value?: string): OverrideInput {
   return { enabled: value !== undefined, value: value ?? "" };
 }
 
 export function createBuilderInput(entry?: BuilderEntry): BuilderInput {
   return {
-    id: crypto.randomUUID(),
+    id: createBuilderId(),
     url: entry?.url ?? "",
     authData: override(entry?.auth_data),
     publicKeys: entry?.builder_pubkeys === undefined ? undefined : [...entry.builder_pubkeys],
