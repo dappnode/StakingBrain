@@ -62,6 +62,7 @@ export default function BuilderConfigDialog({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
+  const refreshId = useRef(0);
   const errors = useMemo(() => (submitted ? builderFormErrors(form) : {}), [form, submitted]);
   const fullScreen = useMediaQuery(useTheme().breakpoints.down("sm"));
   const bulk = validators.length > 1;
@@ -82,23 +83,26 @@ export default function BuilderConfigDialog({
   }
 
   async function refresh(): Promise<void> {
+    const id = ++refreshId.current;
     setReading(true);
     try {
-      setDetails(
-        await rpcClient.call(
-          "getBuilderConfigs",
-          validators.map(({ pubkey }) => pubkey)
-        )
+      const result = await rpcClient.call(
+        "getBuilderConfigs",
+        validators.map(({ pubkey }) => pubkey)
       );
+      if (id === refreshId.current) setDetails(result);
     } catch (error) {
-      setError(error.message);
+      if (id === refreshId.current) setError(error.message);
     } finally {
-      setReading(false);
+      if (id === refreshId.current) setReading(false);
     }
   }
 
   useEffect(() => {
     void refresh();
+    return () => {
+      refreshId.current++;
+    };
   }, []);
 
   async function save(reset: boolean): Promise<void> {
@@ -114,6 +118,9 @@ export default function BuilderConfigDialog({
       }
     }
     setBusy(true);
+    // An earlier read must not replace the status of this save when it finishes.
+    refreshId.current++;
+    setReading(false);
     try {
       const config = reset ? null : builderFormToConfig(form);
       await rpcClient.call(
@@ -132,8 +139,8 @@ export default function BuilderConfigDialog({
     } catch (error) {
       setError(error.message);
     } finally {
-      await refresh();
       setBusy(false);
+      void refresh();
     }
   }
 
@@ -427,7 +434,7 @@ export default function BuilderConfigDialog({
           <span>
             <Button
               startIcon={<RestartAltIcon />}
-              disabled={busy || reading}
+              disabled={busy}
               onClick={() => void save(true)}
               sx={{ textTransform: "none" }}
             >
@@ -440,7 +447,7 @@ export default function BuilderConfigDialog({
             Close
           </Button>
           <Button
-            disabled={busy || reading}
+            disabled={busy}
             variant="contained"
             onClick={() => void save(false)}
             startIcon={busy ? <CircularProgress size={16} color="inherit" /> : undefined}

@@ -24,12 +24,13 @@ export class ValidatorApi extends StandardApi {
     return this.builderConfigStatuses.get(prefix0xPubkey(publicKey));
   }
 
-  public async getBuilderConfig(publicKey: string): Promise<{ data: BuilderConfig }> {
+  public async getBuilderConfig(publicKey: string, signal?: AbortSignal): Promise<{ data: BuilderConfig }> {
     try {
       const response = await this.request({
         method: "GET",
         endpoint: this.builderConfigEndpoint(publicKey),
-        timeout: 10000
+        timeout: 10000,
+        signal
       });
       validateBuilderConfig(response?.data);
       return response;

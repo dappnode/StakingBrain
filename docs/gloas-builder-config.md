@@ -66,6 +66,9 @@ retried on the next reload. A bulk edit persists the validated batch before
 application; partial application failures are reported with per-key status and a
 message that settings are saved and will be retried. Application status is
 transient and becomes pending after Brain restarts until application is tried.
+Reloads, settings updates, imports and deletions share a queue per database, so an
+in-flight reload finishes before a newer edit is saved and applied. Slow cron
+runs skip overlapping ticks rather than accumulating more reloads.
 
 GET returns **resolved** client values. It never supplies editor defaults,
 updates the database, or generates subsequent POST bodies. Changes to inherited
@@ -126,6 +129,15 @@ last application status, and an independent read status/message per key.
 `getValidators` includes saved settings and last application status without
 requiring builder endpoint availability. Refresh client status in the dialog to
 inspect application attempts after a periodic reload.
+Client status reads run at most eight requests at once with a ten-second deadline
+for the entire selection. Timed-out and unstarted reads report an error for their
+key; saved choices remain available. Reads do not disable saving, resetting or
+closing the editor, and stale read responses are discarded after a save.
+
+UI RPC requests allow up to 8 MiB, enough for configurations that fit the 6 MiB
+database limit. The UI rejects larger requests before sending them. Pending RPC
+calls reject on disconnect or after two minutes, with a reminder to refresh status
+before retrying because an already received mutation may still finish on Brain.
 
 HTTP 405/501 are identified as unsupported; 404 explicitly means the endpoint
 may be unavailable or the validator key may be missing. Authentication failures,

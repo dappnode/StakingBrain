@@ -53,7 +53,8 @@ export class StandardApi {
     endpoint,
     body,
     headers = {}, // Default to an empty object
-    timeout
+    timeout,
+    signal
   }: {
     method: AllowedMethods;
     endpoint: string;
@@ -61,8 +62,10 @@ export class StandardApi {
     body?: any;
     headers?: Record<string, string>;
     timeout?: number;
+    signal?: AbortSignal;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }): Promise<any> {
+    signal?.throwIfAborted();
     let req: http.ClientRequest;
     this.requestOptions.method = method;
     this.requestOptions.path = endpoint;
@@ -89,9 +92,9 @@ export class StandardApi {
 
     if (this.useTls) {
       this.requestOptions.rejectUnauthorized = false;
-      req = https.request(this.requestOptions);
+      req = https.request({ ...this.requestOptions, signal });
     } else {
-      req = http.request(this.requestOptions);
+      req = http.request({ ...this.requestOptions, signal });
     }
 
     if (timeout) {

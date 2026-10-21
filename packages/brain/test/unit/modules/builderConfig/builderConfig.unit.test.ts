@@ -3,7 +3,7 @@ import sinon from "sinon";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { BuilderConfig, Network, MEV_SP_ADDRESS_MAINNET } from "@stakingbrain/common";
+import { BuilderConfig, Network, MEV_SP_ADDRESS_MAINNET, ConsensusClient, ExecutionClient } from "@stakingbrain/common";
 import { ValidatorApi, Web3SignerApi, BeaconchainApi } from "../../../../src/modules/apiClients/index.js";
 import { AllowedMethods } from "../../../../src/modules/apiClients/types.js";
 import { HttpApiError } from "../../../../src/modules/apiClients/error.js";
@@ -13,7 +13,17 @@ import { reloadValidators } from "../../../../src/modules/cron/reloadValidators/
 import { updateValidators } from "../../../../src/modules/apiServers/ui/calls/updateValidators.js";
 import { getBuilderConfigs } from "../../../../src/modules/apiServers/ui/calls/getBuilderConfigs.js";
 import { getValidators } from "../../../../src/modules/apiServers/ui/calls/getValidators.js";
+import { setActiveValidatorsLoadedInBrain } from "../../../../src/modules/cron/trackValidatorsPerformance/setActiveValidatorsLoadedInBrain.js";
+import { ValidatorStatus } from "../../../../src/modules/apiClients/types.js";
 import logger from "../../../../src/modules/logger/index.js";
+
+function deferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 const keys = ["11", "22", "33"].map((byte) => "0x" + byte.repeat(48));
 const recipient = "0x" + "ab".repeat(20);
@@ -143,6 +153,178 @@ describe("Builder configuration management", () => {
     api.resolved = { min_bid: "999", builders: [] };
     await getBuilderConfigs({ pubkeys: [keys[0]], brainDb: db, validatorApi: api });
     expect(fs.readFileSync(path.join(directory, "db.json"), "utf8")).to.equal(before);
+  });
+
+  it("finishes an in-flight reload before applying a newer reset", async () => {
+    db.updateValidators({ validators: Object.fromEntries(keys.map((key) => [key, { builderConfig: config }])) });
+    const signer = sinon.createStubInstance(Web3SignerApi);
+    signer.upcheck.resolves();
+    signer.listRemoteKeys.resolves({
+      data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
+    });
+    const entered = deferred();
+    const resume = deferred();
+    const originalSet = api.setBuilderConfig.bind(api);
+    sinon.stub(api, "setBuilderConfig").callsFake(async (settings, pubkey) => {
+      if (pubkey === keys[0]) {
+        entered.resolve();
+        await resume.promise;
+      }
+      await originalSet(settings, pubkey);
+    });
+    const reload = reloadValidators(signer, "http://signer:9000", api, db);
+    await entered.promise;
+    const reset = update(db, api, cron, [{ pubkey: keys[1], builderConfig: null }]);
+    await Promise.resolve();
+    expect(db.getData()[keys[1]].builderConfig).to.deep.equal(config);
+    resume.resolve();
+    await Promise.all([reload, reset]);
+    expect(db.getData()[keys[1]].builderConfig).to.equal(null);
+    const writes = api.calls.filter(
+      ({ endpoint }) => endpoint.includes(keys[1]) && endpoint.endsWith("builder_config")
+    );
+    expect(writes.map(({ method }) => method)).to.deep.equal(["POST", "DELETE"]);
+    expect(api.getBuilderConfigStatus(keys[1])).to.deep.equal({ status: "applied" });
+  });
+
+  it("orders concurrent updates and lets the next update run after an application failure", async () => {
+    const entered = deferred();
+    const resume = deferred();
+    sinon.stub(api, "setBuilderConfig").callsFake(async () => {
+      entered.resolve();
+      await resume.promise;
+      throw new Error("Client unavailable");
+    });
+    const first = rejection(update(db, api, cron, [{ pubkey: keys[0], builderConfig: config }]));
+    await entered.promise;
+    const reset = update(db, api, cron, [{ pubkey: keys[0], builderConfig: null }]);
+    await Promise.resolve();
+    expect(db.getData()[keys[0]].builderConfig).to.deep.equal(config);
+    resume.resolve();
+    expect((await first).message).to.include("Settings saved");
+    await reset;
+    expect(db.getData()[keys[0]].builderConfig).to.equal(null);
+    expect(api.calls.at(-1)?.method).to.equal("DELETE");
+    expect(cron.start.callCount).to.equal(2);
+  });
+
+  it("does not restore old settings when a concurrent validator-index lookup finishes", async () => {
+    delete db.data![keys[0]].index;
+    db.write();
+    const entered = deferred();
+    const resume = deferred();
+    const beacon = sinon.createStubInstance(BeaconchainApi);
+    beacon.postStateValidators.callsFake(async ({ body }) => {
+      if (body.statuses.length === 0) {
+        entered.resolve();
+        await resume.promise;
+      }
+      return {
+        execution_optimistic: false,
+        finalized: true,
+        data: [
+          {
+            index: "77",
+            balance: "0",
+            status: ValidatorStatus.ACTIVE_ONGOING,
+            validator: {
+              pubkey: keys[0],
+              withdrawal_credentials: "",
+              effective_balance: "",
+              slashed: false,
+              activation_eligibility_epoch: "",
+              activation_epoch: "",
+              exit_epoch: "",
+              withdrawable_epoch: ""
+            }
+          }
+        ]
+      };
+    });
+    const lookup = setActiveValidatorsLoadedInBrain({
+      beaconchainApi: beacon,
+      brainDb: db,
+      validatorsDataPerEpochMap: new Map(),
+      clients: { execution: ExecutionClient.Geth, consensus: ConsensusClient.Lighthouse }
+    });
+    await entered.promise;
+    const newRecipient = "0x" + "cd".repeat(20);
+    await update(db, api, cron, [{ pubkey: keys[0], feeRecipient: newRecipient, builderConfig: config }]);
+    resume.resolve();
+    await lookup;
+    expect(db.getData()[keys[0]]).to.include({ index: 77, feeRecipient: newRecipient });
+    expect(db.getData()[keys[0]].builderConfig).to.deep.equal(config);
+  });
+
+  it("bounds concurrent reads, preserves input order and keeps per-key failures separate", async () => {
+    const clock = sinon.useFakeTimers();
+    const pubkeys = Array.from({ length: 20 }, (_, index) => "0x" + (index + 1).toString(16).padStart(96, "0"));
+    db.addValidators({
+      validators: Object.fromEntries(
+        pubkeys.map((key) => [key, { tag: "solo", feeRecipient: recipient, automaticImport: false }])
+      )
+    });
+    let active = 0;
+    let maximum = 0;
+    sinon.stub(api, "getBuilderConfig").callsFake(async (pubkey) => {
+      active++;
+      maximum = Math.max(maximum, active);
+      await new Promise((resolve) => setTimeout(resolve, pubkey === pubkeys[0] ? 100 : 10));
+      active--;
+      if (pubkey === pubkeys[1]) throw new Error("Key not found");
+      return { data: { min_bid: "100" } };
+    });
+    const pending = getBuilderConfigs({ pubkeys, brainDb: db, validatorApi: api });
+    await clock.runAllAsync();
+    const result = await pending;
+    expect(maximum).to.equal(8);
+    expect(result.map(({ pubkey }) => pubkey)).to.deep.equal(pubkeys);
+    expect(result[1]).to.include({ status: "error", message: "Key not found" });
+    expect(result.filter(({ status }) => status === "success")).to.have.length(19);
+    expect(clock.countTimers()).to.equal(0);
+  });
+
+  it("aborts slow reads after one batch deadline and reports keys that were not started", async () => {
+    const clock = sinon.useFakeTimers();
+    const pubkeys = Array.from({ length: 100 }, (_, index) => "0x" + (index + 1).toString(16).padStart(96, "0"));
+    db.addValidators({
+      validators: Object.fromEntries(
+        pubkeys.map((key) => [
+          key,
+          { tag: "solo", feeRecipient: recipient, automaticImport: false, builderConfig: config }
+        ])
+      )
+    });
+    const get = sinon.stub(api, "getBuilderConfig").callsFake(async (pubkey, signal) => {
+      expect(pubkey).to.be.oneOf(pubkeys);
+      return new Promise<{ data: BuilderConfig }>((_resolve, reject) => {
+        signal!.addEventListener("abort", () => reject(new Error("Aborted")), { once: true });
+      });
+    });
+    let finished = false;
+    const pending = getBuilderConfigs({ pubkeys, brainDb: db, validatorApi: api }).then((result) => {
+      finished = true;
+      return result;
+    });
+    await clock.tickAsync(9999);
+    expect(finished).to.equal(false);
+    expect(get.callCount).to.equal(8);
+    await clock.tickAsync(1);
+    const result = await pending;
+    expect(result).to.have.length(100);
+    expect(result.every(({ status, message }) => status === "error" && message?.includes("timed out"))).to.equal(true);
+    expect(result.every(({ builderConfig }) => builderConfig?.min_bid === config.min_bid)).to.equal(true);
+    expect(get.callCount).to.equal(8);
+    expect(get.firstCall.args[1]?.aborted).to.equal(true);
+    expect(clock.countTimers()).to.equal(0);
+  });
+
+  it("passes cancellation through to the HTTP client", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const client = new ValidatorApi({ baseUrl: "http://127.0.0.1:1" }, Network.Mainnet);
+    const error = await rejection(client.getBuilderConfig(keys[0], controller.signal));
+    expect(error.message).to.include("aborted");
   });
 
   it("validates the whole batch before writes and always resumes reload", async () => {

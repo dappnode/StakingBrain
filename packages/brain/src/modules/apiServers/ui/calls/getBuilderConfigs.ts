@@ -3,6 +3,9 @@ import { BrainDataBase } from "../../../db/index.js";
 import { ValidatorApi } from "../../../apiClients/validator/index.js";
 import { ValidatorBuilderConfigResponse } from "./types.js";
 
+const READ_CONCURRENCY = 8;
+const READ_DEADLINE_MS = 10000;
+
 export async function getBuilderConfigs({
   pubkeys,
   brainDb,
@@ -18,12 +21,11 @@ export async function getBuilderConfigs({
   )
     throw new Error("pubkeys must be an array of validator BLS public keys");
   const dbData = brainDb.getData();
-  const results: ValidatorBuilderConfigResponse[] = [];
-  for (const key of pubkeys) {
+  const results: ValidatorBuilderConfigResponse[] = pubkeys.map((key) => {
     const pubkey = prefix0xPubkey(key);
     if (!dbData[pubkey]) throw new Error(`Validator ${pubkey} is not in the database`);
     const builderConfig = dbData[pubkey].builderConfig;
-    const result: ValidatorBuilderConfigResponse = {
+    return {
       pubkey,
       builderConfig,
       application:
@@ -31,13 +33,29 @@ export async function getBuilderConfigs({
         (builderConfig === undefined ? undefined : { status: "pending" }),
       status: "success"
     };
-    try {
-      result.resolved = (await validatorApi.getBuilderConfig(pubkey)).data;
-    } catch (error) {
-      result.status = "error";
-      result.message = error.message;
-    }
-    results.push(result);
+  });
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), READ_DEADLINE_MS);
+  let next = 0;
+  try {
+    await Promise.all(
+      Array.from({ length: Math.min(READ_CONCURRENCY, results.length) }, async () => {
+        while (next < results.length) {
+          const result = results[next++];
+          try {
+            if (controller.signal.aborted) throw new Error("Client status check timed out; refresh to retry");
+            result.resolved = (await validatorApi.getBuilderConfig(result.pubkey, controller.signal)).data;
+          } catch (error) {
+            result.status = "error";
+            result.message = controller.signal.aborted
+              ? "Client status check timed out; refresh to retry"
+              : error.message;
+          }
+        }
+      })
+    );
+  } finally {
+    clearTimeout(deadline);
   }
   return results;
 }

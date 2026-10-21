@@ -1,4 +1,4 @@
-import { Network } from "@stakingbrain/common";
+import { Network, RPC_MAX_PAYLOAD_BYTES } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -85,7 +85,8 @@ export function startUiServer({
 
   // Socket io
   const io = new Server(server, {
-    serveClient: false
+    serveClient: false,
+    maxHttpBufferSize: RPC_MAX_PAYLOAD_BYTES
   });
   io.on("connection", (socket) => {
     logger.debug("A user connected");

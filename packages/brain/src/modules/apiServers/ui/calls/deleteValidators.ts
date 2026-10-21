@@ -1,3 +1,4 @@
+import { withValidatorOperationLock } from "../../../db/withValidatorOperationLock.js";
 import { Web3SignerApi, ValidatorApi } from "../../../apiClients/index.js";
 import { Web3signerDeleteRequest, Web3signerDeleteResponse } from "../../../apiClients/types.js";
 import { CronJob } from "../../../cron/cron.js";
@@ -26,34 +27,35 @@ export async function deleteValidators({
   brainDb: BrainDataBase;
   deleteRequest: Web3signerDeleteRequest;
 }): Promise<Web3signerDeleteResponse> {
-  try {
-    // IMPORTANT: stop the cron. This removes the scheduled cron task from the task queue
-    // and prevents the cron from running while we are deleting validators
-    reloadValidatorsCronTask.stop();
+  return withValidatorOperationLock(brainDb, async () => {
+    try {
+      // Pause future ticks while this operation holds the shared validator lock.
+      reloadValidatorsCronTask.stop();
 
-    // Delete feeRecipient on Validator API
-    for (const pubkey of deleteRequest.pubkeys)
+      // Delete feeRecipient on Validator API
+      for (const pubkey of deleteRequest.pubkeys)
+        await validatorApi
+          .deleteFeeRecipient(pubkey)
+          .then(() => logger.debug(`Deleted fee recipient in validator API`))
+          .catch((err) => logger.error(`Error deleting validator feeRecipient`, err));
+      // Delete pubkeys on validator API
       await validatorApi
-        .deleteFeeRecipient(pubkey)
-        .then(() => logger.debug(`Deleted fee recipient in validator API`))
-        .catch((err) => logger.error(`Error deleting validator feeRecipient`, err));
-    // Delete pubkeys on validator API
-    await validatorApi
-      .deleteRemoteKeys(deleteRequest)
-      .then(() => logger.debug(`Deleted pubkeys in validator API`))
-      .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+        .deleteRemoteKeys(deleteRequest)
+        .then(() => logger.debug(`Deleted pubkeys in validator API`))
+        .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
 
-    // Delete keystores on web3signer API
-    const web3signerDeleteResponse = await signerApi.deleteRemoteKeys(deleteRequest);
+      // Delete keystores on web3signer API
+      const web3signerDeleteResponse = await signerApi.deleteRemoteKeys(deleteRequest);
 
-    // Write on db
-    brainDb.deleteValidators(deleteRequest.pubkeys);
+      // Write on db
+      brainDb.deleteValidators(deleteRequest.pubkeys);
 
-    // IMPORTANT: start the cron
-    reloadValidatorsCronTask.start();
-    return web3signerDeleteResponse;
-  } catch (e) {
-    reloadValidatorsCronTask.restart();
-    throw e;
-  }
+      // IMPORTANT: start the cron
+      reloadValidatorsCronTask.start();
+      return web3signerDeleteResponse;
+    } catch (e) {
+      reloadValidatorsCronTask.restart();
+      throw e;
+    }
+  });
 }
