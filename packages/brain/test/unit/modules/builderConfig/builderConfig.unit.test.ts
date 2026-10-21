@@ -321,35 +321,37 @@ describe("Builder configuration management", () => {
     expect(db.getData()[manyKeys[0]]).not.to.have.property("builderConfig");
   });
 
-  it("reports actual fee destination matches and keeps the validator list usable without builder APIs", async () => {
-    const validator = sinon.createStubInstance(ValidatorApi);
-    validator.getRemoteKeys.resolves({
-      data: keys.map((pubkey) => ({ pubkey, readonly: false, url: "http://signer" }))
-    });
-    for (const [index, key] of keys.entries())
-      validator.getFeeRecipient.withArgs(key).resolves({
-        data: {
-          pubkey: key,
-          ethaddress: index === 0 ? recipient.toUpperCase().replace("0X", "0x") : "0x" + "00".repeat(20)
-        }
+  for (const includePubkey of [true, false]) {
+    it(`reports fee destination matches when responses ${includePubkey ? "include" : "omit"} pubkeys`, async () => {
+      const validator = sinon.createStubInstance(ValidatorApi);
+      validator.getRemoteKeys.resolves({
+        data: keys.map((pubkey) => ({ pubkey, readonly: false, url: "http://signer" }))
       });
-    const signer = sinon.createStubInstance(Web3SignerApi);
-    signer.listRemoteKeys.resolves({
-      data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
+      for (const [index, key] of keys.entries())
+        validator.getFeeRecipient.withArgs(key).resolves({
+          data: {
+            ...(includePubkey ? { pubkey: key } : {}),
+            ethaddress: index === 0 ? recipient.toUpperCase().replace("0X", "0x") : "0x" + "00".repeat(20)
+          }
+        });
+      const signer = sinon.createStubInstance(Web3SignerApi);
+      signer.listRemoteKeys.resolves({
+        data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
+      });
+      const beacon = sinon.createStubInstance(BeaconchainApi);
+      beacon.getStateValidator.rejects(new Error("not deposited"));
+      const result = await getValidators({
+        brainDb: db,
+        validatorApi: validator,
+        signerApi: signer,
+        beaconchainApi: beacon
+      });
+      expect(result.map(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect)).to.deep.equal([
+        true,
+        false,
+        false
+      ]);
+      expect(validator.getBuilderConfig.called).to.equal(false);
     });
-    const beacon = sinon.createStubInstance(BeaconchainApi);
-    beacon.getStateValidator.rejects(new Error("not deposited"));
-    const result = await getValidators({
-      brainDb: db,
-      validatorApi: validator,
-      signerApi: signer,
-      beaconchainApi: beacon
-    });
-    expect(result.map(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect)).to.deep.equal([
-      true,
-      false,
-      false
-    ]);
-    expect(validator.getBuilderConfig.called).to.equal(false);
-  });
+  }
 });

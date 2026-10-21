@@ -39,7 +39,7 @@ export async function getValidators({
   ).data.map((key) => key.validating_pubkey);
 
   const validatorsFeeRecipients = await Promise.all(
-    validatorPubkeys.map((pubkey) => validatorApi.getFeeRecipient(pubkey))
+    validatorPubkeys.map(async (pubkey) => ({ pubkey, response: await validatorApi.getFeeRecipient(pubkey) }))
   ).catch((e) => {
     logger.error(e);
     return [];
@@ -85,8 +85,8 @@ export async function getValidators({
       validatorImported: validatorPubkeys.includes(pubkey),
       signerImported: signerPubkeys.includes(pubkey),
       validatorFeeRecipientCorrect: validatorsFeeRecipients.some(
-        (response) =>
-          response.data.pubkey.toLowerCase() === pubkey.toLowerCase() &&
+        ({ pubkey: validatorPubkey, response }) =>
+          validatorPubkey.toLowerCase() === pubkey.toLowerCase() &&
           response.data.ethaddress.toLowerCase() === feeRecipient.toLowerCase()
       )
     });
