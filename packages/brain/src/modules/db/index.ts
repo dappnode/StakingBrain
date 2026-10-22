@@ -1,4 +1,4 @@
-import { StakingBrainDb, StakingBrainDbUpdate, PubkeyDetails } from "./types.js";
+import { StakingBrainDb, StakingBrainDbUpdate } from "./types.js";
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 import fs from "fs";
@@ -43,7 +43,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   /**
    * Returns the database content.
    * - If the database is empty, it will return an empty object
-   * - If the database is corrupted, it will erase it and create a new empty database with the correct permissions
+   * - Refuses unreadable or invalid data so reload cannot mistake corruption for deleted validators
    *
    * @returns an object in format StakingBrainDb (it could be an empty object {})
    */
@@ -53,21 +53,21 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Initializes the database: IMPORTANT! this method must not throw an error since it will be called from index.ts
+   * Initializes the database. Failure must stop startup before destructive reconciliation runs.
    * - If the database file doesn't exist, it will attempt to perform a migration
-   * - If the migration fails, it will create a new empty database
+   * - If migration fails, startup fails with the original database preserved
    * - If the database file exists, it will validate it
    */
   public async initialize(signerApi: Web3SignerApi, validatorApi: ValidatorApi): Promise<void> {
     try {
       // Important! .read() method must be called before accessing brainDb.data otherwise it will be empty object
-      this.read();
+      this.validateDb();
       // If db.json doesn't exist, db.data will be an empty object
       if (Object.keys(this.data ?? {}).length === 0) await this.databaseMigration(signerApi, validatorApi);
       else this.setOwnerWriteRead();
     } catch (e) {
       logger.error(`unable to initialize the db ${this.dbName}`, e);
-      this.validateDb();
+      throw e;
     }
   }
 
@@ -79,21 +79,32 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   /**
-   * Adds 1 or more public keys and their details to the database
+   * Check new records before an external signer import changes persistent state.
    */
+  public validateNewValidators(validators: StakingBrainDb): void {
+    this.validateDb();
+    const existing = new Set(Object.keys(this.data).map((pubkey) => pubkey.toLowerCase()));
+    const additions = Object.fromEntries(
+      Object.entries(validators).filter(([pubkey]) => !existing.has(pubkey.toLowerCase()))
+    );
+    this.ensureDbMaxSize(additions);
+    this.validateAddValidators(additions);
+  }
+
+  /** Adds new validator records while preserving the settings of existing keys. */
   public addValidators({ validators }: { validators: StakingBrainDb }): void {
     try {
       this.validateDb();
       // Remove pubkeys that already exist
+      const existing = new Set(Object.keys(this.data).map((pubkey) => pubkey.toLowerCase()));
       if (this.data)
         for (const pubkey of Object.keys(validators))
-          if (this.data[pubkey]) {
+          if (existing.has(pubkey.toLowerCase())) {
             logger.warn(`Pubkey ${pubkey} already in the database`);
             delete validators[pubkey];
           }
 
-      this.ensureDbMaxSize(validators);
-      this.validateAddValidators(validators);
+      this.validateNewValidators(validators);
       this.data = { ...this.data, ...validators };
       this.write();
     } catch (e) {
@@ -135,34 +146,24 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     try {
       this.validateDb();
       if (!this.data) return;
+      const storedKeys = new Map(Object.keys(this.data).map((key) => [key.toLowerCase(), key]));
+      let changed = false;
       for (const pubkey of pubkeys) {
-        if (!this.data[pubkey]) {
+        const storedKey = storedKeys.get(pubkey.toLowerCase());
+        if (!storedKey) {
           logger.warn(`Pubkey ${pubkey} not found in the database`);
-        } else delete this.data[pubkey];
-        this.write();
+        } else {
+          delete this.data[storedKey];
+          changed = true;
+        }
       }
+      if (changed) this.write();
     } catch (e) {
       throw new BrainDbError(`Unable to delete pubkeys ${Object.keys(pubkeys).join(", ")}. ${e.message}`);
     }
   }
 
   // PRIVATE METHODS //
-
-  /**
-   * Cleans the database:
-   * - Writes an empty object to the database
-   * - On error deletes the database file and creates a new one
-   */
-  private pruneDatabase(): void {
-    try {
-      this.data = {};
-      this.write();
-    } catch (e) {
-      logger.error(`Unable to prune database. Creating a new one...`, e);
-      if (fs.existsSync(this.dbName)) fs.unlinkSync(this.dbName);
-      this.createJsonFileAndPermissions();
-    }
-  }
 
   /**
    * Set write permissions to the database file
@@ -181,19 +182,26 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   /**
    * Validates the database it is in the correct format:
    * - Creates JSON file if it doesn't exist
-   * - Deletes the database if it is corrupted and creates a new one
+   * - Throws on corrupted data without replacing it
    */
   private validateDb(): void {
     try {
-      this.read();
-      if (Object.keys(this.data ?? {}).length === 0) {
+      if (!fs.existsSync(this.dbName)) {
+        if (Object.keys(this.data ?? {}).length > 0)
+          throw new BrainDbError("Database file disappeared while validators were loaded");
         logger.warn(`Database file ${this.dbName} not found. Creating it...`);
         this.createJsonFileAndPermissions();
       }
+      // LowSync.read() ignores falsy JSON values, so inspect the adapter result directly.
+      const persisted = this.adapter.read();
+      if (!persisted || typeof persisted !== "object" || Array.isArray(persisted))
+        throw new BrainDbError("Expected a validator database object");
+      this.validateAddValidators(persisted);
+      this.data = persisted;
     } catch (e) {
-      logger.error(`The database is corrupted. Cleaning database`, e);
-      this.pruneDatabase();
-      this.read();
+      throw new BrainDbError(
+        `Unable to read database ${this.dbName}; refusing to reconcile validator keys. ${e.message}`
+      );
     }
   }
 
@@ -235,8 +243,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     while (retries < 10) {
       try {
         logger.info(`Database file ${this.dbName} not found. Attemping to perform migration...`);
-        // Create json file
-        this.createJsonFileAndPermissions();
+        this.validateDb();
+        if (Object.keys(this.data).length > 0) return;
         // Fetch public keys from signer API
         const pubkeys = (await signerApi.listRemoteKeys()).data.map((keystore) => keystore.validating_pubkey);
         if (pubkeys.length === 0) {
@@ -244,39 +252,18 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
           return;
         } else logger.info(`Found ${pubkeys.length} public keys to migrate`);
 
-        let feeRecipient = "";
-        await validatorApi
-          .getFeeRecipient(pubkeys[0])
-          .then((response) => {
-            feeRecipient = response.data.ethaddress;
-          })
-          .catch((e) => {
-            logger.error(`Unable to fetch fee recipient for ${pubkeys[0]}. Setting default ${params.burnAddress}}`, e);
-            // TODO: consider setting MEV fee recipient.
-            feeRecipient = params.burnAddress;
-          });
-
-        logger.info(`The fee recipient to be used in the migration is ${feeRecipient}`);
-
-        this.addValidators({
-          validators: pubkeys.reduce(
-            (acc, pubkey) => {
-              acc[pubkey] = {
-                tag: params.defaultTag,
-                feeRecipient,
-                automaticImport: false
-              };
-              return acc;
-            },
-            {} as { [pubkey: string]: PubkeyDetails }
-          )
-        });
+        const validators: StakingBrainDb = {};
+        for (const pubkey of pubkeys) {
+          const feeRecipient = (await validatorApi.getFeeRecipient(pubkey)).data.ethaddress;
+          validators[pubkey] = { tag: params.defaultTag, feeRecipient, automaticImport: false };
+        }
+        this.addValidators({ validators });
 
         logger.info(`Database migration completed`);
         return;
       } catch (e) {
-        if (retries < 30) {
-          retries++;
+        retries++;
+        if (retries < 10) {
           logger.error(`Unable to perform database migration. Retrying in 6 seconds...`, e);
           await new Promise((resolve) => {
             logger.info(`Retrying database migration for ${(retries + 1).toString()} time...`);

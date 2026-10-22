@@ -49,9 +49,10 @@ export async function updateValidators({
       const failures: string[] = [];
       for (const [pubkey, update] of Object.entries(updates)) {
         if (update.feeRecipient !== undefined)
-          await validatorApi
-            .setFeeRecipient(update.feeRecipient, pubkey)
-            .catch((err) => logger.error("Error setting validator feeRecipient", err));
+          await validatorApi.setFeeRecipient(update.feeRecipient, pubkey).catch((err) => {
+            logger.error("Error setting validator feeRecipient", err);
+            failures.push(`Fee recipient application failed for ${pubkey}`);
+          });
         if ("builderConfig" in update) {
           try {
             await applyValidatorBuilderConfig(validatorApi, pubkey, update.builderConfig);
@@ -63,7 +64,7 @@ export async function updateValidators({
       }
       if (failures.length > 0)
         throw new Error(
-          `Settings saved; builder configuration application failed and will be retried on reload. ${failures.join("; ")}`
+          `Settings saved; client configuration application failed and will be retried on reload. ${failures.join("; ")}`
         );
     } finally {
       reloadValidatorsCronTask.start();

@@ -33,10 +33,6 @@ export default function ValidatorList({
 
   const { network, isMevBoostSet } = stakerConfig;
   const smoothAddress = getSmoothAddressByNetwork(network);
-  useEffect(() => {
-    getValidators();
-  }, []);
-
   // Re-render table after delete/update validators
   useEffect(() => {
     if (!deleteOpen && !editFeesOpen && !exitOpen && !builderConfigOpen) {

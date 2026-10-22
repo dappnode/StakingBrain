@@ -4,6 +4,7 @@ import { ApiError, HttpApiError } from "./error.js";
 import logger from "../logger/index.js";
 import type { ApiParams, AllowedMethods, ErrnoException } from "./types.js";
 import type { Network } from "@stakingbrain/common";
+import { RPC_TIMEOUT_MS } from "@stakingbrain/common";
 
 export class StandardApi {
   private useTls = false;
@@ -53,7 +54,7 @@ export class StandardApi {
     endpoint,
     body,
     headers = {}, // Default to an empty object
-    timeout,
+    timeout = RPC_TIMEOUT_MS,
     signal
   }: {
     method: AllowedMethods;
@@ -97,12 +98,14 @@ export class StandardApi {
       req = http.request({ ...this.requestOptions, signal });
     }
 
-    if (timeout) {
-      req.setTimeout(timeout, () => {
-        const error = new ApiError(`Request to ${endpoint} timed out`);
-        req.destroy(error);
-      });
-    }
+    const deadline =
+      timeout > 0
+        ? setTimeout(() => {
+            const error = new ApiError(`Request to ${endpoint} timed out`);
+            req.destroy(error);
+          }, timeout)
+        : undefined;
+    deadline?.unref();
 
     if (body) {
       req.setHeader("Content-Length", Buffer.byteLength(body));
@@ -174,7 +177,7 @@ export class StandardApi {
           });
         });
       }
-    );
+    ).finally(() => clearTimeout(deadline));
   }
 }
 

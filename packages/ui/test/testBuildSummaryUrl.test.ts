@@ -20,7 +20,7 @@ describe("Test the building of a unique URL for all the validators", () => {
     }
 
     for (let i = 1; i <= 3; i++) {
-      allValidatorsInfo[0].data.push({ validatorindex: i + 100 });
+      allValidatorsInfo[1].data.push({ validatorindex: i + 100 });
     }
 
     const network = "mainnet";

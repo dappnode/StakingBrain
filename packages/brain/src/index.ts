@@ -19,8 +19,7 @@ const __dirname = process.cwd();
 
 // Load staker config
 const config = brainConfig();
-logger.debug(`Brain config:\n`);
-for (const [key, value] of Object.entries(config)) logger.debug(`${key}: ${JSON.stringify(value)}`);
+logger.debug(`Chain config: ${JSON.stringify(config.chain)}`);
 
 // Create API instances. Must preceed db initialization
 const { prometheusApi, signerApi, blockExplorerApi, validatorApi, beaconchainApi, dappmanagerApi, postgresClient } =
@@ -32,7 +31,7 @@ const brainDb = new BrainDataBase(
 );
 
 await brainDb.initialize(signerApi, validatorApi);
-logger.debug(brainDb.data);
+logger.debug(`Loaded ${Object.keys(brainDb.getData()).length} validators`);
 
 // CRON
 const { reloadValidatorsCronTask } = getCrons({

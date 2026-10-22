@@ -4,6 +4,7 @@ import { Web3signerDeleteRequest, Web3signerDeleteResponse } from "../../../apiC
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
 import logger from "../../../logger/index.js";
+import { isValidBlsPubkey, prefix0xPubkey } from "@stakingbrain/common";
 
 /**
  * Delete keystores:
@@ -29,6 +30,16 @@ export async function deleteValidators({
 }): Promise<Web3signerDeleteResponse> {
   return withValidatorOperationLock(brainDb, async () => {
     try {
+      if (
+        !deleteRequest ||
+        !Array.isArray(deleteRequest.pubkeys) ||
+        deleteRequest.pubkeys.length === 0 ||
+        Array.from(deleteRequest.pubkeys).some(
+          (key) => typeof key !== "string" || !isValidBlsPubkey(prefix0xPubkey(key))
+        )
+      )
+        throw new Error("Select valid validator public keys to delete");
+      deleteRequest = { pubkeys: deleteRequest.pubkeys.map(prefix0xPubkey) };
       // Pause future ticks while this operation holds the shared validator lock.
       reloadValidatorsCronTask.stop();
 
@@ -48,7 +59,11 @@ export async function deleteValidators({
       const web3signerDeleteResponse = await signerApi.deleteRemoteKeys(deleteRequest);
 
       // Write on db
-      brainDb.deleteValidators(deleteRequest.pubkeys);
+      brainDb.deleteValidators(
+        deleteRequest.pubkeys.filter((_, index) =>
+          ["deleted", "not_found", "not_active"].includes(web3signerDeleteResponse.data[index]?.status)
+        )
+      );
 
       // IMPORTANT: start the cron
       reloadValidatorsCronTask.start();

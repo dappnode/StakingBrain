@@ -44,12 +44,14 @@ export async function reloadValidators(
       await deleteDbPubkeysNotInSigner({ brainDb, dbPubkeys, signerPubkeys });
 
       const validatorPubkeys = (await validatorApi.getRemoteKeys()).data.map((keystore) => keystore.pubkey);
+      const validatorKeys = new Set(validatorPubkeys.map((pubkey) => pubkey.toLowerCase()));
+      const dbKeys = new Set(dbPubkeys.map((pubkey) => pubkey.toLowerCase()));
 
       // 4. POST to validator API pubkeys that are in DB and not in validator API
       await postValidatorPubkeysFromDb({
         validatorApi,
         signerUrl,
-        brainDbPubkeysToAdd: dbPubkeys.filter((pubkey) => !validatorPubkeys.includes(pubkey)),
+        brainDbPubkeysToAdd: dbPubkeys.filter((pubkey) => !validatorKeys.has(pubkey.toLowerCase())),
         validatorPubkeys
       });
 
@@ -57,7 +59,7 @@ export async function reloadValidators(
       await deleteValidatorPubkeysNotInDB({
         validatorApi,
         validatorPubkeys,
-        validatorPubkeysToRemove: validatorPubkeys.filter((pubkey) => !dbPubkeys.includes(pubkey))
+        validatorPubkeysToRemove: validatorPubkeys.filter((pubkey) => !dbKeys.has(pubkey.toLowerCase()))
       });
 
       // 6. POST to validator API fee recipients that are in DB in validator API

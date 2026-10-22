@@ -1,6 +1,9 @@
 import { withValidatorOperationLock } from "../../../db/withValidatorOperationLock.js";
 import {
   isFeeRecipientEditable,
+  isValidBlsPubkey,
+  isValidEcdsaPubkey,
+  tags,
   NonEditableFeeRecipientTag,
   Tag,
   shortenPubkey,
@@ -15,11 +18,12 @@ import { CustomImportRequest } from "./types.js";
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
 import { Web3signerPostResponse } from "../../../apiClients/types.js";
-import { PubkeyDetails } from "../../../db/types.js";
+import { StakingBrainDb } from "../../../db/types.js";
 import logger from "../../../logger/index.js";
 import { Web3SignerApi, ValidatorApi } from "../../../apiClients/index.js";
 
 type ValidatorImportRequest = {
+  requestIndex: number;
   keystore: string;
   password: string;
   tag: Tag;
@@ -27,15 +31,7 @@ type ValidatorImportRequest = {
   pubkey: string;
 };
 
-/**
- * Import keystores:
- * 1. Import keystores + passwords on web3signer API
- * 2. Import pubkeys on validator API
- * 3. Import feeRecipient on Validator API
- * 4. Write on db must go last because if signerApi fails does not make sense to write on db since cron will not delete them at some point
- * @param postRequest
- * @returns Web3signerPostResponse
- */
+/** Validate before importing; persist signer successes before configuring the validator client. */
 export async function importValidators({
   postRequest,
   reloadValidatorsCronTask,
@@ -54,30 +50,47 @@ export async function importValidators({
   brainDb: BrainDataBase;
 }): Promise<Web3signerPostResponse> {
   return withValidatorOperationLock(brainDb, async () => {
+    reloadValidatorsCronTask.stop();
     try {
-      // Pause future ticks while this operation holds the shared validator lock.
-      reloadValidatorsCronTask.stop();
-
+      if (
+        !postRequest ||
+        !Array.isArray(postRequest.validatorsImportRequest) ||
+        postRequest.validatorsImportRequest.length === 0
+      )
+        throw new Error("Select at least one validator to import");
+      if (!["ui", "api"].includes(postRequest.importFrom)) throw new Error("Invalid import origin");
+      const existing = new Set(Object.keys(brainDb.getData()).map((pubkey) => pubkey.toLowerCase()));
       const validators: ValidatorImportRequest[] = [];
       const validatorsToPost: ValidatorImportRequest[] = [];
-      const wrongFeeRecipientResponse: {
-        status: "error";
-        message: string;
-      }[] = [];
-
-      for (const validator of postRequest.validatorsImportRequest) {
-        const keystore = validator.keystore.toString();
-        const pubkey = JSON.parse(keystore).pubkey;
-
+      const results: Web3signerPostResponse = { data: [] };
+      const seen = new Set<string>();
+      for (const [requestIndex, validator] of postRequest.validatorsImportRequest.entries()) {
         try {
+          if (!validator || (typeof validator.keystore !== "string" && !Buffer.isBuffer(validator.keystore)))
+            throw new Error("Keystore must contain JSON text");
+          const keystore = validator.keystore.toString();
+          let parsed: { pubkey?: string } | null;
+          try {
+            parsed = JSON.parse(keystore);
+          } catch {
+            throw new Error("Invalid keystore JSON");
+          }
+          if (typeof parsed?.pubkey !== "string" || !isValidBlsPubkey(prefix0xPubkey(parsed.pubkey)))
+            throw new Error("Keystore must contain a valid BLS public key");
+          const pubkey = prefix0xPubkey(parsed.pubkey).toLowerCase();
+          if (seen.has(pubkey)) throw new Error(`Duplicate public key in import request: ${shortenPubkey(pubkey)}`);
+          if (!tags.includes(validator.tag)) throw new Error("Invalid validator tag");
+          if (typeof validator.password !== "string") throw new Error("Keystore password must be a string");
           const feeRecipient =
             !["gnosis", "lukso"].includes(network) && !isFeeRecipientEditable(validator.tag, postRequest.importFrom)
               ? getNonEditableFeeRecipient(validator.tag as NonEditableFeeRecipientTag, network, validator.feeRecipient)
               : validator.feeRecipient;
-
+          if (typeof feeRecipient !== "string" || !isValidEcdsaPubkey(feeRecipient))
+            throw new Error(`Invalid fee recipient for ${shortenPubkey(pubkey)}`);
+          seen.add(pubkey);
           logger.info(`Setting ${feeRecipient} as fee recipient for ${pubkey}`);
-
           validators.push({
+            requestIndex,
             keystore,
             password: validator.password,
             tag: validator.tag,
@@ -85,16 +98,27 @@ export async function importValidators({
             pubkey
           });
         } catch (e) {
-          wrongFeeRecipientResponse.push({
+          results.data[requestIndex] = {
             status: "error",
-            message: `Could not obtain fee recipient for pubkey ${shortenPubkey(
-              pubkey
-            )}. ${e} You can force a specific fee recipient by selecting tag "solo", but for some protocols this might cause you to lose rewards if you set a wrong address.`
-          });
-
-          logger.error(`Error obtaining fee recipient for pubkey ${shortenPubkey(pubkey)}: ${e}`);
+            message: e.message
+          };
         }
       }
+
+      if (validators.length === 0) return results;
+      const toDbRecords = (entries: ValidatorImportRequest[]): StakingBrainDb =>
+        Object.fromEntries(
+          entries.map(({ pubkey, tag, feeRecipient }) => [
+            pubkey,
+            {
+              tag,
+              feeRecipient,
+              automaticImport: postRequest.importFrom !== "ui"
+            }
+          ])
+        );
+      // Check all database constraints, including size, before changing signer storage.
+      brainDb.validateNewValidators(toDbRecords(validators));
 
       // Import keystores and passwords on web3signer API
       const web3signerPostResponse = await signerApi.importRemoteKeys({
@@ -108,32 +132,30 @@ export async function importValidators({
       // Signer API import keystore may fail for some keystores, but not all
       // @see https://github.com/ConsenSys/web3signer/issues/713
       // Remove the pubkeys to avoid adding them to the db
-      const pubkeysToPostIterator = validators.map((validator) => validator.pubkey).entries();
-
-      //Iterate over pubkeysToPost with index and pubkey
-      for (const [index, pubkey] of pubkeysToPostIterator) {
-        const postStatus = web3signerPostResponse.data[index].status;
-
+      for (const [index, validator] of validators.entries()) {
+        const { pubkey, requestIndex } = validator;
+        const response = web3signerPostResponse.data[index] ?? {
+          status: "error",
+          message: "Signer did not return a result for this key"
+        };
+        results.data[requestIndex] = response;
+        const postStatus = response.status;
         if (postStatus === "error") {
-          web3signerPostResponse.data[index].message +=
-            ". Check that the keystore file format is valid and the password is correct.";
-          logger.error(
-            `Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${web3signerPostResponse.data[index].message}`
-          );
+          response.message =
+            (response.message ?? "") + ". Check that the keystore file format is valid and the password is correct.";
+          logger.error(`Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${response.message}`);
         } else if (postStatus === "duplicate") {
           logger.warn(`Duplicate keystore for pubkey ${shortenPubkey(pubkey)}`);
+          if (!existing.has(pubkey)) validatorsToPost.push(validator);
         } else if (postStatus === "imported") {
-          validatorsToPost.push(validators[index]);
+          if (!existing.has(pubkey)) validatorsToPost.push(validator);
         }
       }
 
-      // Add info about the wrong fee recipients to the response
-      web3signerPostResponse.data.push(...wrongFeeRecipientResponse);
+      if (validatorsToPost.length === 0) return results;
 
-      if (validatorsToPost.length === 0) {
-        reloadValidatorsCronTask.start();
-        return web3signerPostResponse;
-      }
+      // Persist now so reload can repair a failed or interrupted client configuration.
+      brainDb.addValidators({ validators: toDbRecords(validatorsToPost) });
 
       // Import pubkeys on validator API
       await validatorApi
@@ -149,8 +171,6 @@ export async function importValidators({
 
       // Import feeRecipient on Validator API
       for (const validator of validatorsToPost) {
-        console.log("pubkey to set feeRecipient", validator.pubkey);
-
         await validatorApi
           .setFeeRecipient(validator.feeRecipient, validator.pubkey)
           .catch((err) => logger.error(`Error setting validator feeRecipient for pubkey ${validator.pubkey} :`, err));
@@ -158,31 +178,10 @@ export async function importValidators({
 
       logger.debug(`Added fee recipients to validator API`);
 
-      const validatorsToDb = {
-        validators: validatorsToPost.reduce(
-          (acc, validator) => {
-            acc[prefix0xPubkey(validator.pubkey)] = {
-              tag: validator.tag,
-              feeRecipient: validator.feeRecipient,
-              automaticImport: postRequest.importFrom !== "ui"
-            };
-            return acc;
-          },
-          {} as { [pubkey: string]: PubkeyDetails }
-        )
-      };
-
-      // Write on db
-      brainDb.addValidators(validatorsToDb);
-
       logger.debug(`Written on db: ${validatorsToPost.map((v) => v.pubkey).join(", ")}`);
-
-      // IMPORTANT: start the cron
+      return results;
+    } finally {
       reloadValidatorsCronTask.start();
-      return web3signerPostResponse;
-    } catch (e) {
-      reloadValidatorsCronTask.restart();
-      throw e;
     }
   });
 }
@@ -201,7 +200,7 @@ function getNonEditableFeeRecipient(
 
     case "lido":
       if (network === "mainnet") return LIDO_FEE_RECIPIENT_MAINNET;
-      else if (network === "hoodi") return suggestedFeeRecipient ?? LIDO_FEE_RECIPIENT_HOODI;
+      else if (network === "hoodi") return suggestedFeeRecipient || LIDO_FEE_RECIPIENT_HOODI;
       else throw Error(`Fee recipient not found for tag: ${tag} and network: ${network}`);
 
     // Stader FR cannot be known in advance

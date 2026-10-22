@@ -1,9 +1,12 @@
 import type { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid";
+import { isValidBlsPubkey, prefix0xPubkey } from "@stakingbrain/common";
 
 export const extractPubkey = async (file: File): Promise<string> => {
   const text = await file.text();
   const json = JSON.parse(text);
-  return json.pubkey;
+  if (typeof json?.pubkey !== "string" || !isValidBlsPubkey(prefix0xPubkey(json.pubkey)))
+    throw new Error("Keystore does not contain a valid validator public key");
+  return prefix0xPubkey(json.pubkey).toLowerCase();
 };
 
 export function getEmoji(status: string | boolean): string {

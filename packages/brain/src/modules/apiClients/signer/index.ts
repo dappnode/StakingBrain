@@ -154,12 +154,13 @@ export class Web3SignerApi extends StandardApi {
    * List all remote validating pubkeys known to this validator client binary
    * @see https://ethereum.github.io/keymanager-APIs/#/Remote%20Key%20Manager/ListRemoteKeys
    */
-  public async listRemoteKeys(): Promise<Web3signerGetResponse> {
+  public async listRemoteKeys(signal?: AbortSignal): Promise<Web3signerGetResponse> {
     try {
       return await this.request({
         method: "GET",
         endpoint: this.localKeymanagerEndpoint,
-        headers: this.originHeader
+        headers: this.originHeader,
+        signal
       });
     } catch (e) {
       throw new SignerApiError(`Error getting (GET) keystores from remote signer. ${e.message}`);

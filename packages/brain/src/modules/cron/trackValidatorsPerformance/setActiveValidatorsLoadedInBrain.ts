@@ -57,7 +57,7 @@ async function getValidatorIndexesAndSaveInDb({
   const validatorPubkeysWithNoIndex: string[] = [];
   // Iterate over brain db data and push the indexes to the array
   for (const [pubkey, details] of Object.entries(brainDbData)) {
-    if (details.index) validatorIndexes.push(details.index.toString());
+    if (details.index !== undefined) validatorIndexes.push(details.index.toString());
     else validatorPubkeysWithNoIndex.push(pubkey);
   }
 

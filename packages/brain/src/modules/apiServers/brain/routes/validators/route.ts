@@ -23,7 +23,7 @@ export const createBrainValidatorsRouter = ({ brainDb }: { brainDb: BrainDataBas
         const tagList = tagValidatorsMap.get(details.tag) || [];
 
         if (format === "index") {
-          if (!details.index) {
+          if (details.index === undefined) {
             logger.warn(
               `Validator ${pubkey} does not have an index, a possible cause is that the deposit has not been processed yet`
             );

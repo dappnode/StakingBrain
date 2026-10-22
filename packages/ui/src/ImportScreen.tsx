@@ -17,26 +17,19 @@ import {
   Alert
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { DropEvent } from "react-dropzone";
 import { useEffect, useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
 import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
 import ImportDialog from "./components/Dialogs/ImportDialog";
-import {
-  Tag,
-  isValidEcdsaPubkey,
-  BURN_ADDRESS,
-  isFeeRecipientEditable,
-  areAllFeeRecipientsEditable,
-  Network
-} from "@stakingbrain/common";
+import { Tag, isValidEcdsaPubkey, BURN_ADDRESS, isFeeRecipientEditable, Network } from "@stakingbrain/common";
 import CloseIcon from "@mui/icons-material/Close";
 import { rpcClient } from "./socket";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
 import { extractPubkey } from "./utils/dataUtils";
 import type { Web3signerPostResponse } from "@stakingbrain/brain";
 import { createImportRequest } from "./utils/createImportRequest";
+import { appendImportFiles, isImportFormValid, ImportFormState } from "./utils/importForm";
 
 export default function ImportScreen({
   network,
@@ -48,12 +41,21 @@ export default function ImportScreen({
   const [keystoresPostResponse, setKeystoresPostResponse] = useState<Web3signerPostResponse>();
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
   const [openDialog, setOpenDialog] = useState(false);
-  const [acceptedFiles, setAcceptedFiles] = useState<KeystoreInfo[]>([]);
-  const [passwords, setPasswords] = useState<string[]>([]);
+  const [importForm, setImportForm] = useState<ImportFormState>({
+    acceptedFiles: [],
+    passwords: [],
+    tags: [],
+    feeRecipients: []
+  });
+  const { acceptedFiles, passwords, tags, feeRecipients } = importForm;
+  const setAcceptedFiles = (acceptedFiles: KeystoreInfo[]) =>
+    setImportForm((current) => ({ ...current, acceptedFiles }));
+  const setPasswords = (passwords: string[]) => setImportForm((current) => ({ ...current, passwords }));
+  const setTags = (tags: ImportFormState["tags"]) => setImportForm((current) => ({ ...current, tags }));
+  const setFeeRecipients = (feeRecipients: string[]) => setImportForm((current) => ({ ...current, feeRecipients }));
+  const [fileError, setFileError] = useState("");
   const [useSamePassword, setUseSamePassword] = useState(false);
-  const [tags, setTags] = useState<Tag[]>([]);
   const [useSameTag, setUseSameTag] = useState(false);
-  const [feeRecipients, setFeeRecipients] = useState<string[]>([]);
   const [useSameFeerecipient, setUseSameFeerecipient] = useState(false);
   const [importStatus, setImportStatus] = useState(ImportStatus.NotImported);
   const [slashingFile, setSlashingFile] = useState<File>();
@@ -71,46 +73,43 @@ export default function ImportScreen({
     switch (switchType) {
       case "password":
         setUseSamePassword(!useSamePassword); // Directly toggle the boolean state
-        setPasswords([]); // Reset passwords to empty
+        if (!useSamePassword) setPasswords(Array(acceptedFiles.length).fill(passwords[0] ?? ""));
         break;
       case "tag":
         setUseSameTag(!useSameTag); // Directly toggle the boolean state
-        setTags([]); // Reset tags to empty
+        if (!useSameTag) {
+          setTags(Array(acceptedFiles.length).fill(tags[0] ?? ""));
+          if (tags[0] && !isFeeRecipientEditable(tags[0])) setFeeRecipients(Array(acceptedFiles.length).fill(""));
+        }
         break;
       case "feerecipient":
         setUseSameFeerecipient(!useSameFeerecipient); // Directly toggle the boolean state
-        setFeeRecipients([]); // Reset fee recipients to empty
+        if (!useSameFeerecipient) setFeeRecipients(Array(acceptedFiles.length).fill(feeRecipients[0] ?? ""));
         break;
     }
   };
 
-  // This use effect sets the Lido warning when one of the keystores has the 'lido' tag and MEV-Boost is not set
-  useEffect(() => {
-    // Check if any of the selected tags is 'lido' and MEV-Boost is not set
-    const lidoSelected = tags.includes("lido");
-
-    setShowMevWarning(lidoSelected && !isMevBoostSet);
-  }, [tags, isMevBoostSet]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const keystoreFilesCallback = async (files: File[], event: DropEvent) => {
+  const keystoreFilesCallback = async (files: File[]) => {
     const keystoresToAdd: KeystoreInfo[] = [];
-    const passwordsToAdd: string[] = [];
+    const rejected: string[] = [];
     for (const file of files) {
-      const pubkey = await extractPubkey(file);
-      if (pubkey) {
-        if (acceptedFiles.some((e) => e.pubkey === pubkey) === false) {
-          keystoresToAdd.push({ file: file, pubkey: pubkey });
-          passwordsToAdd.push("");
-        }
+      try {
+        keystoresToAdd.push({ file, pubkey: await extractPubkey(file) });
+      } catch {
+        rejected.push(file.name);
       }
     }
-    setAcceptedFiles([...acceptedFiles].concat(keystoresToAdd));
-    setPasswords([...passwords].concat(passwordsToAdd));
+    setFileError(rejected.length ? `Could not read valid validator keystores from: ${rejected.join(", ")}` : "");
+    setImportForm((current) =>
+      appendImportFiles(current, keystoresToAdd, {
+        password: useSamePassword,
+        tag: useSameTag,
+        feeRecipient: useSameFeerecipient
+      })
+    );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const slashingFilesCallback = (files: File[], event: DropEvent) => {
+  const slashingFilesCallback = (files: File[]) => {
     setSlashingFile(files[0]);
   };
 
@@ -127,29 +126,10 @@ export default function ImportScreen({
   // This useEffect updates the "submit keystores" button state based on various conditions,
   // such as if any password is empty, if any tag is empty, if any fee recipient is invalid, etc.
   useEffect(() => {
-    const isAnyPasswordEmpty = () => {
-      return passwords.some((password) => password === "") || passwords.length === 0;
-    };
-
-    const hasInvalidTagOrFeeRecipient = () => {
-      if (tags.length !== acceptedFiles.length) return true;
-      return tags.some((tag, index) => {
-        if (tag.length === 0) return true;
-        if (isFeeRecipientEditable(tag)) {
-          return !isValidEcdsaPubkey(feeRecipients[index]);
-        }
-        return false;
-      });
-    };
-
-    const hasInvalidKeystoreData = () => {
-      return isAnyPasswordEmpty() || hasInvalidTagOrFeeRecipient();
-    };
-
     const disable =
       acceptedFiles.length === 0 ||
       (!slashingFile && slashingProtectionIncluded) ||
-      hasInvalidKeystoreData() ||
+      !isImportFormValid(importForm) ||
       showMevWarning;
 
     setIsButtonDisabled(disable); // Set the state based on the conditions
@@ -158,6 +138,8 @@ export default function ImportScreen({
   async function importKeystores() {
     try {
       setImportStatus(ImportStatus.Importing);
+      setKeystoresPostError(undefined);
+      setKeystoresPostResponse(undefined);
       handleClickOpenDialog();
 
       const importRequest = await createImportRequest({
@@ -165,7 +147,7 @@ export default function ImportScreen({
         passwords,
         tags,
         feeRecipients,
-        slashingFile
+        slashingFile: slashingProtectionIncluded ? slashingFile : undefined
       });
 
       const response = await rpcClient.call("importValidators", importRequest);
@@ -254,6 +236,11 @@ export default function ImportScreen({
                 deposit_data.json file."
           />
           <FileDrop callback={keystoreFilesCallback} />
+          {fileError && (
+            <Alert severity="error" sx={{ marginTop: 2 }}>
+              {fileError}
+            </Alert>
+          )}
 
           <SecondaryInfoTypography
             sx={{ marginTop: 4 }}
@@ -262,86 +249,90 @@ export default function ImportScreen({
           />
         </Card>
 
-        {acceptedFiles.length > 1 && (
-          <>
-            <FormGroup sx={{ marginTop: "6px" }}>
-              <FormControlLabel
-                control={<Switch onChange={() => handleSwitchToggle("password")} />}
-                label="Use same password for every file"
-              />
-              <FormControlLabel
-                control={<Switch onChange={() => handleSwitchToggle("feerecipient")} />}
-                label="Use same fee recipient for every file"
-              />
-              <FormControlLabel
-                control={<Switch onChange={() => handleSwitchToggle("tag")} />}
-                label="Use same tag for every file"
-              />
-            </FormGroup>
-            {(useSameTag || useSameFeerecipient || useSamePassword) && (
-              <FormControl sx={{ marginTop: 2, width: "100%" }}>
-                {useSamePassword && (
-                  <>
-                    <TextField
-                      id={`outlined-password-input`}
-                      label="Keystore Password"
-                      type="password"
-                      sx={{ marginTop: 2 }}
-                      onChange={(e) => setPasswords(Array(acceptedFiles.length).fill(e.target.value))}
-                      helperText={"Password to decrypt the keystore(s)"}
-                    />
-                  </>
-                )}
-                {useSameTag && (
-                  <>
-                    <Select
-                      id="outlined-tag-input"
-                      label="Tag"
-                      value={tags[0]}
-                      type="text"
-                      sx={{ marginTop: 2 }}
-                      onChange={(e) => {
-                        setTags(Array(acceptedFiles.length).fill(e.target.value));
-                        if (!isFeeRecipientEditable(tags[0])) {
-                          setFeeRecipients(Array(acceptedFiles.length).fill(""));
+        {acceptedFiles.length > 0 &&
+          (acceptedFiles.length > 1 || useSameTag || useSamePassword || useSameFeerecipient) && (
+            <>
+              <FormGroup sx={{ marginTop: "6px" }}>
+                <FormControlLabel
+                  control={<Switch checked={useSamePassword} onChange={() => handleSwitchToggle("password")} />}
+                  label="Use same password for every file"
+                />
+                <FormControlLabel
+                  control={<Switch checked={useSameFeerecipient} onChange={() => handleSwitchToggle("feerecipient")} />}
+                  label="Use same fee recipient for every file"
+                />
+                <FormControlLabel
+                  control={<Switch checked={useSameTag} onChange={() => handleSwitchToggle("tag")} />}
+                  label="Use same tag for every file"
+                />
+              </FormGroup>
+              {(useSameTag || useSameFeerecipient || useSamePassword) && (
+                <FormControl sx={{ marginTop: 2, width: "100%" }}>
+                  {useSamePassword && (
+                    <>
+                      <TextField
+                        id={`outlined-password-input`}
+                        label="Keystore Password"
+                        type="password"
+                        value={passwords[0] ?? ""}
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) => setPasswords(Array(acceptedFiles.length).fill(e.target.value))}
+                        helperText={"Password to decrypt the keystore(s)"}
+                      />
+                    </>
+                  )}
+                  {useSameTag && (
+                    <>
+                      <Select
+                        id="outlined-tag-input"
+                        label="Tag"
+                        value={tags[0] ?? ""}
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) => {
+                          setTags(Array(acceptedFiles.length).fill(e.target.value as Tag));
+                          if (!isFeeRecipientEditable(e.target.value as Tag)) {
+                            setFeeRecipients(Array(acceptedFiles.length).fill(""));
+                          }
+                        }}
+                      >
+                        {tagSelectOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>Staking protocol</FormHelperText>
+                    </>
+                  )}
+                  {useSameFeerecipient && (
+                    <>
+                      <TextField
+                        id={`outlined-fee-recipient-input`}
+                        label={
+                          tags.some((tag) => !tag || isFeeRecipientEditable(tag))
+                            ? "Fee Recipient"
+                            : "For this protocol, fee recipient will be set automatically"
                         }
-                      }}
-                    >
-                      {tagSelectOptions.map((option) => (
-                        <MenuItem value={option.value}>{option.label}</MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>Staking protocol</FormHelperText>
-                  </>
-                )}
-                {useSameFeerecipient && (
-                  <>
-                    <TextField
-                      id={`outlined-fee-recipient-input`}
-                      label={
-                        tags[0] === undefined || isFeeRecipientEditable(tags[0])
-                          ? "Fee Recipient"
-                          : "For this protocol, fee recipient will be set automatically"
-                      }
-                      type="text"
-                      sx={{ marginTop: 2 }}
-                      onChange={(e) => {
-                        setFeeRecipients(Array(acceptedFiles.length).fill(e.target.value));
-                      }}
-                      error={isFeeRecipientFieldWrong(0)}
-                      helperText={getFeeRecipientFieldHelperText(0)}
-                      value={feeRecipients[0]}
-                      disabled={!isFeeRecipientEditable(tags[0])}
-                    />
-                    {!areAllFeeRecipientsEditable(tags) && !useSameTag && (
-                      <Alert severity="info">This field will only apply to the editable fee recipients</Alert>
-                    )}
-                  </>
-                )}
-              </FormControl>
-            )}
-          </>
-        )}
+                        type="text"
+                        sx={{ marginTop: 2 }}
+                        onChange={(e) => {
+                          setFeeRecipients(Array(acceptedFiles.length).fill(e.target.value));
+                        }}
+                        error={isFeeRecipientFieldWrong(0)}
+                        helperText={getFeeRecipientFieldHelperText(0)}
+                        value={feeRecipients[0] ?? ""}
+                        disabled={tags.every((tag) => tag && !isFeeRecipientEditable(tag))}
+                      />
+                      {tags.some((tag) => tag && !isFeeRecipientEditable(tag)) && !useSameTag && (
+                        <Alert severity="info">This field will only apply to the editable fee recipients</Alert>
+                      )}
+                    </>
+                  )}
+                </FormControl>
+              )}
+            </>
+          )}
 
         {FileCardList(
           acceptedFiles,
@@ -458,7 +449,7 @@ export default function ImportScreen({
             variant="contained"
             size="medium"
             endIcon={<BackupIcon />}
-            disabled={isButtonDisabled}
+            disabled={isButtonDisabled || importStatus === ImportStatus.Importing}
             onClick={importKeystores}
             sx={{ borderRadius: 2 }}
           >

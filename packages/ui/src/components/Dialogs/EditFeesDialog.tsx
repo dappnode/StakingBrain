@@ -154,18 +154,16 @@ export default function FeeRecipientDialog({
 
   const handleApplyChanges = async () => {
     setLoading(true);
-
+    setErrorMessage("");
+    setSuccessMessage("");
     try {
       await updateValidators();
-    } catch (err) {
-      setErrorMessage("There was an error updating some fee recipients: " + err);
-    }
-
-    setLoading(false);
-
-    if (!errorMessage) {
       setSuccessMessage("Fee recipients updated successfully");
       isMevSpAddressSelected && setActiveStep(1);
+    } catch (err) {
+      setErrorMessage("There was an error updating some fee recipients: " + err);
+    } finally {
+      setLoading(false);
     }
   };
 

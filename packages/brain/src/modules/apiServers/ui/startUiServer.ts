@@ -1,4 +1,4 @@
-import { Network, RPC_MAX_PAYLOAD_BYTES } from "@stakingbrain/common";
+import { Network } from "@stakingbrain/common";
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -7,7 +7,7 @@ import logger from "../../logger/index.js";
 import http from "http";
 import fs from "fs";
 import { params } from "../../../params.js";
-import { RpcMethods } from "./calls/types.js";
+import { createRpcHandler } from "./rpcHandler.js";
 import { createRpcMethods } from "./calls/index.js";
 import { CronJob } from "../../cron/cron.js";
 import { BrainDataBase } from "../../db/index.js";
@@ -19,27 +19,7 @@ import {
   ValidatorApi,
   Web3SignerApi
 } from "../../apiClients/index.js";
-import { allowedOrigins } from "./config.js";
-
-// Define the type for the RPC request
-interface RpcRequest {
-  jsonrpc: string;
-  method: keyof RpcMethods;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  params?: any;
-  id: string | number | null;
-}
-
-function toRpcErrorMessage(error: unknown): string {
-  if (error == null) return "Unknown error";
-  if (typeof error === "string") return error;
-  if (error instanceof Error) return error.message || error.name || "Unknown error";
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
-}
+import { allowedOrigins, uiSocketOptions } from "./config.js";
 
 export function startUiServer({
   brainDb,
@@ -82,49 +62,14 @@ export function startUiServer({
 
   const app = express();
   const server = http.createServer(app);
+  const uiOrigins = allowedOriginsFromEnv ?? allowedOrigins(network);
 
   // Socket io
-  const io = new Server(server, {
-    serveClient: false,
-    maxHttpBufferSize: RPC_MAX_PAYLOAD_BYTES
-  });
+  const io = new Server(server, uiSocketOptions(uiOrigins));
   io.on("connection", (socket) => {
     logger.debug("A user connected");
 
-    socket.on("rpc", async (request: RpcRequest, callback) => {
-      const { jsonrpc, method, params, id } = request;
-      logger.debug(`Received rpc call: ${method}`);
-
-      if (jsonrpc !== "2.0") {
-        callback({
-          jsonrpc: "2.0",
-          error: { code: -32600, message: "Invalid Request" },
-          id
-        });
-        return;
-      }
-
-      if (!(method in rpcMethods)) {
-        callback({
-          jsonrpc: "2.0",
-          error: { code: -32601, message: "Method not found" },
-          id
-        });
-        return;
-      }
-
-      try {
-        const result = await rpcMethods[method](params);
-        callback({ jsonrpc: "2.0", result, id });
-      } catch (error) {
-        logger.error(error);
-        callback({
-          jsonrpc: "2.0",
-          error: { code: -32000, message: toRpcErrorMessage(error) },
-          id
-        });
-      }
-    });
+    socket.on("rpc", createRpcHandler(rpcMethods));
 
     socket.on("disconnect", () => {
       logger.debug("A user disconnected");

@@ -111,10 +111,10 @@ export default function KeystoresExitDialog({
             `Error: ${validatorsExitError}`
           ) : validatorsExitResponse ? (
             <div>
-              {validatorsExitResponse.map((result, index) => (
-                <div style={{ marginBottom: "20px" }}>
+              {validatorsExitResponse.map((result) => (
+                <div key={result.pubkey} style={{ marginBottom: "20px" }}>
                   <Typography variant="h5" color="GrayText">
-                    {shortenPubkey(rows[index]?.pubkey)}
+                    {shortenPubkey(result.pubkey)}
                   </Typography>
                   <Typography variant="h6">
                     <b>Status:</b> {result.status.exited ? <>Exited</> : <>Not exited</>}{" "}
@@ -175,7 +175,7 @@ export default function KeystoresExitDialog({
             </Button>
           </>
         ) : null}
-        <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
+        <Button disabled={loading} onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
           Close
         </Button>
       </DialogActions>

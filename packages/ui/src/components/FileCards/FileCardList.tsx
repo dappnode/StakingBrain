@@ -11,8 +11,8 @@ export default function FileCardList(
   passwords: string[],
   setPasswords: (passwords: string[]) => void,
   useSamePassword: boolean,
-  tags: Tag[],
-  setTags: (tags: Tag[]) => void,
+  tags: (Tag | "")[],
+  setTags: (tags: (Tag | "")[]) => void,
   useSameTag: boolean,
   feeRecipients: string[],
   setFeeRecipients: (feeRecipients: string[]) => void,
@@ -29,8 +29,8 @@ export default function FileCardList(
     setPasswords: (passwords: string[]) => void,
     feeRecipients: string[],
     setFeeRecipients: (feeRecipients: string[]) => void,
-    tags: Tag[],
-    setTags: (tags: Tag[]) => void
+    tags: (Tag | "")[],
+    setTags: (tags: (Tag | "")[]) => void
   ) => {
     const indexToRemove = fileInfos.indexOf(fileInfo);
     setAcceptedFiles(fileInfos.filter((f, index) => index !== indexToRemove));
@@ -40,7 +40,7 @@ export default function FileCardList(
   };
 
   return Array.from(fileInfos).map((fileInfo, index) => (
-    <Card key={index} raised sx={{ padding: 2, marginTop: 4, borderRadius: 2 }}>
+    <Card key={fileInfo.pubkey} raised sx={{ padding: 2, marginTop: 4, borderRadius: 2 }}>
       <Box
         sx={{
           display: "flex",
@@ -77,6 +77,7 @@ export default function FileCardList(
               id={`outlined-password-input-${index}`}
               label="Keystore Password"
               type="password"
+              value={passwords[index] ?? ""}
               sx={{ marginTop: 2 }}
               onChange={(event) => {
                 const newPasswords = [...passwords];
@@ -91,7 +92,7 @@ export default function FileCardList(
               <Select
                 id="outlined-tag-input"
                 label="Tag"
-                value={tags[index]}
+                value={tags[index] ?? ""}
                 type="text"
                 sx={{ marginTop: 2 }}
                 onChange={(event) => {
@@ -99,7 +100,7 @@ export default function FileCardList(
                   newTags[index] = event.target.value as Tag;
                   setTags(newTags);
 
-                  if (!isFeeRecipientEditable(event.target.value as Tag)) {
+                  if (!useSameFeeRecipient && !isFeeRecipientEditable(event.target.value as Tag)) {
                     const newFeeRecipients = [...feeRecipients];
                     newFeeRecipients[index] = "";
                     setFeeRecipients(newFeeRecipients);
@@ -119,11 +120,12 @@ export default function FileCardList(
             <TextField
               id={`outlined-fee-recipient-input-${index}`}
               label={
-                tags[index] === undefined || isFeeRecipientEditable(tags[index])
+                !tags[index] || isFeeRecipientEditable(tags[index])
                   ? "Fee Recipient"
                   : "For this protocol, fee recipient will be set automatically"
               }
               type="text"
+              value={feeRecipients[index] ?? ""}
               sx={{ marginTop: 2 }}
               onChange={(event) => {
                 const newFeeRecipients = [...feeRecipients];
@@ -132,7 +134,7 @@ export default function FileCardList(
               }}
               error={isFeeRecipientFieldWrong(index)}
               helperText={getFeeRecipientFieldHelperText(index)}
-              disabled={!isFeeRecipientEditable(tags[index])}
+              disabled={!!tags[index] && !isFeeRecipientEditable(tags[index])}
             />
           )}
         </FormControl>

@@ -82,7 +82,7 @@ export default function KeystoresDeleteDialog({
       TransitionComponent={SlideTransition}
     >
       <DialogTitle id="alert-dialog-title">
-        {keystoresDelete ? "Keys deleted successfully" : "Delete Keystores?"}
+        {keystoresDelete ? "Key deletion results" : "Delete Keystores?"}
       </DialogTitle>
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
@@ -150,7 +150,7 @@ export default function KeystoresDeleteDialog({
             Delete
           </Button>
         ) : null}
-        <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
+        <Button disabled={loading} onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
           Close
         </Button>
       </DialogActions>

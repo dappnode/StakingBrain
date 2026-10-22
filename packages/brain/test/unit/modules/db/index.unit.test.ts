@@ -52,11 +52,64 @@ describe("Database initialization", () => {
     expect(validator.getBuilderConfig.called).to.equal(false);
   });
 
-  it("recovers corrupted JSON as a valid empty database", async () => {
+  it("refuses corrupted JSON without erasing validator metadata", async () => {
     fs.writeFileSync(filename, "{invalid JSON");
     const db = new BrainDataBase(filename);
-    await db.initialize(sinon.createStubInstance(Web3SignerApi), sinon.createStubInstance(ValidatorApi));
-    expect(db.getData()).to.deep.equal({});
+    const result = await db
+      .initialize(sinon.createStubInstance(Web3SignerApi), sinon.createStubInstance(ValidatorApi))
+      .catch((error: Error) => error);
+    expect(result).to.be.instanceOf(Error);
+    expect(() => db.getData()).to.throw("refusing to reconcile");
+    expect(fs.readFileSync(filename, "utf8")).to.equal("{invalid JSON");
+  });
+
+  it("refuses non-object JSON rather than letting LowSync treat it as an empty database", () => {
+    for (const contents of ["null", "false", "0", "[]", '"invalid"']) {
+      fs.writeFileSync(filename, contents);
+      expect(() => new BrainDataBase(filename).getData()).to.throw("refusing to reconcile");
+      expect(fs.readFileSync(filename, "utf8")).to.equal(contents);
+    }
+  });
+
+  it("preserves each validator's fee destination during migration", async () => {
+    const keys = ["ab", "cd"].map((byte) => "0x" + byte.repeat(48));
+    const recipients = ["11", "22"].map((byte) => "0x" + byte.repeat(20));
+    const signer = sinon.createStubInstance(Web3SignerApi);
+    signer.listRemoteKeys.resolves({
+      data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
+    });
+    const validator = sinon.createStubInstance(ValidatorApi);
+    keys.forEach((key, index) =>
+      validator.getFeeRecipient.withArgs(key).resolves({ data: { ethaddress: recipients[index] } })
+    );
+    const db = new BrainDataBase(filename);
+    await db.initialize(signer, validator);
+    expect(keys.map((key) => db.getData()[key].feeRecipient)).to.deep.equal(recipients);
+  });
+
+  it("fails startup after migration retries instead of treating unavailable signers as empty", async () => {
+    const clock = sinon.useFakeTimers();
+    const signer = sinon.createStubInstance(Web3SignerApi);
+    signer.listRemoteKeys.rejects(new Error("Signer unavailable"));
+    const db = new BrainDataBase(filename);
+    const pending = db.initialize(signer, sinon.createStubInstance(ValidatorApi)).catch((error: Error) => error);
+    await clock.runAllAsync();
+    expect(await pending).to.be.instanceOf(Error);
+    expect(signer.listRemoteKeys.callCount).to.equal(10);
+  });
+
+  it("never guesses a burn address when an existing key's fee recipient cannot be read", async () => {
+    const clock = sinon.useFakeTimers();
+    const signer = sinon.createStubInstance(Web3SignerApi);
+    const key = "0x" + "ab".repeat(48);
+    signer.listRemoteKeys.resolves({ data: [{ validating_pubkey: key, derivation_path: "", readonly: false }] });
+    const validator = sinon.createStubInstance(ValidatorApi);
+    validator.getFeeRecipient.rejects(new Error("Client unavailable"));
+    const db = new BrainDataBase(filename);
+    const pending = db.initialize(signer, validator).catch((error: Error) => error);
+    await clock.runAllAsync();
+    expect(await pending).to.be.instanceOf(Error);
     expect(JSON.parse(fs.readFileSync(filename, "utf8"))).to.deep.equal({});
+    expect(validator.setFeeRecipient.called).to.equal(false);
   });
 });

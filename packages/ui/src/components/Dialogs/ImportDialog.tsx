@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import { Dialog, DialogTitle, DialogContent, Box, Typography, Button, DialogActions } from "@mui/material";
 import { Link } from "react-router-dom";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
-import { KeystoreInfo } from "../../types";
+import { ImportStatus, KeystoreInfo } from "../../types";
 import WaitBox from "../WaitBox/WaitBox";
 import { shortenPubkey } from "@stakingbrain/common";
 import { SlideTransition } from "./Transitions";
@@ -75,7 +75,12 @@ export default function ImportDialog({
 
       <DialogActions>
         <Link to={{ pathname: "/", search: window.location.search }}>
-          <Button onClick={handleClose} variant="contained" sx={{ borderRadius: 2 }}>
+          <Button
+            disabled={importStatus === ImportStatus.Importing}
+            onClick={handleClose}
+            variant="contained"
+            sx={{ borderRadius: 2 }}
+          >
             Close
           </Button>
         </Link>

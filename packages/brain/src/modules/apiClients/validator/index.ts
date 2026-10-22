@@ -104,11 +104,12 @@ export class ValidatorApi extends StandardApi {
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * @see https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
-  public async getFeeRecipient(publicKey: string): Promise<ValidatorGetFeeResponse> {
+  public async getFeeRecipient(publicKey: string, signal?: AbortSignal): Promise<ValidatorGetFeeResponse> {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: path.join(this.validatorEndpoint, prefix0xPubkey(publicKey), "feerecipient")
+        endpoint: path.join(this.validatorEndpoint, prefix0xPubkey(publicKey), "feerecipient"),
+        signal
       })) as ValidatorGetFeeResponse;
     } catch (e) {
       throw new ValidatorApiError(`Error getting fee recipient for pubkey ${publicKey} from validator. ${e.message}`);
@@ -152,11 +153,12 @@ export class ValidatorApi extends StandardApi {
    * List the validator public key to eth address mapping for fee recipient feature on a specific public key.
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/listFeeRecipient
    */
-  public async getRemoteKeys(): Promise<ValidatorGetRemoteKeysResponse> {
+  public async getRemoteKeys(signal?: AbortSignal): Promise<ValidatorGetRemoteKeysResponse> {
     try {
       return (await this.request({
         method: "GET",
-        endpoint: this.remoteKeymanagerEndpoint
+        endpoint: this.remoteKeymanagerEndpoint,
+        signal
       })) as ValidatorGetRemoteKeysResponse;
     } catch (e) {
       throw new ValidatorApiError(`Error getting remote keys from validator. ${e.message}`);

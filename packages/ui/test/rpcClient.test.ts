@@ -134,7 +134,7 @@ describe("RPC request lifecycle", () => {
         })),
         passwords: keystores.map((_, index) => `password-${index}`),
         tags: keystores.map(() => "solo"),
-        feeRecipients: keystores.map((_, index) => "0x" + index.toString(16).padStart(40, "0")),
+        feeRecipients: keystores.map((_, index) => "0x" + (index + 1).toString(16).padStart(40, "0")),
         slashingFile: new File([slashingProtection], "slashing-protection.json")
       });
       connect();
@@ -160,7 +160,7 @@ describe("RPC request lifecycle", () => {
           keystore,
           password: `password-${index}`,
           tag: "solo",
-          feeRecipient: "0x" + index.toString(16).padStart(40, "0")
+          feeRecipient: "0x" + (index + 1).toString(16).padStart(40, "0")
         }))
       );
       const response = { data: keystores.map(() => ({ status: "imported" })) };
