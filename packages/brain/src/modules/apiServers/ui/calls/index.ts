@@ -77,6 +77,7 @@ export const createRpcMethods = ({
         brainDb,
         validatorApi,
         customValidatorUpdateRequest,
+        signerUrl,
         requestFrom
       }),
     getValidators: async () =>
