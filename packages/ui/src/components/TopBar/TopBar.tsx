@@ -17,12 +17,7 @@ export default function TopBar({
   network?: Network;
 }): JSX.Element {
   return (
-    <AppBar
-      position="sticky"
-      color="default"
-      elevation={0}
-      sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}
-    >
+    <AppBar position="sticky" color="primary" elevation={0} sx={{ borderBottom: 1, borderColor: "divider" }}>
       <ToolBar network={network} mode={mode} setMode={setMode} userMode={userMode} setUserMode={setUserMode} />
     </AppBar>
   );

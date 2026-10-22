@@ -31,12 +31,20 @@ export default function ToolBar({
           <Typography variant="h6" sx={{ fontSize: { xs: 16, sm: 20 } }}>
             Staking Brain
           </Typography>
-          {network && <Chip size="small" variant="outlined" label={capitalize(network)} />}
+          {network && (
+            <Chip
+              size="small"
+              variant="outlined"
+              label={capitalize(network)}
+              sx={{ color: "inherit", borderColor: "currentColor" }}
+            />
+          )}
         </Stack>
       </Stack>
       <Stack direction="row" spacing={0.5}>
         <Tooltip title={mode === "dark" ? "Use light mode" : "Use dark mode"}>
           <IconButton
+            color="inherit"
             aria-label={mode === "dark" ? "Use light mode" : "Use dark mode"}
             onClick={() => setMode(mode === "dark" ? "light" : "dark")}
           >
@@ -47,7 +55,8 @@ export default function ToolBar({
           <IconButton
             aria-label="Advanced information"
             aria-pressed={userMode === "advanced"}
-            color={userMode === "advanced" ? "primary" : "default"}
+            color="inherit"
+            sx={{ bgcolor: userMode === "advanced" ? "action.selected" : undefined }}
             onClick={() => setUserMode(userMode === "basic" ? "advanced" : "basic")}
           >
             {userMode === "basic" ? <UnfoldMoreIcon /> : <UnfoldLessIcon />}
