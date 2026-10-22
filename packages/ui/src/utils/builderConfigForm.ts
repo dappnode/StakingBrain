@@ -1,4 +1,10 @@
-import { BuilderConfig, BuilderEntry, isValidBlsPubkey, validateBuilderConfig } from "@stakingbrain/common";
+import {
+  BuilderConfig,
+  BuilderEntry,
+  BuilderRelayPreset,
+  isValidBlsPubkey,
+  validateBuilderConfig
+} from "@stakingbrain/common";
 
 export interface OverrideInput {
   enabled: boolean;
@@ -66,6 +72,31 @@ export function builderConfigToForm(config?: BuilderConfig | null): BuilderConfi
     buildersMode: config?.builders?.length ? "custom" : "none",
     builders: config?.builders?.map(createBuilderInput) ?? []
   };
+}
+
+/** Match endpoint spelling without confusing paths, queries or other networks. */
+export function matchesRelayPreset(entry: BuilderInput, preset: Pick<BuilderRelayPreset, "url">): boolean {
+  try {
+    return new URL(entry.url.trim()).href === new URL(preset.url).href;
+  } catch {
+    return false;
+  }
+}
+
+/** Preset selection preserves every unrelated endpoint and all existing advanced overrides. */
+export function toggleRelayPreset(
+  form: BuilderConfigForm,
+  preset: Pick<BuilderRelayPreset, "url">,
+  checked: boolean
+): BuilderConfigForm {
+  const current = form.buildersMode === "custom" ? form.builders : [];
+  const matches = current.some((entry) => matchesRelayPreset(entry, preset));
+  const builders = checked
+    ? matches
+      ? current
+      : [...current, createBuilderInput({ url: preset.url })]
+    : current.filter((entry) => !matchesRelayPreset(entry, preset));
+  return { ...form, builders, buildersMode: builders.length ? "custom" : "none" };
 }
 
 function include(field: string, input: OverrideInput): Record<string, string> {

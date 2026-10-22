@@ -25,8 +25,8 @@ function ComparisonTable({ rows }: { rows: BuilderComparisonRow[] }): JSX.Elemen
         <TableHead>
           <TableRow>
             <TableCell sx={{ width: "28%" }}>Setting</TableCell>
-            <TableCell sx={{ bgcolor: "action.hover" }}>Saved choice</TableCell>
-            <TableCell>Client is using</TableCell>
+            <TableCell sx={{ bgcolor: "action.hover" }}>Saved in Brain</TableCell>
+            <TableCell>Validator is using</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

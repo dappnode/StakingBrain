@@ -159,6 +159,7 @@ export default function ValidatorList({
 
               {builderConfigOpen && (
                 <BuilderConfigDialog
+                  network={network}
                   validators={selectedRows.map((row) => validatorsGet[row as number])}
                   setOpen={setBuilderConfigOpen}
                 />

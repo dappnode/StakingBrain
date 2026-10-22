@@ -1,11 +1,10 @@
 import type { JSX } from "react";
+import { useEffect, useState } from "react";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   Chip,
+  Collapse,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -23,7 +22,6 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { BuilderFormErrors, BuilderInput, OverrideInput, splitBuilderPublicKeys } from "../../utils/builderConfigForm";
 import { formatBidAmount, formatBidBoost, MAX_BUILDER_BOOST } from "../../utils/builderConfigDisplay";
 
@@ -153,7 +151,17 @@ export function BuilderCard({
   globalBoost: OverrideInput;
 }): JSX.Element {
   const prefix = `builders.${entry.id}`;
-  const advancedError = Object.keys(errors).some((key) => key.startsWith(prefix + ".") && key !== `${prefix}.url`);
+  const hasErrors = Object.keys(errors).some((key) => key.startsWith(prefix + "."));
+  const [expanded, setExpanded] = useState(() => !entry.url.trim());
+  useEffect(() => {
+    if (hasErrors) setExpanded(true);
+  }, [hasErrors]);
+  let title: string;
+  try {
+    title = new URL(entry.url).hostname;
+  } catch {
+    title = entry.url.trim() || "New builder";
+  }
   const customCount = [
     entry.authData.enabled,
     entry.maxPayment.enabled,
@@ -168,8 +176,22 @@ export function BuilderCard({
       sx={{ borderRadius: 2.5, overflow: "hidden" }}
       aria-label={`Direct builder ${index + 1}`}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.5, pt: 2 }}>
-        <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack direction="row" alignItems="center" sx={{ pr: 1 }}>
+        <Button
+          color="inherit"
+          onClick={() => setExpanded((current) => !current)}
+          aria-expanded={expanded}
+          aria-controls={`${entry.id}-settings`}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            p: 2,
+            gap: 1,
+            justifyContent: "flex-start",
+            textTransform: "none",
+            borderRadius: 0
+          }}
+        >
           <Box
             sx={{
               width: 26,
@@ -184,49 +206,39 @@ export function BuilderCard({
           >
             {index + 1}
           </Box>
-          <Typography fontWeight={600}>Direct builder</Typography>
-        </Stack>
+          <Box sx={{ minWidth: 0, textAlign: "left" }}>
+            <Typography component="span" fontWeight={600} sx={{ display: "block", overflowWrap: "anywhere" }}>
+              {title}
+            </Typography>
+            <Typography component="span" variant="caption" color="text.secondary">
+              Builder {index + 1}
+            </Typography>
+          </Box>
+          {customCount > 0 && <Chip size="small" label={`${customCount} custom`} />}
+          <ExpandMoreIcon sx={{ ml: "auto", transform: expanded ? "rotate(180deg)" : undefined, flexShrink: 0 }} />
+        </Button>
         <Tooltip title="Remove builder">
           <IconButton aria-label={`Remove builder ${index + 1}`} onClick={onRemove} size="small">
             <DeleteOutlineIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Stack>
-      <Box sx={{ p: 2.5, pt: 2 }}>
-        <TextField
-          fullWidth
-          size="small"
-          label="Builder URL"
-          placeholder="https://builder.example.com"
-          value={entry.url}
-          onChange={(event) => onChange({ ...entry, url: event.target.value })}
-          error={!!errors[`${prefix}.url`]}
-          helperText={errors[`${prefix}.url`] || "Use the endpoint provided by your builder."}
-          slotProps={{ htmlInput: { inputMode: "url", autoCapitalize: "none", spellCheck: false } }}
-        />
-      </Box>
-      <Accordion
-        defaultExpanded={advancedError}
-        key={advancedError ? "errors" : "settings"}
-        disableGutters
-        elevation={0}
-        sx={{ borderTop: 1, borderColor: "divider", "&::before": { display: "none" } }}
-      >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2.5 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <SettingsOutlinedIcon fontSize="small" color="action" />
-            <Typography variant="body2" fontWeight={500}>
-              Advanced settings
-            </Typography>
-            {customCount > 0 && <Chip size="small" label={`${customCount} custom`} />}
-          </Stack>
-        </AccordionSummary>
-        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+      <Collapse in={expanded} id={`${entry.id}-settings`}>
+        <Box sx={{ p: 2.5, pt: 2 }}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Builder URL"
+            placeholder="https://builder.example.com"
+            value={entry.url}
+            onChange={(event) => onChange({ ...entry, url: event.target.value })}
+            error={!!errors[`${prefix}.url`]}
+            helperText={errors[`${prefix}.url`]}
+            slotProps={{ htmlInput: { inputMode: "url", autoCapitalize: "none", spellCheck: false } }}
+          />
+        </Box>
+        <Box sx={{ px: 2.5, pb: 2.5 }}>
           <Stack spacing={3}>
-            <Typography variant="body2" color="text.secondary">
-              These settings apply only to this builder URL. Minimum bid and boost follow Global bid preferences above
-              until you override them here.
-            </Typography>
             <NumberOverrideField
               label="Execution payment limit"
               input={entry.maxPayment}
@@ -234,27 +246,27 @@ export function BuilderCard({
               inherited="Use client default"
               unit="Gwei"
               error={errors[`${prefix}.maxPayment`]}
-              description="Limits how much trusted execution payment counts when comparing bids. Zero counts none; extra payment may still arrive."
+              description="Cap counted toward bid value. Zero counts none."
             />
             <NumberOverrideField
-              label="Minimum bid override"
+              label="Minimum bid"
               input={entry.minBid}
               onChange={(minBid) => onChange({ ...entry, minBid })}
-              inherited="Use global minimum bid"
+              inherited="Use global"
               unit="Gwei"
               error={errors[`${prefix}.minBid`]}
-              description={`Global minimum bid above: ${globalMinBid.enabled ? formatBidAmount(globalMinBid.value) : "follows the client default"}. Turn off this switch to set a different minimum for this builder only.`}
+              description={`Global: ${globalMinBid.enabled ? formatBidAmount(globalMinBid.value) : "client default"}.`}
             />
             <NumberOverrideField
-              label="Bid boost override"
+              label="Bid boost"
               input={entry.boost}
               onChange={(boost) => onChange({ ...entry, boost })}
-              inherited="Use global bid boost"
+              inherited="Use global"
               unit="%"
               fallback="100"
               error={errors[`${prefix}.boost`]}
               presets
-              description={`Global bid boost above: ${globalBoost.enabled ? formatBidBoost(globalBoost.value) : "follows the client default"}. Turn off this switch to weight this builder differently. 100% is equal weight; 50% counts half and 150% counts 1.5 times for comparison only. Zero prefers local building; MAX prefers this builder, subject to upstream fallback and health checks.`}
+              description={`Global: ${globalBoost.enabled ? formatBidBoost(globalBoost.value) : "client default"}.`}
             />
             <Box>
               <FormControl fullWidth size="small">
@@ -272,9 +284,6 @@ export function BuilderCard({
                   <MenuItem value="custom">Use authorization data from the builder</MenuItem>
                 </Select>
               </FormControl>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                The validator client signs this authorization for builder requests.
-              </Typography>
               {entry.authData.enabled && (
                 <TextField
                   fullWidth
@@ -285,10 +294,7 @@ export function BuilderCard({
                   onChange={(event) => onChange({ ...entry, authData: { enabled: true, value: event.target.value } })}
                   placeholder="0x…"
                   error={!!errors[`${prefix}.authData`]}
-                  helperText={
-                    errors[`${prefix}.authData`] ||
-                    "Paste the hexadecimal data agreed with your builder (1–4096 bytes)."
-                  }
+                  helperText={errors[`${prefix}.authData`] || "Hex data from your builder (1–4096 bytes)."}
                   slotProps={{ htmlInput: { autoCapitalize: "none", spellCheck: false, autoComplete: "off" } }}
                 />
               )}
@@ -307,12 +313,6 @@ export function BuilderCard({
                   <MenuItem value="restricted">Only accept specific public keys</MenuItem>
                 </Select>
               </FormControl>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                This filters bids returned by this URL by the builder’s signing identity. Accept any applies no key
-                filter; specific keys accept only bids signed by those keys. Get these BLS public keys from your
-                builder; they are different from your validator keys. This does not filter public P2P bids or other
-                builder entries.
-              </Typography>
               {(entry.publicKeys?.length ?? 0) > 0 && (
                 <Stack spacing={1.5} sx={{ mt: 1.5 }}>
                   {entry.publicKeys?.map((key, keyIndex) => (
@@ -326,9 +326,7 @@ export function BuilderCard({
                         error={!!errors[`${prefix}.publicKeys.${keyIndex}`]}
                         helperText={
                           errors[`${prefix}.publicKeys.${keyIndex}`] ||
-                          (keyIndex === 0
-                            ? "You can paste multiple keys separated by commas, spaces, or newlines."
-                            : undefined)
+                          (keyIndex === 0 ? "Paste builder BLS keys, separated by commas or spaces." : undefined)
                         }
                         onPaste={(event) => {
                           const pasted = splitBuilderPublicKeys(event.clipboardData.getData("text"));
@@ -384,8 +382,8 @@ export function BuilderCard({
               )}
             </Box>
           </Stack>
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      </Collapse>
     </Paper>
   );
 }

@@ -78,10 +78,38 @@ builder overrides; builder updates preserve fee recipients, index and tags.
 ## UI and RPC
 
 Select one or more validators and choose **Builder settings**. A single selection
-loads its saved overrides into labeled fields and builder cards. Bulk editing
-starts with client defaults and explicitly replaces all selected validators'
+loads its saved overrides. The basic editor shows network-specific ePBS relay
+presets with one selectable row per relay. Selected rows show a tinted background,
+border, and check indicator. Clicking the relay name opens its endpoint; clicking
+anywhere else in the row toggles selection. Row buttons support keyboard selection.
+Presets live in Brain's
+`modules/config/builderRelayPresets.ts` and are served by the read-only
+`getBuilderRelayPresets()` RPC for the active network. The initial Hoodi catalog
+contains Aestus, Flashbots, nflaig, Titan, Ultra Sound, and pk910 from
+[EthStaker's ePBS list](https://ethstaker.org/mev-relay-list), reviewed 2026-10-22.
+These are plain ePBS URLs, not legacy MEV-Boost URLs with public keys. Mainnet has
+an independent empty catalog until ePBS endpoints are announced; add them to its
+entry for a future release. Networks never fall back to Hoodi presets. Nothing
+is automatically enabled. Selecting a preset saves its URL as an ordinary builder
+entry, so future catalog updates do not rewrite saved settings.
+
+**Advanced settings** starts collapsed and exposes global bid preferences,
+custom endpoints, and all per-builder settings without nested Advanced sections.
+Each builder card collapses under its endpoint header. New custom cards open
+automatically, and validation errors reveal the affected card.
+Relay cards link to their endpoints and show network-specific OFAC filtering
+metadata. Hoodi ePBS policies are currently unverified and displayed as
+**Unknown**; mainnet MEV-Boost classifications are not reused for Hoodi.
+Existing custom endpoints and
+overrides are retained when toggling other presets. Saved URLs are matched to
+selected rows, including equivalent trailing slashes; deselecting a relay removes
+all entries at that endpoint, including any authorization variants. Custom
+endpoints are called out above the advanced section. Validation errors expand
+the editor. Custom endpoints remain editable if the preset lookup fails.
+
+Bulk editing starts with client defaults and explicitly replaces all selected validators'
 overrides. Default switches omit numeric fields. Brain is the management point
-for direct builders: the selector offers a custom list or no direct builders.
+for direct builders: select presets, add custom endpoints, or leave the list empty.
 Every normal UI save sends an explicit `builders` list, so client-level builder
 lists cannot silently become effective. Older omitted lists remain unchanged
 until a user saves; the editor explains that saving replaces the inherited list
@@ -90,8 +118,8 @@ The backend still preserves omitted lists for API compatibility, and **Restore
 client defaults** retains DELETE semantics (including restoring any client-level
 builder list), explained by its tooltip and success message.
 Add or remove builder cards and public-key fields without
-editing JSON. Advanced settings start collapsed (validation errors open them) and
-expose per-builder limits and authorization. Minimum bid and boost explicitly
+editing JSON. The single Advanced settings section starts collapsed (validation
+errors open it) and exposes per-builder limits and authorization. Minimum bid and boost explicitly
 inherit the global preferences above; their helper text previews those form values.
 Numbers remain strings internally, including zero and the full uint64 range.
 Restore client defaults saves DELETE intent. A compact table compares saved
@@ -127,7 +155,7 @@ resets. Existing `feeRecipient` edits can still be sent alone. The read RPC
 `getBuilderConfigs([pubkey, ...])` reports saved intent, resolved client values,
 last application status, and an independent read status/message per key.
 `getValidators` includes saved settings and last application status without
-requiring builder endpoint availability. Refresh client status in the dialog to
+requiring builder endpoint availability. Refresh validator status in the dialog to
 inspect application attempts after a periodic reload.
 Client status reads run at most eight requests at once with a ten-second deadline
 for the entire selection. Timed-out and unstarted reads report an error for their

@@ -14,12 +14,8 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  FormControl,
-  FormLabel,
   IconButton,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   Tooltip,
   Typography,
@@ -32,7 +28,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import TuneIcon from "@mui/icons-material/Tune";
-import { shortenPubkey } from "@stakingbrain/common";
+import { Network, shortenPubkey } from "@stakingbrain/common";
 import type { CustomValidatorGetResponse, ValidatorBuilderConfigResponse } from "@stakingbrain/brain";
 import { rpcClient } from "../../socket";
 import {
@@ -44,12 +40,15 @@ import {
 } from "../../utils/builderConfigForm";
 import { BuilderCard, NumberOverrideField } from "../BuilderConfig/BuilderConfigFields";
 import BuilderConfigSummary from "../BuilderConfig/BuilderConfigSummary";
+import RelayPresetSelector from "../BuilderConfig/RelayPresetSelector";
 
 export default function BuilderConfigDialog({
   validators,
+  network,
   setOpen
 }: {
   validators: CustomValidatorGetResponse[];
+  network: Network;
   setOpen: (open: boolean) => void;
 }): JSX.Element {
   const [form, setForm] = useState(() =>
@@ -61,6 +60,7 @@ export default function BuilderConfigDialog({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const refreshId = useRef(0);
   const errors = useMemo(() => (submitted ? builderFormErrors(form) : {}), [form, submitted]);
@@ -111,6 +111,7 @@ export default function BuilderConfigDialog({
     if (!reset) {
       setSubmitted(true);
       if (Object.keys(builderFormErrors(form)).length > 0) {
+        setAdvancedExpanded(true);
         requestAnimationFrame(() =>
           contentRef.current?.querySelector<HTMLInputElement>("[aria-invalid='true']")?.focus()
         );
@@ -142,14 +143,6 @@ export default function BuilderConfigDialog({
       setBusy(false);
       void refresh();
     }
-  }
-
-  function chooseBuilders(mode: BuilderConfigForm["buildersMode"]): void {
-    update({
-      ...form,
-      buildersMode: mode,
-      builders: mode === "custom" && form.builders.length === 0 ? [createBuilderInput()] : form.builders
-    });
   }
 
   return (
@@ -197,6 +190,7 @@ export default function BuilderConfigDialog({
             label={bulk ? `${validators.length} validators selected` : shortenPubkey(validators[0]?.pubkey)}
           />
           <Chip size="small" variant="outlined" label="Gloas / ePBS" />
+          <Chip size="small" variant="outlined" label={network === Network.Hoodi ? "Hoodi testnet" : network} />
           {reading && (
             <Chip size="small" variant="outlined" icon={<CircularProgress size={12} />} label="Checking client…" />
           )}
@@ -213,117 +207,148 @@ export default function BuilderConfigDialog({
           )}
           <Box component="fieldset" disabled={busy} sx={{ m: 0, p: 0, border: 0, minWidth: 0 }}>
             <Stack spacing={3}>
-              <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 0.5 }}>
-                  Global bid preferences
+              <RelayPresetSelector
+                network={network}
+                form={form}
+                onChange={update}
+                onAdvancedSettings={() => setAdvancedExpanded(true)}
+              />
+              {inheritsBuilderList && (
+                <Typography variant="body2" color="text.secondary">
+                  Saving replaces the client’s direct-builder list with your selection.
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                  These values apply to public P2P bids and every builder below. A builder’s advanced settings can
-                  override them for that builder only.
-                </Typography>
-                <Stack spacing={3}>
-                  <NumberOverrideField
-                    label="Minimum bid"
-                    input={form.minBid}
-                    onChange={(minBid) => update({ ...form, minBid })}
-                    inherited="Use client default"
-                    unit="Gwei"
-                    error={errors.minBid}
-                    description="The minimum payment to accept. Switch off the default to set your own amount in whole Gwei."
-                  />
-                  <Divider />
-                  <NumberOverrideField
-                    label="Bid boost"
-                    input={form.boost}
-                    onChange={(boost) => update({ ...form, boost })}
-                    inherited="Use client default"
-                    unit="%"
-                    fallback="100"
-                    error={errors.boost}
-                    presets
-                    description="100% gives bids equal weight against local building. 50% counts half a bid’s payment; 150% counts 1.5 times. This changes selection weight, not the payment you receive. Zero prefers local building; MAX prefers builder bids, subject to upstream fallback and health checks."
-                  />
-                </Stack>
-              </Paper>
-              <Box component="section">
-                <FormControl fullWidth size="small">
-                  <FormLabel
-                    id="direct-builders-label"
-                    sx={{ mb: 1, typography: "subtitle1", color: "text.primary", fontWeight: 700 }}
-                  >
-                    Direct builders
-                  </FormLabel>
-                  <Select
-                    labelId="direct-builders-label"
-                    value={form.buildersMode}
-                    onChange={(event) => chooseBuilders(event.target.value)}
-                  >
-                    <MenuItem value="custom">Configure direct builders</MenuItem>
-                    <MenuItem value="none">No direct builders</MenuItem>
-                  </Select>
-                </FormControl>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25 }}>
-                  {form.buildersMode === "none"
-                    ? "Saving disables direct builder requests. Public P2P bids and local building remain available."
-                    : "Saving uses only the builders below for direct bid requests. Public P2P bids and local building remain available."}
-                </Typography>
-                {inheritsBuilderList && (
-                  <Alert severity="info" sx={{ mt: 1.5 }}>
-                    The saved configuration currently leaves the builder list to the client. Saving here replaces that
-                    list with your choice above.
-                  </Alert>
-                )}
-                {errors.builders && (
-                  <Alert severity="error" sx={{ mt: 1.5 }}>
-                    {errors.builders}
-                  </Alert>
-                )}
-                {form.buildersMode === "custom" && (
-                  <Stack spacing={2} sx={{ mt: 2 }}>
-                    {form.builders.map((entry, index) => (
-                      <BuilderCard
-                        key={entry.id}
-                        entry={entry}
-                        index={index}
-                        errors={errors}
-                        globalMinBid={form.minBid}
-                        globalBoost={form.boost}
-                        onChange={(changed) =>
-                          update({
-                            ...form,
-                            builders: form.builders.map((current) => (current.id === entry.id ? changed : current))
-                          })
-                        }
-                        onRemove={() => {
-                          const remaining = form.builders.filter((current) => current.id !== entry.id);
-                          update({ ...form, builders: remaining, buildersMode: remaining.length ? "custom" : "none" });
-                        }}
-                      />
-                    ))}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Button
-                        startIcon={<AddIcon />}
-                        variant="outlined"
-                        sx={{ textTransform: "none" }}
-                        disabled={form.builders.length >= 64}
-                        onClick={() => update({ ...form, builders: [...form.builders, createBuilderInput()] })}
-                      >
-                        Add builder
-                      </Button>
-                      <Typography variant="caption" color="text.secondary">
-                        {form.builders.length} of 64 builders
-                      </Typography>
-                    </Stack>
+              )}
+              <Accordion
+                expanded={advancedExpanded}
+                onChange={(_, expanded) => setAdvancedExpanded(expanded)}
+                disableGutters
+                elevation={0}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: "12px !important",
+                  "&::before": { display: "none" }
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="advanced-builder-settings">
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="body2" fontWeight={600}>
+                      Advanced settings
+                    </Typography>
+                    {(form.minBid.enabled ||
+                      form.boost.enabled ||
+                      form.builders.some(
+                        (entry) =>
+                          entry.authData.enabled ||
+                          entry.minBid.enabled ||
+                          entry.boost.enabled ||
+                          entry.maxPayment.enabled ||
+                          entry.publicKeys !== undefined
+                      )) && <Chip size="small" label="Custom overrides" />}
                   </Stack>
-                )}
-              </Box>
+                </AccordionSummary>
+                <AccordionDetails id="advanced-builder-settings">
+                  <Stack spacing={3}>
+                    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 2.5 }}>
+                      <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 0.5 }}>
+                        Global bid preferences
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                        These values apply to public P2P bids and every builder below. Per-builder settings can override
+                        them for that builder only.
+                      </Typography>
+                      <Stack spacing={3}>
+                        <NumberOverrideField
+                          label="Minimum bid"
+                          input={form.minBid}
+                          onChange={(minBid) => update({ ...form, minBid })}
+                          inherited="Use client default"
+                          unit="Gwei"
+                          error={errors.minBid}
+                          description="The minimum payment to accept. Switch off the default to set your own amount in whole Gwei."
+                        />
+                        <Divider />
+                        <NumberOverrideField
+                          label="Bid boost"
+                          input={form.boost}
+                          onChange={(boost) => update({ ...form, boost })}
+                          inherited="Use client default"
+                          unit="%"
+                          fallback="100"
+                          error={errors.boost}
+                          presets
+                          description="100% gives bids equal weight against local building. 50% counts half a bid’s payment; 150% counts 1.5 times. This changes selection weight, not the payment you receive. Zero prefers local building; MAX prefers builder bids, subject to upstream fallback and health checks."
+                        />
+                      </Stack>
+                    </Paper>
+                    <Box component="section">
+                      <Typography variant="subtitle1" fontWeight={700}>
+                        Custom endpoints and relay overrides
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Edit selected relays or add any HTTP(S) builder endpoint. Changes here update the relay
+                        selection above.
+                      </Typography>
+                      {errors.builders && (
+                        <Alert severity="error" sx={{ mt: 1.5 }}>
+                          {errors.builders}
+                        </Alert>
+                      )}
+                      <Stack spacing={2} sx={{ mt: 2 }}>
+                        {(form.buildersMode === "custom" ? form.builders : []).map((entry, index) => (
+                          <BuilderCard
+                            key={entry.id}
+                            entry={entry}
+                            index={index}
+                            errors={errors}
+                            globalMinBid={form.minBid}
+                            globalBoost={form.boost}
+                            onChange={(changed) =>
+                              update({
+                                ...form,
+                                builders: form.builders.map((current) => (current.id === entry.id ? changed : current))
+                              })
+                            }
+                            onRemove={() => {
+                              const remaining = form.builders.filter((current) => current.id !== entry.id);
+                              update({
+                                ...form,
+                                builders: remaining,
+                                buildersMode: remaining.length ? "custom" : "none"
+                              });
+                            }}
+                          />
+                        ))}
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Button
+                            startIcon={<AddIcon />}
+                            variant="outlined"
+                            sx={{ textTransform: "none" }}
+                            disabled={form.builders.length >= 64}
+                            onClick={() =>
+                              update({
+                                ...form,
+                                buildersMode: "custom",
+                                builders: [
+                                  ...(form.buildersMode === "custom" ? form.builders : []),
+                                  createBuilderInput()
+                                ]
+                              })
+                            }
+                          >
+                            Add builder
+                          </Button>
+                          <Typography variant="caption" color="text.secondary">
+                            {form.builders.length} of 64 builders
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Box>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
             </Stack>
           </Box>
-          <Alert severity="info" variant="outlined">
-            Your fee recipient stays the payment destination, including Smooth’s pool address. Gloas protocol payments
-            target the bid’s fee recipient; the execution payload may use a different address. Smooth continues to
-            handle payment detection and rewards.
-          </Alert>
           {Object.keys(errors).length > 0 && (
             <Alert severity="error" role="alert">
               Check the highlighted fields before saving.
@@ -343,7 +368,7 @@ export default function BuilderConfigDialog({
             <Alert severity="warning">
               {problems.length === 1
                 ? (problems[0].application?.message ?? problems[0].message)
-                : `${problems.length} validators need attention. Review client status below for details.`}{" "}
+                : `${problems.length} validators need attention. Review validator status below for details.`}{" "}
               Key and fee-recipient management remain available.
             </Alert>
           )}
@@ -359,21 +384,21 @@ export default function BuilderConfigDialog({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="body2" fontWeight={600}>
-                Saved choices vs. client
+                Saved settings and validator status
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Stack spacing={2}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between">
-                  <Typography variant="caption" color="text.secondary">
-                    Compare the last saved choices with current client values. “Client default” keeps following the
-                    client; “Use global” follows that validator’s saved global preferences. Unsaved edits are not shown
-                    here.
+                  <Typography variant="body2" color="text.secondary">
+                    Brain saves your choices and sends them to your validator software. Compare those choices with the
+                    settings the software reports using. “Client default” lets it choose; “Use global” follows your
+                    saved bid preferences. Unsaved edits aren’t shown.
                   </Typography>
-                  <Tooltip title="Refresh client status">
+                  <Tooltip title="Refresh validator status">
                     <span>
                       <IconButton
-                        aria-label="Refresh client status"
+                        aria-label="Refresh validator status"
                         disabled={busy || reading}
                         onClick={() => void refresh()}
                       >
@@ -399,14 +424,14 @@ export default function BuilderConfigDialog({
                         }
                         label={
                           detail.application?.status === "applied"
-                            ? "Last apply succeeded"
+                            ? "Settings sent successfully"
                             : detail.application?.status === "unsupported"
                               ? "Unsupported"
                               : detail.application?.status === "error"
                                 ? "Needs attention"
                                 : detail.application?.status === "pending"
                                   ? "Pending"
-                                  : "Using client settings"
+                                  : "Using validator defaults"
                         }
                       />
                     </Stack>
@@ -429,9 +454,17 @@ export default function BuilderConfigDialog({
         </Stack>
       </DialogContent>
       <Divider />
-      <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 2, justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+      <DialogActions
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: 2,
+          justifyContent: advancedExpanded ? "space-between" : "flex-end",
+          flexWrap: "wrap",
+          gap: 1
+        }}
+      >
         <Tooltip title="Remove all overrides, including the direct-builder list. Any builders configured on the client become effective again.">
-          <span>
+          <span hidden={!advancedExpanded}>
             <Button
               startIcon={<RestartAltIcon />}
               disabled={busy}

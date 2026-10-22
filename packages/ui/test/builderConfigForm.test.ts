@@ -6,6 +6,8 @@ import {
   builderFormErrors,
   builderFormToConfig,
   createBuilderInput,
+  matchesRelayPreset,
+  toggleRelayPreset,
   splitBuilderPublicKeys
 } from "../src/utils/builderConfigForm.js";
 
@@ -13,6 +15,52 @@ const url = "https://builder.example.com";
 const maximum = "18446744073709551615";
 
 describe("Builder settings form", () => {
+  const preset = { id: "aestus", name: "Aestus", url: "https://hoodi.aestus.live" };
+
+  it("adds and removes relay presets with an explicit empty list after the last checkbox is cleared", () => {
+    const original = builderConfigToForm();
+    const selected = toggleRelayPreset(original, preset, true);
+    expect(original.builders).to.deep.equal([]);
+    expect(builderFormToConfig(selected)).to.deep.equal({ builders: [{ url: preset.url }] });
+    expect(toggleRelayPreset(selected, preset, true).builders).to.have.length(1);
+    expect(builderFormToConfig(toggleRelayPreset(selected, preset, false))).to.deep.equal({ builders: [] });
+  });
+
+  it("preserves custom endpoints and all advanced overrides when another relay is selected", () => {
+    const config: BuilderConfig = {
+      min_bid: "9007199254740993",
+      builder_boost_factor: maximum,
+      builders: [{ url, auth_data: "0xab", min_bid: "0", builder_pubkeys: ["0x" + "ab".repeat(48)] }]
+    };
+    const form = builderConfigToForm(config);
+    const selected = toggleRelayPreset(form, preset, true);
+    expect(builderFormToConfig(selected)).to.deep.equal({
+      ...config,
+      builders: [...config.builders!, { url: preset.url }]
+    });
+    expect(builderFormToConfig(toggleRelayPreset(selected, preset, false))).to.deep.equal(config);
+    expect(builderFormToConfig(form)).to.deep.equal(config);
+  });
+
+  it("recognizes saved preset URLs and retains their custom options until unchecked", () => {
+    const config = { builders: [{ url: preset.url + "/", auth_data: "0x01", max_execution_payment: "0" }] };
+    const form = builderConfigToForm(config);
+    expect(matchesRelayPreset(form.builders[0], preset)).to.equal(true);
+    expect(builderFormToConfig(toggleRelayPreset(form, preset, true))).to.deep.equal(config);
+    expect(builderFormToConfig(toggleRelayPreset(form, preset, false))).to.deep.equal({ builders: [] });
+    for (const other of ["https://aestus.live", preset.url + "/other", preset.url + "?other", "invalid"]) {
+      expect(matchesRelayPreset(createBuilderInput({ url: other }), preset)).to.equal(false);
+    }
+  });
+
+  it("does not restore inactive custom cards when a preset is selected", () => {
+    const form = builderConfigToForm({ builders: [{ url }] });
+    form.buildersMode = "none";
+    expect(builderFormToConfig(toggleRelayPreset(form, preset, true))).to.deep.equal({
+      builders: [{ url: preset.url }]
+    });
+  });
+
   it("accepts pasted public-key lists without array syntax or numeric conversion", () => {
     const first = "0x" + "ab".repeat(48);
     const second = "0x" + "CD".repeat(48);
