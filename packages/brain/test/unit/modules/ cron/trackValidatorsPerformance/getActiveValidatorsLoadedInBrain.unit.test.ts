@@ -139,7 +139,7 @@ describe("Cron - trackValidatorsPerformance - getActiveValidatorsLoadedInBrain",
   it("should return the active validators loaded in the brain and not update validator index one and update validator index two in db", async () => {
     const beaconchainApi = new BeaconchainApiMock(
       { baseUrl: "http://localhost:3000", apiPath: "", authToken: "" },
-      Network.Holesky
+      Network.Hoodi
     );
     const brainDb = new BrainDataBaseMock("test.json");
     const validatorsDataPerEpochMap: ValidatorsDataPerEpochMap = new Map();

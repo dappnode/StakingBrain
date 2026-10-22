@@ -3,7 +3,7 @@ import { DappmanagerApi } from "../../../../src/modules/apiClients/index.js";
 import { NotificationType } from "../../../../src/modules/apiClients/dappmanager/types.js";
 
 describe.skip("Dappmanager API", () => {
-  const dappmanagerApi = new DappmanagerApi({ baseUrl: "http://my.dappnode" }, Network.Holesky);
+  const dappmanagerApi = new DappmanagerApi({ baseUrl: "http://my.dappnode" }, Network.Hoodi);
 
   it("should send a notification to the dappmanager", async () => {
     const title = "Test title";

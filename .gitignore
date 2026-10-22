@@ -9,6 +9,7 @@ packages/brain/uiBuild
 
 # Brain db
 packages/brain/brain-db.json
+packages/brain/builder-config-imported
 
 # Keystores
 packages/brain/keystores

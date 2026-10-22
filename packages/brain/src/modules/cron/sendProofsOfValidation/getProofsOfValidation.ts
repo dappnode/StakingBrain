@@ -1,4 +1,3 @@
-import { isEmpty } from "lodash-es";
 import { Web3SignerApi } from "../../apiClients/index.js";
 import {
   DappnodeSignatureVerifierPostRequest,
@@ -31,7 +30,7 @@ export async function getProofsOfValidation(
   const dbPubkeysDetailsFiltered = Object.fromEntries(
     Object.entries(dbPubkeysDetails).filter(([, details]) => shareDataWithDappnode || details.tag === "stader")
   );
-  if (isEmpty(dbPubkeysDetailsFiltered)) return [];
+  if (Object.keys(dbPubkeysDetailsFiltered).length === 0) return [];
   // For each pubkey, get the proof of validation from the signer
   const proofsOfValidations = await Promise.all(
     Object.keys(dbPubkeysDetailsFiltered).map(async (pubkey) => {

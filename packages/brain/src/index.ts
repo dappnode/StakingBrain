@@ -8,6 +8,7 @@ import process from "node:process";
 import { params } from "./params.js";
 import { getCrons } from "./modules/cron/index.js";
 import { brainConfig } from "./modules/config/index.js";
+import { importBuilderIds } from "./modules/config/importBuilderIds.js";
 
 logger.info(`Starting brain...`);
 
@@ -19,20 +20,33 @@ const __dirname = process.cwd();
 
 // Load staker config
 const config = brainConfig();
-logger.debug(`Brain config:\n`);
-for (const [key, value] of Object.entries(config)) logger.debug(`${key}: ${JSON.stringify(value)}`);
+logger.debug(`Chain config: ${JSON.stringify(config.chain)}`);
 
 // Create API instances. Must preceed db initialization
 const { prometheusApi, signerApi, blockExplorerApi, validatorApi, beaconchainApi, dappmanagerApi, postgresClient } =
   getApiClients(config);
 
 // Create DB instance
-const brainDb = new BrainDataBase(
-  mode === "production" ? path.resolve("data", params.brainDbName) : params.brainDbName
-);
+const brainDbPath = mode === "production" ? path.resolve("data", params.brainDbName) : params.brainDbName;
+const brainDb = new BrainDataBase(brainDbPath);
 
 await brainDb.initialize(signerApi, validatorApi);
-logger.debug(brainDb.data);
+logger.debug(`Loaded ${Object.keys(brainDb.getData()).length} validators`);
+
+// Import builder choices once before cron/API writes can begin.
+try {
+  const imported = importBuilderIds({
+    builderIds: process.env.BUILDER_IDS,
+    network: config.chain.network,
+    brainDb,
+    markerPath: path.join(path.dirname(brainDbPath), "builder-config-imported")
+  });
+  if (imported)
+    logger.info(`Builder settings imported: ${imported.imported} validators; ${imported.skipped} preserved`);
+} catch (error) {
+  // A failed optional handoff must not interrupt ordinary key/fee reconciliation.
+  logger.error("Unable to import BUILDER_IDS; import will retry at next startup", error);
+}
 
 // CRON
 const { reloadValidatorsCronTask } = getCrons({

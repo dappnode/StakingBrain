@@ -4,6 +4,7 @@ import type {
   CustomImportRequest,
   CustomValidatorGetResponse,
   CustomValidatorUpdateRequest,
+  ValidatorBuilderConfigResponse,
   ValidatorExitExecute,
   Web3signerDeleteRequest,
   Web3signerDeleteResponse,
@@ -12,7 +13,7 @@ import type {
   EpochsValidatorsMap,
   NumberOfDaysToQuery
 } from "@stakingbrain/brain";
-import { StakerConfig } from "@stakingbrain/common";
+import { BuilderRelayPresets, StakerConfig } from "@stakingbrain/common";
 
 // Define the type for RPC methods
 export interface RpcMethods {
@@ -24,6 +25,8 @@ export interface RpcMethods {
   updateValidators: (updateRequest: CustomValidatorUpdateRequest[]) => Promise<void>;
   deleteValidators: (deleteRequest: Web3signerDeleteRequest) => Promise<Web3signerDeleteResponse>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
+  getBuilderConfigs: (pubkeys: string[]) => Promise<ValidatorBuilderConfigResponse[]>;
+  getBuilderRelayPresets: () => Promise<BuilderRelayPresets>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;
   exitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<ValidatorExitExecute[]>;

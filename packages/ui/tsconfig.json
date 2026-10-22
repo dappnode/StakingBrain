@@ -4,6 +4,7 @@
   "exclude": ["./test/", "./node_modules/", "./dist/"],
   "compilerOptions": {
     "outDir": "dist",
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
     "types": ["vite/client", "node"],
@@ -15,7 +16,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

@@ -1,4 +1,4 @@
-import { StakerConfig, Tag } from "@stakingbrain/common";
+import { BuilderConfig, BuilderConfigStatus, BuilderRelayPresets, StakerConfig, Tag } from "@stakingbrain/common";
 import type {
   BeaconchaGetResponse,
   Web3signerDeleteRequest,
@@ -13,6 +13,7 @@ import { NumberOfDaysToQuery } from "../../../validatorsDataIngest/types.js";
 
 // Define the type for RPC methods
 export interface RpcMethods {
+  getBuilderRelayPresets: () => Promise<BuilderRelayPresets>;
   beaconchaFetchAllValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse[]>;
   beaconchaFetchValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse>;
   deleteValidators: (deleteRequest: Web3signerDeleteRequest) => Promise<Web3signerDeleteResponse>;
@@ -24,6 +25,7 @@ export interface RpcMethods {
     requestFrom?: ActionRequestOrigin
   ) => Promise<void>;
   getValidators: () => Promise<CustomValidatorGetResponse[]>;
+  getBuilderConfigs: (pubkeys: string[]) => Promise<ValidatorBuilderConfigResponse[]>;
   signerGetStatus: () => Promise<Web3signerHealthcheckResponse>;
   getStakerConfig: () => Promise<StakerConfig>;
   fetchValidatorsPerformanceData: (
@@ -37,18 +39,28 @@ export type ActionRequestOrigin = "ui" | "api";
 export interface CustomImportRequest {
   validatorsImportRequest: CustomValidatorImportRequest[];
   importFrom: ActionRequestOrigin;
-  slashing_protection?: File | string;
+  slashing_protection?: string;
 }
 export interface CustomValidatorImportRequest {
   tag: Tag;
   feeRecipient: string;
-  keystore: File | string;
+  keystore: string;
   password: string;
 }
 
 export interface CustomValidatorUpdateRequest {
   pubkey: string;
-  feeRecipient: string;
+  feeRecipient?: string;
+  builderConfig?: BuilderConfig | null;
+}
+
+export interface ValidatorBuilderConfigResponse {
+  pubkey: string;
+  builderConfig?: BuilderConfig | null;
+  resolved?: BuilderConfig;
+  application?: BuilderConfigStatus;
+  status: "success" | "error";
+  message?: string;
 }
 
 export type WithdrawalCredentialsFormat = "ecdsa" | "bls" | "unknown" | "error";
@@ -64,4 +76,6 @@ export interface CustomValidatorGetResponse {
   signerImported?: boolean;
   validatorImported?: boolean;
   validatorFeeRecipientCorrect?: boolean;
+  builderConfig?: BuilderConfig | null;
+  builderConfigStatus?: BuilderConfigStatus;
 }

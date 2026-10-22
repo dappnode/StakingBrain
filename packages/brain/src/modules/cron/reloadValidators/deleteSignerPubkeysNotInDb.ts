@@ -14,7 +14,8 @@ export async function deleteSignerPubkeysNotInDb({
   signerPubkeys: string[];
   dbPubkeys: string[];
 }): Promise<void> {
-  const signerPubkeysToRemove = signerPubkeys.filter((pubkey) => !dbPubkeys.includes(pubkey));
+  const dbKeys = new Set(dbPubkeys.map((pubkey) => pubkey.toLowerCase()));
+  const signerPubkeysToRemove = signerPubkeys.filter((pubkey) => !dbKeys.has(pubkey.toLowerCase()));
 
   if (signerPubkeysToRemove.length > 0) {
     logger.debug(`${logPrefix}Found ${signerPubkeysToRemove.length} validators to remove from signer`);

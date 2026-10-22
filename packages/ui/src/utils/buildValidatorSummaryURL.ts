@@ -15,12 +15,6 @@ export default function buildValidatorSummaryURL({
   const baseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
   if (!baseUrl) return "";
 
-  let summaryValidatorURL = baseUrl + "/dashboard?validators=";
-
-  allValidatorsInfo.forEach((validatorChunk) => {
-    const chunkIndexes = validatorChunk.data.map((validator) => validator.validatorindex);
-    summaryValidatorURL += chunkIndexes.join(",");
-  });
-
-  return summaryValidatorURL;
+  const indexes = allValidatorsInfo.flatMap((chunk) => chunk.data.map(({ validatorindex }) => validatorindex));
+  return baseUrl + "/dashboard?validators=" + indexes.join(",");
 }

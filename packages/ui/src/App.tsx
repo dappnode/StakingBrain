@@ -1,8 +1,10 @@
+import type { JSX } from "react";
 import { Alert, CircularProgress } from "@mui/material";
 import TopBar from "./components/TopBar/TopBar";
 import ImportScreen from "./ImportScreen";
 import ValidatorList from "./components/ValidatorList/ValidatorList";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
+import { createAppTheme } from "./Styles/theme";
 import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import React, { useEffect } from "react";
@@ -10,9 +12,26 @@ import { StakerConfig } from "@stakingbrain/common";
 import { rpcClient } from "./socket";
 import type { Web3SignerStatus } from "@stakingbrain/brain";
 
+const COLOR_MODE_STORAGE_KEY = "stakingbrain.color-mode";
+
 function App(): JSX.Element {
-  const [mode, setMode] = React.useState<"dark" | "light">("light");
+  const [mode, setMode] = React.useState<"dark" | "light">(() => {
+    try {
+      return window.localStorage.getItem(COLOR_MODE_STORAGE_KEY) === "dark" ? "dark" : "light";
+    } catch {
+      return "light";
+    }
+  });
   const [userMode, setUserMode] = React.useState<"basic" | "advanced">("basic");
+  const theme = React.useMemo(() => createAppTheme(mode), [mode]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+    } catch {
+      // Keep theme switching available when browser storage is disabled.
+    }
+  }, [mode]);
 
   const [signerStatus, setSignerStatus] = React.useState<Web3SignerStatus>("LOADING");
   const [stakerConfig, setStakerConfig] = React.useState<StakerConfig>();
@@ -50,13 +69,7 @@ function App(): JSX.Element {
   }
 
   return (
-    <ThemeProvider
-      theme={createTheme({
-        palette: {
-          mode
-        }
-      })}
-    >
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <TopBar
         network={stakerConfig?.network}
@@ -73,14 +86,14 @@ function App(): JSX.Element {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              height: "100vh"
+              minHeight: "60vh"
             }}
           >
             <CircularProgress />
           </div>
         ) : (
           <>
-            <Alert severity="error" sx={{ m: 2 }} variant="filled">
+            <Alert severity="error" sx={{ m: 3 }}>
               Web3Signer is not available.
               {signerStatus === "DOWN" ? (
                 <> Its API is responsive, but signer is down. </>
@@ -90,7 +103,7 @@ function App(): JSX.Element {
               To avoid slashing, <b>do not upload </b>
               your validator <b>keystores to another machine</b>.
             </Alert>
-            <Alert severity="info" sx={{ m: 2 }} variant="filled">
+            <Alert severity="info" sx={{ m: 3 }}>
               To safely migrate your keystores, remove the Web3Signer package (or its volumes) after you make sure you
               have a backup of your keystores. Then, wait for at least 2 epochs before you upload your keystores to
               another machine.

@@ -137,15 +137,18 @@ export class BeaconchainApi extends StandardApi {
    */
   public async getStateValidator({
     state,
-    pubkey
+    pubkey,
+    signal
   }: {
     state: BlockId;
     pubkey: string;
+    signal?: AbortSignal;
   }): Promise<BeaconchainValidatorFromStateGetResponse> {
     try {
       return await this.request({
         method: "GET",
-        endpoint: path.join(this.beaconchainEndpoint, "states", state, "validators", pubkey)
+        endpoint: path.join(this.beaconchainEndpoint, "states", state, "validators", pubkey),
+        signal
       });
     } catch (e) {
       throw new BeaconchainApiError(`Error getting (GET) validator from beaconchain. ${e.message}`);

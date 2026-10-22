@@ -132,7 +132,6 @@ export class PrometheusApi extends StandardApi {
     query: string;
     startTimestamp: number;
     endTimestamp: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }): Promise<number> {
     // Construct the request body
     const requestBody = new URLSearchParams({

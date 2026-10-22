@@ -1,5 +1,6 @@
+import type { JSX } from "react";
 import { Alert } from "@mui/material";
-import { GridSelectionModel } from "@mui/x-data-grid";
+import type { GridRowId } from "@mui/x-data-grid";
 import { shortenPubkey } from "@stakingbrain/common";
 import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
@@ -7,7 +8,7 @@ export default function ExitWarning({
   selectedRows,
   rows
 }: {
-  selectedRows: GridSelectionModel;
+  selectedRows: GridRowId[];
   rows: CustomValidatorGetResponse[];
 }): JSX.Element {
   return (

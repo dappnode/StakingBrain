@@ -1,7 +1,7 @@
-import { Card, Box, Typography, TextField, MenuItem, Select, FormControl, FormHelperText } from "@mui/material";
+import type { JSX } from "react";
+import { Card, Box, Chip, IconButton, Typography, TextField, MenuItem, FormControl } from "@mui/material";
 import { KeystoreInfo, TagSelectOption } from "../../types";
 import CloseIcon from "@mui/icons-material/Close";
-import "./FileCardList.css";
 import { Tag, shortenPubkey, isFeeRecipientEditable } from "@stakingbrain/common";
 
 export default function FileCardList(
@@ -10,8 +10,8 @@ export default function FileCardList(
   passwords: string[],
   setPasswords: (passwords: string[]) => void,
   useSamePassword: boolean,
-  tags: Tag[],
-  setTags: (tags: Tag[]) => void,
+  tags: (Tag | "")[],
+  setTags: (tags: (Tag | "")[]) => void,
   useSameTag: boolean,
   feeRecipients: string[],
   setFeeRecipients: (feeRecipients: string[]) => void,
@@ -28,8 +28,8 @@ export default function FileCardList(
     setPasswords: (passwords: string[]) => void,
     feeRecipients: string[],
     setFeeRecipients: (feeRecipients: string[]) => void,
-    tags: Tag[],
-    setTags: (tags: Tag[]) => void
+    tags: (Tag | "")[],
+    setTags: (tags: (Tag | "")[]) => void
   ) => {
     const indexToRemove = fileInfos.indexOf(fileInfo);
     setAcceptedFiles(fileInfos.filter((f, index) => index !== indexToRemove));
@@ -39,18 +39,29 @@ export default function FileCardList(
   };
 
   return Array.from(fileInfos).map((fileInfo, index) => (
-    <Card key={index} raised sx={{ padding: 2, marginTop: 4, borderRadius: 2 }}>
+    <Card key={fileInfo.pubkey} sx={{ p: { xs: 2, sm: 3 } }}>
       <Box
         sx={{
           display: "flex",
           flexDirection: "row",
-          alignItems: "left"
+          alignItems: "flex-start",
+          gap: 1
         }}
       >
-        <Typography variant="h6" sx={{ flex: 1 }}>
-          <b>✅ {fileInfo.file.name}</b> - {shortenPubkey(fileInfo.pubkey)}
-        </Typography>
-        <button
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle1" sx={{ overflowWrap: "anywhere" }}>
+            {fileInfo.file.name}
+          </Typography>
+          <Chip
+            size="small"
+            variant="outlined"
+            label={shortenPubkey(fileInfo.pubkey)}
+            sx={{ mt: 1, fontFamily: "monospace" }}
+          />
+        </Box>
+        <IconButton
+          size="small"
+          aria-label={`Remove ${fileInfo.file.name}`}
           onClick={() =>
             removeFileFromList(
               fileInfo,
@@ -66,7 +77,7 @@ export default function FileCardList(
           }
         >
           <CloseIcon color="action" />
-        </button>
+        </IconButton>
       </Box>
 
       {(!useSameTag || !useSameFeeRecipient || !useSamePassword) && (
@@ -74,23 +85,25 @@ export default function FileCardList(
           {!useSamePassword && (
             <TextField
               id={`outlined-password-input-${index}`}
-              label="Keystore Password"
+              label="Keystore password"
               type="password"
+              value={passwords[index] ?? ""}
               sx={{ marginTop: 2 }}
               onChange={(event) => {
                 const newPasswords = [...passwords];
                 newPasswords[index] = event.target.value;
                 setPasswords(newPasswords);
               }}
-              helperText={"Password to decrypt the keystore(s)"}
+              helperText="Password used to create this keystore."
             />
           )}
           {!useSameTag && (
             <>
-              <Select
-                id="outlined-tag-input"
-                label="Tag"
-                value={tags[index]}
+              <TextField
+                select
+                id={`staking-protocol-${index}`}
+                label="Staking protocol"
+                value={tags[index] ?? ""}
                 type="text"
                 sx={{ marginTop: 2 }}
                 onChange={(event) => {
@@ -98,7 +111,7 @@ export default function FileCardList(
                   newTags[index] = event.target.value as Tag;
                   setTags(newTags);
 
-                  if (!isFeeRecipientEditable(event.target.value as Tag)) {
+                  if (!useSameFeeRecipient && !isFeeRecipientEditable(event.target.value as Tag)) {
                     const newFeeRecipients = [...feeRecipients];
                     newFeeRecipients[index] = "";
                     setFeeRecipients(newFeeRecipients);
@@ -110,19 +123,17 @@ export default function FileCardList(
                     {option.label}
                   </MenuItem>
                 ))}
-              </Select>
-              <FormHelperText>Staking protocol</FormHelperText>
+              </TextField>
             </>
           )}
           {!useSameFeeRecipient && (
             <TextField
               id={`outlined-fee-recipient-input-${index}`}
               label={
-                tags[index] === undefined || isFeeRecipientEditable(tags[index])
-                  ? "Fee Recipient"
-                  : "For this protocol, fee recipient will be set automatically"
+                !tags[index] || isFeeRecipientEditable(tags[index]) ? "Fee recipient" : "Fee recipient set by protocol"
               }
               type="text"
+              value={feeRecipients[index] ?? ""}
               sx={{ marginTop: 2 }}
               onChange={(event) => {
                 const newFeeRecipients = [...feeRecipients];
@@ -131,7 +142,7 @@ export default function FileCardList(
               }}
               error={isFeeRecipientFieldWrong(index)}
               helperText={getFeeRecipientFieldHelperText(index)}
-              disabled={!isFeeRecipientEditable(tags[index])}
+              disabled={!!tags[index] && !isFeeRecipientEditable(tags[index])}
             />
           )}
         </FormControl>

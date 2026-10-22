@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { AppBar } from "@mui/material";
 import ToolBar from "./ToolBar";
 import { Network } from "@stakingbrain/common";
@@ -16,7 +17,7 @@ export default function TopBar({
   network?: Network;
 }): JSX.Element {
   return (
-    <AppBar position="sticky">
+    <AppBar position="sticky" color="primary" elevation={0} sx={{ borderBottom: 1, borderColor: "divider" }}>
       <ToolBar network={network} mode={mode} setMode={setMode} userMode={userMode} setUserMode={setUserMode} />
     </AppBar>
   );

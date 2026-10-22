@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import Tooltip from "@mui/material/Tooltip";
 import { HourglassTop, CrisisAlert, CheckCircle, Warning, Close, Help, Block } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -16,19 +17,19 @@ export default function SmoothStatus({
   // Helper functions for rendering based on conditions
   const renderAwaitingSubscription = () => (
     <Tooltip title="Awaiting Subscription. This validator will subscribe automatically when it proposes a block. Changes to the state can take up to 40 minutes to update">
-      <HourglassTop style={{ color: "orange" }} />
+      <HourglassTop color="warning" />
     </Tooltip>
   );
 
   const renderWrongFeeRecipient = () => (
     <Tooltip title="Wrong Fee Recipient! This validator is subscribed to Smooth, but its fee recipient is not set to Smooth's address. Please change it to Smooth's address as soon as possible!">
-      <CrisisAlert style={{ color: "red" }} />
+      <CrisisAlert color="error" />
     </Tooltip>
   );
 
   const renderWrongWithdrawalAddressFormat = () => (
     <Tooltip title="Wrong Withdrawal Address Format! This validator has Smooth as fee recipient, but its withdrawal address format is not ETH1 execution format. Please change it to ETH1 execution format as soon as possible!">
-      <CrisisAlert style={{ color: "red" }} />
+      <CrisisAlert color="error" />
     </Tooltip>
   );
 
@@ -38,29 +39,29 @@ export default function SmoothStatus({
 
     switch (status) {
       case MevSpSubscriptionStatus.ACTIVE:
-        icon = <CheckCircle style={{ color: "green" }} />;
+        icon = <CheckCircle color="success" />;
         tooltipText = "Active Subscription. All good!";
         break;
       case MevSpSubscriptionStatus.YELLOW_CARD:
-        icon = <Warning style={{ color: "yellow" }} />;
+        icon = <Warning color="warning" />;
         tooltipText =
           "Yellow Card Subscription. This validator missed it's last proposal. Propose successfully next block to get back to active.";
         break;
       case MevSpSubscriptionStatus.RED_CARD:
-        icon = <Warning style={{ color: "red" }} />;
+        icon = <Warning color="error" />;
         tooltipText =
           "Red Card Subscription. This validator missed it's two last proposals in a row. Propose successfully next block to get back to yellow card.";
         break;
       case MevSpSubscriptionStatus.BANNED:
-        icon = <Block style={{ color: "red" }} />;
+        icon = <Block color="error" />;
         tooltipText = "Banned Subscription. This validator proposed a block with an incorrect fee recipient.";
         break;
       case MevSpSubscriptionStatus.NOT_SUBSCRIBED:
-        icon = <Close style={{ color: "grey" }} />;
+        icon = <Close color="action" />;
         tooltipText = "Not Subscribed. Subscribe to earn more rewards!";
         break;
       default:
-        icon = <Help style={{ color: "red" }} />;
+        icon = <Help color="error" />;
         tooltipText = "Unknown Status. Something went wrong."; // we should never get here
         break;
     }
@@ -74,7 +75,7 @@ export default function SmoothStatus({
   if (oracleCallError) {
     return (
       <Tooltip title={oracleCallError}>
-        <Help style={{ color: "red" }} />
+        <Help color="error" />
       </Tooltip>
     );
   }
@@ -88,7 +89,7 @@ export default function SmoothStatus({
   if (subscriptionStatus === "unknown") {
     return (
       <Tooltip title="Unknown Status. Is your consensus client up and synced? Is this validator new to the chain?">
-        <Help style={{ color: "red" }} />
+        <Help color="error" />
       </Tooltip>
     );
   }

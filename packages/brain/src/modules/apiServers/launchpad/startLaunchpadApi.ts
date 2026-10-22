@@ -7,7 +7,7 @@ import { allowedOrigins } from "./config.js";
 import { createKeystoresRouter, createFeeRecipientsRouter } from "./routes/index.js";
 import { CronJob } from "../../cron/cron.js";
 import { BrainDataBase } from "../../db/index.js";
-import { Network } from "@stakingbrain/common";
+import { Network, RPC_MAX_PAYLOAD_BYTES } from "@stakingbrain/common";
 import { BeaconchainApi } from "../../apiClients/beaconchain/index.js";
 import { Web3SignerApi } from "../../apiClients/signer/index.js";
 import { ValidatorApi } from "../../apiClients/validator/index.js";
@@ -32,7 +32,7 @@ export function startLaunchpadApi({
   allowedOriginsFromEnv: string | string[] | null;
 }): http.Server {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: RPC_MAX_PAYLOAD_BYTES }));
   app.use(cors({ origin: allowedOriginsFromEnv ?? allowedOrigins }));
 
   app.use(createKeystoresRouter({ reloadValidatorsCronTask, brainDb, network, validatorApi, signerApi, signerUrl }));

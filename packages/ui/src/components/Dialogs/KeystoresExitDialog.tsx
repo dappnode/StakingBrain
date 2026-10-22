@@ -1,23 +1,25 @@
+import type { JSX } from "react";
 import { useState } from "react";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   Box,
-  Typography,
   Button,
   DialogContentText,
   DialogActions,
-  TextField
+  TextField,
+  Alert,
+  Divider
 } from "@mui/material";
-import { GridSelectionModel } from "@mui/x-data-grid";
+import type { GridRowId } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import ExitWarning from "./ExitWarning";
-import { shortenPubkey } from "@stakingbrain/common";
 import { rpcClient } from "../../socket";
 import { SlideTransition } from "./Transitions";
-import { getEmoji } from "../../utils/dataUtils";
+import LogoutIcon from "@mui/icons-material/Logout";
+import DialogHeader from "./DialogHeader";
+import ValidatorResult from "./ValidatorResult";
 import type { CustomValidatorGetResponse, ValidatorExitExecute } from "@stakingbrain/brain";
 import { useTheme, useMediaQuery } from "@mui/material";
 
@@ -29,8 +31,8 @@ export default function KeystoresExitDialog({
   setOpen
 }: {
   rows: CustomValidatorGetResponse[];
-  selectedRows: GridSelectionModel;
-  setSelectedRows: (selectedRows: GridSelectionModel) => void;
+  selectedRows: GridRowId[];
+  setSelectedRows: (selectedRows: GridRowId[]) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
 }): JSX.Element {
@@ -103,28 +105,27 @@ export default function KeystoresExitDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle id="alert-dialog-title">{validatorsExitResponse ? "Done" : "Exit Validators?"}</DialogTitle>
+      <DialogHeader
+        title={validatorsExitResponse ? "Exit results" : "Exit validators"}
+        subtitle="Review and confirm your validator exits."
+        icon={<LogoutIcon />}
+        count={validatorsExitResponse?.length ?? selectedRows.length}
+        onClose={handleClose}
+        busy={loading}
+      />
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {validatorsExitError ? (
-            `Error: ${validatorsExitError}`
+            <Alert severity="error">{validatorsExitError}</Alert>
           ) : validatorsExitResponse ? (
             <div>
-              {validatorsExitResponse.map((result, index) => (
-                <div style={{ marginBottom: "20px" }}>
-                  <Typography variant="h5" color="GrayText">
-                    {shortenPubkey(rows[index]?.pubkey)}
-                  </Typography>
-                  <Typography variant="h6">
-                    <b>Status:</b> {result.status.exited ? <>Exited</> : <>Not exited</>}{" "}
-                    {getEmoji(result.status.exited)}
-                  </Typography>
-                  {result.status.message ? (
-                    <Typography variant="h6">
-                      <b>Message:</b> {result.status.message}
-                    </Typography>
-                  ) : null}
-                </div>
+              {validatorsExitResponse.map((result) => (
+                <ValidatorResult
+                  key={result.pubkey}
+                  pubkey={result.pubkey}
+                  status={result.status.exited ? "Exited" : "Not exited"}
+                  message={result.status.message}
+                />
               ))}
             </div>
           ) : (
@@ -153,9 +154,16 @@ export default function KeystoresExitDialog({
           )}
         </Box>
       </DialogContent>
+      <Divider />
       <DialogActions>
+        <Button disabled={loading} onClick={handleClose}>
+          Close
+        </Button>
         {!validatorsExitResponse && !loading ? (
           <>
+            <Button onClick={() => getExitSelectedKeystores()} variant="outlined">
+              Download exit messages
+            </Button>
             <Button
               onClick={() => exitSelectedKeystores()}
               variant="contained"
@@ -165,18 +173,8 @@ export default function KeystoresExitDialog({
             >
               Exit
             </Button>
-            <Button
-              onClick={() => getExitSelectedKeystores()}
-              variant="contained"
-              sx={{ marginRight: 1, borderRadius: 2 }}
-            >
-              Download
-            </Button>
           </>
         ) : null}
-        <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
-          Close
-        </Button>
       </DialogActions>
     </Dialog>
   );

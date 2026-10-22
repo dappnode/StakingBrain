@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { SxProps } from "@mui/material";
 import Typography from "@mui/material/Typography";
 
@@ -11,8 +12,8 @@ export function HeaderTypography({ text, sx }: { text: string; sx?: SxProps }): 
 
 export function SecondaryInfoTypography({ text, sx }: { text: string; sx?: SxProps }): JSX.Element {
   return (
-    <Typography variant="body2" color="GrayText" sx={sx}>
-      <i>{text}</i>
+    <Typography variant="body2" color="text.secondary" sx={sx}>
+      {text}
     </Typography>
   );
 }

@@ -1,4 +1,4 @@
-import { Tag } from "@stakingbrain/common";
+import { BuilderConfig, Tag } from "@stakingbrain/common";
 
 /**
  * DbSlot represents the line in the database for a given public key:
@@ -13,7 +13,7 @@ export interface StakingBrainDb {
 }
 
 export interface StakingBrainDbUpdate {
-  [pubkey: string]: Omit<PubkeyDetails, "automaticImport" | "tag">;
+  [pubkey: string]: Partial<Omit<PubkeyDetails, "automaticImport" | "tag">>;
 }
 
 export interface CustomValidators extends PubkeyDetails {
@@ -24,7 +24,11 @@ export interface PubkeyDetails {
   tag: Tag;
   feeRecipient: string;
   automaticImport: boolean;
+  // Durable import intent: absence from the signer is not proof that an in-flight import failed.
+  importPending?: boolean;
   index?: number; // index of the validator. Only available if the validator is active.
+  // Absent: unmanaged. Object: original overrides. Null: persistently reset to VC defaults.
+  builderConfig?: BuilderConfig | null;
 }
 
 export const nonEditableFeeRecipientTags = ["rocketpool", "stader", "stakewise", "lido"] as const;

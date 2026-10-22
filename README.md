@@ -2,7 +2,9 @@
 
 Staking Brain is a critical logical component for Staking in DAppNode. It provides a user interface and a Launchpad API that allow manual and automatic keystore management. Designed to support not only solo stakers, but also DVT/LSD technologies, Staking Brain streamlines the staking process for all users.
 
-Within the Dappnode environment, Staking Brain is incorporated into the Web3Signer packages (gnosis, mainnet, prater, lukso, holesky, hoodi). It ensures that user configurations for validators are reliably maintained. Please note that Staking Brain does not store keystores itself, but ensures their storage in the web3signer. It also maintains consistency between the validator service and web3signer service, as the validator must recognize all the pubkeys of validators whose keystores have been imported into the signer.
+Within the Dappnode environment, Staking Brain is incorporated into the Web3Signer packages (gnosis, mainnet, lukso, hoodi). It ensures that user configurations for validators are reliably maintained. Please note that Staking Brain does not store keystores itself, but ensures their storage in the web3signer. It also maintains consistency between the validator service and web3signer service, as the validator must recognize all the pubkeys of validators whose keystores have been imported into the signer.
+
+Supported `NETWORK` values are `mainnet`, `gnosis`, `lukso`, and `hoodi`. Retired testnets are rejected at startup. Update the network and corresponding client environment variables when moving an older deployment to a supported network; network names are not automatically remapped.
 
 Each Web3Signer package includes four services:
 
@@ -26,7 +28,9 @@ The new functionalities that the StakingBrain brings are:
 
 Follow these steps to develop with Staking Brain:
 
-    1. Connect to your DAppNode (which should be running an instance of web3signer and validator in a network, e.g., Prater).
+Use Node.js 24 LTS (at least 24.11) and Yarn 4.18.1, pinned in `package.json`. Enable Corepack with `corepack enable`.
+
+    1. Connect to your DAppNode (which should be running an instance of web3signer and validator in a network, e.g., Hoodi).
 
     2. Clone the repository:
 
@@ -37,9 +41,9 @@ git clone https://github.com/dappnode/StakingBrain
 3. Set your current DAppNode staker config in `packages/brain/.env` :
 
 ```
-NETWORK="prater"
-_DAPPNODE_GLOBAL_EXECUTION_CLIENT_PRATER="goerli-erigon.dnp.dappnode.eth"
-_DAPPNODE_GLOBAL_CONSENSUS_CLIENT_PRATER="prysm-prater.dnp.dappnode.eth"
+NETWORK="hoodi"
+_DAPPNODE_GLOBAL_EXECUTION_CLIENT_HOODI="hoodi-geth.dnp.dappnode.eth"
+_DAPPNODE_GLOBAL_CONSENSUS_CLIENT_HOODI="lighthouse-hoodi.dnp.dappnode.eth"
 ```
 
 ### A) Local development
@@ -52,10 +56,10 @@ yarn build
 yarn dev
 ```
 
-5.Access the KeyManager UI (e.g. Prater)
+5.Access the KeyManager UI (e.g. Hoodi)
 
 ```
-http://localhost/?network=prater&signerUrl=http://web3signer.web3signer-prater.dappnode:9000/
+http://localhost:3000/
 ```
 
 ### B) Docker development
@@ -76,7 +80,7 @@ docker logs -f brain (To watch status)
 docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' brain
 ```
 
-6. Access the KeyManager UI (e.g. Prater)
+6. Access the KeyManager UI (e.g. Hoodi)
 
 ```
 http://<obtainedIP>
@@ -84,7 +88,7 @@ http://<obtainedIP>
 
 ### Development Recommendations
 
-    1. Connect to your DAppNode using SSH and stop the brain container of your Prater web3signer:
+    1. Connect to your DAppNode using SSH and stop the brain container of your Hoodi web3signer:
 
 ```
 docker ps | grep brain

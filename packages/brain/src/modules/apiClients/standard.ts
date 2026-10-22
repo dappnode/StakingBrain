@@ -1,9 +1,10 @@
 import https from "node:https";
 import http from "node:http";
-import { ApiError } from "./error.js";
+import { ApiError, HttpApiError } from "./error.js";
 import logger from "../logger/index.js";
 import type { ApiParams, AllowedMethods, ErrnoException } from "./types.js";
 import type { Network } from "@stakingbrain/common";
+import { RPC_TIMEOUT_MS } from "@stakingbrain/common";
 
 export class StandardApi {
   private useTls = false;
@@ -53,7 +54,8 @@ export class StandardApi {
     endpoint,
     body,
     headers = {}, // Default to an empty object
-    timeout
+    timeout = RPC_TIMEOUT_MS,
+    signal
   }: {
     method: AllowedMethods;
     endpoint: string;
@@ -61,8 +63,10 @@ export class StandardApi {
     body?: any;
     headers?: Record<string, string>;
     timeout?: number;
+    signal?: AbortSignal;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }): Promise<any> {
+    signal?.throwIfAborted();
     let req: http.ClientRequest;
     this.requestOptions.method = method;
     this.requestOptions.path = endpoint;
@@ -89,17 +93,19 @@ export class StandardApi {
 
     if (this.useTls) {
       this.requestOptions.rejectUnauthorized = false;
-      req = https.request(this.requestOptions);
+      req = https.request({ ...this.requestOptions, signal });
     } else {
-      req = http.request(this.requestOptions);
+      req = http.request({ ...this.requestOptions, signal });
     }
 
-    if (timeout) {
-      req.setTimeout(timeout, () => {
-        const error = new ApiError(`Request to ${endpoint} timed out`);
-        req.destroy(error);
-      });
-    }
+    const deadline =
+      timeout > 0
+        ? setTimeout(() => {
+            const error = new ApiError(`Request to ${endpoint} timed out`);
+            req.destroy(error);
+          }, timeout)
+        : undefined;
+    deadline?.unref();
 
     if (body) {
       req.setHeader("Content-Length", Buffer.byteLength(body));
@@ -159,7 +165,10 @@ export class StandardApi {
               } else errorMessage = Buffer.concat(data).toString();
 
               reject(
-                new ApiError(`Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `)
+                new HttpApiError(
+                  res.statusCode || 0,
+                  `Request to ${endpoint} failed with status code ${res.statusCode}: ${errorMessage}. `
+                )
               );
             }
           });
@@ -168,7 +177,7 @@ export class StandardApi {
           });
         });
       }
-    );
+    ).finally(() => clearTimeout(deadline));
   }
 }
 

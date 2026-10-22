@@ -1,4 +1,5 @@
-import { DataGrid, GridAlignment, GridSelectionModel } from "@mui/x-data-grid";
+import type { JSX } from "react";
+import { DataGrid, GridAlignment, GridRowId } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { beaconchaApiParamsMap } from "../../params";
 import {
@@ -15,8 +16,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HelpIcon from "@mui/icons-material/Help";
-import { CircularProgress, IconButton, Tooltip } from "@mui/material";
-import { HeaderTypography } from "../../Styles/Typographies";
+import { capitalize, Chip, CircularProgress, IconButton, Paper, Stack, Tooltip } from "@mui/material";
+import { PageHeader } from "../Layout/PageLayout";
+import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
+import TuneIcon from "@mui/icons-material/Tune";
 import { Box } from "@mui/system";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Button } from "@mui/material";
@@ -25,6 +28,7 @@ import { BeaconchaUrlBuildingStatus, SmoothStatusByPubkey } from "../../types";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { rpcClient } from "../../socket";
+import { selectedGridRowIds } from "../../utils/dataUtils";
 import type { BeaconchaGetResponse, CustomValidatorGetResponse } from "@stakingbrain/brain";
 import { SmoothValidatorByIndexApiResponse, SmoothValidator, MevSpSubscriptionStatus } from "../../types";
 
@@ -37,6 +41,7 @@ export default function KeystoresDataGrid({
   userMode,
   setDeleteOpen,
   setEditFeesOpen,
+  setBuilderConfigOpen,
   setExitOpen,
   summaryUrlBuildingStatus,
   setSummaryUrlBuildingStatus,
@@ -44,18 +49,19 @@ export default function KeystoresDataGrid({
 }: {
   rows: CustomValidatorGetResponse[];
   areRowsSelected: boolean;
-  selectedRows: GridSelectionModel;
-  setSelectedRows: (selectedRows: GridSelectionModel) => void;
+  selectedRows: GridRowId[];
+  setSelectedRows: (selectedRows: GridRowId[]) => void;
   network: string;
   userMode: "basic" | "advanced";
   setDeleteOpen(open: boolean): void;
   setEditFeesOpen(open: boolean): void;
+  setBuilderConfigOpen(open: boolean): void;
   setExitOpen(open: boolean): void;
   summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
   mevSpFeeRecipient: string | null;
 }): JSX.Element {
-  const [pageSize, setPageSize] = useState(rows.length > 10 ? 10 : rows.length);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
   const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
 
@@ -166,7 +172,7 @@ export default function KeystoresDataGrid({
   const columns: GridColDef[] = [
     {
       field: "pubkey",
-      headerName: "Public Key",
+      headerName: "Public key",
       description: "Validating Public Key",
       disableColumnMenu: true,
       headerClassName: "tableHeader",
@@ -175,7 +181,7 @@ export default function KeystoresDataGrid({
     },
     {
       field: "feeRecipient",
-      headerName: "Fee Recipient",
+      headerName: "Fee recipient",
       description: "Address to which the rewards generated from proposing a block are sent",
       disableReorder: true,
       disableColumnMenu: true,
@@ -241,7 +247,8 @@ export default function KeystoresDataGrid({
             sx={{
               height: 40,
               width: 40,
-              padding: 0
+              padding: 0,
+              display: "block"
             }}
             alt={rowData.row.tag}
             src={"/assets/tagIcons/" + rowData.row.tag + ".png"}
@@ -261,11 +268,29 @@ export default function KeystoresDataGrid({
     pubkeyInValidator: row.validatorImported,
     pubkeyInSigner: row.signerImported,
     feeRecipientImported: row.validatorFeeRecipientCorrect,
+    builderConfig: row.builderConfig,
+    builderConfigStatus: row.builderConfigStatus,
     id: index
   }));
 
   if (userMode === "advanced")
     columns.push(
+      {
+        field: "builderConfigStatus",
+        headerName: "Builder config",
+        description: "Last application attempt; open Builder config to inspect client values and refresh status",
+        width: 180,
+        sortable: false,
+        renderCell: ({ row }) => (
+          <Tooltip title={row.builderConfigStatus?.message ?? "Open Builder config for details"}>
+            <span>
+              {capitalize(
+                row.builderConfigStatus?.status ?? (row.builderConfig === undefined ? "Unmanaged" : "Pending")
+              )}
+            </span>
+          </Tooltip>
+        )
+      },
       {
         field: "beaconchaUrl",
         headerName: "URL",
@@ -277,9 +302,16 @@ export default function KeystoresDataGrid({
         align: "center",
         headerAlign: "center",
         renderCell: (rowData) => (
-          <a style={{ color: "grey" }} href={rowData.row.beaconcha_url} target="_blank" rel="noopener noreferrer">
-            <LinkIcon />
-          </a>
+          <IconButton
+            component="a"
+            size="small"
+            aria-label="View validator in explorer"
+            href={rowData.row.beaconcha_url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <LinkIcon fontSize="small" />
+          </IconButton>
         ),
         headerClassName: "tableHeader",
         width: 60
@@ -297,11 +329,11 @@ export default function KeystoresDataGrid({
         renderCell: (rowData) => (
           <div>
             {rowData.row.withdrawalCredentials.format === "ecdsa" ? (
-              <CheckCircleIcon style={{ color: "green" }} />
+              <CheckCircleIcon color="success" />
             ) : rowData.row.withdrawalCredentials.format === "bls" ? (
-              <CancelIcon style={{ color: "red" }} />
+              <CancelIcon color="error" />
             ) : (
-              <HelpIcon style={{ color: "grey" }} />
+              <HelpIcon color="action" />
             )}
           </div>
         ),
@@ -323,11 +355,11 @@ export default function KeystoresDataGrid({
         renderCell: (rowData) => (
           <div>
             {rowData.row.pubkeyInSigner === true ? (
-              <CheckCircleIcon style={{ color: "green" }} />
-            ) : rowData.row.pubkeyInSigner ? (
-              <CancelIcon style={{ color: "red" }} />
+              <CheckCircleIcon color="success" />
+            ) : rowData.row.pubkeyInSigner === false ? (
+              <CancelIcon color="error" />
             ) : (
-              <HelpIcon style={{ color: "grey" }} />
+              <HelpIcon color="action" />
             )}
           </div>
         )
@@ -347,11 +379,11 @@ export default function KeystoresDataGrid({
         renderCell: (rowData) => (
           <div>
             {rowData.row.pubkeyInValidator === true ? (
-              <CheckCircleIcon style={{ color: "green" }} />
-            ) : rowData.row.pubkeyInValidator ? (
-              <CancelIcon style={{ color: "red" }} />
+              <CheckCircleIcon color="success" />
+            ) : rowData.row.pubkeyInValidator === false ? (
+              <CancelIcon color="error" />
             ) : (
-              <HelpIcon style={{ color: "grey" }} />
+              <HelpIcon color="action" />
             )}
           </div>
         )
@@ -371,11 +403,11 @@ export default function KeystoresDataGrid({
         renderCell: (rowData) => (
           <div>
             {rowData.row.feeRecipientImported === true ? (
-              <CheckCircleIcon style={{ color: "green" }} />
-            ) : rowData.row.feeRecipientImported ? (
-              <CancelIcon style={{ color: "red" }} />
+              <CheckCircleIcon color="success" />
+            ) : rowData.row.feeRecipientImported === false ? (
+              <CancelIcon color="error" />
             ) : (
-              <HelpIcon style={{ color: "grey" }} />
+              <HelpIcon color="action" />
             )}
           </div>
         )
@@ -432,17 +464,43 @@ export default function KeystoresDataGrid({
   }
 
   return (
-    <>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <HeaderTypography text={"Validators"} />
-        <div>
+    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+      <PageHeader
+        title="Validators"
+        subtitle="Manage keys, fee recipients, and builder settings."
+        icon={<VpnKeyOutlinedIcon />}
+        action={
+          <Button
+            component={Link}
+            to={{ pathname: "/import", search: window.location.search }}
+            variant="contained"
+            startIcon={<UploadFileIcon />}
+          >
+            Import validators
+          </Button>
+        }
+      />
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+        spacing={1.5}
+        sx={{ my: 3 }}
+      >
+        <Chip
+          size="small"
+          variant="outlined"
+          label={selectedRows.length ? `${selectedRows.length} selected` : `${rows.length} validators`}
+        />
+        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
           {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.InProgress ? (
             <Tooltip title="Loading dashboard">
-              <CircularProgress size={18} style={{ color: "#808080" }} />
+              <CircularProgress size={18} color="inherit" />
             </Tooltip>
           ) : (
             <Tooltip title="Go to Beaconcha.in dashboard for selected validators">
               <IconButton
+                aria-label="Open validator dashboard"
                 disabled={!areRowsSelected}
                 onClick={async () => {
                   await getValidatorSummaryURL();
@@ -455,56 +513,69 @@ export default function KeystoresDataGrid({
           )}
 
           <Tooltip title="Edit validators fee recipient">
-            <IconButton
+            <Button
+              size="small"
+              startIcon={<EditIcon />}
               disabled={!areRowsSelected || areAllSelectedRowsUneditable()}
               onClick={() => setEditFeesOpen(true)}
             >
-              <EditIcon />
-            </IconButton>
+              Fee recipient
+            </Button>
           </Tooltip>
 
+          <Button
+            size="small"
+            startIcon={<TuneIcon />}
+            disabled={!areRowsSelected}
+            onClick={() => setBuilderConfigOpen(true)}
+          >
+            Builder settings
+          </Button>
+
           <Tooltip title="Delete validators">
-            <IconButton disabled={!areRowsSelected} onClick={() => setDeleteOpen(true)}>
+            <IconButton aria-label="Delete validators" disabled={!areRowsSelected} onClick={() => setDeleteOpen(true)}>
               <DeleteIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Exit validators (In order to exit a Rocket Pool validator, please go to the Rocket Pool package UI)">
-            <IconButton disabled={!areRowsSelected || !areAllSelectedRowsExitable()} onClick={() => setExitOpen(true)}>
+            <IconButton
+              aria-label="Exit validators"
+              disabled={!areRowsSelected || !areAllSelectedRowsExitable()}
+              onClick={() => setExitOpen(true)}
+            >
               <LogoutIcon />
             </IconButton>
           </Tooltip>
-        </div>
-      </div>
-      <div style={{ width: "100%", height: "80%" }}>
+        </Stack>
+      </Stack>
+      <Box sx={{ width: "100%", height: { xs: 440, sm: 520 } }}>
         <DataGrid
           rows={customRows}
           onCellClick={(params) => {
             if (params.field === "validating_pubkey" || params.field === "fee_recipient")
-              navigator.clipboard.writeText(params.value);
+              navigator.clipboard.writeText(String(params.value));
           }}
           columns={columns}
-          pageSize={pageSize}
-          rowsPerPageOptions={[10, 20, 50, 100]}
-          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          paginationModel={paginationModel}
+          pageSizeOptions={[10, 20, 50, 100]}
+          onPaginationModelChange={setPaginationModel}
           checkboxSelection
-          onSelectionModelChange={(selectionModel: GridSelectionModel) => setSelectedRows(selectionModel)}
-          sx={{ borderRadius: 2 }}
+          disableRowSelectionExcludeModel
+          rowSelectionModel={{ type: "include", ids: new Set(selectedRows) }}
+          onRowSelectionModelChange={(selectionModel) =>
+            setSelectedRows(selectedGridRowIds(selectionModel, customRows))
+          }
+          sx={{
+            borderRadius: 2.5,
+            "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
+            "& .MuiDataGrid-cell--textCenter": { justifyContent: "center" },
+            "& .MuiDataGrid-cell svg": { display: "block" },
+            "& .MuiDataGrid-columnHeaderTitle": { fontWeight: 600 },
+            "& .MuiDataGrid-columnHeader": { bgcolor: "action.hover" }
+          }}
         />
-      </div>
-      <Box
-        style={{
-          marginTop: 16,
-          display: "flex",
-          flexDirection: "row-reverse"
-        }}
-      >
-        <Link style={{ textDecoration: "none" }} to={{ pathname: "/import", search: window.location.search }}>
-          <Button variant="contained" sx={{ borderRadius: 2 }} endIcon={<UploadFileIcon />}>
-            Import
-          </Button>
-        </Link>
       </Box>
-    </>
+    </Paper>
   );
 }

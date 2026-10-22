@@ -2,7 +2,7 @@ import { BeaconchainPoolVoluntaryExitsPostRequest } from "../beaconchain/types.j
 
 export interface ValidatorGetFeeResponse {
   data: {
-    pubkey: string;
+    pubkey?: string;
     ethaddress: string;
   };
 }

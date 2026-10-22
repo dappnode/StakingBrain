@@ -167,7 +167,7 @@ export const createFeeRecipientsRouter = ({
         reloadValidatorsCronTask,
         brainDb,
         validatorApi,
-        customValidatorUpdateRequest: validatorsToUpdate,
+        customValidatorUpdateRequest: validatorsToUpdate.map(({ pubkey, feeRecipient }) => ({ pubkey, feeRecipient })),
         requestFrom: "api"
       });
 

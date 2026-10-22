@@ -1,7 +1,5 @@
-import Toolbar from "@mui/material/Toolbar";
-import { HeaderTypography } from "../../Styles/Typographies";
-import { Box, capitalize, Typography } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
+import type { JSX } from "react";
+import { Box, capitalize, Chip, IconButton, Stack, Toolbar, Tooltip, Typography } from "@mui/material";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
@@ -22,67 +20,49 @@ export default function ToolBar({
   network?: Network;
 }): JSX.Element {
   return (
-    <Toolbar>
-      <Box
-        sx={{
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "center",
-          lineHeight: "50px"
-        }}
-      >
-        <img src="/assets/dappnode_logo_clean.png" alt="logo" height={50} style={{ marginRight: "5px" }} />
-
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "flex-start", sm: "center" }
-          }}
+    <Toolbar sx={{ width: "100%", maxWidth: 1280, mx: "auto", gap: 2, py: 1 }}>
+      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
+        <Box component="img" src="/assets/dappnode_logo_clean.png" alt="Dappnode" sx={{ width: 36, height: 36 }} />
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 0.5, sm: 1.5 }}
+          alignItems={{ xs: "flex-start", sm: "center" }}
         >
-          <HeaderTypography
-            sx={{ flexGrow: 1, fontWeight: "bold", fontSize: { xs: "14px", sm: "20px" } }}
-            text={"Staking Brain"}
-          />
+          <Typography variant="h6" sx={{ fontSize: { xs: 16, sm: 20 } }}>
+            Staking Brain
+          </Typography>
           {network && (
-            <Typography
-              sx={{ fontStyle: "italic", fontSize: { xs: "14px", sm: "20px" }, marginLeft: { xs: 0, sm: 1 } }}
-            >
-              {capitalize(network)}
-            </Typography>
+            <Chip
+              size="small"
+              variant="outlined"
+              label={capitalize(network)}
+              sx={{ color: "inherit", borderColor: "currentColor" }}
+            />
           )}
-        </Box>
-      </Box>
-      <div style={{ marginLeft: "auto" }}>
-        <Box
-          sx={{
-            padding: 0.5,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center"
-          }}
-        >
-          <IconButton sx={{ ml: 1 }} onClick={() => setMode(mode === "dark" ? "light" : "dark")} color="inherit">
-            {mode === "dark" ? (
-              <LightModeIcon titleAccess="Set Light Mode" />
-            ) : (
-              <DarkModeIcon titleAccess="Set Dark Mode" />
-            )}
-          </IconButton>
+        </Stack>
+      </Stack>
+      <Stack direction="row" spacing={0.5}>
+        <Tooltip title={mode === "dark" ? "Use light mode" : "Use dark mode"}>
           <IconButton
-            sx={{ ml: 1 }}
-            onClick={() => setUserMode(userMode === "basic" ? "advanced" : "basic")}
             color="inherit"
+            aria-label={mode === "dark" ? "Use light mode" : "Use dark mode"}
+            onClick={() => setMode(mode === "dark" ? "light" : "dark")}
           >
-            {userMode === "basic" ? (
-              <UnfoldMoreIcon titleAccess="Expand Andanced Info" />
-            ) : (
-              <UnfoldLessIcon titleAccess="Collapse Advanced Info" />
-            )}
+            {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
-        </Box>
-      </div>
+        </Tooltip>
+        <Tooltip title={userMode === "basic" ? "Show advanced information" : "Hide advanced information"}>
+          <IconButton
+            aria-label="Advanced information"
+            aria-pressed={userMode === "advanced"}
+            color="inherit"
+            sx={{ bgcolor: userMode === "advanced" ? "action.selected" : undefined }}
+            onClick={() => setUserMode(userMode === "basic" ? "advanced" : "basic")}
+          >
+            {userMode === "basic" ? <UnfoldMoreIcon /> : <UnfoldLessIcon />}
+          </IconButton>
+        </Tooltip>
+      </Stack>
     </Toolbar>
   );
 }

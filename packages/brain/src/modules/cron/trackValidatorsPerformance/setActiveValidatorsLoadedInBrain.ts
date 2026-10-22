@@ -1,4 +1,3 @@
-import { isEmpty } from "lodash-es";
 import { BeaconchainApi } from "../../apiClients/index.js";
 import { ValidatorStatus } from "../../apiClients/types.js";
 import { BrainDataBase } from "../../db/index.js";
@@ -51,14 +50,14 @@ async function getValidatorIndexesAndSaveInDb({
   brainDb: BrainDataBase;
 }): Promise<string[]> {
   const brainDbData = brainDb.getData();
-  if (isEmpty(brainDbData)) return [];
+  if (Object.keys(brainDbData).length === 0) return [];
 
   // Get validator indexes from brain db
   const validatorIndexes: string[] = [];
   const validatorPubkeysWithNoIndex: string[] = [];
   // Iterate over brain db data and push the indexes to the array
   for (const [pubkey, details] of Object.entries(brainDbData)) {
-    if (details.index) validatorIndexes.push(details.index.toString());
+    if (details.index !== undefined) validatorIndexes.push(details.index.toString());
     else validatorPubkeysWithNoIndex.push(pubkey);
   }
 
@@ -79,7 +78,7 @@ async function getValidatorIndexesAndSaveInDb({
       const { pubkey } = validatorData.validator;
       const index = validatorData.index;
       validatorIndexes.push(index);
-      brainDb.updateValidators({ validators: { [pubkey]: { ...brainDbData[pubkey], index: parseInt(index) } } });
+      brainDb.updateValidators({ validators: { [pubkey]: { index: parseInt(index) } } });
     }
   }
 

@@ -1,8 +1,10 @@
+import type { JSX } from "react";
 import KeystoresDataGrid from "./KeystoresDataGrid";
 import KeystoresDeleteDialog from "../Dialogs/KeystoresDeleteDialog";
 import EditFeesDialog from "../Dialogs/EditFeesDialog";
+import BuilderConfigDialog from "../Dialogs/BuilderConfigDialog";
 import { Alert, Box, CircularProgress } from "@mui/material";
-import { GridSelectionModel } from "@mui/x-data-grid";
+import type { GridRowId } from "@mui/x-data-grid";
 import { StakerConfig as StakerConfigType } from "@stakingbrain/common";
 import { useEffect, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
@@ -11,6 +13,7 @@ import StakerConfig from "../StakerConfig/StakerConfig";
 import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
 import { getSmoothAddressByNetwork } from "../../utils/addresses";
 import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
+import PageLayout from "../Layout/PageLayout";
 
 export default function ValidatorList({
   stakerConfig,
@@ -19,9 +22,10 @@ export default function ValidatorList({
   stakerConfig: StakerConfigType;
   userMode: "basic" | "advanced";
 }): JSX.Element {
-  const [selectedRows, setSelectedRows] = useState<GridSelectionModel>([]);
+  const [selectedRows, setSelectedRows] = useState<GridRowId[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFeesOpen, setEditFeesOpen] = useState(false);
+  const [builderConfigOpen, setBuilderConfigOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validatorsGet, setValidatorsGet] = useState<CustomValidatorGetResponse[]>();
@@ -30,17 +34,13 @@ export default function ValidatorList({
 
   const { network, isMevBoostSet } = stakerConfig;
   const smoothAddress = getSmoothAddressByNetwork(network);
-  useEffect(() => {
-    getValidators();
-  }, []);
-
   // Re-render table after delete/update validators
   useEffect(() => {
-    if (!deleteOpen && !editFeesOpen && !exitOpen) {
+    if (!deleteOpen && !editFeesOpen && !exitOpen && !builderConfigOpen) {
       getValidators();
       setSelectedRows([]);
     }
-  }, [deleteOpen, editFeesOpen, exitOpen]);
+  }, [deleteOpen, editFeesOpen, exitOpen, builderConfigOpen]);
 
   async function getValidators() {
     try {
@@ -57,10 +57,9 @@ export default function ValidatorList({
 
   const SmoothBanner = () => {
     return (
-      <Box sx={{ marginBottom: 3 }}>
-        <Alert severity="info" variant="filled">
-          🎉 Calling all solo stakers: Smooth has arrived! To join, select your validators and click on the edit fee
-          recipient button. Learn more{" "}
+      <Box>
+        <Alert severity="info" variant="outlined">
+          Join Smooth by selecting your validators and editing their fee recipient. Learn more{" "}
           <strong>
             <a href="https://smooth.dappnode.io/" target="_blank" rel="noopener noreferrer">
               here!
@@ -72,30 +71,26 @@ export default function ValidatorList({
   };
 
   return (
-    <div style={{ height: "90vh" }}>
+    <PageLayout>
       {userMode === "advanced" && <StakerConfig stakerConfig={stakerConfig} />}
       <Box
         sx={{
-          margin: { xs: 2, sm: 3, md: 5 },
           display: "flex",
           flexDirection: "column",
-          alignItems: "left",
-          height: "100%"
+          gap: 3
         }}
       >
         {(network === "hoodi" || network === "mainnet") && <SmoothBanner />}
 
         <Box sx={{ flexGrow: 1 }}>
           {validatorsGetError ? (
-            <Alert severity="error" sx={{ marginTop: 2 }} variant="filled">
-              {validatorsGetError}
-            </Alert>
+            <Alert severity="error">{validatorsGetError}</Alert>
           ) : loading ? (
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "center",
-                height: "100%",
+                minHeight: 320,
                 alignItems: "center"
               }}
             >
@@ -116,6 +111,7 @@ export default function ValidatorList({
                 userMode={userMode}
                 setDeleteOpen={setDeleteOpen}
                 setEditFeesOpen={setEditFeesOpen}
+                setBuilderConfigOpen={setBuilderConfigOpen}
                 setExitOpen={setExitOpen}
                 summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
@@ -123,14 +119,14 @@ export default function ValidatorList({
               />
 
               {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Error && (
-                <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+                <Alert severity="warning" sx={{ marginTop: 2 }}>
                   There was an error loading the dashboard. The number of API calls allowed by the explorer might have
                   been exceeded or the network might be invalid. Please wait for a minute and refresh the page.
                 </Alert>
               )}
 
               {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NoIndexes && (
-                <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
+                <Alert severity="warning" sx={{ marginTop: 2 }}>
                   There was an error loading the dashboard. The explorer may not be able to show a dashboard for all
                   your validators or some of them might not have been indexed yet. Have you done a deposit?
                 </Alert>
@@ -157,6 +153,14 @@ export default function ValidatorList({
                 />
               )}
 
+              {builderConfigOpen && (
+                <BuilderConfigDialog
+                  network={network}
+                  validators={selectedRows.map((row) => validatorsGet[row as number])}
+                  setOpen={setBuilderConfigOpen}
+                />
+              )}
+
               {exitOpen && (
                 <KeystoresExitDialog
                   rows={validatorsGet}
@@ -168,12 +172,10 @@ export default function ValidatorList({
               )}
             </>
           ) : (
-            <Alert severity="warning" sx={{ marginTop: 2 }} variant="filled">
-              There are no keystores to display.
-            </Alert>
+            <Alert severity="warning">There are no keystores to display.</Alert>
           )}
         </Box>
       </Box>
-    </div>
+    </PageLayout>
   );
 }

@@ -3,7 +3,9 @@
   "include": ["src"],
   "exclude": ["test", "./node_modules/", "./dist/"],
   "compilerOptions": {
+    "rootDir": "src",
     "outDir": "dist",
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "skipLibCheck": true
   }
 }
