@@ -50,13 +50,13 @@ Each validator may have a `builderConfig` in the existing database:
 Database writes retain owner-only read/write permissions (`0600`), including
 after the JSON adapter atomically replaces the file.
 
-| Stored value | Meaning on application |
-| --- | --- |
-| Property absent | Unmanaged: no builder endpoint calls, including for older database records and newly imported keys |
-| `{}` | POST no overrides; inherit all validator defaults |
-| `{ "builders": [] }` | POST an explicitly empty direct-builder list |
-| Sparse object | POST exactly these overrides, replacing the prior configuration in full |
-| `null` | DELETE the key's builder configuration and follow validator defaults |
+| Stored value         | Meaning on application                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| Property absent      | Unmanaged: no builder endpoint calls, including for older database records and newly imported keys |
+| `{}`                 | POST no overrides; inherit all validator defaults                                                  |
+| `{ "builders": [] }` | POST an explicitly empty direct-builder list                                                       |
+| Sparse object        | POST exactly these overrides, replacing the prior configuration in full                            |
+| `null`               | DELETE the key's builder configuration and follow validator defaults                               |
 
 Reset intent remains stored as `null`: a failed reset, validator restart, or a
 later client-side configuration change must not resurrect the old override.
@@ -74,6 +74,26 @@ GET returns **resolved** client values. It never supplies editor defaults,
 updates the database, or generates subsequent POST bodies. Changes to inherited
 validator defaults therefore remain effective. Fee and index updates preserve
 builder overrides; builder updates preserve fee recipients, index and tags.
+
+## One-time MEV-Boost settings import
+
+Set a comma-separated list of preset IDs on the `brain` service and restart it:
+
+```dotenv
+BUILDER_IDS=aestus,flashbots,titan
+```
+
+Brain resolves the IDs using its current `NETWORK`. Hoodi IDs are `aestus`,
+`flashbots`, `nflaig`, `titan`, `ultrasound`, and `pk910`. Spaces and duplicates
+are ignored. Empty lists do nothing; unknown IDs reject the whole import without
+changing settings or stopping normal startup.
+
+The list is saved once for existing validators without builder settings. Existing
+choices and resets are preserved. After saving, Brain creates an empty
+`builder-config-imported` marker beside `brain-db.json` in the data volume.
+Keep it with the database in backups. The environment variable can remain set:
+later restarts, edits, and new validators are unaffected. An empty database also
+completes the import. Normal reconciliation applies the saved choices to the client.
 
 ## UI and RPC
 
