@@ -1,12 +1,23 @@
 import type { JSX } from "react";
-import { Dialog, DialogTitle, DialogContent, Box, Typography, Button, DialogActions } from "@mui/material";
-import { Link } from "react-router-dom";
+import {
+  Alert,
+  Dialog,
+  DialogContent,
+  Box,
+  Button,
+  DialogActions,
+  Divider,
+  useMediaQuery,
+  useTheme
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import { ImportStatus, KeystoreInfo } from "../../types";
 import WaitBox from "../WaitBox/WaitBox";
-import { shortenPubkey } from "@stakingbrain/common";
 import { SlideTransition } from "./Transitions";
-import { getEmoji } from "../../utils/dataUtils";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import DialogHeader from "./DialogHeader";
+import ValidatorResult from "./ValidatorResult";
 import type { Web3signerPostResponse } from "@stakingbrain/brain";
 
 export default function ImportDialog({
@@ -24,8 +35,11 @@ export default function ImportDialog({
   importStatus: string;
   acceptedFiles: KeystoreInfo[];
 }): JSX.Element {
+  const navigate = useNavigate();
+  const isMobile = useMediaQuery(useTheme().breakpoints.down("sm"));
   const handleClose = () => {
     setOpen(false);
+    navigate({ pathname: "/", search: window.location.search });
   };
 
   return (
@@ -33,6 +47,7 @@ export default function ImportDialog({
       disableEscapeKeyDown={true}
       open={open}
       fullWidth={true}
+      fullScreen={isMobile}
       onClose={(event, reason) => {
         if (!reason) {
           handleClose();
@@ -42,29 +57,33 @@ export default function ImportDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle id="alert-dialog-title" sx={{ fontWeight: "bolder" }}>
-        {importStatus}
-      </DialogTitle>
+      <DialogHeader
+        title={
+          importStatus === ImportStatus.Importing
+            ? "Importing validators"
+            : keystoresPostError
+              ? "Import failed"
+              : "Import results"
+        }
+        subtitle="Keystore import status for your selected files."
+        icon={<UploadFileIcon />}
+        count={acceptedFiles.length}
+        onClose={handleClose}
+        busy={importStatus === ImportStatus.Importing}
+      />
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {keystoresPostError ? (
-            `Error: ${keystoresPostError}`
+            <Alert severity="error">{keystoresPostError}</Alert>
           ) : keystoresPostResponse ? (
             <div>
               {keystoresPostResponse.data.map((result, index) => (
-                <div style={{ marginBottom: "20px" }} key={index}>
-                  <Typography variant="h5" color="GrayText">
-                    {shortenPubkey(acceptedFiles[index]?.pubkey)}
-                  </Typography>
-                  <Typography variant="h6">
-                    <b>Status:</b> {result.status} {getEmoji(result.status)}
-                  </Typography>
-                  {result.message ? (
-                    <Typography variant="h6">
-                      <b>Message:</b> {result.message}
-                    </Typography>
-                  ) : null}
-                </div>
+                <ValidatorResult
+                  key={index}
+                  pubkey={acceptedFiles[index]?.pubkey}
+                  status={result.status}
+                  message={result.message}
+                />
               ))}
             </div>
           ) : (
@@ -73,17 +92,16 @@ export default function ImportDialog({
         </Box>
       </DialogContent>
 
+      <Divider />
       <DialogActions>
-        <Link to={{ pathname: "/", search: window.location.search }}>
-          <Button
-            disabled={importStatus === ImportStatus.Importing}
-            onClick={handleClose}
-            variant="contained"
-            sx={{ borderRadius: 2 }}
-          >
-            Close
-          </Button>
-        </Link>
+        <Button
+          disabled={importStatus === ImportStatus.Importing}
+          onClick={handleClose}
+          variant="contained"
+          sx={{ borderRadius: 2 }}
+        >
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,24 +1,15 @@
 import type { JSX } from "react";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Box,
-  Typography,
-  Button,
-  DialogContentText,
-  DialogActions,
-  Alert
-} from "@mui/material";
+import { Dialog, DialogContent, Box, Button, DialogContentText, DialogActions, Alert, Divider } from "@mui/material";
 import type { GridRowId } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
 import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
-import { shortenPubkey } from "@stakingbrain/common";
 import { rpcClient } from "../../socket";
 import { SlideTransition } from "./Transitions";
-import { getEmoji } from "../../utils/dataUtils";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DialogHeader from "./DialogHeader";
+import ValidatorResult from "./ValidatorResult";
 import type { CustomValidatorGetResponse, Web3signerDeleteResponse } from "@stakingbrain/brain";
 import { useTheme, useMediaQuery } from "@mui/material";
 
@@ -81,36 +72,34 @@ export default function KeystoresDeleteDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle id="alert-dialog-title">
-        {keystoresDelete ? "Key deletion results" : "Delete Keystores?"}
-      </DialogTitle>
+      <DialogHeader
+        title={keystoresDelete ? "Deletion results" : "Delete keystores"}
+        subtitle="Remove validator keys from this signer."
+        icon={<DeleteOutlineIcon />}
+        count={keystoresDelete ? deletedPubkeys.length : selectedRows.length}
+        onClose={handleClose}
+        busy={loading}
+      />
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
           {keystoresDeleteError ? (
-            `Error: ${keystoresDeleteError}`
+            <Alert severity="error">{keystoresDeleteError}</Alert>
           ) : keystoresDelete?.data ? (
             <div>
               {keystoresDelete.data.map((result, index) => {
                 const pubkey = deletedPubkeys[index];
                 return (
-                  <div style={{ marginBottom: "20px" }} key={pubkey || index}>
-                    <Typography variant="h5" color="GrayText">
-                      {shortenPubkey(pubkey)}
-                    </Typography>
-                    <Typography variant="h6">
-                      <b>Status:</b> {result.status} {getEmoji(result.status)}
-                    </Typography>
-                    {result.message ? (
-                      <Typography variant="h6">
-                        <b>Message:</b> {result.message}
-                      </Typography>
-                    ) : null}
-                  </div>
+                  <ValidatorResult
+                    key={pubkey || index}
+                    pubkey={pubkey}
+                    status={result.status}
+                    message={result.message}
+                  />
                 );
               })}
               {keystoresDelete.slashing_protection ? (
                 <div>
-                  <Alert severity="warning" sx={{ marginTop: 2, marginBottom: 2 }} variant="filled">
+                  <Alert severity="warning" sx={{ marginTop: 2, marginBottom: 2 }}>
                     It is strongly recommended to stop the validator and watch at least 3 missed attestations in the
                     explorer before uploading the keys to another machine.
                   </Alert>
@@ -121,7 +110,7 @@ export default function KeystoresDeleteDialog({
                     download="slashing_protection.json"
                     sx={{ borderRadius: 2 }}
                   >
-                    Download Slashing Protection Data
+                    Download slashing protection
                   </Button>
                 </div>
               ) : null}
@@ -139,7 +128,11 @@ export default function KeystoresDeleteDialog({
           )}
         </Box>
       </DialogContent>
+      <Divider />
       <DialogActions>
+        <Button disabled={loading} onClick={handleClose}>
+          Close
+        </Button>
         {!keystoresDelete && !loading ? (
           <Button
             onClick={() => deleteSelectedKeystores()}
@@ -150,9 +143,6 @@ export default function KeystoresDeleteDialog({
             Delete
           </Button>
         ) : null}
-        <Button disabled={loading} onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
-          Close
-        </Button>
       </DialogActions>
     </Dialog>
   );

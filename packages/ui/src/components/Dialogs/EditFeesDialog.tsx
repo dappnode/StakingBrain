@@ -7,7 +7,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   FormControlLabel,
   FormGroup,
   Switch,
@@ -17,9 +16,12 @@ import {
   Step,
   StepLabel,
   Tooltip,
-  Checkbox
+  Checkbox,
+  Divider
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DialogHeader from "./DialogHeader";
 import type { GridRowId } from "@mui/x-data-grid";
 import { BURN_ADDRESS, isValidEcdsaPubkey, areAllFeeRecipientsEditable, Network } from "@stakingbrain/common";
 import React from "react";
@@ -262,7 +264,7 @@ export default function FeeRecipientDialog({
           }}
         >
           <Button variant="contained" sx={{ borderRadius: 2, marginLeft: 1 }} onClick={handleSubscriptionClick}>
-            Take me to Smooth Website!
+            Open Smooth
           </Button>
         </Box>
       </>
@@ -281,7 +283,7 @@ export default function FeeRecipientDialog({
           }}
         >
           <Button variant="contained" sx={{ borderRadius: 2, marginLeft: 1 }} onClick={handleUnsubscriptionClick}>
-            Take me to Smooth's website
+            Open Smooth
           </Button>
         </Box>
         <div
@@ -300,20 +302,20 @@ export default function FeeRecipientDialog({
     );
   }
 
-  const joinSpSteps = ["Edit Fee Recipient", "Subscribe manually (optional)"];
+  const joinSpSteps = ["Fee recipient", "Subscribe manually (optional)"];
 
   function alertCard(alertType: AlertType): JSX.Element {
     switch (alertType) {
       case "successAlert":
         return (
-          <Alert severity="success" variant="filled" sx={{ marginY: 1 }}>
+          <Alert severity="success" sx={{ marginY: 1 }}>
             {successMessage}
           </Alert>
         );
 
       case "errorAlert":
         return (
-          <Alert severity="error" variant="filled" sx={{ marginY: 1 }}>
+          <Alert severity="error" sx={{ marginY: 1 }}>
             {errorMessage}
           </Alert>
         );
@@ -548,7 +550,7 @@ export default function FeeRecipientDialog({
               <TextField
                 onChange={handleNewFeeRecipientChange}
                 sx={{ marginTop: 2 }}
-                label="New Fee Recipient"
+                label="Fee recipient"
                 error={
                   (!isNewFeeRecipientValid() && newFeeRecipient !== "") ||
                   (isAnyWithdrawalCredentialsDiff("ecdsa") && newFeeRecipient === mevSpAddress)
@@ -575,8 +577,8 @@ export default function FeeRecipientDialog({
                       <FormControlLabel
                         control={<Switch onChange={() => switchSetMevSpAddress()} />}
                         label={
-                          <Typography component="div">
-                            Set <b>Smooth</b> Fee Recipient
+                          <Typography component="div" variant="body2">
+                            Use Smooth fee recipient
                           </Typography>
                         }
                         checked={isMevSpAddressSelected}
@@ -614,12 +616,19 @@ export default function FeeRecipientDialog({
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle id="alert-dialog-title" sx={{ fontWeight: 700, fontSize: 24 }}>
-        Edit Fee Recipient (for selected validators)
-      </DialogTitle>
+      <DialogHeader
+        title="Fee recipient"
+        subtitle="Choose where validator proposal fees are sent."
+        icon={<EditOutlinedIcon />}
+        count={selectedRows.length}
+        onClose={handleClose}
+        busy={loading}
+      />
       {modalContent()}
+      <Divider />
       {!loading ? (
         <DialogActions>
+          <Button onClick={handleClose}>Close</Button>
           {!errorMessage && activeStep === 0 && (
             <Button
               onClick={() => handleApplyChanges()}
@@ -630,9 +639,6 @@ export default function FeeRecipientDialog({
               Apply changes
             </Button>
           )}
-          <Button onClick={handleClose} variant="outlined" sx={{ borderRadius: 2 }}>
-            Close
-          </Button>
         </DialogActions>
       ) : (
         <WaitBox />
