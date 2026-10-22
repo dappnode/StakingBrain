@@ -3,6 +3,7 @@ import sinon from "sinon";
 import { Manager, Socket } from "socket.io-client";
 import { RPC_MAX_PAYLOAD_BYTES, RPC_TIMEOUT_MS, validateBuilderConfig } from "@stakingbrain/common";
 import { RpcClient } from "../src/socket/rpcClient.js";
+import { createImportRequest } from "../src/utils/createImportRequest.js";
 
 class TestManager extends Manager {
   connectSocket(): void {
@@ -115,6 +116,78 @@ describe("RPC request lifecycle", () => {
         }))
       )
       .catch((error: Error) => error);
+    expect(error).to.have.property("message").that.includes("too large");
+    expect(packets.called).to.equal(false);
+    expect(clock.countTimers()).to.equal(0);
+  });
+
+  for (const count of [1, 10, 100]) {
+    it(`sends ${count} keystores and slashing protection as one text packet`, async () => {
+      const keystores = Array.from({ length: count }, (_, index) =>
+        JSON.stringify({ pubkey: index.toString(16).padStart(96, "0"), description: "Validator 🔑" })
+      );
+      const slashingProtection = JSON.stringify({ metadata: { interchange_format_version: "5" }, data: [] });
+      const request = await createImportRequest({
+        acceptedFiles: keystores.map((keystore, index) => ({
+          file: new File([keystore], `keystore-${index}.json`),
+          pubkey: JSON.parse(keystore).pubkey
+        })),
+        passwords: keystores.map((_, index) => `password-${index}`),
+        tags: keystores.map(() => "solo"),
+        feeRecipients: keystores.map((_, index) => "0x" + index.toString(16).padStart(40, "0")),
+        slashingFile: new File([slashingProtection], "slashing-protection.json")
+      });
+      connect();
+      // Exercise Socket.IO's real encoder, capturing writes instead of opening a transport.
+      const write = sinon.stub();
+      manager.engine = {
+        write,
+        close: sinon.stub(),
+        _hasPingExpired: () => false
+      } as unknown as Manager["engine"];
+      packets.callsFake((packet) => Manager.prototype._packet.call(manager, packet));
+
+      const pending = client.call("importValidators", request);
+      expect(write.calledOnce).to.equal(true);
+      const encoded = write.firstCall.args[0] as string;
+      expect(encoded.startsWith("2")).to.equal(true); // EVENT, rather than BINARY_EVENT (5).
+      const [event, received] = JSON.parse(encoded.slice(encoded.indexOf("[")));
+      expect(event).to.equal("rpc");
+      expect(received.params.importFrom).to.equal("ui");
+      expect(received.params.slashing_protection).to.equal(slashingProtection);
+      expect(received.params.validatorsImportRequest).to.deep.equal(
+        keystores.map((keystore, index) => ({
+          keystore,
+          password: `password-${index}`,
+          tag: "solo",
+          feeRecipient: "0x" + index.toString(16).padStart(40, "0")
+        }))
+      );
+      const response = { data: keystores.map(() => ({ status: "imported" })) };
+      acknowledge({ result: response });
+      expect(await pending).to.deep.equal(response);
+      expect(clock.countTimers()).to.equal(0);
+    });
+  }
+
+  it("counts file contents toward the payload limit even without slashing protection", async () => {
+    const request = await createImportRequest({
+      acceptedFiles: [
+        {
+          file: new File(
+            [JSON.stringify({ pubkey: "11".repeat(48), padding: "x".repeat(RPC_MAX_PAYLOAD_BYTES) })],
+            "key.json"
+          ),
+          pubkey: "11".repeat(48)
+        }
+      ],
+      passwords: ["password"],
+      tags: ["solo"],
+      feeRecipients: ["0x" + "22".repeat(20)]
+    });
+    expect(request.slashing_protection).to.equal(undefined);
+    connect();
+    const error = await client.call("importValidators", request).catch((error: Error) => error);
     expect(error).to.have.property("message").that.includes("too large");
     expect(packets.called).to.equal(false);
     expect(clock.countTimers()).to.equal(0);

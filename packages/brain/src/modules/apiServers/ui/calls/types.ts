@@ -38,12 +38,12 @@ export type ActionRequestOrigin = "ui" | "api";
 export interface CustomImportRequest {
   validatorsImportRequest: CustomValidatorImportRequest[];
   importFrom: ActionRequestOrigin;
-  slashing_protection?: File | string;
+  slashing_protection?: string;
 }
 export interface CustomValidatorImportRequest {
   tag: Tag;
   feeRecipient: string;
-  keystore: File | string;
+  keystore: string;
   password: string;
 }
 

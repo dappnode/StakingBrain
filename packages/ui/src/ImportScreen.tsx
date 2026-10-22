@@ -35,7 +35,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { rpcClient } from "./socket";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
 import { extractPubkey } from "./utils/dataUtils";
-import type { CustomImportRequest, Web3signerPostResponse } from "@stakingbrain/brain";
+import type { Web3signerPostResponse } from "@stakingbrain/brain";
+import { createImportRequest } from "./utils/createImportRequest";
 
 export default function ImportScreen({
   network,
@@ -159,18 +160,13 @@ export default function ImportScreen({
       setImportStatus(ImportStatus.Importing);
       handleClickOpenDialog();
 
-      const importRequest: CustomImportRequest = {
-        importFrom: "ui",
-        slashing_protection: slashingFile,
-        validatorsImportRequest: acceptedFiles.map((f, i) => {
-          return {
-            keystore: f.file,
-            password: passwords[i],
-            tag: tags[i],
-            feeRecipient: feeRecipients[i]
-          };
-        })
-      };
+      const importRequest = await createImportRequest({
+        acceptedFiles,
+        passwords,
+        tags,
+        feeRecipients,
+        slashingFile
+      });
 
       const response = await rpcClient.call("importValidators", importRequest);
 
