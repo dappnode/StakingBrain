@@ -350,6 +350,8 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       }
 
       // AutomaticImport
+      if (pubkeyDetails.importPending !== undefined && typeof pubkeyDetails.importPending !== "boolean")
+        errors.push(`\n  pubkey ${pubkeySubstr}: importPending must be a boolean`);
       if ("builderConfig" in pubkeyDetails && pubkeyDetails.builderConfig !== null)
         validateBuilderConfig(pubkeyDetails.builderConfig);
       if (typeof pubkeyDetails.automaticImport === "undefined") {

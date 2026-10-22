@@ -31,7 +31,7 @@ type ValidatorImportRequest = {
   pubkey: string;
 };
 
-/** Validate before importing; persist signer successes before configuring the validator client. */
+/** Persist import intent before contacting the signer; reconcile uncertain outcomes without deleting keys. */
 export async function importValidators({
   postRequest,
   reloadValidatorsCronTask,
@@ -59,7 +59,8 @@ export async function importValidators({
       )
         throw new Error("Select at least one validator to import");
       if (!["ui", "api"].includes(postRequest.importFrom)) throw new Error("Invalid import origin");
-      const existing = new Set(Object.keys(brainDb.getData()).map((pubkey) => pubkey.toLowerCase()));
+      const existingData = brainDb.getData();
+      const existing = new Map(Object.keys(existingData).map((pubkey) => [pubkey.toLowerCase(), pubkey]));
       const validators: ValidatorImportRequest[] = [];
       const validatorsToPost: ValidatorImportRequest[] = [];
       const results: Web3signerPostResponse = { data: [] };
@@ -113,12 +114,15 @@ export async function importValidators({
             {
               tag,
               feeRecipient,
-              automaticImport: postRequest.importFrom !== "ui"
+              automaticImport: postRequest.importFrom !== "ui",
+              importPending: true
             }
           ])
         );
       // Check all database constraints, including size, before changing signer storage.
       brainDb.validateNewValidators(toDbRecords(validators));
+      // Journal new keys before the signer can change state. Keep uncertain outcomes across restarts.
+      brainDb.addValidators({ validators: toDbRecords(validators) });
 
       // Import keystores and passwords on web3signer API
       const web3signerPostResponse = await signerApi.importRemoteKeys({
@@ -131,31 +135,45 @@ export async function importValidators({
 
       // Signer API import keystore may fail for some keystores, but not all
       // @see https://github.com/ConsenSys/web3signer/issues/713
-      // Remove the pubkeys to avoid adding them to the db
+      // Remove explicit new-key failures, but retain intent when a result is missing.
+      const rejectedNewKeys: string[] = [];
+      const confirmedKeys: string[] = [];
       for (const [index, validator] of validators.entries()) {
         const { pubkey, requestIndex } = validator;
         const response = web3signerPostResponse.data[index] ?? {
           status: "error",
-          message: "Signer did not return a result for this key"
+          message: "Import outcome unknown: signer did not return a result. Import intent retained for recovery."
         };
         results.data[requestIndex] = response;
         const postStatus = response.status;
         if (postStatus === "error") {
-          response.message =
-            (response.message ?? "") + ". Check that the keystore file format is valid and the password is correct.";
+          // A missing result is uncertain, unlike an explicit per-key rejection.
+          if (web3signerPostResponse.data[index]?.status === "error") {
+            if (!existing.has(pubkey)) rejectedNewKeys.push(pubkey);
+            response.message =
+              (response.message ?? "") + ". Check that the keystore file format is valid and the password is correct.";
+          }
           logger.error(`Error importing keystore for pubkey ${shortenPubkey(pubkey)}: ${response.message}`);
-        } else if (postStatus === "duplicate") {
-          logger.warn(`Duplicate keystore for pubkey ${shortenPubkey(pubkey)}`);
-          if (!existing.has(pubkey)) validatorsToPost.push(validator);
-        } else if (postStatus === "imported") {
-          if (!existing.has(pubkey)) validatorsToPost.push(validator);
+        } else if (postStatus === "duplicate" || postStatus === "imported") {
+          if (postStatus === "duplicate") logger.warn(`Duplicate keystore for pubkey ${shortenPubkey(pubkey)}`);
+          const storedKey = existing.get(pubkey);
+          confirmedKeys.push(storedKey ?? pubkey);
+          if (!storedKey || existingData[storedKey].importPending)
+            validatorsToPost.push({
+              ...validator,
+              pubkey: storedKey ?? pubkey,
+              feeRecipient: storedKey ? existingData[storedKey].feeRecipient : validator.feeRecipient
+            });
         }
       }
 
-      if (validatorsToPost.length === 0) return results;
+      brainDb.deleteValidators(rejectedNewKeys);
+      if (confirmedKeys.length > 0)
+        brainDb.updateValidators({
+          validators: Object.fromEntries(confirmedKeys.map((pubkey) => [pubkey, { importPending: undefined }]))
+        });
 
-      // Persist now so reload can repair a failed or interrupted client configuration.
-      brainDb.addValidators({ validators: toDbRecords(validatorsToPost) });
+      if (validatorsToPost.length === 0) return results;
 
       // Import pubkeys on validator API
       await validatorApi

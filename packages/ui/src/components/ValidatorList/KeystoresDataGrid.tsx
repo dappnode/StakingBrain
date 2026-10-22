@@ -344,7 +344,7 @@ export default function KeystoresDataGrid({
           <div>
             {rowData.row.pubkeyInSigner === true ? (
               <CheckCircleIcon style={{ color: "green" }} />
-            ) : rowData.row.pubkeyInSigner ? (
+            ) : rowData.row.pubkeyInSigner === false ? (
               <CancelIcon style={{ color: "red" }} />
             ) : (
               <HelpIcon style={{ color: "grey" }} />
@@ -368,7 +368,7 @@ export default function KeystoresDataGrid({
           <div>
             {rowData.row.pubkeyInValidator === true ? (
               <CheckCircleIcon style={{ color: "green" }} />
-            ) : rowData.row.pubkeyInValidator ? (
+            ) : rowData.row.pubkeyInValidator === false ? (
               <CancelIcon style={{ color: "red" }} />
             ) : (
               <HelpIcon style={{ color: "grey" }} />
@@ -392,7 +392,7 @@ export default function KeystoresDataGrid({
           <div>
             {rowData.row.feeRecipientImported === true ? (
               <CheckCircleIcon style={{ color: "green" }} />
-            ) : rowData.row.feeRecipientImported ? (
+            ) : rowData.row.feeRecipientImported === false ? (
               <CancelIcon style={{ color: "red" }} />
             ) : (
               <HelpIcon style={{ color: "grey" }} />

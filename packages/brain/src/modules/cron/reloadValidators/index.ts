@@ -43,6 +43,20 @@ export async function reloadValidators(
       // 3. DELETE from DB pubkeys that are not in signer API
       await deleteDbPubkeysNotInSigner({ brainDb, dbPubkeys, signerPubkeys });
 
+      const signerKeys = new Set(signerPubkeys.map((pubkey) => pubkey.toLowerCase()));
+      const data = brainDb.getData();
+      const confirmedImports = dbPubkeys.filter(
+        (pubkey) => data[pubkey].importPending && signerKeys.has(pubkey.toLowerCase())
+      );
+      if (confirmedImports.length > 0)
+        brainDb.updateValidators({
+          validators: Object.fromEntries(confirmedImports.map((pubkey) => [pubkey, { importPending: undefined }]))
+        });
+      // Preserve pending records, but do not activate keys the signer has not confirmed.
+      const activeData = Object.fromEntries(
+        Object.entries(brainDb.getData()).filter(([pubkey]) => signerKeys.has(pubkey.toLowerCase()))
+      );
+
       const validatorPubkeys = (await validatorApi.getRemoteKeys()).data.map((keystore) => keystore.pubkey);
       const validatorKeys = new Set(validatorPubkeys.map((pubkey) => pubkey.toLowerCase()));
       const dbKeys = new Set(dbPubkeys.map((pubkey) => pubkey.toLowerCase()));
@@ -51,7 +65,7 @@ export async function reloadValidators(
       await postValidatorPubkeysFromDb({
         validatorApi,
         signerUrl,
-        brainDbPubkeysToAdd: dbPubkeys.filter((pubkey) => !validatorKeys.has(pubkey.toLowerCase())),
+        brainDbPubkeysToAdd: Object.keys(activeData).filter((pubkey) => !validatorKeys.has(pubkey.toLowerCase())),
         validatorPubkeys
       });
 
@@ -65,11 +79,11 @@ export async function reloadValidators(
       // 6. POST to validator API fee recipients that are in DB in validator API
       await postValidatorsFeeRecipientsFromDb({
         validatorApi,
-        dbData: brainDb.getData()
+        dbData: activeData
       });
 
       // Independently retry managed configuration after key imports and fee destinations.
-      await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: brainDb.getData() });
+      await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: activeData });
       logger.debug(`${logPrefix}Finished reloading data`);
     } catch (e) {
       logger.error(`${logPrefix}Error reloading data`, e);

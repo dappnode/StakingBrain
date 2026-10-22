@@ -24,6 +24,8 @@ export interface PubkeyDetails {
   tag: Tag;
   feeRecipient: string;
   automaticImport: boolean;
+  // Durable import intent: absence from the signer is not proof that an in-flight import failed.
+  importPending?: boolean;
   index?: number; // index of the validator. Only available if the validator is active.
   // Absent: unmanaged. Object: original overrides. Null: persistently reset to VC defaults.
   builderConfig?: BuilderConfig | null;

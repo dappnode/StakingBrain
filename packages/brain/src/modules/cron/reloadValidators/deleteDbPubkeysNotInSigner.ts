@@ -15,7 +15,10 @@ export async function deleteDbPubkeysNotInSigner({
   signerPubkeys: string[];
 }): Promise<void> {
   const signerKeys = new Set(signerPubkeys.map((pubkey) => pubkey.toLowerCase()));
-  const dbPubkeysToRemove = dbPubkeys.filter((pubkey) => !signerKeys.has(pubkey.toLowerCase()));
+  const data = brainDb.getData();
+  const dbPubkeysToRemove = dbPubkeys.filter(
+    (pubkey) => !signerKeys.has(pubkey.toLowerCase()) && !data[pubkey]?.importPending
+  );
 
   if (dbPubkeysToRemove.length > 0) {
     logger.debug(`${logPrefix}Found ${dbPubkeysToRemove.length} validators to remove from DB`);

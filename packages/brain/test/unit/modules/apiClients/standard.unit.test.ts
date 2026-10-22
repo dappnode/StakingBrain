@@ -18,7 +18,7 @@ describe("HTTP request deadlines", () => {
   beforeEach(() => {
     clock = sinon.useFakeTimers();
     request = new EventEmitter() as http.ClientRequest;
-    request.end = sinon.stub();
+    request.end = () => request;
     request.destroy = sinon.stub().callsFake((error: Error) => {
       request.emit("error", error);
       return request;

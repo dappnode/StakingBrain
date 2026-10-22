@@ -8,10 +8,7 @@ import { isValidBlsPubkey, prefix0xPubkey } from "@stakingbrain/common";
 
 /**
  * Delete keystores:
- * 1. Write on db
- * 2. Delete keystores on web3signer API
- * 3. Delete pubkeys on validator API
- * 4. Delete feeRecipient on Validator API
+ * Stop signing first. Only remove client settings for confirmed deletions.
  * @param deleteRequest
  * @returns
  */
@@ -43,27 +40,25 @@ export async function deleteValidators({
       // Pause future ticks while this operation holds the shared validator lock.
       reloadValidatorsCronTask.stop();
 
-      // Delete feeRecipient on Validator API
-      for (const pubkey of deleteRequest.pubkeys)
-        await validatorApi
-          .deleteFeeRecipient(pubkey)
-          .then(() => logger.debug(`Deleted fee recipient in validator API`))
-          .catch((err) => logger.error(`Error deleting validator feeRecipient`, err));
-      // Delete pubkeys on validator API
-      await validatorApi
-        .deleteRemoteKeys(deleteRequest)
-        .then(() => logger.debug(`Deleted pubkeys in validator API`))
-        .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
-
       // Delete keystores on web3signer API
       const web3signerDeleteResponse = await signerApi.deleteRemoteKeys(deleteRequest);
 
-      // Write on db
-      brainDb.deleteValidators(
-        deleteRequest.pubkeys.filter((_, index) =>
-          ["deleted", "not_found", "not_active"].includes(web3signerDeleteResponse.data[index]?.status)
-        )
+      const deletedPubkeys = deleteRequest.pubkeys.filter((_, index) =>
+        ["deleted", "not_found", "not_active"].includes(web3signerDeleteResponse.data[index]?.status)
       );
+      // Persist before client cleanup so reload can finish an interrupted deletion.
+      brainDb.deleteValidators(deletedPubkeys);
+      if (deletedPubkeys.length > 0) {
+        const clientResponse = await validatorApi
+          .deleteRemoteKeys({ pubkeys: deletedPubkeys })
+          .catch((err) => logger.error(`Error deleting validator pubkeys`, err));
+        for (const [index, pubkey] of deletedPubkeys.entries()) {
+          if (!clientResponse || !["deleted", "not_found"].includes(clientResponse.data[index]?.status)) continue;
+          await validatorApi
+            .deleteFeeRecipient(pubkey)
+            .catch((err) => logger.error(`Error deleting validator feeRecipient`, err));
+        }
+      }
 
       // IMPORTANT: start the cron
       reloadValidatorsCronTask.start();
