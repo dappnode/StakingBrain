@@ -12,8 +12,8 @@ export interface StakingBrainDb {
   [pubkey: string]: PubkeyDetails;
 }
 
-export interface StakingBrainDbUpdate {
-  [pubkey: string]: Partial<Omit<PubkeyDetails, "automaticImport" | "tag">>;
+export interface ValidatorUpdate extends Partial<Omit<PubkeyDetails, "automaticImport" | "tag">> {
+  pubkey: string;
 }
 
 export interface CustomValidators extends PubkeyDetails {

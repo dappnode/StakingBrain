@@ -49,12 +49,10 @@ describe("One-time MEV-Boost builder settings import", () => {
   });
 
   it("persists exact settings for unmanaged validators and preserves existing choices and resets", () => {
-    brainDb.updateValidators({
-      validators: {
-        [keys[1]]: { builderConfig: {} },
-        [keys[2]]: { builderConfig: null }
-      }
-    });
+    brainDb.updateValidators([
+      { pubkey: keys[1], builderConfig: {} },
+      { pubkey: keys[2], builderConfig: null }
+    ]);
     const before = brainDb.getData();
     expect(run(brainDb, markerPath)).to.deep.equal({ imported: 1, skipped: 2 });
     const persisted = new BrainDataBase(dbPath).getData();
@@ -67,12 +65,10 @@ describe("One-time MEV-Boost builder settings import", () => {
 
   it("ignores retained, changed and invalid IDs after a restart and never configures future keys", () => {
     expect(run(brainDb, markerPath)).to.deep.equal({ imported: 3, skipped: 0 });
-    brainDb.updateValidators({
-      validators: {
-        [keys[0]]: { builderConfig: { builders: [] } },
-        [keys[1]]: { builderConfig: null }
-      }
-    });
+    brainDb.updateValidators([
+      { pubkey: keys[0], builderConfig: { builders: [] } },
+      { pubkey: keys[1], builderConfig: null }
+    ]);
     brainDb.addValidators({
       validators: { [keys[3]]: { tag: "solo", feeRecipient: recipient, automaticImport: false } }
     });
@@ -96,9 +92,7 @@ describe("One-time MEV-Boost builder settings import", () => {
   });
 
   it("completes without rewriting the database when every validator already has settings", () => {
-    brainDb.updateValidators({
-      validators: Object.fromEntries(keys.slice(0, 3).map((pubkey) => [pubkey, { builderConfig: null }]))
-    });
+    brainDb.updateValidators(keys.slice(0, 3).map((pubkey) => ({ pubkey, builderConfig: null })));
     const update = sinon.spy(brainDb, "updateValidators");
     expect(run(brainDb, markerPath)).to.deep.equal({ imported: 0, skipped: 3 });
     expect(update.called).to.equal(false);
@@ -146,7 +140,7 @@ describe("One-time MEV-Boost builder settings import", () => {
     expect(() => run(brainDb, markerPath)).to.throw();
     expect(fs.existsSync(markerPath)).to.equal(false);
     expect(brainDb.getData()[keys[0]].builderConfig).to.deep.equal(config);
-    brainDb.updateValidators({ validators: { [keys[0]]: { builderConfig: { builders: [] } } } });
+    brainDb.updateValidators([{ pubkey: keys[0], builderConfig: { builders: [] } }]);
     fs.mkdirSync(path.dirname(markerPath));
     expect(run(new BrainDataBase(dbPath), markerPath)).to.deep.equal({ imported: 0, skipped: 3 });
     expect(brainDb.getData()[keys[0]].builderConfig).to.deep.equal({ builders: [] });

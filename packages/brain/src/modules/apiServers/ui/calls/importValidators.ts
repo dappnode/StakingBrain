@@ -169,9 +169,7 @@ export async function importValidators({
 
       brainDb.deleteValidators(rejectedNewKeys);
       if (confirmedKeys.length > 0)
-        brainDb.updateValidators({
-          validators: Object.fromEntries(confirmedKeys.map((pubkey) => [pubkey, { importPending: undefined }]))
-        });
+        brainDb.updateValidators(confirmedKeys.map((pubkey) => ({ pubkey, importPending: undefined })));
 
       if (validatorsToPost.length === 0) return results;
 

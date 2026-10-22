@@ -35,14 +35,12 @@ export function importBuilderIds({
   };
 
   const validators = Object.entries(brainDb.getData());
-  const updates = Object.fromEntries(
-    validators
-      .filter(([, details]) => details.builderConfig === undefined)
-      .map(([pubkey]) => [pubkey, { builderConfig }])
-  );
-  const imported = Object.keys(updates).length;
+  const updates = validators
+    .filter(([, details]) => details.builderConfig === undefined)
+    .map(([pubkey]) => ({ pubkey, builderConfig }));
+  const imported = updates.length;
   const skipped = validators.length - imported;
-  if (imported > 0) brainDb.updateValidators({ validators: updates });
+  if (imported > 0) brainDb.updateValidators(updates);
 
   // Mark completion only after saving. Retries preserve existing settings and edits.
   fs.writeFileSync(markerPath, "", { mode: 0o600, flag: "wx" });

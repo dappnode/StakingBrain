@@ -7,7 +7,7 @@ import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import { Web3SignerApi, ValidatorApi } from "../../../../src/modules/apiClients/index.js";
 import logger from "../../../../src/modules/logger/index.js";
 
-describe("Database initialization", () => {
+describe("Validator database", () => {
   let directory: string;
   let filename: string;
   beforeEach(() => {
@@ -50,6 +50,62 @@ describe("Database initialization", () => {
     expect(db.getData()).to.deep.equal(records);
     expect(signer.listRemoteKeys.called).to.equal(false);
     expect(validator.getBuilderConfig.called).to.equal(false);
+  });
+
+  it("applies partial update records without persisting pubkeys or erasing omitted settings", () => {
+    const pubkey = "0x" + "ab".repeat(48);
+    const original = {
+      tag: "solo" as const,
+      feeRecipient: "0x" + "cd".repeat(20),
+      automaticImport: false,
+      importPending: true,
+      index: 42,
+      builderConfig: { min_bid: "100" }
+    };
+    const db = new BrainDataBase(filename);
+    db.addValidators({ validators: { [pubkey]: original } });
+
+    db.updateValidators([{ pubkey, importPending: undefined, builderConfig: null }]);
+    const saved = new BrainDataBase(filename).getData()[pubkey];
+    expect(saved).to.deep.equal({
+      tag: original.tag,
+      feeRecipient: original.feeRecipient,
+      automaticImport: original.automaticImport,
+      index: original.index,
+      builderConfig: null
+    });
+
+    db.updateValidators([{ pubkey, builderConfig: { builders: [] } }]);
+    expect(db.getData()[pubkey].builderConfig).to.deep.equal({ builders: [] });
+    expect(fs.statSync(filename).mode & 0o777).to.equal(0o600);
+  });
+
+  it("rejects invalid or duplicate update records before writing any part of the batch", () => {
+    const pubkeys = ["ab", "cd"].map((byte) => "0x" + byte.repeat(48));
+    const feeRecipient = "0x" + "11".repeat(20);
+    const db = new BrainDataBase(filename);
+    db.addValidators({
+      validators: Object.fromEntries(
+        pubkeys.map((pubkey) => [pubkey, { tag: "solo", feeRecipient, automaticImport: false }])
+      )
+    });
+    const before = fs.readFileSync(filename, "utf8");
+
+    expect(() =>
+      db.updateValidators([
+        { pubkey: pubkeys[0], builderConfig: { builders: [] } },
+        { pubkey: pubkeys[1], feeRecipient: "invalid" }
+      ])
+    ).to.throw("fee recipient is invalid");
+    expect(fs.readFileSync(filename, "utf8")).to.equal(before);
+
+    expect(() =>
+      db.updateValidators([
+        { pubkey: pubkeys[0], index: 1 },
+        { pubkey: pubkeys[0], index: 2 }
+      ])
+    ).to.throw("duplicate update");
+    expect(fs.readFileSync(filename, "utf8")).to.equal(before);
   });
 
   it("refuses corrupted JSON without erasing validator metadata", async () => {
