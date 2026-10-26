@@ -40,6 +40,7 @@ export function startLaunchpadApi({
     createFeeRecipientsRouter({
       brainDb,
       signerApi,
+      signerUrl,
       validatorApi,
       beaconchainApi,
       reloadValidatorsCronTask

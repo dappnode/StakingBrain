@@ -242,6 +242,7 @@ describe("Key management partial failures", () => {
     const result = await updateValidators({
       brainDb,
       validatorApi,
+      signerUrl: "http://signer:9000",
       reloadValidatorsCronTask,
       customValidatorUpdateRequest: keys.map((pubkey) => ({ pubkey, feeRecipient: recipient }))
     }).catch((error: Error) => error);

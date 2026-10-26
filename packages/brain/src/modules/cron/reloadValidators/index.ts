@@ -49,9 +49,7 @@ export async function reloadValidators(
         (pubkey) => data[pubkey].importPending && signerKeys.has(pubkey.toLowerCase())
       );
       if (confirmedImports.length > 0)
-        brainDb.updateValidators({
-          validators: Object.fromEntries(confirmedImports.map((pubkey) => [pubkey, { importPending: undefined }]))
-        });
+        brainDb.updateValidators(confirmedImports.map((pubkey) => ({ pubkey, importPending: undefined })));
       // Preserve pending records, but do not activate keys the signer has not confirmed.
       const activeData = Object.fromEntries(
         Object.entries(brainDb.getData()).filter(([pubkey]) => signerKeys.has(pubkey.toLowerCase()))

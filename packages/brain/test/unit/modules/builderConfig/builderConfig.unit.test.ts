@@ -83,6 +83,7 @@ describe("Builder configuration management", () => {
       )
     });
     api = new RecordingValidator();
+    api.remoteKeys = [...keys];
     cron = sinon.createStubInstance(CronJob);
     sinon.stub(logger, "error");
   });
@@ -96,7 +97,30 @@ describe("Builder configuration management", () => {
     validatorApi: ValidatorApi,
     reloadValidatorsCronTask: CronJob,
     requests: Parameters<typeof updateValidators>[0]["customValidatorUpdateRequest"]
-  ) => updateValidators({ brainDb, validatorApi, reloadValidatorsCronTask, customValidatorUpdateRequest: requests });
+  ) =>
+    updateValidators({
+      brainDb,
+      validatorApi,
+      signerUrl: "http://signer:9000",
+      reloadValidatorsCronTask,
+      customValidatorUpdateRequest: requests
+    });
+
+  it("adds missing keys before applying builder settings after a validator restart", async () => {
+    api.remoteKeys = [keys[1]];
+    await update(db, api, cron, [
+      { pubkey: keys[0], builderConfig: config },
+      { pubkey: keys[1], builderConfig: {} }
+    ]);
+    const imports = api.calls.filter(({ endpoint, method }) => endpoint.endsWith("remotekeys") && method === "POST");
+    expect(imports).to.have.length(1);
+    expect(JSON.parse(imports[0].body!)).to.deep.equal({
+      remote_keys: [{ pubkey: keys[0], url: "http://signer:9000" }]
+    });
+    const writes = api.calls.filter(({ endpoint }) => endpoint.includes(keys[0]));
+    expect(writes.map(({ endpoint }) => endpoint.split("/").at(-1))).to.deep.equal(["feerecipient", "builder_config"]);
+    expect(api.getBuilderConfigStatus(keys[0])?.status).to.equal("applied");
+  });
 
   it("serializes sparse replacement and uint64 strings and supports GET/DELETE", async () => {
     await api.setBuilderConfig(config, keys[0].slice(2));
@@ -123,7 +147,7 @@ describe("Builder configuration management", () => {
     await update(db, api, cron, [{ pubkey: keys[0].slice(2), builderConfig: config }]);
     const reopened = new BrainDataBase(path.join(directory, "db.json"));
     expect(reopened.getData()[keys[0]].builderConfig).to.deep.equal(config);
-    reopened.updateValidators({ validators: { [keys[0]]: { index: 77 } } });
+    reopened.updateValidators([{ pubkey: keys[0], index: 77 }]);
     await update(reopened, api, cron, [{ pubkey: keys[0], feeRecipient: recipient }]);
     expect(reopened.getData()[keys[0]]).to.include({ index: 77, feeRecipient: recipient });
     expect(reopened.getData()[keys[0]].builderConfig).to.deep.equal(config);
@@ -156,7 +180,7 @@ describe("Builder configuration management", () => {
   });
 
   it("finishes an in-flight reload before applying a newer reset", async () => {
-    db.updateValidators({ validators: Object.fromEntries(keys.map((key) => [key, { builderConfig: config }])) });
+    db.updateValidators(keys.map((pubkey) => ({ pubkey, builderConfig: config })));
     const signer = sinon.createStubInstance(Web3SignerApi);
     signer.upcheck.resolves();
     signer.listRemoteKeys.resolves({
@@ -370,7 +394,10 @@ describe("Builder configuration management", () => {
   });
 
   it("reimports keys after restarts, retries failures/resets and replays sparse overrides on every reload", async () => {
-    db.updateValidators({ validators: { [keys[0]]: { builderConfig: config }, [keys[1]]: { builderConfig: null } } });
+    db.updateValidators([
+      { pubkey: keys[0], builderConfig: config },
+      { pubkey: keys[1], builderConfig: null }
+    ]);
     const signer = sinon.createStubInstance(Web3SignerApi);
     signer.upcheck.resolves();
     signer.listRemoteKeys.resolves({
@@ -411,7 +438,7 @@ describe("Builder configuration management", () => {
 
   it("preserves Smooth payout destination and protocol fee-recipient restrictions", async () => {
     const smooth = MEV_SP_ADDRESS_MAINNET;
-    db.updateValidators({ validators: { [keys[0]]: { feeRecipient: smooth } } });
+    db.updateValidators([{ pubkey: keys[0], feeRecipient: smooth }]);
     await update(db, api, cron, [{ pubkey: keys[0], builderConfig: { builders: [], builder_boost_factor: "0" } }]);
     expect(db.getData()[keys[0]].feeRecipient).to.equal(smooth);
     // Other protocols may also configure builders without gaining fee-recipient editing rights.
@@ -496,9 +523,7 @@ describe("Builder configuration management", () => {
       }))
     };
     const before = fs.readFileSync(path.join(directory, "db.json"), "utf8");
-    expect(() =>
-      db.updateValidators({ validators: Object.fromEntries(manyKeys.map((key) => [key, { builderConfig: large }])) })
-    ).to.throw("too big");
+    expect(() => db.updateValidators(manyKeys.map((pubkey) => ({ pubkey, builderConfig: large })))).to.throw("too big");
     expect(fs.readFileSync(path.join(directory, "db.json"), "utf8")).to.equal(before);
     expect(db.getData()[manyKeys[0]]).not.to.have.property("builderConfig");
   });

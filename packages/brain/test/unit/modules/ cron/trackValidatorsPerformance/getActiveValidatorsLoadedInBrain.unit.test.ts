@@ -8,7 +8,7 @@ import {
   ValidatorStatus
 } from "../../../../../src/modules/apiClients/types.js";
 import { BrainDataBase } from "../../../../../src/modules/db/index.js";
-import { StakingBrainDb } from "../../../../../src/modules/db/types.js";
+import { StakingBrainDb, ValidatorUpdate } from "../../../../../src/modules/db/types.js";
 import { setActiveValidatorsLoadedInBrain } from "../../../../../src/modules/cron/trackValidatorsPerformance/setActiveValidatorsLoadedInBrain.js";
 import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common";
 
@@ -130,8 +130,8 @@ class BrainDataBaseMock extends BrainDataBase {
     return this.data;
   }
 
-  updateValidators({ validators }: { validators: StakingBrainDb }) {
-    this.data = { ...this.data, ...validators };
+  updateValidators(validators: readonly ValidatorUpdate[]) {
+    for (const { pubkey, ...changes } of validators) this.data[pubkey] = { ...this.data[pubkey], ...changes };
   }
 }
 

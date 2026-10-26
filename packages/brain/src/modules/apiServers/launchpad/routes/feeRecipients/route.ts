@@ -41,12 +41,14 @@ import { ValidatorApi } from "../../../../apiClients/validator/index.js";
 export const createFeeRecipientsRouter = ({
   brainDb,
   signerApi,
+  signerUrl,
   validatorApi,
   beaconchainApi,
   reloadValidatorsCronTask
 }: {
   brainDb: BrainDataBase;
   signerApi: Web3SignerApi;
+  signerUrl: string;
   validatorApi: ValidatorApi;
   beaconchainApi: BeaconchainApi;
   reloadValidatorsCronTask: CronJob;
@@ -168,6 +170,7 @@ export const createFeeRecipientsRouter = ({
         brainDb,
         validatorApi,
         customValidatorUpdateRequest: validatorsToUpdate.map(({ pubkey, feeRecipient }) => ({ pubkey, feeRecipient })),
+        signerUrl,
         requestFrom: "api"
       });
 
