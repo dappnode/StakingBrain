@@ -32,7 +32,7 @@ export function startLaunchpadApi({
   allowedOriginsFromEnv: string | string[] | null;
 }): http.Server {
   const app = express();
-  app.use(express.json({ limit: RPC_MAX_PAYLOAD_BYTES }));
+  app.use(express.json({ limit: RPC_MAX_PAYLOAD_BYTES, inflate: false }));
   app.use(cors({ origin: allowedOriginsFromEnv ?? allowedOrigins }));
 
   app.use(createKeystoresRouter({ reloadValidatorsCronTask, brainDb, network, validatorApi, signerApi, signerUrl }));

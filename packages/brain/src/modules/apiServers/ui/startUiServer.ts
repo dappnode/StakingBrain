@@ -86,7 +86,7 @@ export function startUiServer({
       origin: allowedOriginsFromEnv ?? allowedOrigins(network)
     })
   );
-  app.use(express.json());
+  app.use(express.json({ inflate: false }));
   app.use(express.static(uiBuildPath));
   // path-to-regexp (used by express >=5.0.0) has a breaking change
   // where it does not allow to use wildcard among other characters
