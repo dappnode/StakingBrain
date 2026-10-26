@@ -1,7 +1,9 @@
-ARG DOCKER_IMAGE=node:20.17.0-alpine3.20
+ARG DOCKER_IMAGE=node:24.22.1-alpine3.24
 
 # Build
 FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE} AS build-stage
+
+RUN apk add --no-cache --upgrade ca-certificates ca-certificates-bundle && update-ca-certificates
 
 WORKDIR /app
 COPY package.json yarn.lock tsconfig.json .yarnrc.yml ./
@@ -21,6 +23,8 @@ RUN yarn install --immutable && \
 # Production
 FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE}
 ENV NODE_ENV=production
+RUN apk add --no-cache --upgrade ca-certificates ca-certificates-bundle && update-ca-certificates
+
 WORKDIR /app
 COPY ./packages/brain/tls ./tls
 

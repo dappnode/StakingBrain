@@ -1,5 +1,7 @@
-ARG DOCKER_IMAGE=node:20.17.0-alpine3.20
+ARG DOCKER_IMAGE=node:24.22.1-alpine3.24
 FROM --platform=$TARGETPLATFORM ${DOCKER_IMAGE} as build-stage
+
+RUN apk add --no-cache --upgrade ca-certificates ca-certificates-bundle && update-ca-certificates
 
 ENV NODE_ENV=development
 WORKDIR /app

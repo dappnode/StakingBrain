@@ -15,7 +15,7 @@ export function startBrainApi({
   allowedOriginsFromEnv: string | string[] | null;
 }): http.Server {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ inflate: false }));
   app.use(cors({ origin: allowedOriginsFromEnv ?? allowedOrigins }));
 
   app.use(createBrainValidatorsRouter({ brainDb }));
