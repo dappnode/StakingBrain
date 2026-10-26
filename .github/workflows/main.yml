@@ -10,20 +10,24 @@ on:
 
 jobs:
   docker:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      # Set up Docker Buildx for multi-arch support
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-      # Build multi-arch image
-      - name: Build Docker image (multi-arch)
-        run: |
-          docker buildx build --platform linux/amd64,linux/arm64 .
-      # Docker development
-      - name: Docker development
-        run: docker buildx build -f Dockerfile.brain.dev --platform linux/amd64,linux/arm64 .
+      - name: Build production image
+        run: docker buildx build --platform linux/${{ matrix.arch }} .
+      - name: Build development image
+        run: docker buildx build -f Dockerfile.brain.dev --platform linux/${{ matrix.arch }} .
   build:
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +37,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.1
 
       - name: Enable Corepack
         run: corepack enable
