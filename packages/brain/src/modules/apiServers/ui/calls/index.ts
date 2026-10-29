@@ -1,4 +1,3 @@
-import { beaconchaFetchAllValidatorsInfo, beaconchaFetchValidatorsInfo } from "./beaconchaApi.js";
 import { fetchValidatorsPerformanceData } from "./fetchValidatorsPerformanceData.js";
 import { deleteValidators } from "./deleteValidators.js";
 import { exitValidators, getExitValidators } from "./exitValidators.js";
@@ -13,19 +12,12 @@ import { CronJob } from "../../../cron/cron.js";
 import { ActionRequestOrigin, CustomImportRequest, CustomValidatorUpdateRequest, RpcMethods } from "./types.js";
 import { Web3signerDeleteRequest } from "../../../apiClients/types.js";
 import { NumberOfDaysToQuery } from "../../../validatorsDataIngest/types.js";
-import {
-  BeaconchainApi,
-  BlockExplorerApi,
-  PostgresClient,
-  ValidatorApi,
-  Web3SignerApi
-} from "../../../apiClients/index.js";
+import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../../../apiClients/index.js";
 import { BrainConfig } from "../../../config/types.js";
 import { getBuilderRelayPresets } from "../../../config/builderRelayPresets.js";
 
 export const createRpcMethods = ({
   postgresClient,
-  blockExplorerApi,
   beaconchainApi,
   validatorApi,
   signerApi,
@@ -34,7 +26,6 @@ export const createRpcMethods = ({
   brainConfig
 }: {
   postgresClient: PostgresClient;
-  blockExplorerApi: BlockExplorerApi;
   beaconchainApi: BeaconchainApi;
   validatorApi: ValidatorApi;
   signerApi: Web3SignerApi;
@@ -48,10 +39,6 @@ export const createRpcMethods = ({
   return {
     getBuilderRelayPresets: async () => getBuilderRelayPresets(network),
     getBuilderConfigs: async (pubkeys: string[]) => await getBuilderConfigs({ pubkeys, brainDb, validatorApi }),
-    beaconchaFetchAllValidatorsInfo: async (pubkeys: string[]) =>
-      await beaconchaFetchAllValidatorsInfo({ blockExplorerApi, pubkeys }),
-    beaconchaFetchValidatorsInfo: async (pubkeys: string[]) =>
-      await beaconchaFetchValidatorsInfo({ blockExplorerApi, pubkeys }),
     deleteValidators: async (deleteRequest: Web3signerDeleteRequest) =>
       await deleteValidators({ brainDb, reloadValidatorsCronTask, validatorApi, signerApi, deleteRequest }),
     exitValidators: async ({ pubkeys }: { pubkeys: string[] }) =>

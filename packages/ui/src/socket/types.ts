@@ -1,5 +1,4 @@
 import type {
-  BeaconchaGetResponse,
   BeaconchainPoolVoluntaryExitsPostRequest,
   CustomImportRequest,
   CustomValidatorGetResponse,
@@ -17,9 +16,6 @@ import { BuilderRelayPresets, StakerConfig } from "@stakingbrain/common";
 
 // Define the type for RPC methods
 export interface RpcMethods {
-  // BeaconchaApi
-  beaconchaFetchAllValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse[]>;
-  beaconchaFetchValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse>;
   // Validators
   importValidators: (postRequest: CustomImportRequest) => Promise<Web3signerPostResponse>;
   updateValidators: (updateRequest: CustomValidatorUpdateRequest[]) => Promise<void>;
