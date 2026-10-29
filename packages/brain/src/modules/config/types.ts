@@ -8,7 +8,6 @@ export interface BrainConfig {
 export interface ApisConfig {
   prometheusUrl: string;
   signerUrl: string;
-  blockExplorerUrl: string;
   validatorUrl: string;
   beaconchainUrl: string;
   executionClientUrl: string;

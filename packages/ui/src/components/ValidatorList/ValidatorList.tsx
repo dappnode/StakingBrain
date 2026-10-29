@@ -113,22 +113,20 @@ export default function ValidatorList({
                 setEditFeesOpen={setEditFeesOpen}
                 setBuilderConfigOpen={setBuilderConfigOpen}
                 setExitOpen={setExitOpen}
-                summaryUrlBuildingStatus={summaryUrlBuildingStatus}
                 setSummaryUrlBuildingStatus={setSummaryUrlBuildingStatus}
                 mevSpFeeRecipient={smoothAddress}
               />
 
               {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.Error && (
                 <Alert severity="warning" sx={{ marginTop: 2 }}>
-                  There was an error loading the dashboard. The number of API calls allowed by the explorer might have
-                  been exceeded or the network might be invalid. Please wait for a minute and refresh the page.
+                  There is no explorer dashboard configured for this network.
                 </Alert>
               )}
 
               {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.NoIndexes && (
                 <Alert severity="warning" sx={{ marginTop: 2 }}>
-                  There was an error loading the dashboard. The explorer may not be able to show a dashboard for all
-                  your validators or some of them might not have been indexed yet. Have you done a deposit?
+                  The dashboard could not be opened because some selected validators do not have an index yet. Check
+                  that your consensus client is synced and the validators have been deposited, then refresh the page.
                 </Alert>
               )}
 

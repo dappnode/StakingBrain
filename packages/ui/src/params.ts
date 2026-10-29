@@ -1,17 +1,10 @@
 import { Network } from "@stakingbrain/common";
-import type { ApiParams } from "@stakingbrain/brain";
 
-export const beaconchaApiParamsMap = new Map<string, Omit<ApiParams, "host">>([
-  ["mainnet", { baseUrl: "https://beaconcha.in", apiPath: "/api/v1/" }],
-  ["gnosis", { baseUrl: "https://gnosischa.in", apiPath: "/api/v1/" }],
-  [
-    "lukso",
-    {
-      baseUrl: "https://explorer.consensus.mainnet.lukso.network",
-      apiPath: "/api/v1/"
-    }
-  ],
-  ["hoodi", { baseUrl: "https://hoodi.beaconcha.in", apiPath: "/api/v1/" }]
+export const blockExplorerUrls = new Map<string, string>([
+  ["mainnet", "https://beaconcha.in"],
+  ["gnosis", "https://gnosischa.in"],
+  ["lukso", "https://explorer.consensus.mainnet.lukso.network"],
+  ["hoodi", "https://hoodi.beaconcha.in"]
 ]);
 
 export interface AppParams {
