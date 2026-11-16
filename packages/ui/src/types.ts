@@ -35,7 +35,6 @@ export enum BeaconchaUrlBuildingStatus {
   NotStarted,
   Success,
   Error,
-  InProgress,
   NoIndexes
 }
 

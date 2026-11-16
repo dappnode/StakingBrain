@@ -1,6 +1,5 @@
 import { BuilderConfig, BuilderConfigStatus, BuilderRelayPresets, StakerConfig, Tag } from "@stakingbrain/common";
 import type {
-  BeaconchaGetResponse,
   Web3signerDeleteRequest,
   Web3signerDeleteResponse,
   ValidatorExitExecute,
@@ -14,8 +13,6 @@ import { NumberOfDaysToQuery } from "../../../validatorsDataIngest/types.js";
 // Define the type for RPC methods
 export interface RpcMethods {
   getBuilderRelayPresets: () => Promise<BuilderRelayPresets>;
-  beaconchaFetchAllValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse[]>;
-  beaconchaFetchValidatorsInfo: (pubkeys: string[]) => Promise<BeaconchaGetResponse>;
   deleteValidators: (deleteRequest: Web3signerDeleteRequest) => Promise<Web3signerDeleteResponse>;
   exitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<ValidatorExitExecute[]>;
   getExitValidators: ({ pubkeys }: { pubkeys: string[] }) => Promise<BeaconchainPoolVoluntaryExitsPostRequest[]>;

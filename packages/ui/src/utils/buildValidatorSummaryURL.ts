@@ -1,20 +1,18 @@
-import type { BeaconchaGetResponse } from "@stakingbrain/brain";
-import { beaconchaApiParamsMap } from "../params";
+import { blockExplorerUrls } from "../params";
 
 export default function buildValidatorSummaryURL({
-  allValidatorsInfo,
+  validatorIndexes,
   network
 }: {
-  allValidatorsInfo: BeaconchaGetResponse[];
+  validatorIndexes: string[];
   network: string;
 }): string {
-  if (!beaconchaApiParamsMap.has(network)) {
+  const baseUrl = blockExplorerUrls.get(network);
+  if (!baseUrl) {
     throw new Error(`Invalid network: ${network}`);
   }
 
-  const baseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
-  if (!baseUrl) return "";
+  if (validatorIndexes.length === 0 || validatorIndexes.some((index) => !/^\d+$/.test(index))) return "";
 
-  const indexes = allValidatorsInfo.flatMap((chunk) => chunk.data.map(({ validatorindex }) => validatorindex));
-  return baseUrl + "/dashboard?validators=" + indexes.join(",");
+  return baseUrl + "/dashboard?validators=" + validatorIndexes.join(",");
 }

@@ -11,13 +11,7 @@ import { ConsensusClient, ExecutionClient, Network } from "@stakingbrain/common"
 import { startBrainApi } from "../../../src/modules/apiServers/brain/startBrainApi.js";
 import { startLaunchpadApi } from "../../../src/modules/apiServers/launchpad/startLaunchpadApi.js";
 import { startUiServer } from "../../../src/modules/apiServers/ui/startUiServer.js";
-import {
-  BeaconchainApi,
-  BlockExplorerApi,
-  PostgresClient,
-  ValidatorApi,
-  Web3SignerApi
-} from "../../../src/modules/apiClients/index.js";
+import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../../../src/modules/apiClients/index.js";
 import { BrainDataBase } from "../../../src/modules/db/index.js";
 import { CronJob } from "../../../src/modules/cron/cron.js";
 import { params } from "../../../src/params.js";
@@ -85,7 +79,6 @@ describe("JSON request content encoding", () => {
         signerApi,
         beaconchainApi,
         reloadValidatorsCronTask,
-        blockExplorerApi: sinon.createStubInstance(BlockExplorerApi),
         postgresClient: sinon.createStubInstance(PostgresClient),
         uiBuildPath: directory,
         allowedOriginsFromEnv,
@@ -106,7 +99,6 @@ describe("JSON request content encoding", () => {
             executionClientUrl: signerUrl,
             prometheusUrl: signerUrl,
             dappmanagerUrl: signerUrl,
-            blockExplorerUrl: signerUrl,
             postgresUrl: signerUrl,
             token: "",
             tlsCert: null,

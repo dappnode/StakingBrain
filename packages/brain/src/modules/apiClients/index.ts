@@ -1,4 +1,3 @@
-import { BlockExplorerApi } from "./blockExplorer/index.js";
 import { DappmanagerApi } from "./dappmanager/index.js";
 import { PrometheusApi } from "./prometheus/index.js";
 import { BeaconchainApi } from "./beaconchain/index.js";
@@ -9,7 +8,6 @@ import { BrainConfig } from "../config/types.js";
 import { DappnodeSignatureVerifier } from "./signatureVerifier/index.js";
 
 export {
-  BlockExplorerApi,
   DappmanagerApi,
   PrometheusApi,
   BeaconchainApi,
@@ -20,18 +18,8 @@ export {
 };
 
 export const getApiClients = (brainConfig: BrainConfig) => {
-  const {
-    prometheusUrl,
-    signerUrl,
-    blockExplorerUrl,
-    validatorUrl,
-    beaconchainUrl,
-    dappmanagerUrl,
-    postgresUrl,
-    token,
-    tlsCert,
-    host
-  } = brainConfig.apis;
+  const { prometheusUrl, signerUrl, validatorUrl, beaconchainUrl, dappmanagerUrl, postgresUrl, token, tlsCert, host } =
+    brainConfig.apis;
   const { minGenesisTime, secondsPerSlot, slotsPerEpoch, network } = brainConfig.chain;
   return {
     prometheusApi: new PrometheusApi({
@@ -49,7 +37,6 @@ export const getApiClients = (brainConfig: BrainConfig) => {
       },
       network
     ),
-    blockExplorerApi: new BlockExplorerApi({ baseUrl: blockExplorerUrl }, network),
     validatorApi: new ValidatorApi(
       {
         baseUrl: validatorUrl,

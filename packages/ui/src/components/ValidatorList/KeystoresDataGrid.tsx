@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { DataGrid, GridAlignment, GridRowId } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import { beaconchaApiParamsMap } from "../../params";
+import { blockExplorerUrls } from "../../params";
 import {
   MAINNET_ORACLE_URL,
   TESTNET_ORACLE_URL,
@@ -16,7 +16,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HelpIcon from "@mui/icons-material/Help";
-import { capitalize, Chip, CircularProgress, IconButton, Paper, Stack, Tooltip } from "@mui/material";
+import { capitalize, Chip, IconButton, Paper, Stack, Tooltip } from "@mui/material";
 import { PageHeader } from "../Layout/PageLayout";
 import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -27,9 +27,8 @@ import { Link } from "react-router-dom";
 import { BeaconchaUrlBuildingStatus, SmoothStatusByPubkey } from "../../types";
 import buildValidatorSummaryURL from "../../utils/buildValidatorSummaryURL";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { rpcClient } from "../../socket";
 import { selectedGridRowIds } from "../../utils/dataUtils";
-import type { BeaconchaGetResponse, CustomValidatorGetResponse } from "@stakingbrain/brain";
+import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 import { SmoothValidatorByIndexApiResponse, SmoothValidator, MevSpSubscriptionStatus } from "../../types";
 
 export default function KeystoresDataGrid({
@@ -43,7 +42,6 @@ export default function KeystoresDataGrid({
   setEditFeesOpen,
   setBuilderConfigOpen,
   setExitOpen,
-  summaryUrlBuildingStatus,
   setSummaryUrlBuildingStatus,
   mevSpFeeRecipient
 }: {
@@ -57,22 +55,15 @@ export default function KeystoresDataGrid({
   setEditFeesOpen(open: boolean): void;
   setBuilderConfigOpen(open: boolean): void;
   setExitOpen(open: boolean): void;
-  summaryUrlBuildingStatus: BeaconchaUrlBuildingStatus;
   setSummaryUrlBuildingStatus: (status: BeaconchaUrlBuildingStatus) => void;
   mevSpFeeRecipient: string | null;
 }): JSX.Element {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-  const beaconchaBaseUrl = beaconchaApiParamsMap.get(network)?.baseUrl;
-  const [validatorSummaryURL, setValidatorSummaryURL] = useState<string>("");
+  const blockExplorerUrl = blockExplorerUrls.get(network);
 
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-    setValidatorSummaryURL("");
-  }, [selectedRows]);
-
-  useEffect(() => {
-    openDashboardTab();
-  }, [validatorSummaryURL]);
+  }, [selectedRows, network, rows]);
 
   const [validatorsSubscriptionMap, setValidatorsSubscriptionMap] = useState<SmoothStatusByPubkey | null>(null);
 
@@ -260,7 +251,7 @@ export default function KeystoresDataGrid({
 
   const customRows = rows.map((row, index) => ({
     pubkey: row.pubkey,
-    beaconcha_url: beaconchaBaseUrl ? beaconchaBaseUrl + "/validator/" + row.pubkey : "",
+    explorerUrl: blockExplorerUrl ? blockExplorerUrl + "/validator/" + row.pubkey : "",
     feeRecipient: row.feeRecipient,
     index: row.index,
     tag: row.tag,
@@ -292,9 +283,9 @@ export default function KeystoresDataGrid({
         )
       },
       {
-        field: "beaconchaUrl",
+        field: "explorerUrl",
         headerName: "URL",
-        description: "Beaconcha URL to track the status of this validator",
+        description: "Explorer URL to track the status of this validator",
         disableReorder: true,
         disableColumnMenu: true,
         disableExport: true,
@@ -306,7 +297,7 @@ export default function KeystoresDataGrid({
             component="a"
             size="small"
             aria-label="View validator in explorer"
-            href={rowData.row.beaconcha_url}
+            href={rowData.row.explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -414,42 +405,24 @@ export default function KeystoresDataGrid({
       }
     );
 
-  async function getValidatorSummaryURL() {
-    if (!beaconchaApiParamsMap?.get(network)) {
-      setValidatorSummaryURL("");
+  function openDashboardTab() {
+    if (!blockExplorerUrl) {
       setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Error);
       return;
     }
 
-    let allValidatorsInfo: BeaconchaGetResponse[];
-
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.InProgress);
-
-    try {
-      allValidatorsInfo = await rpcClient.call(
-        "beaconchaFetchAllValidatorsInfo",
-        selectedRows.map((row) => rows[row as number].pubkey)
-      );
-    } catch (e) {
-      console.error(`Error fetching all validators info: ${e}`);
-      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
-      setValidatorSummaryURL("");
-      return;
-    }
-
-    const summaryUrlBuilt = buildValidatorSummaryURL({
-      allValidatorsInfo,
+    const summaryUrl = buildValidatorSummaryURL({
+      validatorIndexes: selectedRows.map((row) => rows[row as number]?.index ?? ""),
       network
     });
 
-    setValidatorSummaryURL(summaryUrlBuilt);
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
-  }
-
-  async function openDashboardTab() {
-    if (validatorSummaryURL) {
-      window.open(validatorSummaryURL, "_blank", "noopener, noreferrer");
+    if (!summaryUrl) {
+      setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NoIndexes);
+      return;
     }
+
+    window.open(summaryUrl, "_blank", "noopener,noreferrer");
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.Success);
   }
 
   function areAllSelectedRowsExitable() {
@@ -493,24 +466,11 @@ export default function KeystoresDataGrid({
           label={selectedRows.length ? `${selectedRows.length} selected` : `${rows.length} validators`}
         />
         <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
-          {summaryUrlBuildingStatus === BeaconchaUrlBuildingStatus.InProgress ? (
-            <Tooltip title="Loading dashboard">
-              <CircularProgress size={18} color="inherit" />
-            </Tooltip>
-          ) : (
-            <Tooltip title="Go to Beaconcha.in dashboard for selected validators">
-              <IconButton
-                aria-label="Open validator dashboard"
-                disabled={!areRowsSelected}
-                onClick={async () => {
-                  await getValidatorSummaryURL();
-                  await openDashboardTab();
-                }}
-              >
-                <LinkIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+          <Tooltip title="Go to explorer dashboard for selected validators">
+            <IconButton aria-label="Open validator dashboard" disabled={!areRowsSelected} onClick={openDashboardTab}>
+              <LinkIcon />
+            </IconButton>
+          </Tooltip>
 
           <Tooltip title="Edit validators fee recipient">
             <Button

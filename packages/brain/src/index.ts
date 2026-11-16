@@ -23,7 +23,7 @@ const config = brainConfig();
 logger.debug(`Chain config: ${JSON.stringify(config.chain)}`);
 
 // Create API instances. Must preceed db initialization
-const { prometheusApi, signerApi, blockExplorerApi, validatorApi, beaconchainApi, dappmanagerApi, postgresClient } =
+const { prometheusApi, signerApi, validatorApi, beaconchainApi, dappmanagerApi, postgresClient } =
   getApiClients(config);
 
 // Create DB instance
@@ -69,7 +69,6 @@ const { uiServer, launchpadServer, brainApiServer } = getServers({
   brainConfig: config,
   uiBuildPath: path.resolve(__dirname, params.uiBuildDirName),
   signerApi,
-  blockExplorerApi,
   postgresClient,
   validatorApi,
   beaconchainApi,

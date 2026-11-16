@@ -28,7 +28,7 @@ export const brainConfig = (): BrainConfig => {
     validatorUrl = `http://validator.${network}.dncore.dappnode:3500`;
   }
 
-  const { blockExplorerUrl, minGenesisTime, secondsPerSlot, slotsPerEpoch } = networkConfig(network);
+  const { minGenesisTime, secondsPerSlot, slotsPerEpoch } = networkConfig(network);
 
   // Default beaconchainUrl if not already set
   if (!beaconchainUrl) {
@@ -48,7 +48,6 @@ export const brainConfig = (): BrainConfig => {
     apis: {
       prometheusUrl: "http://prometheus.dms.dappnode:9090",
       dappmanagerUrl: "http://my.dappnode:9000",
-      blockExplorerUrl,
       executionClientUrl: `http://execution.${network}.dncore.dappnode:8545`,
       validatorUrl,
       beaconchainUrl,

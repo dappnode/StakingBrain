@@ -1,4 +1,3 @@
-import { BlockExplorerApi } from "../apiClients/blockExplorer/index.js";
 import { PostgresClient } from "../apiClients/postgres/index.js";
 import { Web3SignerApi } from "../apiClients/signer/index.js";
 import { ValidatorApi } from "../apiClients/validator/index.js";
@@ -15,7 +14,6 @@ export const getServers = ({
   brainConfig,
   uiBuildPath,
   signerApi,
-  blockExplorerApi,
   postgresClient,
   validatorApi,
   beaconchainApi,
@@ -26,7 +24,6 @@ export const getServers = ({
   brainConfig: BrainConfig;
   uiBuildPath: string;
   signerApi: Web3SignerApi;
-  blockExplorerApi: BlockExplorerApi;
   postgresClient: PostgresClient;
   validatorApi: ValidatorApi;
   beaconchainApi: BeaconchainApi;
@@ -46,7 +43,6 @@ export const getServers = ({
       reloadValidatorsCronTask,
       signerApi,
       validatorApi,
-      blockExplorerApi,
       beaconchainApi,
       postgresClient,
       allowedOriginsFromEnv

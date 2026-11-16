@@ -12,18 +12,11 @@ import { createRpcMethods } from "./calls/index.js";
 import { CronJob } from "../../cron/cron.js";
 import { BrainDataBase } from "../../db/index.js";
 import { BrainConfig } from "../../config/types.js";
-import {
-  BeaconchainApi,
-  BlockExplorerApi,
-  PostgresClient,
-  ValidatorApi,
-  Web3SignerApi
-} from "../../apiClients/index.js";
+import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../../apiClients/index.js";
 import { allowedOrigins, uiSocketOptions } from "./config.js";
 
 export function startUiServer({
   brainDb,
-  blockExplorerApi,
   beaconchainApi,
   validatorApi,
   signerApi,
@@ -34,7 +27,6 @@ export function startUiServer({
   allowedOriginsFromEnv
 }: {
   brainDb: BrainDataBase;
-  blockExplorerApi: BlockExplorerApi;
   beaconchainApi: BeaconchainApi;
   validatorApi: ValidatorApi;
   signerApi: Web3SignerApi;
@@ -51,7 +43,6 @@ export function startUiServer({
   // Initialize RPC methods
   const rpcMethods = createRpcMethods({
     postgresClient,
-    blockExplorerApi,
     beaconchainApi,
     validatorApi,
     signerApi,
