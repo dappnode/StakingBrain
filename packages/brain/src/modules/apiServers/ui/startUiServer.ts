@@ -26,7 +26,8 @@ export function startUiServer({
   uiBuildPath,
   brainConfig,
   reloadValidatorsCronTask,
-  allowedOriginsFromEnv
+  allowedOriginsFromEnv,
+  port = params.uiPort
 }: {
   brainDb: BrainDataBase;
   beaconchainApi: BeaconchainApi;
@@ -37,6 +38,8 @@ export function startUiServer({
   brainConfig: BrainConfig;
   reloadValidatorsCronTask: CronJob;
   allowedOriginsFromEnv: string | string[] | null;
+  /** Defaults to the production UI port; tests pass 0 for an ephemeral port. */
+  port?: number;
 }): http.Server {
   const { network } = brainConfig.chain;
   // create index.html modified with network
@@ -100,8 +103,8 @@ export function startUiServer({
     res.sendFile(path.join(uiBuildPath, "index.html"));
   });
 
-  server.listen(params.uiPort, () => {
-    logger.info(`Server listening on *:${params.uiPort}`);
+  server.listen(port, () => {
+    logger.info(`Server listening on *:${port}`);
   });
 
   return server;

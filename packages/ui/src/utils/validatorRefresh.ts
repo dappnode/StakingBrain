@@ -1,4 +1,5 @@
-import type { GridRowId } from "@mui/x-data-grid";
+/** Grid row ids (positions here). Kept free of UI-library types so the Brain e2e tests can import this module. */
+type GridRowId = string | number;
 
 /** Delay between refreshes while the Brain reports rows whose checks were cut short. */
 export const PENDING_REFRESH_MS = 3000;
