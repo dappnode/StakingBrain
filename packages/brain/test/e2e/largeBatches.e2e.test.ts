@@ -24,8 +24,8 @@ import {
   runImportBatches,
   summarizeImport
 } from "../../../ui/src/utils/importBatches.js";
-import { countPending, MAX_STALLED_REFRESHES, nextStallCount } from "../../../ui/src/utils/validatorRefresh.js";
 import type { CustomImportRequest } from "../../src/modules/apiServers/ui/calls/types.js";
+import { BeaconStatusStore } from "../../src/modules/beaconStatus/index.js";
 import { FakeBeaconNode, FakeSigner, FakeValidatorClient } from "./fakeClients.js";
 
 const feeRecipient = "0x" + "ab".repeat(20);
@@ -69,6 +69,7 @@ describe("E2E: large validator batches through the UI socket", function () {
   let signerUrl: string;
   let brainDb: BrainDataBase;
   let cron: CronJob;
+  let beaconStatus: BeaconStatusStore;
   let server: http.Server;
   let sockets: Socket[];
   let client: RpcClient;
@@ -116,6 +117,8 @@ describe("E2E: large validator batches through the UI socket", function () {
 
     brainDb = new BrainDataBase(path.join(directory, "brain-db.json"));
     await brainDb.initialize(signerApi, validatorApi);
+    // As in production: reconciliation and beacon details are separate jobs.
+    beaconStatus = new BeaconStatusStore(brainDb, beaconchainApi);
     cron = new CronJob(60_000, () => reloadValidators(signerApi, signerUrl, validatorApi, brainDb));
     cron.start();
 
@@ -135,6 +138,7 @@ describe("E2E: large validator batches through the UI socket", function () {
       } as unknown as BrainConfig,
       reloadValidatorsCronTask: cron,
       allowedOriginsFromEnv: null,
+      beaconStatus,
       port: 0
     });
     if (!server.listening) await once(server, "listening");
@@ -145,6 +149,7 @@ describe("E2E: large validator batches through the UI socket", function () {
   afterEach(async () => {
     for (const socket of sockets) socket.disconnect();
     cron.stop();
+    await beaconStatus.whenIdle();
     server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));
     await Promise.all(closeFakes.map((close) => close()));
@@ -243,40 +248,105 @@ describe("E2E: large validator batches through the UI socket", function () {
         latest = await watcher.client.call("getValidators", undefined);
       });
     });
-    const pubkeys = Array.from({ length: 10 }, (_, index) => pubkeyAt(index));
+    // Writes are sequential, so a few keys are enough to outlast the notification debounce.
+    const pubkeys = Array.from({ length: 4 }, (_, index) => pubkeyAt(index));
     await importAll(importRequest(pubkeys), pubkeys);
     // Let the last push and its refresh land.
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await refreshes;
-    expect(latest).to.have.length(10);
+    expect(latest).to.have.length(4);
     expect(latest.every(({ validatorImported }) => validatorImported === true)).to.equal(true);
     expect(latest.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect === true)).to.equal(true);
   });
 
-  it("loads a slow list progressively until every row is complete", async () => {
-    const pubkeys = Array.from({ length: 70 }, (_, index) => pubkeyAt(index));
-    await importAll(importRequest(pubkeys), pubkeys);
+  it("lists 600 validators at once and fills in beacon data with a push, without polling", async () => {
+    const pubkeys = Array.from({ length: 600 }, (_, index) => pubkeyAt(index));
     pubkeys.forEach((pubkey, index) => beacon.indexes.set(pubkey, 1000 + index));
-    // 8 parallel lookups of 1.5s cannot cover 70 validators inside the 10s list deadline.
-    beacon.lookupDelayMs = 1500;
+    // A slow beacon node must not slow the import or the list down.
+    beacon.bulkDelayMs = 1500;
+    const watcher = await connect();
+    // Behave like the validator list: refresh on every push and keep the latest rows.
+    let latest: Awaited<ReturnType<typeof watcher.client.call<"getValidators">>> = [];
+    let refreshes = Promise.resolve();
+    watcher.client.on(VALIDATORS_CHANGED_EVENT, () => {
+      refreshes = refreshes.then(async () => {
+        latest = await watcher.client.call("getValidators", undefined);
+      });
+    });
 
-    // Refresh the way the validator list does until nothing is pending or progress stalls.
-    const pendingByRound: number[] = [];
-    let stalls = 0;
-    let rows = await client.call("getValidators", undefined);
-    pendingByRound.push(countPending(rows));
-    while (countPending(rows) > 0 && stalls < MAX_STALLED_REFRESHES) {
-      rows = await client.call("getValidators", undefined);
-      stalls = nextStallCount(stalls, pendingByRound.at(-1), countPending(rows));
-      pendingByRound.push(countPending(rows));
-    }
-
-    expect(pendingByRound[0]).to.be.greaterThan(0).and.lessThan(70);
-    expect(pendingByRound.at(-1)).to.equal(0);
-    expect(pendingByRound.length).to.be.at.most(3);
-    expect(rows.map(({ index }) => index)).to.deep.equal(pubkeys.map((_, index) => String(1000 + index)));
-    expect(rows.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect === true)).to.equal(true);
+    await importAll(importRequest(pubkeys), pubkeys);
+    const started = Date.now();
+    let rows = await watcher.client.call("getValidators", undefined);
+    expect(Date.now() - started).to.be.lessThan(5000);
+    expect(rows).to.have.length(600);
+    // Signer and client membership and fee recipients are read live, within one bounded request.
     expect(rows.every(({ signerImported, validatorImported }) => signerImported && validatorImported)).to.equal(true);
+    expect(rows.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect === true)).to.equal(true);
+
+    await waitFor(
+      () =>
+        latest.length === 600 && latest.every(({ detailsPending, beaconPending }) => !detailsPending && !beaconPending),
+      20_000
+    );
+    await refreshes;
+    rows = latest;
+    expect(rows.some(({ detailsPending }) => detailsPending)).to.equal(false);
+    expect(rows.map(({ index }) => index)).to.deep.equal(pubkeys.map((_, index) => String(1000 + index)));
+    expect(rows.every(({ withdrawalCredentials }) => withdrawalCredentials.format === "ecdsa")).to.equal(true);
+    // Lookups for the 30 import batches merge, and each covers many keys at once.
+    expect(beacon.bulkLookups.length).to.be.lessThan(10);
+    expect(beacon.lookups).to.equal(0);
+    // Indexes are stored, so the Brain API and the explorer link have them.
+    expect(Object.values(brainDb.getData()).every(({ index }) => index !== undefined)).to.equal(true);
+  });
+
+  it("reports unreachable clients as errors instead of loading forever, then recovers", async () => {
+    const pubkeys = Array.from({ length: 5 }, (_, index) => pubkeyAt(index));
+    pubkeys.forEach((pubkey, index) => beacon.indexes.set(pubkey, index));
+    beacon.unavailable = true;
+    await importAll(importRequest(pubkeys), pubkeys);
+    await beaconStatus.refresh();
+    let rows = await client.call("getValidators", undefined);
+    expect(rows.every(({ detailsPending, beaconPending }) => !detailsPending && !beaconPending)).to.equal(true);
+    expect(rows[0].detailsError).to.include("beacon node");
+
+    // A validator client outage after a successful check is reported, not hidden by the earlier result.
+    validator.unavailable = true;
+    rows = await client.call("getValidators", undefined);
+    expect(
+      rows.every(
+        ({ validatorImported, validatorFeeRecipientCorrect }) =>
+          validatorImported === undefined && validatorFeeRecipientCorrect === undefined
+      )
+    ).to.equal(true);
+    expect(rows[0].detailsError).to.include("validator client");
+
+    validator.unavailable = false;
+    beacon.unavailable = false;
+    await beaconStatus.refresh();
+    rows = await client.call("getValidators", undefined);
+    expect(
+      rows.every(
+        ({ detailsError, detailsPending, beaconPending }) => !detailsError && !detailsPending && !beaconPending
+      )
+    ).to.equal(true);
+  });
+
+  it("repairs a validator client that lost its keys and shows the repair", async () => {
+    const pubkeys = Array.from({ length: 20 }, (_, index) => pubkeyAt(index));
+    await importAll(importRequest(pubkeys), pubkeys);
+    // The validator client restarted without its remote keys or fee recipients.
+    validator.remoteKeys.clear();
+    validator.feeRecipients.clear();
+    await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+    expect(validator.remoteKeys.size).to.equal(20);
+    expect(validator.feeRecipients.size).to.equal(20);
+    const rows = await client.call("getValidators", undefined);
+    expect(
+      rows.every(
+        ({ validatorImported, validatorFeeRecipientCorrect }) => validatorImported && validatorFeeRecipientCorrect
+      )
+    ).to.equal(true);
   });
 
   it("keeps builder configuration switched off end to end", async () => {

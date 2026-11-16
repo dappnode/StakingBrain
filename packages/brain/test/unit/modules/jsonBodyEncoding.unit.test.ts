@@ -15,6 +15,7 @@ import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../
 import { BrainDataBase } from "../../../src/modules/db/index.js";
 import { CronJob } from "../../../src/modules/cron/cron.js";
 import { params } from "../../../src/params.js";
+import { BeaconStatusStore } from "../../../src/modules/beaconStatus/index.js";
 
 function postJson(server: http.Server, body: Buffer, encoding?: string): Promise<number> {
   const address = server.address() as AddressInfo;
@@ -57,6 +58,7 @@ describe("JSON request content encoding", () => {
     const reloadValidatorsCronTask = sinon.createStubInstance(CronJob);
     const signerUrl = "http://127.0.0.1:1";
     const allowedOriginsFromEnv = null;
+    const beaconStatus = new BeaconStatusStore(brainDb, beaconchainApi);
     servers.set("Brain", startBrainApi({ brainDb, allowedOriginsFromEnv }));
     servers.set(
       "Launchpad",
@@ -64,7 +66,6 @@ describe("JSON request content encoding", () => {
         brainDb,
         validatorApi,
         signerApi,
-        beaconchainApi,
         reloadValidatorsCronTask,
         signerUrl,
         network: Network.Hoodi,
@@ -82,6 +83,7 @@ describe("JSON request content encoding", () => {
         postgresClient: sinon.createStubInstance(PostgresClient),
         uiBuildPath: directory,
         allowedOriginsFromEnv,
+        beaconStatus,
         brainConfig: {
           chain: {
             network: Network.Hoodi,

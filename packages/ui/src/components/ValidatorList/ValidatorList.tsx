@@ -6,7 +6,7 @@ import BuilderConfigDialog from "../Dialogs/BuilderConfigDialog";
 import { Alert, Box, Button, CircularProgress, LinearProgress, Typography } from "@mui/material";
 import type { GridRowId } from "@mui/x-data-grid";
 import { featureFlags, StakerConfig as StakerConfigType, VALIDATORS_CHANGED_EVENT } from "@stakingbrain/common";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { rpcClient } from "../../socket";
 import StakerConfig from "../StakerConfig/StakerConfig";
@@ -14,13 +14,7 @@ import KeystoresExitDialog from "../Dialogs/KeystoresExitDialog";
 import { getSmoothAddressByNetwork } from "../../utils/addresses";
 import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 import PageLayout from "../Layout/PageLayout";
-import {
-  countPending,
-  MAX_STALLED_REFRESHES,
-  nextStallCount,
-  PENDING_REFRESH_MS,
-  selectionAfterRefresh
-} from "../../utils/validatorRefresh";
+import { countUnfinished, FOLLOW_UP_MS, MAX_STALLED_FOLLOW_UPS, nextStallCount } from "../../utils/listFollowUp";
 
 export default function ValidatorList({
   stakerConfig,
@@ -44,24 +38,26 @@ export default function ValidatorList({
   const anyDialogOpen = deleteOpen || editFeesOpen || exitOpen || builderConfigOpen;
   const dialogOpenRef = useRef(anyDialogOpen);
   dialogOpenRef.current = anyDialogOpen;
-  const rowsRef = useRef<CustomValidatorGetResponse[]>(undefined);
+  const loaded = useRef(false);
   const inFlight = useRef(false);
   const queued = useRef(false);
+  const [refreshError, setRefreshError] = useState<string>();
   const stalls = useRef(0);
-  const lastPending = useRef<number>(undefined);
+  const lastUnfinished = useRef<number>(undefined);
   const [stalled, setStalled] = useState(false);
 
-  // Re-render table after delete/update validators
+  // Refresh when a dialog closes (its action may have changed validators) and on first load.
   useEffect(() => {
     if (!anyDialogOpen) {
       // Only the first load blanks the page; later refreshes keep the table visible.
-      getValidators(rowsRef.current !== undefined);
+      void getValidators(loaded.current);
       setSelectedRows([]);
     }
   }, [anyDialogOpen]);
 
-  // Live updates: the Brain pushes a hint after every validator change, from any tab or the reload job.
-  // Dialogs act on row positions, so refreshes wait until they close (closing always refreshes).
+  // Live updates: the Brain pushes a hint whenever a validator or its client status changes, including
+  // when pending checks complete, so the list never needs to poll. Refreshes wait while a dialog is
+  // open so its content does not shift; closing a dialog always refreshes.
   useEffect(() => {
     const refresh = () => {
       if (!dialogOpenRef.current) void getValidators(true);
@@ -75,12 +71,22 @@ export default function ValidatorList({
     };
   }, []);
 
-  // Large lists load in bounded rounds; keep refreshing while rows are pending and progress is made.
+  // Client reads cut off by the Brain's deadline only continue when the list is requested again, so keep
+  // requesting (one request at a time) while that makes progress. A failed request does not poll: it
+  // shows an error with Retry. Beacon details arrive by push and need no follow-up.
   useEffect(() => {
-    if (anyDialogOpen || stalled || !validatorsGet || countPending(validatorsGet) === 0) return;
-    const timer = setTimeout(() => getValidators(true), PENDING_REFRESH_MS);
+    if (anyDialogOpen || stalled || refreshError || !validatorsGet || countUnfinished(validatorsGet) === 0) return;
+    const timer = setTimeout(() => void getValidators(true), FOLLOW_UP_MS);
     return () => clearTimeout(timer);
-  }, [validatorsGet, anyDialogOpen, stalled]);
+  }, [validatorsGet, anyDialogOpen, stalled, refreshError]);
+
+  function retry() {
+    stalls.current = 0;
+    lastUnfinished.current = undefined;
+    setStalled(false);
+    setRefreshError(undefined);
+    void getValidators(true);
+  }
 
   async function getValidators(background = false) {
     // Coalesce overlapping triggers into one follow-up refresh.
@@ -92,19 +98,22 @@ export default function ValidatorList({
     try {
       if (!background) setLoading(true);
       const rows = await rpcClient.call("getValidators", undefined);
-      // Capture the rows the current selection refers to before replacing them (see selectionAfterRefresh).
-      if (background) setSelectedRows(selectionAfterRefresh(rowsRef.current, rows));
-      rowsRef.current = rows;
-      const pending = countPending(rows);
-      stalls.current = nextStallCount(stalls.current, lastPending.current, pending);
-      lastPending.current = pending;
-      setStalled(stalls.current >= MAX_STALLED_REFRESHES);
+      loaded.current = true;
+      // Rows are identified by pubkey, so a refresh only has to drop validators that are gone.
+      const present = new Set(rows.map(({ pubkey }) => pubkey));
+      setSelectedRows((selected) => selected.filter((id) => present.has(String(id))));
+      const unfinished = countUnfinished(rows);
+      stalls.current = nextStallCount(stalls.current, lastUnfinished.current, unfinished);
+      lastUnfinished.current = unfinished;
+      setStalled(stalls.current >= MAX_STALLED_FOLLOW_UPS);
       setValidatorsGet(rows);
       setValidatorsGetError(undefined);
+      setRefreshError(undefined);
     } catch (e) {
       console.error(e);
-      // A failed background refresh keeps the last good table instead of replacing it with an error.
-      if (!background || !rowsRef.current) setValidatorsGetError(e.message);
+      // A failed background refresh keeps the last good table and offers a retry.
+      if (!background || !loaded.current) setValidatorsGetError(e.message);
+      else setRefreshError(e.message);
     } finally {
       if (!background) setLoading(false);
       inFlight.current = false;
@@ -115,7 +124,13 @@ export default function ValidatorList({
     }
   }
 
-  const pendingCount = validatorsGet ? countPending(validatorsGet) : 0;
+  const selectedValidators = useMemo(() => {
+    const selected = new Set(selectedRows.map(String));
+    return (validatorsGet ?? []).filter(({ pubkey }) => selected.has(pubkey));
+  }, [validatorsGet, selectedRows]);
+  const pendingCount =
+    validatorsGet?.filter(({ detailsPending, beaconPending }) => detailsPending || beaconPending).length ?? 0;
+  const detailsErrors = [...new Set((validatorsGet ?? []).flatMap(({ detailsError }) => detailsError ?? []))];
 
   const SmoothBanner = () => {
     return (
@@ -164,41 +179,50 @@ export default function ValidatorList({
             </Box>
           ) : validatorsGet ? (
             <>
-              {pendingCount > 0 &&
-                (stalled ? (
-                  <Alert
-                    severity="info"
-                    sx={{ mb: 2 }}
-                    action={
-                      <Button
-                        color="inherit"
-                        size="small"
-                        onClick={() => {
-                          stalls.current = 0;
-                          lastPending.current = undefined;
-                          setStalled(false);
-                          void getValidators(true);
-                        }}
-                      >
-                        Retry
-                      </Button>
-                    }
-                  >
-                    Details for {pendingCount} of {validatorsGet.length} validators are still loading slowly. Your
-                    consensus or validator client may be busy or syncing.
-                  </Alert>
-                ) : (
-                  <Box sx={{ mb: 2 }} role="status">
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      Loading details for {pendingCount} of {validatorsGet.length} validators…
-                    </Typography>
-                    <LinearProgress
-                      variant="determinate"
-                      value={((validatorsGet.length - pendingCount) / validatorsGet.length) * 100}
-                      aria-label="Validator details loading progress"
-                    />
-                  </Box>
-                ))}
+              {refreshError && (
+                <Alert
+                  severity="warning"
+                  sx={{ mb: 2 }}
+                  action={
+                    <Button color="inherit" size="small" onClick={retry}>
+                      Retry
+                    </Button>
+                  }
+                >
+                  The validator list could not be refreshed: {refreshError}
+                </Alert>
+              )}
+              {detailsErrors.length > 0 && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Some validator details are unavailable: {detailsErrors.join("; ")}
+                </Alert>
+              )}
+              {stalled && (
+                <Alert
+                  severity="info"
+                  sx={{ mb: 2 }}
+                  action={
+                    <Button color="inherit" size="small" onClick={retry}>
+                      Retry
+                    </Button>
+                  }
+                >
+                  Details for {validatorsGet && countUnfinished(validatorsGet)} validators are loading slowly. Your
+                  validator client or signer may be busy.
+                </Alert>
+              )}
+              {pendingCount > 0 && (
+                <Box sx={{ mb: 2 }} role="status">
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    Checking {pendingCount} of {validatorsGet.length} validators with your clients…
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={((validatorsGet.length - pendingCount) / validatorsGet.length) * 100}
+                    aria-label="Validator details loading progress"
+                  />
+                </Box>
+              )}
               <KeystoresDataGrid
                 rows={validatorsGet}
                 areRowsSelected={selectedRows.length !== 0}
@@ -229,8 +253,7 @@ export default function ValidatorList({
 
               {deleteOpen && (
                 <KeystoresDeleteDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
+                  validators={selectedValidators}
                   setSelectedRows={setSelectedRows}
                   open={deleteOpen}
                   setOpen={setDeleteOpen}
@@ -239,8 +262,7 @@ export default function ValidatorList({
 
               {editFeesOpen && (
                 <EditFeesDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
+                  validators={selectedValidators}
                   open={editFeesOpen}
                   setOpen={setEditFeesOpen}
                   network={network}
@@ -249,17 +271,12 @@ export default function ValidatorList({
               )}
 
               {featureFlags.builderConfig && builderConfigOpen && (
-                <BuilderConfigDialog
-                  network={network}
-                  validators={selectedRows.map((row) => validatorsGet[row as number])}
-                  setOpen={setBuilderConfigOpen}
-                />
+                <BuilderConfigDialog network={network} validators={selectedValidators} setOpen={setBuilderConfigOpen} />
               )}
 
               {exitOpen && (
                 <KeystoresExitDialog
-                  rows={validatorsGet}
-                  selectedRows={selectedRows}
+                  validators={selectedValidators}
                   setSelectedRows={setSelectedRows}
                   open={exitOpen}
                   setOpen={setExitOpen}

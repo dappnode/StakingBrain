@@ -24,14 +24,13 @@ import type { CustomValidatorGetResponse, ValidatorExitExecute } from "@stakingb
 import { useTheme, useMediaQuery } from "@mui/material";
 
 export default function KeystoresExitDialog({
-  rows,
-  selectedRows,
+  validators,
   setSelectedRows,
   open,
   setOpen
 }: {
-  rows: CustomValidatorGetResponse[];
-  selectedRows: GridRowId[];
+  /** The selected validators, resolved by pubkey. */
+  validators: CustomValidatorGetResponse[];
   setSelectedRows: (selectedRows: GridRowId[]) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -49,7 +48,7 @@ export default function KeystoresExitDialog({
     try {
       setLoading(true);
       const exitKeysores = await rpcClient.call("getExitValidators", {
-        pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
+        pubkeys: validators.map(({ pubkey }) => pubkey)
       });
 
       exitKeysores.forEach((validator) => {
@@ -75,7 +74,7 @@ export default function KeystoresExitDialog({
       setLoading(true);
       setValidatorsExitResponse(
         await rpcClient.call("exitValidators", {
-          pubkeys: selectedRows.map((row) => rows[parseInt(row.toString())].pubkey)
+          pubkeys: validators.map(({ pubkey }) => pubkey)
         })
       );
       setLoading(false);
@@ -109,7 +108,7 @@ export default function KeystoresExitDialog({
         title={validatorsExitResponse ? "Exit results" : "Exit validators"}
         subtitle="Review and confirm your validator exits."
         icon={<LogoutIcon />}
-        count={validatorsExitResponse?.length ?? selectedRows.length}
+        count={validatorsExitResponse?.length ?? validators.length}
         onClose={handleClose}
         busy={loading}
       />
@@ -135,7 +134,7 @@ export default function KeystoresExitDialog({
               ) : (
                 <>
                   <DialogContentText id="alert-dialog-description" component={"span"}>
-                    <ExitWarning rows={rows} selectedRows={selectedRows} />
+                    <ExitWarning validators={validators} />
                   </DialogContentText>
 
                   <br />

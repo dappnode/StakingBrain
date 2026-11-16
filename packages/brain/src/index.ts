@@ -9,6 +9,7 @@ import { params } from "./params.js";
 import { getCrons } from "./modules/cron/index.js";
 import { brainConfig } from "./modules/config/index.js";
 import { importBuilderIds } from "./modules/config/importBuilderIds.js";
+import { BeaconStatusStore } from "./modules/beaconStatus/index.js";
 import { featureFlags } from "@stakingbrain/common";
 
 logger.info(`Starting brain...`);
@@ -54,8 +55,11 @@ if (featureFlags.builderConfig) {
   logger.warn("BUILDER_IDS is set but builder configuration is disabled in this version; ignoring it");
 }
 
+// Beacon chain details (index, withdrawal credentials) for listing validators.
+const beaconStatus = new BeaconStatusStore(brainDb, beaconchainApi);
+
 // CRON
-const { reloadValidatorsCronTask } = getCrons({
+const { reloadValidatorsCronTask, beaconStatusCronTask } = getCrons({
   sendNotification: true,
   postgresClient,
   prometheusApi,
@@ -65,9 +69,13 @@ const { reloadValidatorsCronTask } = getCrons({
   brainDb,
   chainConfig: config.chain,
   beaconchainApi,
-  dappmanagerApi
+  dappmanagerApi,
+  beaconStatus
 });
 reloadValidatorsCronTask.start();
+beaconStatusCronTask.start();
+// Reads only: load beacon details now rather than after the first interval.
+void beaconStatusCronTask.runNow();
 //trackValidatorsPerformanceCronTask.start();
 
 // Start server APIs
@@ -80,13 +88,15 @@ const { uiServer, launchpadServer, brainApiServer } = getServers({
   beaconchainApi,
   brainDb,
   reloadValidatorsCronTask,
-  allowedOriginsFromEnv: config.apis.cors
+  allowedOriginsFromEnv: config.apis.cors,
+  beaconStatus
 });
 
 // Graceful shutdown
 function handle(signal: string): void {
   logger.info(`${signal} received. Shutting down...`);
   reloadValidatorsCronTask.stop();
+  beaconStatusCronTask.stop();
   //trackValidatorsPerformanceCronTask.stop();
   brainDb.close();
   postgresClient.close().catch((err) => logger.error(`Error closing postgres client`, err)); // postgresClient db connection is the only external resource that needs to be closed

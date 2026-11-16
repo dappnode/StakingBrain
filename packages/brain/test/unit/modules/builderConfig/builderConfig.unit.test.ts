@@ -25,6 +25,8 @@ import { createRpcMethods } from "../../../../src/modules/apiServers/ui/calls/in
 import { setActiveValidatorsLoadedInBrain } from "../../../../src/modules/cron/trackValidatorsPerformance/setActiveValidatorsLoadedInBrain.js";
 import { ValidatorStatus } from "../../../../src/modules/apiClients/types.js";
 import logger from "../../../../src/modules/logger/index.js";
+import { BeaconStatusStore } from "../../../../src/modules/beaconStatus/index.js";
+import { emptyBeacon } from "../../../helpers/beacon.js";
 
 function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void;
@@ -557,13 +559,11 @@ describe("Builder configuration management", () => {
       signer.listRemoteKeys.resolves({
         data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
       });
-      const beacon = sinon.createStubInstance(BeaconchainApi);
-      beacon.getStateValidator.rejects(new Error("not deposited"));
       const result = await getValidators({
         brainDb: db,
         validatorApi: validator,
         signerApi: signer,
-        beaconchainApi: beacon
+        beaconStatus: new BeaconStatusStore(db, emptyBeacon())
       });
       expect(result.map(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect)).to.deep.equal([
         true,
@@ -618,9 +618,12 @@ describe("Builder configuration while disabled", () => {
     expect(api.calls.filter(({ endpoint }) => endpoint.includes("builder_config"))).to.deep.equal([]);
     expect(db.getData()[keys[0]].builderConfig).to.deep.equal(config);
 
-    const beacon = sinon.createStubInstance(BeaconchainApi);
-    beacon.getStateValidator.rejects(new Error("not deposited"));
-    const [row] = await getValidators({ brainDb: db, validatorApi: api, signerApi: signer, beaconchainApi: beacon });
+    const [row] = await getValidators({
+      brainDb: db,
+      validatorApi: api,
+      signerApi: signer,
+      beaconStatus: new BeaconStatusStore(db, emptyBeacon())
+    });
     expect(row).to.not.have.property("builderConfig");
     expect(row).to.not.have.property("builderConfigStatus");
   });
@@ -633,7 +636,8 @@ describe("Builder configuration while disabled", () => {
       signerApi: {} as never,
       brainDb: db,
       reloadValidatorsCronTask: {} as never,
-      brainConfig: { apis: {}, chain: { network: Network.Hoodi } } as never
+      brainConfig: { apis: {}, chain: { network: Network.Hoodi } } as never,
+      beaconStatus: new BeaconStatusStore(db, emptyBeacon())
     });
     for (const call of [() => methods.getBuilderRelayPresets(), () => methods.getBuilderConfigs([keys[0]])])
       expect(await call().catch((e: Error) => e)).to.be.instanceOf(FeatureDisabledError);

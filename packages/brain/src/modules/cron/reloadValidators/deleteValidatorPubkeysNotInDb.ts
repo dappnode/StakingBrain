@@ -22,13 +22,13 @@ export async function deleteValidatorPubkeysNotInDB({
     });
 
     for (const [index, pubkeyToRemove] of validatorPubkeysToRemove.entries()) {
-      const deleteValidatorKeyStatus = deleteValidatorKeysResponse.data[index].status;
-
-      if (deleteValidatorKeyStatus === "deleted" || deleteValidatorKeyStatus === "not_found")
+      // A missing result is uncertain; keep the key listed so the next reload tries again.
+      const result = deleteValidatorKeysResponse.data[index];
+      if (result?.status === "deleted" || result?.status === "not_found")
         validatorPubkeys.splice(validatorPubkeys.indexOf(pubkeyToRemove), 1);
       else
         logger.error(
-          `${logPrefix}Error deleting pubkey ${pubkeyToRemove} from validator API: ${deleteValidatorKeyStatus} ${deleteValidatorKeysResponse.data[index].message}`
+          `${logPrefix}Error deleting pubkey ${pubkeyToRemove} from validator API: ${result?.status ?? "no result"} ${result?.message ?? ""}`
         );
     }
   }

@@ -1,163 +1,180 @@
-import { isValidWithdrawableBlsAddress, isValidNonWithdrawableBlsAddress, featureFlags } from "@stakingbrain/common";
+import { featureFlags } from "@stakingbrain/common";
 import { CustomValidatorGetResponse } from "./types.js";
 import { BrainDataBase } from "../../../db/index.js";
-import { ValidatorApi, Web3SignerApi, BeaconchainApi } from "../../../apiClients/index.js";
+import { ValidatorApi, Web3SignerApi } from "../../../apiClients/index.js";
+import { BeaconStatusStore } from "../../../beaconStatus/index.js";
+import { forEachConcurrently } from "../../../utils/forEachConcurrently.js";
 import logger from "../../../logger/index.js";
 
-type BeaconDetails = Pick<CustomValidatorGetResponse, "index" | "withdrawalCredentials">;
-type ListProgress = {
-  beaconNext: number;
-  feeNext: number;
-  beacon: Map<string, { expires: number; details: BeaconDetails }>;
-  // Keyed by the expected fee recipient so an edit is re-checked immediately.
-  fee: Map<string, { expires: number; feeRecipient: string; correct: boolean }>;
-};
-const listProgress = new WeakMap<BrainDataBase, ListProgress>();
-const BEACON_CACHE_MS = 60_000; // Also bounds how stale a cached fee recipient check can be.
+/** Bound on one list request; unfinished reads are reported as pending for the UI to request again. */
+export const LIST_DEADLINE_MS = 10_000;
+const READ_CONCURRENCY = 8;
+const FEE_CHECK_TTL_MS = 60_000;
 
-/** Read a stable snapshot; independent queues rotate unfinished work across bounded refreshes. */
+interface FeeCheck {
+  expected: string;
+  correct: boolean;
+  expires: number;
+}
+interface ReadState {
+  /** Where the next request resumes fee reads, so successive requests cover different validators. */
+  feeNext: number;
+  fee: Map<string, FeeCheck>;
+  /** Bumped on every validator change; a read that overlaps one is not cached. */
+  generation: number;
+}
+const readStates = new WeakMap<BrainDataBase, ReadState>();
+
+function readStateFor(brainDb: BrainDataBase): ReadState {
+  let state = readStates.get(brainDb);
+  if (!state) {
+    const created: ReadState = { feeNext: 0, fee: new Map(), generation: 0 };
+    // Change notifications arrive after an operation has configured the validator client. A check read
+    // mid-operation saw the new expected address but the old client value, so only mismatches can be
+    // stale; drop them, and refuse to cache reads that straddle the change.
+    brainDb.onChange(() => {
+      for (const [pubkey, check] of created.fee) if (!check.correct) created.fee.delete(pubkey);
+      created.generation++;
+    });
+    readStates.set(brainDb, created);
+    state = created;
+  }
+  return state;
+}
+
+const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+/**
+ * List validators with their signer and validator client status, read within one bounded request.
+ * Reads cut off by the deadline are marked `detailsPending` (request again); failed reads are reported
+ * in `detailsError` rather than replaced by an earlier result. Beacon details come from the beacon
+ * store, which announces its updates.
+ */
 export async function getValidators({
   brainDb,
   validatorApi,
   signerApi,
-  beaconchainApi
+  beaconStatus
 }: {
   brainDb: BrainDataBase;
   validatorApi: ValidatorApi;
   signerApi: Web3SignerApi;
-  beaconchainApi: BeaconchainApi;
+  beaconStatus: BeaconStatusStore;
 }): Promise<CustomValidatorGetResponse[]> {
   const entries = Object.entries(brainDb.getData());
-  const progress = listProgress.get(brainDb) ?? { beaconNext: 0, feeNext: 0, beacon: new Map(), fee: new Map() };
-  listProgress.set(brainDb, progress);
-  const currentKeys = new Set(entries.map(([pubkey]) => pubkey));
-  for (const [pubkey, cached] of progress.beacon) {
-    if (!currentKeys.has(pubkey) || cached.expires <= Date.now()) progress.beacon.delete(pubkey);
-  }
-  for (const [pubkey, cached] of progress.fee) {
-    if (!currentKeys.has(pubkey) || cached.expires <= Date.now()) progress.fee.delete(pubkey);
-  }
   if (entries.length === 0) return [];
-  const results: CustomValidatorGetResponse[] = entries.map(([pubkey, details]) => ({
-    pubkey,
-    index: details.index?.toString() ?? "",
-    tag: details.tag,
-    feeRecipient: details.feeRecipient,
-    // Stored settings are kept while the feature is off, but not surfaced.
-    ...(featureFlags.builderConfig && {
-      builderConfig: details.builderConfig,
-      builderConfigStatus:
-        validatorApi.getBuilderConfigStatus(pubkey) ??
-        (details.builderConfig === undefined ? undefined : { status: "pending" })
-    }),
-    withdrawalCredentials: { address: "", format: "error" },
-    ...progress.beacon.get(pubkey)?.details
-    // Membership and fee checks stay undefined until a successful read establishes their value.
-  }));
-  const controller = new AbortController();
-  const deadline = setTimeout(() => controller.abort(), 10000);
-  // Reads cut short by the deadline stay pending so the UI knows to refresh; definite failures do not.
-  const beaconPending = new Set(results.map((_, index) => index));
-  const feePending = new Set<number>();
-  let membershipPending = false;
+  const state = readStateFor(brainDb);
+  const now = Date.now();
+  const present = new Set(entries.map(([pubkey]) => pubkey));
+  for (const [pubkey, check] of state.fee) if (!present.has(pubkey) || check.expires <= now) state.fee.delete(pubkey);
 
-  async function readQueue(
-    cursor: "beaconNext" | "feeNext",
-    pending: Set<number>,
-    read: (result: CustomValidatorGetResponse) => Promise<void>
-  ) {
-    const start = progress[cursor] % results.length;
-    let next = 0;
-    await Promise.all(
-      Array.from({ length: Math.min(8, results.length) }, async () => {
-        while (next < results.length && !controller.signal.aborted) {
-          const index = (start + next++) % results.length;
-          progress[cursor] = (index + 1) % results.length;
-          try {
-            await read(results[index]);
-            pending.delete(index);
-          } catch (error) {
-            if (!controller.signal.aborted) pending.delete(index);
-            logger.error(error);
-          }
-        }
+  const rows: CustomValidatorGetResponse[] = entries.map(([pubkey, details]) => {
+    const { beaconError, ...beacon } = beaconStatus.view(pubkey);
+    return {
+      pubkey,
+      tag: details.tag,
+      feeRecipient: details.feeRecipient,
+      ...beacon,
+      index: details.index?.toString() ?? beacon.index ?? "",
+      detailsPending: false,
+      detailsError: beaconError,
+      // Stored settings are kept while the feature is off, but not surfaced.
+      ...(featureFlags.builderConfig && {
+        builderConfig: details.builderConfig,
+        builderConfigStatus:
+          validatorApi.getBuilderConfigStatus(pubkey) ??
+          (details.builderConfig === undefined ? undefined : { status: "pending" })
       })
-    );
-  }
+    };
+  });
+  const errors = rows.map((row) => (row.detailsError ? [row.detailsError] : []));
+  const pending = new Set<number>();
+
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), LIST_DEADLINE_MS);
+  const { signal } = controller;
+  /** Cut off by the deadline: pending. Anything else: a definite failure to report. */
+  const failed = (indexes: Iterable<number>, what: string, error: unknown) => {
+    for (const index of indexes) {
+      if (signal.aborted) pending.add(index);
+      else errors[index].push(`${what}: ${message(error)}`);
+    }
+  };
 
   try {
     await Promise.all([
       (async () => {
         try {
-          const remoteKeys = await validatorApi.getRemoteKeys(controller.signal);
-          const keys = new Set(remoteKeys.data.map(({ pubkey }) => pubkey.toLowerCase()));
-          results.forEach((result, index) => {
-            result.validatorImported = keys.has(result.pubkey.toLowerCase());
-            if (result.validatorImported) feePending.add(index);
-          });
-          await readQueue("feeNext", feePending, async (result) => {
-            if (!result.validatorImported) return;
-            const feeRecipient = result.feeRecipient.toLowerCase();
-            const cached = progress.fee.get(result.pubkey);
-            if (cached?.feeRecipient === feeRecipient) {
-              result.validatorFeeRecipientCorrect = cached.correct;
-              return;
-            }
-            const response = await validatorApi.getFeeRecipient(result.pubkey, controller.signal);
-            result.validatorFeeRecipientCorrect = response.data.ethaddress.toLowerCase() === feeRecipient;
-            progress.fee.set(result.pubkey, {
-              feeRecipient,
-              correct: result.validatorFeeRecipientCorrect,
-              expires: Date.now() + BEACON_CACHE_MS
-            });
-          });
+          const keys = new Set(
+            (await signerApi.listRemoteKeys(signal)).data.map(({ validating_pubkey }) =>
+              validating_pubkey.toLowerCase()
+            )
+          );
+          for (const row of rows) row.signerImported = keys.has(row.pubkey.toLowerCase());
         } catch (error) {
-          if (controller.signal.aborted) membershipPending = true;
           logger.error(error);
+          failed(rows.keys(), "Could not read the signer's keys", error);
         }
       })(),
       (async () => {
+        let keys: Set<string>;
         try {
-          const signerKeys = await signerApi.listRemoteKeys(controller.signal);
-          const keys = new Set(signerKeys.data.map(({ validating_pubkey }) => validating_pubkey.toLowerCase()));
-          for (const result of results) result.signerImported = keys.has(result.pubkey.toLowerCase());
+          keys = new Set((await validatorApi.getRemoteKeys(signal)).data.map(({ pubkey }) => pubkey.toLowerCase()));
         } catch (error) {
-          if (controller.signal.aborted) membershipPending = true;
           logger.error(error);
-        }
-      })(),
-      readQueue("beaconNext", beaconPending, async (result) => {
-        const cached = progress.beacon.get(result.pubkey);
-        if (cached) {
-          Object.assign(result, cached.details);
+          failed(rows.keys(), "Could not read the validator client's keys", error);
           return;
         }
-        const { data } = await beaconchainApi.getStateValidator({
-          state: "head",
-          pubkey: result.pubkey,
-          signal: controller.signal
-        });
-        const address = data.validator.withdrawal_credentials;
-        const details: BeaconDetails = {
-          index: data.index,
-          withdrawalCredentials: {
-            address,
-            format: isValidWithdrawableBlsAddress(address)
-              ? "ecdsa"
-              : isValidNonWithdrawableBlsAddress(address)
-                ? "bls"
-                : "unknown"
+        // Fee recipients are only checked for keys the client has; cached checks need a current
+        // membership read, so an outage is never hidden behind an earlier success.
+        const toRead: number[] = [];
+        rows.forEach((row, index) => {
+          row.validatorImported = keys.has(row.pubkey.toLowerCase());
+          // A check made before the key left the client says nothing about it once it returns.
+          if (!row.validatorImported) {
+            state.fee.delete(row.pubkey);
+            return;
           }
-        };
-        Object.assign(result, details);
-        progress.beacon.set(result.pubkey, { details, expires: Date.now() + BEACON_CACHE_MS });
-      })
+          const cached = state.fee.get(row.pubkey);
+          if (cached?.expected === row.feeRecipient.toLowerCase()) row.validatorFeeRecipientCorrect = cached.correct;
+          else toRead.push(index);
+        });
+        // Resume where the previous request stopped, so a large list converges over a few requests.
+        const start = toRead.findIndex((index) => index >= state.feeNext % rows.length);
+        const order = start <= 0 ? toRead : [...toRead.slice(start), ...toRead.slice(0, start)];
+        order.forEach((index) => pending.add(index));
+        await forEachConcurrently(order, READ_CONCURRENCY, async (index) => {
+          if (signal.aborted) return;
+          // Advance on dispatch: reads that hang until the deadline must not hold the next request back.
+          state.feeNext = index + 1;
+          const row = rows[index];
+          const expected = row.feeRecipient.toLowerCase();
+          const generation = state.generation;
+          try {
+            const { data } = await validatorApi.getFeeRecipient(row.pubkey, signal);
+            row.validatorFeeRecipientCorrect = data.ethaddress.toLowerCase() === expected;
+            pending.delete(index);
+            if (state.generation === generation)
+              state.fee.set(row.pubkey, {
+                expected,
+                correct: row.validatorFeeRecipientCorrect,
+                expires: Date.now() + FEE_CHECK_TTL_MS
+              });
+          } catch (error) {
+            if (!signal.aborted) pending.delete(index);
+            logger.error(error);
+            failed([index], "Could not read the fee recipient", error);
+          }
+        });
+      })()
     ]);
-    results.forEach((result, index) => {
-      result.detailsPending = membershipPending || beaconPending.has(index) || feePending.has(index);
-    });
-    return results;
   } finally {
     clearTimeout(deadline);
   }
+
+  rows.forEach((row, index) => {
+    row.detailsPending = pending.has(index);
+    row.detailsError = errors[index].length > 0 ? errors[index].join("; ") : undefined;
+  });
+  return rows;
 }

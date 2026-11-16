@@ -1,5 +1,10 @@
 import { expect } from "chai";
-import { appendImportFiles, isImportFormValid, ImportFormState } from "../src/utils/importForm.js";
+import {
+  appendImportFiles,
+  incompleteImportIndexes,
+  isImportFormValid,
+  ImportFormState
+} from "../src/utils/importForm.js";
 import { createImportRequest } from "../src/utils/createImportRequest.js";
 import { extractPubkey } from "../src/utils/dataUtils.js";
 
@@ -65,5 +70,19 @@ describe("Bulk import form", () => {
       const result = await extractPubkey(new File([contents], "invalid.json")).catch((error: Error) => error);
       expect(result).to.be.instanceOf(Error);
     }
+  });
+});
+
+describe("Large import forms", () => {
+  it("points at the files that still need input", () => {
+    const acceptedFiles = ["a", "b", "c"].map((name) => ({ file: new File(["{}"], name), pubkey: "0x" + name }));
+    expect(
+      incompleteImportIndexes({
+        acceptedFiles,
+        passwords: ["pw", "", "pw"],
+        tags: ["solo", "solo", ""],
+        feeRecipients: ["0x" + "ab".repeat(20), "0x" + "ab".repeat(20), ""]
+      })
+    ).to.deep.equal([1, 2]);
   });
 });

@@ -127,7 +127,8 @@ export function planImportBatches(
 
   const tooLarge: ImportBatch[] = [...oversized].map(([index, size]) => ({
     indexes: [index],
-    request: { ...request, validatorsImportRequest: [] },
+    // Never sent: the run reports it as an error instead.
+    request: { importFrom: request.importFrom, validatorsImportRequest: [] },
     tooLarge: { bytes: size, maxBytes }
   }));
   return [

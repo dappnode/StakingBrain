@@ -16,6 +16,7 @@ import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../
 import { BrainConfig } from "../../../config/types.js";
 import { getBuilderRelayPresets } from "../../../config/builderRelayPresets.js";
 import { featureFlags, FeatureDisabledError } from "@stakingbrain/common";
+import { BeaconStatusStore } from "../../../beaconStatus/index.js";
 
 export const createRpcMethods = ({
   postgresClient,
@@ -24,7 +25,8 @@ export const createRpcMethods = ({
   signerApi,
   brainDb,
   reloadValidatorsCronTask,
-  brainConfig
+  brainConfig,
+  beaconStatus
 }: {
   postgresClient: PostgresClient;
   beaconchainApi: BeaconchainApi;
@@ -33,6 +35,7 @@ export const createRpcMethods = ({
   brainDb: BrainDataBase;
   reloadValidatorsCronTask: CronJob;
   brainConfig: BrainConfig;
+  beaconStatus: BeaconStatusStore;
 }): RpcMethods => {
   const { beaconchainUrl, executionClientUrl, signerUrl, validatorUrl } = brainConfig.apis;
   const { minGenesisTime, secondsPerSlot, network, isMevBoostSet, executionClient, consensusClient } =
@@ -47,7 +50,13 @@ export const createRpcMethods = ({
       return await getBuilderConfigs({ pubkeys, brainDb, validatorApi });
     },
     deleteValidators: async (deleteRequest: Web3signerDeleteRequest) =>
-      await deleteValidators({ brainDb, reloadValidatorsCronTask, validatorApi, signerApi, deleteRequest }),
+      await deleteValidators({
+        brainDb,
+        reloadValidatorsCronTask,
+        validatorApi,
+        signerApi,
+        deleteRequest
+      }),
     exitValidators: async ({ pubkeys }: { pubkeys: string[] }) =>
       await exitValidators({ pubkeys, beaconchainApi, signerApi }),
     getExitValidators: async ({ pubkeys }: { pubkeys: string[] }) =>
@@ -74,13 +83,7 @@ export const createRpcMethods = ({
         signerUrl,
         requestFrom
       }),
-    getValidators: async () =>
-      await getValidators({
-        brainDb,
-        validatorApi,
-        signerApi,
-        beaconchainApi
-      }),
+    getValidators: async () => getValidators({ brainDb, validatorApi, signerApi, beaconStatus }),
     signerGetStatus: async () => await signerGetStatus({ signerApi }),
     getStakerConfig: async () =>
       await getStakerConfig({

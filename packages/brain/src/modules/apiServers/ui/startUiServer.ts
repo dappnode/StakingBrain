@@ -16,6 +16,7 @@ import { BrainDataBase } from "../../db/index.js";
 import { BrainConfig } from "../../config/types.js";
 import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../../apiClients/index.js";
 import { allowedOrigins, uiSocketOptions } from "./config.js";
+import { BeaconStatusStore } from "../../beaconStatus/index.js";
 
 export function startUiServer({
   brainDb,
@@ -27,6 +28,7 @@ export function startUiServer({
   brainConfig,
   reloadValidatorsCronTask,
   allowedOriginsFromEnv,
+  beaconStatus,
   port = params.uiPort
 }: {
   brainDb: BrainDataBase;
@@ -38,6 +40,7 @@ export function startUiServer({
   brainConfig: BrainConfig;
   reloadValidatorsCronTask: CronJob;
   allowedOriginsFromEnv: string | string[] | null;
+  beaconStatus: BeaconStatusStore;
   /** Defaults to the production UI port; tests pass 0 for an ephemeral port. */
   port?: number;
 }): http.Server {
@@ -53,7 +56,8 @@ export function startUiServer({
     signerApi,
     brainDb,
     reloadValidatorsCronTask,
-    brainConfig
+    brainConfig,
+    beaconStatus
   });
 
   const app = express();

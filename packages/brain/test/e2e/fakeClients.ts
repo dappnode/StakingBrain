@@ -87,12 +87,18 @@ export class FakeValidatorClient {
   paths: string[] = [];
   /** Simulated latency of a busy validator client on every write. */
   writeDelayMs = 0;
+  /** Answer every request with 503, as a restarting client would. */
+  unavailable = false;
 
   async start(): Promise<Started> {
     const app = express();
     app.use(express.json({ limit: "64mb" }));
-    app.use(async (req, _res, next) => {
+    app.use(async (req, res, next) => {
       this.paths.push(`${req.method} ${req.path}`);
+      if (this.unavailable) {
+        res.status(503).json({ message: "Validator client is restarting" });
+        return;
+      }
       if (req.method !== "GET") await delay(this.writeDelayMs);
       next();
     });
@@ -140,9 +146,40 @@ export class FakeBeaconNode {
   /** Simulated per-validator lookup latency of a busy or syncing beacon node. */
   lookupDelayMs = 0;
   lookups = 0;
+  /** Simulated latency of one bulk lookup, whatever its size. */
+  bulkDelayMs = 0;
+  bulkLookups: number[] = [];
+  unavailable = false;
 
   async start(): Promise<Started> {
     const app = express();
+    app.use(express.json({ limit: "64mb" }));
+    app.post("/eth/v1/beacon/states/head/validators", async (req, res) => {
+      const ids = (req.body.ids as string[]).map(prefixed);
+      this.bulkLookups.push(ids.length);
+      await delay(this.bulkDelayMs);
+      if (this.unavailable) {
+        res.status(503).json({ message: "Beacon node is syncing" });
+        return;
+      }
+      res.json({
+        execution_optimistic: false,
+        finalized: false,
+        data: ids.flatMap((pubkey) => {
+          const index = this.indexes.get(pubkey);
+          return index === undefined
+            ? []
+            : [
+                {
+                  index: String(index),
+                  balance: "32000000000",
+                  status: "active_ongoing",
+                  validator: { pubkey, withdrawal_credentials: "0x01" + "00".repeat(11) + "ab".repeat(20) }
+                }
+              ];
+        })
+      });
+    });
     app.get("/eth/v1/beacon/states/head/validators/:pubkey", async (req, res) => {
       this.lookups++;
       // Stop early when the Brain aborts the request at its deadline.

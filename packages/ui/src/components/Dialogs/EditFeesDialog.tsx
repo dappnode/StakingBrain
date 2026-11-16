@@ -22,7 +22,6 @@ import {
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DialogHeader from "./DialogHeader";
-import type { GridRowId } from "@mui/x-data-grid";
 import { BURN_ADDRESS, isValidEcdsaPubkey, areAllFeeRecipientsEditable, Network } from "@stakingbrain/common";
 import React from "react";
 import type {
@@ -47,15 +46,14 @@ import { useTheme, useMediaQuery } from "@mui/material";
 export default function FeeRecipientDialog({
   open,
   setOpen,
-  rows,
-  selectedRows,
+  validators,
   network,
   isMevBoostSet
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
-  rows: CustomValidatorGetResponse[];
-  selectedRows: GridRowId[];
+  /** The selected validators, resolved by pubkey. */
+  validators: CustomValidatorGetResponse[];
   network: Network;
   isMevBoostSet: boolean;
 }): JSX.Element {
@@ -75,7 +73,7 @@ export default function FeeRecipientDialog({
   useEffect(() => {
     isAnyWithdrawalCredentialsDiff("ecdsa") && getNonEcdsaValidatorsData();
     getSmoothValidatorsSelected();
-  }, [selectedRows]);
+  }, [validators]);
 
   const mevSpAddress = getSmoothAddressByNetwork(network);
   const smoothUrl = getSmoothUrlByNetwork(network);
@@ -141,9 +139,7 @@ export default function FeeRecipientDialog({
   async function updateValidators() {
     const validatorsData: CustomValidatorUpdateRequest[] = [];
 
-    selectedRows.forEach((rowId) => {
-      const row = rows[+rowId];
-
+    validators.forEach((row) => {
       if (row) {
         validatorsData.push({
           pubkey: row.pubkey,
@@ -170,18 +166,18 @@ export default function FeeRecipientDialog({
   };
 
   function areAllSelectedFeeRecipientsEditable() {
-    const selectedTags = selectedRows.map((rowId) => rows[+rowId].tag).flat();
+    const selectedTags = validators.map((row) => row.tag).flat();
 
     return areAllFeeRecipientsEditable(selectedTags);
   }
 
   function areAllOldFrsSameAsGiven(givenFr: string) {
-    const oldFeeRecipients = selectedRows.map((rowId) => rows[+rowId].feeRecipient).flat();
+    const oldFeeRecipients = validators.map((row) => row.feeRecipient).flat();
 
     return oldFeeRecipients.every((fr) => fr === givenFr);
   }
   function isRemovingMevSpFr() {
-    const oldFeeRecipients = selectedRows.map((rowId) => rows[+rowId].feeRecipient).flat();
+    const oldFeeRecipients = validators.map((row) => row.feeRecipient).flat();
 
     return (
       mevSpAddress !== null &&
@@ -198,8 +194,7 @@ export default function FeeRecipientDialog({
   // Given a possible withdrawal credentials format, checks if any of the selected validators has it
   const isAnyWithdrawalCredentialsEqual = (givenFormat: WithdrawalCredentialsFormat): boolean => {
     let isAnyAsGivenFormat = false;
-    for (const row of selectedRows) {
-      const rowData = rows[+row];
+    for (const rowData of validators) {
       const withdrawalFormat = rowData.withdrawalCredentials.format;
       if (withdrawalFormat === givenFormat) {
         isAnyAsGivenFormat = true;
@@ -212,8 +207,7 @@ export default function FeeRecipientDialog({
   // Given a possible withdrawal credentials format, checks if any of the selected validators has a different format
   const isAnyWithdrawalCredentialsDiff = (givenFormat: WithdrawalCredentialsFormat): boolean => {
     let isAnyAsGivenFormat = false;
-    for (const row of selectedRows) {
-      const rowData = rows[+row];
+    for (const rowData of validators) {
       const withdrawalFormat = rowData.withdrawalCredentials.format;
       if (withdrawalFormat !== givenFormat) {
         isAnyAsGivenFormat = true;
@@ -225,9 +219,8 @@ export default function FeeRecipientDialog({
 
   // Update the smoothValidatorsPubkeys state with the selected validators that have Smooth's fee recipient
   const getSmoothValidatorsSelected = (): void => {
-    const smoothValidatorsPubkeys: string[] = selectedRows
-      .map((row) => {
-        const rowData = rows[+row];
+    const smoothValidatorsPubkeys: string[] = validators
+      .map((rowData) => {
         return rowData.feeRecipient === mevSpAddress ? rowData.pubkey : null;
       })
       .filter((pubkey): pubkey is string => pubkey !== null);
@@ -237,9 +230,8 @@ export default function FeeRecipientDialog({
 
   // Update the nonEcdsaValidatorsData state with the selected validators that have a withdrawal address format different from ecdsa
   const getNonEcdsaValidatorsData = (): void => {
-    const filteredValidators = selectedRows
-      .map((row) => {
-        const rowData = rows[+row];
+    const filteredValidators = validators
+      .map((rowData) => {
         return rowData.withdrawalCredentials.format !== "ecdsa"
           ? {
               pubkey: rowData.pubkey,
@@ -620,7 +612,7 @@ export default function FeeRecipientDialog({
         title="Fee recipient"
         subtitle="Choose where validator proposal fees are sent."
         icon={<EditOutlinedIcon />}
-        count={selectedRows.length}
+        count={validators.length}
         onClose={handleClose}
         busy={loading}
       />

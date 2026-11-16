@@ -1,22 +1,15 @@
 import type { JSX } from "react";
 import { Alert } from "@mui/material";
-import type { GridRowId } from "@mui/x-data-grid";
 import { shortenPubkey } from "@stakingbrain/common";
 import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
-export default function ExitWarning({
-  selectedRows,
-  rows
-}: {
-  selectedRows: GridRowId[];
-  rows: CustomValidatorGetResponse[];
-}): JSX.Element {
+export default function ExitWarning({ validators }: { validators: CustomValidatorGetResponse[] }): JSX.Element {
   return (
     <>
       Are you sure you want to exit these validators?
       <ul>
-        {selectedRows.map((row, i) => (
-          <li key={i}>{shortenPubkey(rows[parseInt(row.toString())].pubkey)}</li>
+        {validators.map(({ pubkey }) => (
+          <li key={pubkey}>{shortenPubkey(pubkey)}</li>
         ))}
       </ul>
       <Alert severity="warning">

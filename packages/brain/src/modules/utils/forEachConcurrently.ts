@@ -14,6 +14,3 @@ export async function forEachConcurrently<T>(
     })
   );
 }
-
-/** Keeps per-validator client calls fast for large batches without flooding the validator client. */
-export const VALIDATOR_CLIENT_CONCURRENCY = 8;

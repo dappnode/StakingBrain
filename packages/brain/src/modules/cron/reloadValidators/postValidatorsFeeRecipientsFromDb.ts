@@ -1,12 +1,10 @@
 import { ValidatorApi } from "../../apiClients/index.js";
 import { StakingBrainDb } from "../../db/types.js";
 import logger from "../../logger/index.js";
-import { forEachConcurrently, VALIDATOR_CLIENT_CONCURRENCY } from "../../utils/forEachConcurrently.js";
 import { logPrefix } from "./logPrefix.js";
 
 /**
- * Post in the validator API fee recipients that are in the DB in the validator API.
- * Bounded concurrency keeps the reload (and the validator lock it holds) short for large key sets.
+ * Post in the validator API fee recipients that are in the DB in the validator API
  */
 export async function postValidatorsFeeRecipientsFromDb({
   validatorApi,
@@ -15,13 +13,13 @@ export async function postValidatorsFeeRecipientsFromDb({
   validatorApi: ValidatorApi;
   dbData: StakingBrainDb;
 }): Promise<void> {
-  await forEachConcurrently(Object.entries(dbData), VALIDATOR_CLIENT_CONCURRENCY, ([pubkey, { feeRecipient }]) =>
-    validatorApi
+  for (const [pubkey, { feeRecipient }] of Object.entries(dbData)) {
+    await validatorApi
       .setFeeRecipient(feeRecipient, pubkey)
       .catch((e) =>
         logger.error(
           `${logPrefix}Error posting fee recipient ${feeRecipient} for pubkey ${pubkey} to validator API: ${e}`
         )
-      )
-  );
+      );
+  }
 }

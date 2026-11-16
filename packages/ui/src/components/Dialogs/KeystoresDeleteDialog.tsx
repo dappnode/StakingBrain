@@ -14,14 +14,13 @@ import type { CustomValidatorGetResponse, Web3signerDeleteResponse } from "@stak
 import { useTheme, useMediaQuery } from "@mui/material";
 
 export default function KeystoresDeleteDialog({
-  rows,
-  selectedRows,
+  validators,
   setSelectedRows,
   open,
   setOpen
 }: {
-  rows: CustomValidatorGetResponse[];
-  selectedRows: GridRowId[];
+  /** The selected validators, resolved by pubkey. */
+  validators: CustomValidatorGetResponse[];
   setSelectedRows: (selectedRows: GridRowId[]) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -37,7 +36,7 @@ export default function KeystoresDeleteDialog({
     try {
       setKeystoresDelete(undefined);
       setLoading(true);
-      const pubkeysToDelete = selectedRows.map((row) => rows[parseInt(row.toString())]?.pubkey);
+      const pubkeysToDelete = validators.map(({ pubkey }) => pubkey);
       setDeletedPubkeys(pubkeysToDelete);
       setKeystoresDelete(
         await rpcClient.call("deleteValidators", {
@@ -76,7 +75,7 @@ export default function KeystoresDeleteDialog({
         title={keystoresDelete ? "Deletion results" : "Delete keystores"}
         subtitle="Remove validator keys from this signer."
         icon={<DeleteOutlineIcon />}
-        count={keystoresDelete ? deletedPubkeys.length : selectedRows.length}
+        count={keystoresDelete ? deletedPubkeys.length : validators.length}
         onClose={handleClose}
         busy={loading}
       />
@@ -121,7 +120,7 @@ export default function KeystoresDeleteDialog({
                 <WaitBox />
               ) : (
                 <DialogContentText id="alert-dialog-description" component={"span"}>
-                  <DeletionWarning rows={rows} selectedRows={selectedRows} />
+                  <DeletionWarning validators={validators} />
                 </DialogContentText>
               )}
             </div>

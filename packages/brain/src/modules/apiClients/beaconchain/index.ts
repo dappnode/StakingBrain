@@ -166,16 +166,19 @@ export class BeaconchainApi extends StandardApi {
    */
   public async postStateValidators({
     stateId,
-    body
+    body,
+    timeout
   }: {
     stateId: BlockId;
     body: { ids: string[]; statuses: ValidatorStatus[] };
+    timeout?: number;
   }): Promise<BeaconchainValidatorStatePostResponse> {
     try {
       return await this.request({
         method: "POST",
         endpoint: path.join(this.beaconchainEndpoint, "states", stateId, "validators"),
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        timeout
       });
     } catch (e) {
       throw new BeaconchainApiError(`Error getting (POST) state validators from beaconchain. ${e.message}`);

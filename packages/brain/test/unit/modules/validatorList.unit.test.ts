@@ -4,40 +4,28 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { BrainDataBase } from "../../../src/modules/db/index.js";
-import { ValidatorApi, Web3SignerApi, BeaconchainApi } from "../../../src/modules/apiClients/index.js";
-import { getValidators } from "../../../src/modules/apiServers/ui/calls/getValidators.js";
+import { ValidatorApi, Web3SignerApi } from "../../../src/modules/apiClients/index.js";
+import { getValidators, LIST_DEADLINE_MS } from "../../../src/modules/apiServers/ui/calls/getValidators.js";
+import { BeaconStatusStore } from "../../../src/modules/beaconStatus/index.js";
 import logger from "../../../src/modules/logger/index.js";
-import type { BeaconchainValidatorFromStateGetResponse } from "../../../src/modules/apiClients/beaconchain/types.js";
-import { ValidatorStatus } from "../../../src/modules/apiClients/beaconchain/types.js";
+import { emptyBeacon } from "../../helpers/beacon.js";
 
 const keys = Array.from({ length: 30 }, (_, index) => "0x" + (index + 1).toString(16).padStart(96, "0"));
 const feeRecipient = "0x" + "ab".repeat(20);
-const beaconResponse = (pubkey: string, address: string): BeaconchainValidatorFromStateGetResponse => ({
-  execution_optimistic: false,
-  data: {
-    index: String(keys.indexOf(pubkey)),
-    balance: "32000000000",
-    status: ValidatorStatus.ACTIVE_ONGOING,
-    validator: {
-      pubkey,
-      withdrawal_credentials: address,
-      effective_balance: "32000000000",
-      slashed: false,
-      activation_eligibility_epoch: "0",
-      activation_epoch: "0",
-      exit_epoch: "18446744073709551615",
-      withdrawable_epoch: "18446744073709551615"
-    }
-  }
-});
+const hang = ({ signal }: { signal?: AbortSignal }) =>
+  new Promise<never>((_resolve, reject) => {
+    signal!.addEventListener("abort", () => reject(new Error("Aborted")), { once: true });
+  });
 
-describe("Validator list bulk reads", () => {
+describe("Validator list reads", () => {
   let directory: string;
   let brainDb: BrainDataBase;
   let validatorApi: sinon.SinonStubbedInstance<ValidatorApi>;
   let signerApi: sinon.SinonStubbedInstance<Web3SignerApi>;
-  let beaconchainApi: sinon.SinonStubbedInstance<BeaconchainApi>;
+  let beaconStatus: BeaconStatusStore;
+
   beforeEach(() => {
+    sinon.stub(logger, "error");
     directory = fs.mkdtempSync(path.join(os.tmpdir(), "stakingbrain-list-"));
     brainDb = new BrainDataBase(path.join(directory, "db.json"));
     brainDb.addValidators({
@@ -45,169 +33,159 @@ describe("Validator list bulk reads", () => {
     });
     validatorApi = sinon.createStubInstance(ValidatorApi);
     signerApi = sinon.createStubInstance(Web3SignerApi);
-    beaconchainApi = sinon.createStubInstance(BeaconchainApi);
-    validatorApi.getRemoteKeys.resolves({
-      data: keys.map((pubkey) => ({ pubkey, readonly: false, url: "http://signer" }))
-    });
+    beaconStatus = new BeaconStatusStore(brainDb, emptyBeacon());
+    validatorApi.getRemoteKeys.resolves({ data: keys.map((pubkey) => ({ pubkey, readonly: false, url: "" })) });
     signerApi.listRemoteKeys.resolves({
       data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
     });
-    validatorApi.getFeeRecipient.resolves({ data: { ethaddress: feeRecipient } });
-    sinon.stub(logger, "error");
+    validatorApi.getFeeRecipient.resolves({ data: { ethaddress: feeRecipient.toUpperCase().replace("0X", "0x") } });
   });
   afterEach(() => {
     sinon.restore();
     fs.rmSync(directory, { recursive: true, force: true });
   });
-  const read = () => getValidators({ brainDb, validatorApi, signerApi, beaconchainApi });
+  const list = () => getValidators({ brainDb, validatorApi, signerApi, beaconStatus });
 
-  it("keeps successful fee checks when a different validator fails", async () => {
-    validatorApi.getFeeRecipient.withArgs(keys[0]).rejects(new Error("key missing"));
-    beaconchainApi.getStateValidator.rejects(new Error("not deposited"));
-    const results = await read();
-    expect(results.map(({ pubkey }) => pubkey)).to.deep.equal(keys);
-    expect(results[0].validatorFeeRecipientCorrect).to.equal(undefined);
-    expect(results.slice(1).every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect)).to.equal(true);
+  it("reads membership and fee recipients from the clients", async () => {
+    validatorApi.getFeeRecipient.withArgs(keys[1]).resolves({ data: { ethaddress: "0x" + "00".repeat(20) } });
+    signerApi.listRemoteKeys.resolves({ data: [] });
+    const rows = await list();
+    expect(rows.every(({ signerImported }) => signerImported === false)).to.equal(true);
+    expect(rows.every(({ validatorImported }) => validatorImported)).to.equal(true);
+    expect(rows.map(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect).slice(0, 3)).to.deep.equal([
+      true,
+      false,
+      true
+    ]);
+    expect(rows.every(({ detailsPending, detailsError }) => !detailsPending && !detailsError)).to.equal(true);
   });
 
-  it("bounds concurrent beacon reads and stops the whole list at its deadline", async () => {
+  it("bounds reads by concurrency and deadline and reports cut-off rows as pending", async () => {
     const clock = sinon.useFakeTimers();
-    beaconchainApi.getStateValidator.callsFake(
-      async ({ signal }) =>
-        new Promise((_resolve, reject) => {
-          if (signal?.aborted) reject(new Error("Aborted"));
-          signal!.addEventListener("abort", () => reject(new Error("Aborted")), { once: true });
-        })
-    );
-    const pending = read();
-    await clock.tickAsync(9999);
-    expect(beaconchainApi.getStateValidator.callCount).to.equal(8);
+    validatorApi.getFeeRecipient.callsFake(((_pubkey: string, signal?: AbortSignal) => hang({ signal })) as never);
+    const rows = list();
+    await clock.tickAsync(LIST_DEADLINE_MS - 1);
+    expect(validatorApi.getFeeRecipient.callCount).to.equal(8);
     await clock.tickAsync(1);
-    const results = await pending;
-    expect(results.map(({ pubkey }) => pubkey)).to.deep.equal(keys);
-    expect(results.every(({ withdrawalCredentials }) => withdrawalCredentials.format === "error")).to.equal(true);
-    expect(beaconchainApi.getStateValidator.callCount).to.equal(8);
+    const result = await rows;
+    expect(result.every(({ detailsPending, detailsError }) => detailsPending && !detailsError)).to.equal(true);
     expect(clock.countTimers()).to.equal(0);
   });
 
-  it("finishes later beacon reads on refresh and retains earlier results without delaying fee checks", async () => {
+  it("converges over follow-up requests: only unread rows are pending", async () => {
     const clock = sinon.useFakeTimers();
-    const address = "0x01" + "00".repeat(11) + "ab".repeat(20);
-    beaconchainApi.getStateValidator.callsFake(
-      ({ pubkey, signal }) =>
+    validatorApi.getFeeRecipient.callsFake(
+      ((_pubkey: string, signal?: AbortSignal) =>
         new Promise((resolve, reject) => {
-          const abort = () => {
+          const timer = setTimeout(() => resolve({ data: { ethaddress: feeRecipient } }), 4000);
+          signal?.addEventListener("abort", () => {
             clearTimeout(timer);
             reject(new Error("Aborted"));
-          };
-          const timer = setTimeout(() => {
-            signal!.removeEventListener("abort", abort);
-            resolve(beaconResponse(pubkey, address));
-          }, 4000);
-          signal!.addEventListener("abort", abort, { once: true });
-        })
+          });
+        })) as never
     );
-    const first = read();
-    await clock.tickAsync(10000);
-    const firstResults = await first;
-    expect(firstResults.filter(({ index }) => index !== "").length).to.equal(16);
-    expect(firstResults.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect)).to.equal(true);
-    const second = read();
-    await clock.tickAsync(10000);
-    const secondResults = await second;
-    expect(secondResults.map(({ index }) => index)).to.deep.equal(keys.map((_, index) => String(index)));
-    expect(secondResults.every(({ withdrawalCredentials }) => withdrawalCredentials.address === address)).to.equal(
-      true
-    );
-    // Expiration forces fresh reads so changed withdrawal credentials are not cached forever.
-    await clock.tickAsync(60000);
-    beaconchainApi.getStateValidator.resetHistory();
-    const third = read();
-    await clock.tickAsync(10000);
-    await third;
-    expect(beaconchainApi.getStateValidator.callCount).to.be.greaterThan(0);
-    expect(clock.countTimers()).to.equal(0);
+    const pendingByRound: number[] = [];
+    for (let round = 0; round < 3; round++) {
+      const rows = list();
+      await clock.tickAsync(LIST_DEADLINE_MS);
+      const result = await rows;
+      const pending = result.filter(({ detailsPending }) => detailsPending);
+      // Pending means exactly "not read yet".
+      expect(pending.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect === undefined)).to.equal(
+        true
+      );
+      pendingByRound.push(pending.length);
+    }
+    expect(pendingByRound).to.deep.equal([14, 0, 0]);
   });
 
-  it("rotates stalled fee reads and keeps unverified results unknown", async () => {
+  it("moves past reads that time out, so responsive validators are not starved", async () => {
     const clock = sinon.useFakeTimers();
-    beaconchainApi.getStateValidator.rejects(new Error("not deposited"));
-    validatorApi.getFeeRecipient.callsFake(
-      async (_pubkey, signal) =>
-        new Promise((_resolve, reject) => {
-          signal!.addEventListener("abort", () => reject(new Error("Aborted")), { once: true });
-        })
-    );
-    const first = read();
-    await clock.tickAsync(10000);
+    const stuck = new Set(keys.slice(0, 8));
+    validatorApi.getFeeRecipient.callsFake(((pubkey: string, signal?: AbortSignal) =>
+      stuck.has(pubkey) ? hang({ signal }) : Promise.resolve({ data: { ethaddress: feeRecipient } })) as never);
+    for (let round = 0; round < 2; round++) {
+      const rows = list();
+      await clock.tickAsync(LIST_DEADLINE_MS);
+      await rows;
+    }
+    const rows = list();
+    await clock.tickAsync(LIST_DEADLINE_MS);
+    const result = await rows;
     expect(
-      (await first).every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect === undefined)
+      result
+        .slice(8)
+        .every(({ detailsPending, validatorFeeRecipientCorrect }) => !detailsPending && validatorFeeRecipientCorrect)
     ).to.equal(true);
-    expect(validatorApi.getFeeRecipient.args.map(([pubkey]) => pubkey)).to.deep.equal(keys.slice(0, 8));
-    validatorApi.getFeeRecipient.resetHistory();
-    const second = read();
-    await clock.tickAsync(10000);
-    await second;
-    expect(validatorApi.getFeeRecipient.args.map(([pubkey]) => pubkey)).to.deep.equal(keys.slice(8, 16));
-    expect(clock.countTimers()).to.equal(0);
+    expect(result.slice(0, 8).every(({ detailsPending }) => detailsPending)).to.equal(true);
   });
 
-  it("keeps membership unknown on list failures while independently reading beacon data", async () => {
-    validatorApi.getRemoteKeys.rejects(new Error("unavailable"));
-    signerApi.listRemoteKeys.rejects(new Error("unavailable"));
-    beaconchainApi.getStateValidator.callsFake(async ({ pubkey }) => beaconResponse(pubkey, "0x01" + "00".repeat(31)));
-    const results = await read();
-    expect(
-      results.every(
-        ({ signerImported, validatorImported, validatorFeeRecipientCorrect }) =>
-          signerImported === undefined && validatorImported === undefined && validatorFeeRecipientCorrect === undefined
-      )
-    ).to.equal(true);
-    expect(results.map(({ index }) => index)).to.deep.equal(keys.map((_, index) => String(index)));
-  });
-  it("marks rows pending only when the deadline cut their reads short", async () => {
-    const clock = sinon.useFakeTimers();
-    beaconchainApi.getStateValidator.callsFake(({ pubkey, signal }) =>
-      // Validator 0 is not deposited yet: a definite failure must not keep the UI polling.
-      pubkey === keys[0]
-        ? Promise.reject(new Error("not deposited"))
-        : new Promise((resolve, reject) => {
-            const abort = () => {
-              clearTimeout(timer);
-              reject(new Error("Aborted"));
-            };
-            const timer = setTimeout(() => {
-              signal!.removeEventListener("abort", abort);
-              resolve(beaconResponse(pubkey, "0x01" + "00".repeat(31)));
-            }, 4000);
-            signal!.addEventListener("abort", abort, { once: true });
-          })
-    );
-    const first = read();
-    await clock.tickAsync(10000);
-    const firstResults = await first;
-    expect(firstResults[0].detailsPending).to.equal(false);
-    expect(firstResults.some(({ detailsPending }) => detailsPending)).to.equal(true);
-    expect(
-      firstResults.filter(({ detailsPending }) => !detailsPending).every(({ index }, i) => i === 0 || index !== "")
-    ).to.be.true;
-    const second = read();
-    await clock.tickAsync(10000);
-    expect((await second).every(({ detailsPending }) => !detailsPending)).to.equal(true);
-    expect(clock.countTimers()).to.equal(0);
+  it("forgets a cached fee check when the key leaves the validator client", async () => {
+    await list();
+    validatorApi.getRemoteKeys.resolves({
+      data: keys.slice(1).map((pubkey) => ({ pubkey, readonly: false, url: "" }))
+    });
+    await list();
+    // The key returns, but its fee recipient was not restored.
+    validatorApi.getRemoteKeys.resolves({ data: keys.map((pubkey) => ({ pubkey, readonly: false, url: "" })) });
+    validatorApi.getFeeRecipient.withArgs(keys[0]).resolves({ data: { ethaddress: "0x" + "00".repeat(20) } });
+    brainDb.notifyChanged();
+    expect((await list())[0].validatorFeeRecipientCorrect).to.equal(false);
   });
 
-  it("caches fee checks per expected recipient and re-checks after an edit", async () => {
-    beaconchainApi.getStateValidator.rejects(new Error("not deposited"));
-    await read();
-    expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length);
-    await read();
-    expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length);
+  it("reports an unreachable client instead of an earlier success", async () => {
+    await list();
+    validatorApi.getRemoteKeys.rejects(new Error("ECONNREFUSED"));
+    const rows = await list();
+    expect(rows.every(({ validatorImported }) => validatorImported === undefined)).to.equal(true);
+    expect(rows.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect === undefined)).to.equal(true);
+    expect(rows.every(({ detailsPending }) => !detailsPending)).to.equal(true);
+    expect(rows[0].detailsError).to.include("validator client").and.include("ECONNREFUSED");
+  });
+
+  it("reports a failed fee read for that row only", async () => {
+    validatorApi.getFeeRecipient.withArgs(keys[0]).rejects(new Error("HTTP 404"));
+    const rows = await list();
+    expect(rows[0].detailsPending).to.equal(false);
+    expect(rows[0].validatorFeeRecipientCorrect).to.equal(undefined);
+    expect(rows[0].detailsError).to.include("HTTP 404");
+    expect(rows.slice(1).every(({ detailsError }) => !detailsError)).to.equal(true);
+  });
+
+  it("re-reads a fee recipient checked mid-update once the update announces itself", async () => {
     const other = "0x" + "cd".repeat(20);
     brainDb.updateValidators([{ pubkey: keys[0], feeRecipient: other }]);
-    const results = await read();
+    let finishRead!: () => void;
+    validatorApi.getFeeRecipient.withArgs(keys[0]).callsFake(
+      () =>
+        new Promise((resolve) => {
+          finishRead = () => resolve({ data: { ethaddress: feeRecipient } });
+        }) as never
+    );
+    const during = list();
+    await new Promise((resolve) => setImmediate(resolve));
+    validatorApi.getFeeRecipient.withArgs(keys[0]).resolves({ data: { ethaddress: other } });
+    brainDb.notifyChanged();
+    finishRead();
+    expect((await during)[0].validatorFeeRecipientCorrect).to.equal(false);
+    expect((await list())[0].validatorFeeRecipientCorrect).to.equal(true);
+  });
+
+  it("caches matching fee checks between requests and re-checks after an edit", async () => {
+    await list();
+    expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length);
+    await list();
+    expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length);
+    brainDb.updateValidators([{ pubkey: keys[0], feeRecipient: "0x" + "cd".repeat(20) }]);
+    const rows = await list();
     expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length + 1);
-    expect(results[0].validatorFeeRecipientCorrect).to.equal(false);
-    expect(results.every(({ detailsPending }) => detailsPending === false)).to.equal(true);
+    expect(rows[0].validatorFeeRecipientCorrect).to.equal(false);
+  });
+
+  it("takes beacon details from the beacon store, pending until it has looked them up", async () => {
+    const rows = await list();
+    expect(rows.every(({ beaconPending, detailsPending }) => beaconPending && !detailsPending)).to.equal(true);
+    await beaconStatus.refresh();
+    expect((await list()).every(({ beaconPending }) => !beaconPending)).to.equal(true);
   });
 });

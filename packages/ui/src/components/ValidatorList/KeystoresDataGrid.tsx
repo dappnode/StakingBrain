@@ -157,6 +157,8 @@ export default function KeystoresDataGrid({
   // about changes, and not on every round while details are still loading.
   const oracleQueryKey = rows.map((row) => `${row.pubkey}:${row.tag}:${row.index}`).join(",");
   const detailsLoading = rows.some((row) => row.detailsPending);
+  const selectedIds = new Set(selectedRows);
+  const selectedValidators = rows.filter((row) => selectedIds.has(row.pubkey));
   // Live refreshes replace `rows` often; only reset the dashboard hint when what it depends on changes.
   useEffect(() => {
     setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
@@ -255,7 +257,7 @@ export default function KeystoresDataGrid({
     }
   ];
 
-  const customRows = rows.map((row, index) => ({
+  const customRows = rows.map((row) => ({
     pubkey: row.pubkey,
     explorerUrl: blockExplorerUrl ? blockExplorerUrl + "/validator/" + row.pubkey : "",
     feeRecipient: row.feeRecipient,
@@ -267,7 +269,8 @@ export default function KeystoresDataGrid({
     feeRecipientImported: row.validatorFeeRecipientCorrect,
     builderConfig: row.builderConfig,
     builderConfigStatus: row.builderConfigStatus,
-    id: index
+    // Pubkeys, not positions: live refreshes reorder and remove rows under a selection.
+    id: row.pubkey
   }));
 
   const builderConfigColumn: GridColDef = {
@@ -418,7 +421,7 @@ export default function KeystoresDataGrid({
     }
 
     const summaryUrl = buildValidatorSummaryURL({
-      validatorIndexes: selectedRows.map((row) => rows[row as number]?.index ?? ""),
+      validatorIndexes: selectedValidators.map((row) => row.index),
       network
     });
 
@@ -432,12 +435,12 @@ export default function KeystoresDataGrid({
   }
 
   function areAllSelectedRowsExitable() {
-    return selectedRows.every((row) => rows[row as number].tag !== "rocketpool");
+    return selectedValidators.every((row) => row.tag !== "rocketpool");
   }
 
   function areAllSelectedRowsUneditable() {
-    return selectedRows.every((row) => {
-      const tag = rows[row as number].tag;
+    return selectedValidators.every((row) => {
+      const tag = row.tag;
       return nonEditableFeeRecipientTags.includes(tag as NonEditableFeeRecipientTag);
     });
   }
