@@ -75,4 +75,6 @@ export interface CustomValidatorGetResponse {
   validatorFeeRecipientCorrect?: boolean;
   builderConfig?: BuilderConfig | null;
   builderConfigStatus?: BuilderConfigStatus;
+  /** True when the read deadline cut this row's checks short; a later refresh continues them. */
+  detailsPending?: boolean;
 }

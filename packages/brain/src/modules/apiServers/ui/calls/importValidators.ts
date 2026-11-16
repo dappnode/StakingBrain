@@ -15,6 +15,7 @@ import {
   LIDO_FEE_RECIPIENT_HOODI
 } from "@stakingbrain/common";
 import { CustomImportRequest } from "./types.js";
+import { forEachConcurrently, VALIDATOR_CLIENT_CONCURRENCY } from "../../../utils/forEachConcurrently.js";
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
 import { Web3signerPostResponse } from "../../../apiClients/types.js";
@@ -193,11 +194,11 @@ export async function importValidators({
         logger.debug(`Added pubkeys to validator API`);
 
         // Import feeRecipient on Validator API
-        for (const validator of validatorsToPost) {
-          await validatorApi
+        await forEachConcurrently(validatorsToPost, VALIDATOR_CLIENT_CONCURRENCY, (validator) =>
+          validatorApi
             .setFeeRecipient(validator.feeRecipient, validator.pubkey)
-            .catch((err) => logger.error(`Error setting validator feeRecipient for pubkey ${validator.pubkey} :`, err));
-        }
+            .catch((err) => logger.error(`Error setting validator feeRecipient for pubkey ${validator.pubkey} :`, err))
+        );
 
         logger.debug(`Added fee recipients to validator API`);
 

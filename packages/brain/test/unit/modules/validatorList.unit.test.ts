@@ -165,4 +165,49 @@ describe("Validator list bulk reads", () => {
     ).to.equal(true);
     expect(results.map(({ index }) => index)).to.deep.equal(keys.map((_, index) => String(index)));
   });
+  it("marks rows pending only when the deadline cut their reads short", async () => {
+    const clock = sinon.useFakeTimers();
+    beaconchainApi.getStateValidator.callsFake(({ pubkey, signal }) =>
+      // Validator 0 is not deposited yet: a definite failure must not keep the UI polling.
+      pubkey === keys[0]
+        ? Promise.reject(new Error("not deposited"))
+        : new Promise((resolve, reject) => {
+            const abort = () => {
+              clearTimeout(timer);
+              reject(new Error("Aborted"));
+            };
+            const timer = setTimeout(() => {
+              signal!.removeEventListener("abort", abort);
+              resolve(beaconResponse(pubkey, "0x01" + "00".repeat(31)));
+            }, 4000);
+            signal!.addEventListener("abort", abort, { once: true });
+          })
+    );
+    const first = read();
+    await clock.tickAsync(10000);
+    const firstResults = await first;
+    expect(firstResults[0].detailsPending).to.equal(false);
+    expect(firstResults.some(({ detailsPending }) => detailsPending)).to.equal(true);
+    expect(
+      firstResults.filter(({ detailsPending }) => !detailsPending).every(({ index }, i) => i === 0 || index !== "")
+    ).to.be.true;
+    const second = read();
+    await clock.tickAsync(10000);
+    expect((await second).every(({ detailsPending }) => !detailsPending)).to.equal(true);
+    expect(clock.countTimers()).to.equal(0);
+  });
+
+  it("caches fee checks per expected recipient and re-checks after an edit", async () => {
+    beaconchainApi.getStateValidator.rejects(new Error("not deposited"));
+    await read();
+    expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length);
+    await read();
+    expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length);
+    const other = "0x" + "cd".repeat(20);
+    brainDb.updateValidators([{ pubkey: keys[0], feeRecipient: other }]);
+    const results = await read();
+    expect(validatorApi.getFeeRecipient.callCount).to.equal(keys.length + 1);
+    expect(results[0].validatorFeeRecipientCorrect).to.equal(false);
+    expect(results.every(({ detailsPending }) => detailsPending === false)).to.equal(true);
+  });
 });

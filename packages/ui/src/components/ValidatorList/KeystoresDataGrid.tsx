@@ -61,10 +61,6 @@ export default function KeystoresDataGrid({
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const blockExplorerUrl = blockExplorerUrls.get(network);
 
-  useEffect(() => {
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-  }, [selectedRows, network, rows]);
-
   const [validatorsSubscriptionMap, setValidatorsSubscriptionMap] = useState<SmoothStatusByPubkey | null>(null);
 
   const [oracleCallError, setOracleCallError] = useState<string>();
@@ -154,11 +150,18 @@ export default function KeystoresDataGrid({
       setOracleCallError("Error fetching subscription status. Oracle might be down: " + e.message);
     }
   };
+  // The list refreshes live and in rounds; only query the external oracle when what it is asked
+  // about changes, and not on every round while details are still loading.
+  const oracleQueryKey = rows.map((row) => `${row.pubkey}:${row.tag}:${row.index}`).join(",");
+  const detailsLoading = rows.some((row) => row.detailsPending);
+  // Live refreshes replace `rows` often; only reset the dashboard hint when what it depends on changes.
   useEffect(() => {
-    if (rows.length > 0) {
-      fetchValidatorsData(rows);
-    }
-  }, [rows]);
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
+  }, [selectedRows, network, oracleQueryKey]);
+  useEffect(() => {
+    if (rows.length === 0 || (detailsLoading && validatorsSubscriptionMap !== null)) return;
+    fetchValidatorsData(rows);
+  }, [oracleQueryKey, detailsLoading, network]);
 
   const columns: GridColDef[] = [
     {

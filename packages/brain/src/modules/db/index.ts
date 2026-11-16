@@ -33,11 +33,26 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     this.dbName = dbName;
   }
 
+  private changeListeners = new Set<() => void>();
+
   public override write(): void {
     super.write();
     // The JSON adapter replaces the file atomically; restore the private mode on
     // the replacement too, since records may contain builder authorization data.
     this.setOwnerWriteRead();
+    for (const listener of this.changeListeners) {
+      try {
+        listener();
+      } catch (e) {
+        logger.error("Database change listener failed", e);
+      }
+    }
+  }
+
+  /** Notify after each persisted change, e.g. to push live updates to open UIs. Returns an unsubscribe. */
+  public onChange(listener: () => void): () => void {
+    this.changeListeners.add(listener);
+    return () => this.changeListeners.delete(listener);
   }
 
   /**

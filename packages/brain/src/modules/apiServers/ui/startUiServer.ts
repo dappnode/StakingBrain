@@ -1,4 +1,6 @@
-import { Network } from "@stakingbrain/common";
+import { Network, VALIDATORS_CHANGED_EVENT } from "@stakingbrain/common";
+
+const VALIDATORS_CHANGED_DEBOUNCE_MS = 500;
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -57,6 +59,17 @@ export function startUiServer({
 
   // Socket io
   const io = new Server(server, uiSocketOptions(uiOrigins));
+  // One import or reload writes several times; coalesce them into a single refresh hint.
+  let changeTimer: NodeJS.Timeout | undefined;
+  brainDb.onChange(() => {
+    if (changeTimer) return;
+    changeTimer = setTimeout(() => {
+      changeTimer = undefined;
+      io.emit(VALIDATORS_CHANGED_EVENT);
+    }, VALIDATORS_CHANGED_DEBOUNCE_MS);
+    changeTimer.unref();
+  });
+
   io.on("connection", (socket) => {
     logger.debug("A user connected");
 

@@ -18,7 +18,7 @@ import {
   Stack
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BackupIcon from "@mui/icons-material/Backup";
 import { ImportStatus, KeystoreInfo, TagSelectOption } from "./types";
 import FileCardList from "./components/FileCards/FileCardList";
@@ -28,10 +28,13 @@ import CloseIcon from "@mui/icons-material/Close";
 import { rpcClient } from "./socket";
 import ArrowCircleLeftOutlinedIcon from "@mui/icons-material/ArrowCircleLeftOutlined";
 import { extractPubkey } from "./utils/dataUtils";
-import type { Web3signerPostResponse } from "@stakingbrain/brain";
 import { createImportRequest } from "./utils/createImportRequest";
-import { appendImportFiles, isImportFormValid, ImportFormState } from "./utils/importForm";
+import { appendImportFiles, incompleteImportIndexes, isImportFormValid, ImportFormState } from "./utils/importForm";
 import PageLayout, { PageHeader } from "./components/Layout/PageLayout";
+import { ImportProgress, ImportResult, notAttempted, planImportBatches, runImportBatches } from "./utils/importBatches";
+
+// Each card holds up to three inputs; rendering hundreds at once makes typing laggy.
+const FILE_CARDS_PAGE = 25;
 
 export default function ImportScreen({
   network,
@@ -40,7 +43,11 @@ export default function ImportScreen({
   network: Network;
   isMevBoostSet: boolean;
 }): JSX.Element {
-  const [keystoresPostResponse, setKeystoresPostResponse] = useState<Web3signerPostResponse>();
+  const [importResults, setImportResults] = useState<ImportResult[]>();
+  const [importProgress, setImportProgress] = useState<ImportProgress>();
+  const [importStopped, setImportStopped] = useState<"user" | "error">();
+  const [stopRequested, setStopRequested] = useState(false);
+  const stopRef = useRef(false);
   const [keystoresPostError, setKeystoresPostError] = useState<string>();
   const [openDialog, setOpenDialog] = useState(false);
   const [importForm, setImportForm] = useState<ImportFormState>({
@@ -63,6 +70,8 @@ export default function ImportScreen({
   const [slashingFile, setSlashingFile] = useState<File>();
   const [showMevWarning, setShowMevWarning] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  const [visibleFiles, setVisibleFiles] = useState(FILE_CARDS_PAGE);
+  const incomplete = incompleteImportIndexes(importForm);
 
   // If the user has selected the 'lido' tag and MEV-Boost is not set, show the warning
   useEffect(() => {
@@ -137,11 +146,18 @@ export default function ImportScreen({
     setIsButtonDisabled(disable); // Set the state based on the conditions
   }, [passwords, tags, feeRecipients, acceptedFiles, slashingFile, slashingProtectionIncluded, showMevWarning]);
 
-  async function importKeystores() {
+  /** Import in batches with live progress. `only` retries a subset while keeping earlier results. */
+  async function importKeystores(only?: number[]) {
     try {
       setImportStatus(ImportStatus.Importing);
       setKeystoresPostError(undefined);
-      setKeystoresPostResponse(undefined);
+      setImportStopped(undefined);
+      stopRef.current = false;
+      setStopRequested(false);
+      if (!only) {
+        setImportResults(undefined);
+        setImportProgress(undefined);
+      }
       handleClickOpenDialog();
 
       const importRequest = await createImportRequest({
@@ -151,11 +167,24 @@ export default function ImportScreen({
         feeRecipients,
         slashingFile: slashingProtectionIncluded ? slashingFile : undefined
       });
+      const batches = planImportBatches(
+        importRequest,
+        acceptedFiles.map(({ pubkey }) => pubkey),
+        { only }
+      );
+      const { results, stopped } = await runImportBatches({
+        batches,
+        results: (only && importResults) || acceptedFiles.map(notAttempted),
+        importBatch: (request) => rpcClient.call("importValidators", request),
+        onProgress: (progress, results) => {
+          setImportProgress(progress);
+          setImportResults(results);
+        },
+        shouldStop: () => stopRef.current
+      });
 
-      const response = await rpcClient.call("importValidators", importRequest);
-
-      setKeystoresPostResponse(response);
-      setKeystoresPostError(undefined);
+      setImportResults(results);
+      setImportStopped(stopped);
       setImportStatus(ImportStatus.Imported);
     } catch (e) {
       console.error(e);
@@ -328,6 +357,23 @@ export default function ImportScreen({
           </Card>
         )}
 
+      {acceptedFiles.length > 1 && (
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+          <Typography variant="subtitle1">{acceptedFiles.length} keystores selected</Typography>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => {
+              setImportForm({ acceptedFiles: [], passwords: [], tags: [], feeRecipients: [] });
+              setVisibleFiles(FILE_CARDS_PAGE);
+              setFileError("");
+            }}
+          >
+            Remove all
+          </Button>
+        </Stack>
+      )}
+
       {FileCardList(
         acceptedFiles,
         setAcceptedFiles,
@@ -342,7 +388,35 @@ export default function ImportScreen({
         useSameFeerecipient,
         getFeeRecipientFieldHelperText,
         isFeeRecipientFieldWrong,
-        tagSelectOptions
+        tagSelectOptions,
+        visibleFiles
+      )}
+
+      {acceptedFiles.length > visibleFiles && (
+        <Card sx={{ p: 2 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            spacing={2}
+            useFlexGap
+            flexWrap="wrap"
+          >
+            <Typography variant="body2" color="text.secondary">
+              Showing {visibleFiles} of {acceptedFiles.length} keystores.
+              {!(useSamePassword && useSameTag && useSameFeerecipient) &&
+                " Hidden keystores still need their own values; turn on shared settings to fill them all at once."}
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Button size="small" onClick={() => setVisibleFiles(visibleFiles + FILE_CARDS_PAGE)}>
+                Show {Math.min(FILE_CARDS_PAGE, acceptedFiles.length - visibleFiles)} more
+              </Button>
+              <Button size="small" onClick={() => setVisibleFiles(acceptedFiles.length)}>
+                Show all
+              </Button>
+            </Stack>
+          </Stack>
+        </Card>
       )}
 
       <Card sx={{ p: { xs: 2, sm: 3 } }}>
@@ -397,6 +471,21 @@ export default function ImportScreen({
           </Box>
         ) : null}
       </Card>
+      {incomplete.length > 0 && acceptedFiles.length > 1 && (
+        <Alert
+          severity="info"
+          action={
+            incomplete[0] >= visibleFiles ? (
+              <Button color="inherit" size="small" onClick={() => setVisibleFiles(incomplete[0] + 1)}>
+                Show first
+              </Button>
+            ) : undefined
+          }
+        >
+          {incomplete.length} of {acceptedFiles.length} keystores still need a password, protocol or valid fee recipient
+          (first: #{incomplete[0] + 1}, {acceptedFiles[incomplete[0]]?.file.name}).
+        </Alert>
+      )}
       {showMevWarning && (
         <Alert
           severity="warning"
@@ -439,7 +528,7 @@ export default function ImportScreen({
           size="medium"
           endIcon={<BackupIcon />}
           disabled={isButtonDisabled || importStatus === ImportStatus.Importing}
-          onClick={importKeystores}
+          onClick={() => importKeystores()}
           sx={{ borderRadius: 2 }}
         >
           Import validators
@@ -448,10 +537,18 @@ export default function ImportScreen({
       <ImportDialog
         open={openDialog}
         setOpen={setOpenDialog}
-        keystoresPostResponse={keystoresPostResponse}
-        keystoresPostError={keystoresPostError}
+        results={importResults}
+        progress={importProgress}
+        error={keystoresPostError}
+        stopped={importStopped}
+        stopRequested={stopRequested}
         importStatus={importStatus}
         acceptedFiles={acceptedFiles}
+        onStop={() => {
+          stopRef.current = true;
+          setStopRequested(true);
+        }}
+        onRetry={(indexes) => importKeystores(indexes)}
       />
     </PageLayout>
   );

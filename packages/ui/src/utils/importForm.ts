@@ -32,18 +32,22 @@ export function appendImportFiles(
   };
 }
 
-export function isImportFormValid({ acceptedFiles, passwords, tags, feeRecipients }: ImportFormState): boolean {
+function isImportEntryValid({ passwords, tags, feeRecipients }: ImportFormState, index: number): boolean {
+  const tag = tags[index];
   return (
-    acceptedFiles.length > 0 &&
-    acceptedFiles.every((_, index) => {
-      const tag = tags[index];
-      return (
-        typeof passwords[index] === "string" &&
-        passwords[index].length > 0 &&
-        !!tag &&
-        (!isFeeRecipientEditable(tag) ||
-          (isValidEcdsaPubkey(feeRecipients[index]) && feeRecipients[index] !== BURN_ADDRESS))
-      );
-    })
+    typeof passwords[index] === "string" &&
+    passwords[index].length > 0 &&
+    !!tag &&
+    (!isFeeRecipientEditable(tag) ||
+      (isValidEcdsaPubkey(feeRecipients[index]) && feeRecipients[index] !== BURN_ADDRESS))
   );
+}
+
+/** Positions of files still missing a password, protocol or valid fee recipient. */
+export function incompleteImportIndexes(state: ImportFormState): number[] {
+  return state.acceptedFiles.flatMap((_, index) => (isImportEntryValid(state, index) ? [] : [index]));
+}
+
+export function isImportFormValid(state: ImportFormState): boolean {
+  return state.acceptedFiles.length > 0 && incompleteImportIndexes(state).length === 0;
 }

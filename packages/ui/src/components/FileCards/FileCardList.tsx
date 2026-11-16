@@ -18,7 +18,9 @@ export default function FileCardList(
   useSameFeeRecipient: boolean,
   getFeeRecipientFieldHelperText: (index: number) => string,
   isFeeRecipientFieldWrong: (index: number) => boolean,
-  tagSelectOptions: TagSelectOption[]
+  tagSelectOptions: TagSelectOption[],
+  // Only the first `limit` cards render; indexes stay aligned because the slice starts at 0.
+  limit = Infinity
 ): JSX.Element[] {
   const removeFileFromList = (
     fileInfo: KeystoreInfo,
@@ -38,115 +40,119 @@ export default function FileCardList(
     setTags(tags.filter((f, index) => index !== indexToRemove));
   };
 
-  return Array.from(fileInfos).map((fileInfo, index) => (
-    <Card key={fileInfo.pubkey} sx={{ p: { xs: 2, sm: 3 } }}>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "flex-start",
-          gap: 1
-        }}
-      >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle1" sx={{ overflowWrap: "anywhere" }}>
-            {fileInfo.file.name}
-          </Typography>
-          <Chip
-            size="small"
-            variant="outlined"
-            label={shortenPubkey(fileInfo.pubkey)}
-            sx={{ mt: 1, fontFamily: "monospace" }}
-          />
-        </Box>
-        <IconButton
-          size="small"
-          aria-label={`Remove ${fileInfo.file.name}`}
-          onClick={() =>
-            removeFileFromList(
-              fileInfo,
-              fileInfos,
-              setAcceptedFiles,
-              passwords,
-              setPasswords,
-              feeRecipients,
-              setFeeRecipients,
-              tags,
-              setTags
-            )
-          }
+  return Array.from(fileInfos)
+    .slice(0, limit)
+    .map((fileInfo, index) => (
+      <Card key={fileInfo.pubkey} sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "flex-start",
+            gap: 1
+          }}
         >
-          <CloseIcon color="action" />
-        </IconButton>
-      </Box>
-
-      {(!useSameTag || !useSameFeeRecipient || !useSamePassword) && (
-        <FormControl sx={{ marginTop: 2, width: "100%" }}>
-          {!useSamePassword && (
-            <TextField
-              id={`outlined-password-input-${index}`}
-              label="Keystore password"
-              type="password"
-              value={passwords[index] ?? ""}
-              sx={{ marginTop: 2 }}
-              onChange={(event) => {
-                const newPasswords = [...passwords];
-                newPasswords[index] = event.target.value;
-                setPasswords(newPasswords);
-              }}
-              helperText="Password used to create this keystore."
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle1" sx={{ overflowWrap: "anywhere" }}>
+              {fileInfo.file.name}
+            </Typography>
+            <Chip
+              size="small"
+              variant="outlined"
+              label={shortenPubkey(fileInfo.pubkey)}
+              sx={{ mt: 1, fontFamily: "monospace" }}
             />
-          )}
-          {!useSameTag && (
-            <>
+          </Box>
+          <IconButton
+            size="small"
+            aria-label={`Remove ${fileInfo.file.name}`}
+            onClick={() =>
+              removeFileFromList(
+                fileInfo,
+                fileInfos,
+                setAcceptedFiles,
+                passwords,
+                setPasswords,
+                feeRecipients,
+                setFeeRecipients,
+                tags,
+                setTags
+              )
+            }
+          >
+            <CloseIcon color="action" />
+          </IconButton>
+        </Box>
+
+        {(!useSameTag || !useSameFeeRecipient || !useSamePassword) && (
+          <FormControl sx={{ marginTop: 2, width: "100%" }}>
+            {!useSamePassword && (
               <TextField
-                select
-                id={`staking-protocol-${index}`}
-                label="Staking protocol"
-                value={tags[index] ?? ""}
-                type="text"
+                id={`outlined-password-input-${index}`}
+                label="Keystore password"
+                type="password"
+                value={passwords[index] ?? ""}
                 sx={{ marginTop: 2 }}
                 onChange={(event) => {
-                  const newTags = [...tags];
-                  newTags[index] = event.target.value as Tag;
-                  setTags(newTags);
-
-                  if (!useSameFeeRecipient && !isFeeRecipientEditable(event.target.value as Tag)) {
-                    const newFeeRecipients = [...feeRecipients];
-                    newFeeRecipients[index] = "";
-                    setFeeRecipients(newFeeRecipients);
-                  }
+                  const newPasswords = [...passwords];
+                  newPasswords[index] = event.target.value;
+                  setPasswords(newPasswords);
                 }}
-              >
-                {tagSelectOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </>
-          )}
-          {!useSameFeeRecipient && (
-            <TextField
-              id={`outlined-fee-recipient-input-${index}`}
-              label={
-                !tags[index] || isFeeRecipientEditable(tags[index]) ? "Fee recipient" : "Fee recipient set by protocol"
-              }
-              type="text"
-              value={feeRecipients[index] ?? ""}
-              sx={{ marginTop: 2 }}
-              onChange={(event) => {
-                const newFeeRecipients = [...feeRecipients];
-                newFeeRecipients[index] = event.target.value;
-                setFeeRecipients(newFeeRecipients);
-              }}
-              error={isFeeRecipientFieldWrong(index)}
-              helperText={getFeeRecipientFieldHelperText(index)}
-              disabled={!!tags[index] && !isFeeRecipientEditable(tags[index])}
-            />
-          )}
-        </FormControl>
-      )}
-    </Card>
-  ));
+                helperText="Password used to create this keystore."
+              />
+            )}
+            {!useSameTag && (
+              <>
+                <TextField
+                  select
+                  id={`staking-protocol-${index}`}
+                  label="Staking protocol"
+                  value={tags[index] ?? ""}
+                  type="text"
+                  sx={{ marginTop: 2 }}
+                  onChange={(event) => {
+                    const newTags = [...tags];
+                    newTags[index] = event.target.value as Tag;
+                    setTags(newTags);
+
+                    if (!useSameFeeRecipient && !isFeeRecipientEditable(event.target.value as Tag)) {
+                      const newFeeRecipients = [...feeRecipients];
+                      newFeeRecipients[index] = "";
+                      setFeeRecipients(newFeeRecipients);
+                    }
+                  }}
+                >
+                  {tagSelectOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </>
+            )}
+            {!useSameFeeRecipient && (
+              <TextField
+                id={`outlined-fee-recipient-input-${index}`}
+                label={
+                  !tags[index] || isFeeRecipientEditable(tags[index])
+                    ? "Fee recipient"
+                    : "Fee recipient set by protocol"
+                }
+                type="text"
+                value={feeRecipients[index] ?? ""}
+                sx={{ marginTop: 2 }}
+                onChange={(event) => {
+                  const newFeeRecipients = [...feeRecipients];
+                  newFeeRecipients[index] = event.target.value;
+                  setFeeRecipients(newFeeRecipients);
+                }}
+                error={isFeeRecipientFieldWrong(index)}
+                helperText={getFeeRecipientFieldHelperText(index)}
+                disabled={!!tags[index] && !isFeeRecipientEditable(tags[index])}
+              />
+            )}
+          </FormControl>
+        )}
+      </Card>
+    ));
 }
