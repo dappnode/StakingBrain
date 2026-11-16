@@ -6,7 +6,8 @@ import {
   MAINNET_ORACLE_URL,
   TESTNET_ORACLE_URL,
   nonEditableFeeRecipientTags,
-  NonEditableFeeRecipientTag
+  NonEditableFeeRecipientTag,
+  featureFlags
 } from "@stakingbrain/common";
 import SmoothStatus from "./SmoothStatus";
 import { GridColDef } from "@mui/x-data-grid";
@@ -269,24 +270,24 @@ export default function KeystoresDataGrid({
     id: index
   }));
 
+  const builderConfigColumn: GridColDef = {
+    field: "builderConfigStatus",
+    headerName: "Builder config",
+    description: "Last application attempt; open Builder config to inspect client values and refresh status",
+    width: 180,
+    sortable: false,
+    renderCell: ({ row }) => (
+      <Tooltip title={row.builderConfigStatus?.message ?? "Open Builder config for details"}>
+        <span>
+          {capitalize(row.builderConfigStatus?.status ?? (row.builderConfig === undefined ? "Unmanaged" : "Pending"))}
+        </span>
+      </Tooltip>
+    )
+  };
+
   if (userMode === "advanced")
     columns.push(
-      {
-        field: "builderConfigStatus",
-        headerName: "Builder config",
-        description: "Last application attempt; open Builder config to inspect client values and refresh status",
-        width: 180,
-        sortable: false,
-        renderCell: ({ row }) => (
-          <Tooltip title={row.builderConfigStatus?.message ?? "Open Builder config for details"}>
-            <span>
-              {capitalize(
-                row.builderConfigStatus?.status ?? (row.builderConfig === undefined ? "Unmanaged" : "Pending")
-              )}
-            </span>
-          </Tooltip>
-        )
-      },
+      ...(featureFlags.builderConfig ? [builderConfigColumn] : []),
       {
         field: "explorerUrl",
         headerName: "URL",
@@ -488,14 +489,16 @@ export default function KeystoresDataGrid({
             </Button>
           </Tooltip>
 
-          <Button
-            size="small"
-            startIcon={<TuneIcon />}
-            disabled={!areRowsSelected}
-            onClick={() => setBuilderConfigOpen(true)}
-          >
-            Builder settings
-          </Button>
+          {featureFlags.builderConfig && (
+            <Button
+              size="small"
+              startIcon={<TuneIcon />}
+              disabled={!areRowsSelected}
+              onClick={() => setBuilderConfigOpen(true)}
+            >
+              Builder settings
+            </Button>
+          )}
 
           <Tooltip title="Delete validators">
             <IconButton aria-label="Delete validators" disabled={!areRowsSelected} onClick={() => setDeleteOpen(true)}>

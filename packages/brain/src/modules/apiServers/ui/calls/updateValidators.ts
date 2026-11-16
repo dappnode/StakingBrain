@@ -1,4 +1,10 @@
-import { prefix0xPubkey, isFeeRecipientEditable, ActionRequestOrigin } from "@stakingbrain/common";
+import {
+  prefix0xPubkey,
+  isFeeRecipientEditable,
+  ActionRequestOrigin,
+  featureFlags,
+  FeatureDisabledError
+} from "@stakingbrain/common";
 import { CLIENT_OPERATION_MAX_WAIT_MS, withValidatorOperationLock } from "../../../db/withValidatorOperationLock.js";
 import logger from "../../../logger/index.js";
 import { CustomValidatorUpdateRequest } from "./types.js";
@@ -70,7 +76,10 @@ function prepareUpdates(
     const update: CustomValidatorUpdateRequest = { pubkey };
     if (feeRecipient !== undefined && isFeeRecipientEditable(current.tag, requestFrom))
       update.feeRecipient = feeRecipient;
-    if (builderConfig !== undefined) update.builderConfig = builderConfig;
+    if (builderConfig !== undefined) {
+      if (!featureFlags.builderConfig) throw new FeatureDisabledError("Builder configuration");
+      update.builderConfig = builderConfig;
+    }
     if (update.feeRecipient !== undefined || update.builderConfig !== undefined) {
       updates.push(update);
       seen.add(pubkey);

@@ -4,3 +4,4 @@ export * from "./params.js";
 export * from "./builderConfig.js";
 export * from "./builderRelayPresets.js";
 export * from "./rpc.js";
+export * from "./featureFlags.js";

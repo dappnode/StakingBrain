@@ -1,3 +1,4 @@
+import { featureFlags } from "@stakingbrain/common";
 import { withValidatorOperationLock } from "../../db/withValidatorOperationLock.js";
 import { Web3SignerApi, ValidatorApi } from "../../apiClients/index.js";
 import { BrainDataBase } from "../../db/index.js";
@@ -81,7 +82,7 @@ export async function reloadValidators(
       });
 
       // Independently retry managed configuration after key imports and fee destinations.
-      await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: activeData });
+      if (featureFlags.builderConfig) await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: activeData });
       logger.debug(`${logPrefix}Finished reloading data`);
     } catch (e) {
       logger.error(`${logPrefix}Error reloading data`, e);

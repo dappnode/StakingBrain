@@ -9,6 +9,7 @@ import { params } from "./params.js";
 import { getCrons } from "./modules/cron/index.js";
 import { brainConfig } from "./modules/config/index.js";
 import { importBuilderIds } from "./modules/config/importBuilderIds.js";
+import { featureFlags } from "@stakingbrain/common";
 
 logger.info(`Starting brain...`);
 
@@ -34,18 +35,23 @@ await brainDb.initialize(signerApi, validatorApi);
 logger.debug(`Loaded ${Object.keys(brainDb.getData()).length} validators`);
 
 // Import builder choices once before cron/API writes can begin.
-try {
-  const imported = importBuilderIds({
-    builderIds: process.env.BUILDER_IDS,
-    network: config.chain.network,
-    brainDb,
-    markerPath: path.join(path.dirname(brainDbPath), "builder-config-imported")
-  });
-  if (imported)
-    logger.info(`Builder settings imported: ${imported.imported} validators; ${imported.skipped} preserved`);
-} catch (error) {
-  // A failed optional handoff must not interrupt ordinary key/fee reconciliation.
-  logger.error("Unable to import BUILDER_IDS; import will retry at next startup", error);
+if (featureFlags.builderConfig) {
+  try {
+    const imported = importBuilderIds({
+      builderIds: process.env.BUILDER_IDS,
+      network: config.chain.network,
+      brainDb,
+      markerPath: path.join(path.dirname(brainDbPath), "builder-config-imported")
+    });
+    if (imported)
+      logger.info(`Builder settings imported: ${imported.imported} validators; ${imported.skipped} preserved`);
+  } catch (error) {
+    // A failed optional handoff must not interrupt ordinary key/fee reconciliation.
+    logger.error("Unable to import BUILDER_IDS; import will retry at next startup", error);
+  }
+} else if (process.env.BUILDER_IDS) {
+  // Leave the one-time marker unwritten so the import still runs once the feature is enabled.
+  logger.warn("BUILDER_IDS is set but builder configuration is disabled in this version; ignoring it");
 }
 
 // CRON

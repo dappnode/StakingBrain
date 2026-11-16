@@ -15,6 +15,7 @@ import { NumberOfDaysToQuery } from "../../../validatorsDataIngest/types.js";
 import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../../../apiClients/index.js";
 import { BrainConfig } from "../../../config/types.js";
 import { getBuilderRelayPresets } from "../../../config/builderRelayPresets.js";
+import { featureFlags, FeatureDisabledError } from "@stakingbrain/common";
 
 export const createRpcMethods = ({
   postgresClient,
@@ -37,8 +38,14 @@ export const createRpcMethods = ({
   const { minGenesisTime, secondsPerSlot, network, isMevBoostSet, executionClient, consensusClient } =
     brainConfig.chain;
   return {
-    getBuilderRelayPresets: async () => getBuilderRelayPresets(network),
-    getBuilderConfigs: async (pubkeys: string[]) => await getBuilderConfigs({ pubkeys, brainDb, validatorApi }),
+    getBuilderRelayPresets: async () => {
+      if (!featureFlags.builderConfig) throw new FeatureDisabledError("Builder configuration");
+      return getBuilderRelayPresets(network);
+    },
+    getBuilderConfigs: async (pubkeys: string[]) => {
+      if (!featureFlags.builderConfig) throw new FeatureDisabledError("Builder configuration");
+      return await getBuilderConfigs({ pubkeys, brainDb, validatorApi });
+    },
     deleteValidators: async (deleteRequest: Web3signerDeleteRequest) =>
       await deleteValidators({ brainDb, reloadValidatorsCronTask, validatorApi, signerApi, deleteRequest }),
     exitValidators: async ({ pubkeys }: { pubkeys: string[] }) =>

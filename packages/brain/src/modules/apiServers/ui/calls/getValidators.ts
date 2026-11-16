@@ -1,4 +1,4 @@
-import { isValidWithdrawableBlsAddress, isValidNonWithdrawableBlsAddress } from "@stakingbrain/common";
+import { isValidWithdrawableBlsAddress, isValidNonWithdrawableBlsAddress, featureFlags } from "@stakingbrain/common";
 import { CustomValidatorGetResponse } from "./types.js";
 import { BrainDataBase } from "../../../db/index.js";
 import { ValidatorApi, Web3SignerApi, BeaconchainApi } from "../../../apiClients/index.js";
@@ -43,10 +43,13 @@ export async function getValidators({
     index: details.index?.toString() ?? "",
     tag: details.tag,
     feeRecipient: details.feeRecipient,
-    builderConfig: details.builderConfig,
-    builderConfigStatus:
-      validatorApi.getBuilderConfigStatus(pubkey) ??
-      (details.builderConfig === undefined ? undefined : { status: "pending" }),
+    // Stored settings are kept while the feature is off, but not surfaced.
+    ...(featureFlags.builderConfig && {
+      builderConfig: details.builderConfig,
+      builderConfigStatus:
+        validatorApi.getBuilderConfigStatus(pubkey) ??
+        (details.builderConfig === undefined ? undefined : { status: "pending" })
+    }),
     withdrawalCredentials: { address: "", format: "error" },
     ...progress.beacon.get(pubkey)?.details
     // Membership and fee checks stay undefined until a successful read establishes their value.

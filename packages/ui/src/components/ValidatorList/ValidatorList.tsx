@@ -5,7 +5,7 @@ import EditFeesDialog from "../Dialogs/EditFeesDialog";
 import BuilderConfigDialog from "../Dialogs/BuilderConfigDialog";
 import { Alert, Box, Button, CircularProgress, LinearProgress, Typography } from "@mui/material";
 import type { GridRowId } from "@mui/x-data-grid";
-import { StakerConfig as StakerConfigType, VALIDATORS_CHANGED_EVENT } from "@stakingbrain/common";
+import { featureFlags, StakerConfig as StakerConfigType, VALIDATORS_CHANGED_EVENT } from "@stakingbrain/common";
 import { useEffect, useRef, useState } from "react";
 import { BeaconchaUrlBuildingStatus } from "../../types";
 import { rpcClient } from "../../socket";
@@ -247,7 +247,7 @@ export default function ValidatorList({
                 />
               )}
 
-              {builderConfigOpen && (
+              {featureFlags.builderConfig && builderConfigOpen && (
                 <BuilderConfigDialog
                   network={network}
                   validators={selectedRows.map((row) => validatorsGet[row as number])}
