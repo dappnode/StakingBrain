@@ -7,6 +7,7 @@ import { deleteDbPubkeysNotInSigner } from "./deleteDbPubkeysNotInSigner.js";
 import { deleteSignerPubkeysNotInDb } from "./deleteSignerPubkeysNotInDb.js";
 import { deleteValidatorPubkeysNotInDB } from "./deleteValidatorPubkeysNotInDb.js";
 import { logPrefix } from "./logPrefix.js";
+import { takeListRecheck } from "../../validatorList/readState.js";
 import { postValidatorPubkeysFromDb } from "./postValidatorPubkeysFromDb.js";
 import { postValidatorsFeeRecipientsFromDb } from "./postValidatorsFeeRecipientsFromDb.js";
 import { postValidatorsBuilderConfigsFromDb } from "./postValidatorsBuilderConfigsFromDb.js";
@@ -21,6 +22,15 @@ import { postValidatorsBuilderConfigsFromDb } from "./postValidatorsBuilderConfi
  * - POST to validator API fee recipients that are in DB and not in validator API
  *
  */
+/** Steps that tidy up rather than configure: log a failure and carry on with the pass. */
+async function continueOnFailure(step: string, run: () => Promise<void>): Promise<void> {
+  try {
+    await run();
+  } catch (e) {
+    logger.error(`${logPrefix}${step} failed; continuing so desired validators are still configured`, e);
+  }
+}
+
 export async function reloadValidators(
   signerApi: Web3SignerApi,
   signerUrl: string,
@@ -38,8 +48,11 @@ export async function reloadValidators(
       const dbPubkeys = Object.keys(brainDb.getData());
       const signerPubkeys = (await signerApi.listRemoteKeys()).data.map((keystore) => keystore.validating_pubkey);
 
-      // 2. DELETE from signer API pubkeys that are not in DB
-      await deleteSignerPubkeysNotInDb({ signerApi, signerPubkeys, dbPubkeys });
+      // 2. DELETE from signer API pubkeys that are not in DB. Keys whose deletion fails stay listed, so
+      // the database keeps them and the next pass retries.
+      await continueOnFailure("Deleting signer keys not in the database", () =>
+        deleteSignerPubkeysNotInDb({ signerApi, signerPubkeys, dbPubkeys })
+      );
 
       // 3. DELETE from DB pubkeys that are not in signer API
       await deleteDbPubkeysNotInSigner({ brainDb, dbPubkeys, signerPubkeys });
@@ -62,11 +75,17 @@ export async function reloadValidators(
 
       // 4. POST to validator API pubkeys that are in DB and not in validator API
       const brainDbPubkeysToAdd = Object.keys(activeData).filter((pubkey) => !validatorKeys.has(pubkey.toLowerCase()));
-      await postValidatorPubkeysFromDb({ validatorApi, signerUrl, brainDbPubkeysToAdd, validatorPubkeys });
+      await continueOnFailure("Adding keys to the validator client", () =>
+        postValidatorPubkeysFromDb({ validatorApi, signerUrl, brainDbPubkeysToAdd, validatorPubkeys })
+      );
 
       // 5. DELETE to validator API pubkeys that are in validator API and not in DB
       const validatorPubkeysToRemove = validatorPubkeys.filter((pubkey) => !dbKeys.has(pubkey.toLowerCase()));
-      await deleteValidatorPubkeysNotInDB({ validatorApi, validatorPubkeys, validatorPubkeysToRemove });
+      // Cleanup must not stop desired validators from being configured; failed removals stay listed and
+      // are retried next pass.
+      await continueOnFailure("Removing obsolete keys from the validator client", () =>
+        deleteValidatorPubkeysNotInDB({ validatorApi, validatorPubkeys, validatorPubkeysToRemove })
+      );
       // Client membership is shown in the UI; repairs here change it without touching the database.
       if (brainDbPubkeysToAdd.length > 0 || validatorPubkeysToRemove.length > 0) brainDb.notifyChanged();
 
@@ -78,6 +97,9 @@ export async function reloadValidators(
 
       // Independently retry managed configuration after key imports and fee destinations.
       if (featureFlags.builderConfig) await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: activeData });
+      // Repairs such as restored fee recipients change no database record. If an open UI last saw a
+      // problem, announce the pass so it lists again (and checks the fee recipients by GET).
+      if (takeListRecheck(brainDb)) brainDb.notifyChanged();
       logger.debug(`${logPrefix}Finished reloading data`);
     } catch (e) {
       logger.error(`${logPrefix}Error reloading data`, e);
