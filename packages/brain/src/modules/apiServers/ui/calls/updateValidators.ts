@@ -1,8 +1,9 @@
 import { prefix0xPubkey, isFeeRecipientEditable, ActionRequestOrigin } from "@stakingbrain/common";
-import { withValidatorOperationLock } from "../../../db/withValidatorOperationLock.js";
+import { CLIENT_OPERATION_MAX_WAIT_MS, withValidatorOperationLock } from "../../../db/withValidatorOperationLock.js";
 import logger from "../../../logger/index.js";
 import { CustomValidatorUpdateRequest } from "./types.js";
 import { StakingBrainDb } from "../../../db/types.js";
+import { storedPubkeys } from "../../../db/utils.js";
 import { CronJob } from "../../../cron/cron.js";
 import { BrainDataBase } from "../../../db/index.js";
 import { ValidatorApi } from "../../../apiClients/validator/index.js";
@@ -26,20 +27,24 @@ export async function updateValidators({
   customValidatorUpdateRequest: requests,
   requestFrom
 }: UpdateValidatorsOptions): Promise<void> {
-  return withValidatorOperationLock(brainDb, async () => {
-    reloadValidatorsCronTask.stop();
-    try {
-      const currentValidators = brainDb.getData();
-      const updates = prepareUpdates(requests, currentValidators, requestFrom);
+  return withValidatorOperationLock(
+    brainDb,
+    async () => {
+      reloadValidatorsCronTask.stop();
+      try {
+        const currentValidators = brainDb.getData();
+        const updates = prepareUpdates(requests, currentValidators, requestFrom);
 
-      // The database validates the entire batch before persisting any settings.
-      brainDb.updateValidators(updates);
-      const importedKeys = await importMissingBuilderKeys(validatorApi, signerUrl, updates);
-      await applyUpdates(validatorApi, updates, currentValidators, importedKeys);
-    } finally {
-      reloadValidatorsCronTask.start();
-    }
-  });
+        // The database validates the entire batch before persisting any settings.
+        brainDb.updateValidators(updates);
+        const importedKeys = await importMissingBuilderKeys(validatorApi, signerUrl, updates);
+        await applyUpdates(validatorApi, updates, currentValidators, importedKeys);
+      } finally {
+        reloadValidatorsCronTask.start();
+      }
+    },
+    { maxWaitMs: CLIENT_OPERATION_MAX_WAIT_MS }
+  );
 }
 
 function prepareUpdates(
@@ -51,11 +56,12 @@ function prepareUpdates(
 
   const updates: CustomValidatorUpdateRequest[] = [];
   const seen = new Set<string>();
+  const storedKeys = storedPubkeys(currentValidators);
   for (const request of requests) {
     if (!request || typeof request.pubkey !== "string") throw new Error("Validator public key is required");
-    const pubkey = prefix0xPubkey(request.pubkey);
+    const pubkey = storedKeys.get(prefix0xPubkey(request.pubkey).toLowerCase());
+    if (!pubkey) throw new Error(`Validator ${prefix0xPubkey(request.pubkey)} is not in the database`);
     const current = currentValidators[pubkey];
-    if (!current) throw new Error(`Validator ${pubkey} is not in the database`);
     if (seen.has(pubkey)) throw new Error(`Duplicate validator ${pubkey}`);
     if (Object.keys(request).some((field) => !["pubkey", "feeRecipient", "builderConfig"].includes(field)))
       throw new Error("Unsupported validator setting");

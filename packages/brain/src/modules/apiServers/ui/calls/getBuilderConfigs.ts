@@ -1,5 +1,6 @@
 import { isValidBlsPubkey, prefix0xPubkey } from "@stakingbrain/common";
 import { BrainDataBase } from "../../../db/index.js";
+import { storedPubkeys } from "../../../db/utils.js";
 import { ValidatorApi } from "../../../apiClients/validator/index.js";
 import { ValidatorBuilderConfigResponse } from "./types.js";
 
@@ -21,9 +22,10 @@ export async function getBuilderConfigs({
   )
     throw new Error("pubkeys must be an array of validator BLS public keys");
   const dbData = brainDb.getData();
+  const storedKeys = storedPubkeys(dbData);
   const results: ValidatorBuilderConfigResponse[] = pubkeys.map((key) => {
-    const pubkey = prefix0xPubkey(key);
-    if (!dbData[pubkey]) throw new Error(`Validator ${pubkey} is not in the database`);
+    const pubkey = storedKeys.get(prefix0xPubkey(key).toLowerCase());
+    if (!pubkey) throw new Error(`Validator ${prefix0xPubkey(key)} is not in the database`);
     const builderConfig = dbData[pubkey].builderConfig;
     return {
       pubkey,

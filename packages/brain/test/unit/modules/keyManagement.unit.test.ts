@@ -13,6 +13,11 @@ import { updateValidators } from "../../../src/modules/apiServers/ui/calls/updat
 import { reloadValidators } from "../../../src/modules/cron/reloadValidators/index.js";
 import type { CustomImportRequest } from "../../../src/modules/apiServers/ui/calls/types.js";
 import logger from "../../../src/modules/logger/index.js";
+import {
+  CLIENT_OPERATION_MAX_WAIT_MS,
+  ValidatorOperationBusyError,
+  withValidatorOperationLock
+} from "../../../src/modules/db/withValidatorOperationLock.js";
 
 const keys = ["11", "22", "33"].map((byte) => "0x" + byte.repeat(48));
 const recipient = "0x" + "ab".repeat(20);
@@ -277,5 +282,72 @@ describe("Key management partial failures", () => {
     expect(validatorApi.deleteRemoteKeys.called).to.equal(false);
     expect(validatorApi.postRemoteKeys.called).to.equal(false);
     expect(Object.keys(brainDb.getData())).to.deep.equal([pubkey]);
+  });
+
+  it("updates the stored record when the request uses different hex casing", async () => {
+    const pubkey = "0x" + "ab".repeat(48);
+    const other = "0x" + "cd".repeat(20);
+    brainDb.addValidators({ validators: { [pubkey]: { ...record } } });
+    await updateValidators({
+      brainDb,
+      validatorApi,
+      signerUrl: "http://signer:9000",
+      reloadValidatorsCronTask,
+      customValidatorUpdateRequest: [{ pubkey: "0x" + "AB".repeat(48), feeRecipient: other }]
+    });
+    expect(brainDb.getData()).to.deep.equal({ [pubkey]: { ...record, feeRecipient: other } });
+    expect(validatorApi.setFeeRecipient.calledOnceWith(other, pubkey)).to.equal(true);
+  });
+
+  it("rejects the same validator twice in one update even with different hex casing", async () => {
+    const pubkey = "0x" + "ab".repeat(48);
+    brainDb.addValidators({ validators: { [pubkey]: { ...record } } });
+    const result = await updateValidators({
+      brainDb,
+      validatorApi,
+      signerUrl: "http://signer:9000",
+      reloadValidatorsCronTask,
+      customValidatorUpdateRequest: [
+        { pubkey, feeRecipient: recipient },
+        { pubkey: "0x" + "AB".repeat(48), feeRecipient: recipient }
+      ]
+    }).catch((error: Error) => error);
+    expect(result).to.be.instanceOf(Error).and.have.property("message").that.includes("Duplicate validator");
+    expect(validatorApi.setFeeRecipient.called).to.equal(false);
+  });
+
+  it("keeps a signer key listed when its deletion result is missing", async () => {
+    brainDb.addValidators({ validators: { [keys[0]]: { ...record } } });
+    signerApi.upcheck.resolves();
+    signerApi.listRemoteKeys.resolves({
+      data: [keys[0], keys[1]].map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
+    });
+    signerApi.deleteRemoteKeys.resolves({ data: [] });
+    validatorApi.getRemoteKeys.resolves({ data: [{ pubkey: keys[0], readonly: false, url: "http://signer" }] });
+    await reloadValidators(signerApi, "http://signer", validatorApi, brainDb);
+    expect(signerApi.deleteRemoteKeys.calledOnceWith({ pubkeys: [keys[1]] })).to.equal(true);
+    // Reload continues past the short response instead of aborting.
+    expect(validatorApi.setFeeRecipient.calledOnceWith(recipient, keys[0])).to.equal(true);
+  });
+
+  it("abandons a client operation that cannot start before its wait budget", async () => {
+    const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    let finishReload!: () => void;
+    const reload = withValidatorOperationLock(brainDb, () => new Promise<void>((resolve) => (finishReload = resolve)));
+    const update = updateValidators({
+      brainDb,
+      validatorApi,
+      signerUrl: "http://signer:9000",
+      reloadValidatorsCronTask,
+      customValidatorUpdateRequest: [{ pubkey: keys[0], feeRecipient: recipient }]
+    }).catch((error: Error) => error);
+    await clock.tickAsync(CLIENT_OPERATION_MAX_WAIT_MS);
+    expect(await update).to.be.instanceOf(ValidatorOperationBusyError);
+    clock.restore();
+    finishReload();
+    await reload;
+    // The abandoned call never touched clients or the cron, even after the lock was released.
+    expect(reloadValidatorsCronTask.stop.called).to.equal(false);
+    expect(validatorApi.setFeeRecipient.called).to.equal(false);
   });
 });
