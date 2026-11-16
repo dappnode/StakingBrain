@@ -1,4 +1,4 @@
-ARG DOCKER_IMAGE=node:24.22.1-alpine3.24
+ARG DOCKER_IMAGE=node:24.22.3-alpine3.24
 
 # Build
 FROM ${DOCKER_IMAGE} AS build-stage
