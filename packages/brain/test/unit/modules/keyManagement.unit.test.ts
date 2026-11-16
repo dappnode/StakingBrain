@@ -330,6 +330,56 @@ describe("Key management partial failures", () => {
     expect(validatorApi.setFeeRecipient.calledOnceWith(recipient, keys[0])).to.equal(true);
   });
 
+  describe("reload keeps configuring desired validators when cleanup fails", () => {
+    const obsolete = "0x" + "ee".repeat(48);
+    beforeEach(() => {
+      brainDb.addValidators({ validators: Object.fromEntries(keys.map((key) => [key, { ...record }])) });
+      signerApi.upcheck.resolves();
+      signerApi.listRemoteKeys.resolves({
+        data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
+      });
+      // The validator client lost the desired keys but still holds one the database no longer has.
+      validatorApi.getRemoteKeys.resolves({ data: [{ pubkey: obsolete, readonly: false, url: "http://signer" }] });
+    });
+
+    it("restores fee recipients when removing obsolete validator keys fails, and retries the removal", async () => {
+      validatorApi.deleteRemoteKeys.rejects(new Error("HTTP 500"));
+      for (let pass = 0; pass < 2; pass++) await reloadValidators(signerApi, "http://signer", validatorApi, brainDb);
+      expect(validatorApi.postRemoteKeys.callCount).to.equal(2);
+      expect(validatorApi.deleteRemoteKeys.callCount).to.equal(2);
+      expect(validatorApi.deleteRemoteKeys.firstCall.args[0].pubkeys).to.deep.equal([obsolete]);
+      // Every pass configures every desired validator despite the failing cleanup.
+      expect(validatorApi.setFeeRecipient.callCount).to.equal(2 * keys.length);
+    });
+
+    it("restores fee recipients when adding keys to the validator client fails", async () => {
+      validatorApi.postRemoteKeys.rejects(new Error("HTTP 500"));
+      await reloadValidators(signerApi, "http://signer", validatorApi, brainDb);
+      expect(validatorApi.setFeeRecipient.callCount).to.equal(keys.length);
+    });
+
+    it("keeps database records and restores fee recipients when signer cleanup fails", async () => {
+      signerApi.listRemoteKeys.resolves({
+        data: [...keys, obsolete].map((validating_pubkey) => ({
+          validating_pubkey,
+          derivation_path: "",
+          readonly: false
+        }))
+      });
+      signerApi.deleteRemoteKeys.rejects(new Error("HTTP 500"));
+      await reloadValidators(signerApi, "http://signer", validatorApi, brainDb);
+      expect(Object.keys(brainDb.getData())).to.deep.equal(keys);
+      expect(validatorApi.setFeeRecipient.callCount).to.equal(keys.length);
+    });
+
+    it("still stops before any change when the signer cannot be listed", async () => {
+      signerApi.listRemoteKeys.rejects(new Error("ECONNREFUSED"));
+      await reloadValidators(signerApi, "http://signer", validatorApi, brainDb);
+      expect(validatorApi.getRemoteKeys.called || validatorApi.setFeeRecipient.called).to.equal(false);
+      expect(Object.keys(brainDb.getData())).to.deep.equal(keys);
+    });
+  });
+
   it("abandons a client operation that cannot start before its wait budget", async () => {
     const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     let finishReload!: () => void;

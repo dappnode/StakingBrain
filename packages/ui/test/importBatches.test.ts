@@ -127,8 +127,28 @@ describe("Batched validator import", () => {
       shouldStop: () => false
     });
     expect(stopped).to.equal(undefined);
-    expect(progress.map(({ done }) => done)).to.deep.equal([0, 20, 40, 45]);
+    // One report as each batch starts (so the UI can show it in flight) and one as it finishes.
+    expect(progress.map(({ done }) => done)).to.deep.equal([0, 0, 20, 20, 40, 40, 45]);
+    expect(progress.map(({ current }) => current)).to.deep.equal([0, 20, 0, 20, 0, 5, 0]);
     expect(results.every(({ status }) => status === "imported")).to.equal(true);
+  });
+
+  it("shows the batch in flight as importing and later ones as queued, never as not attempted", async () => {
+    const snapshots: { progress: ImportProgress; summary: Record<string, number> }[] = [];
+    await runImportBatches({
+      batches: planImportBatches(request(), pubkeys),
+      results: pubkeys.map(notAttempted),
+      importBatch: async (batch) => imported(batch),
+      onProgress: (progress, results) => snapshots.push({ progress, summary: summarizeImport(results) }),
+      shouldStop: () => false
+    });
+    // While the second batch is in flight: 20 done, 20 importing, 5 queued.
+    const second = snapshots.find(({ progress }) => progress.batch === 1 && progress.current > 0)!;
+    expect(second.progress).to.deep.equal({ done: 20, total: 45, batch: 1, batches: 3, current: 20 });
+    expect(second.summary).to.deep.equal({ imported: 20, importing: 20, queued: 5 });
+    expect(snapshots.some(({ summary }) => summary.not_attempted)).to.equal(false);
+    expect(snapshots.at(-1)!.summary).to.deep.equal({ imported: 45 });
+    expect(snapshots.at(-1)!.progress.current).to.equal(0);
   });
 
   it("stops after a failed batch and leaves the rest retryable", async () => {

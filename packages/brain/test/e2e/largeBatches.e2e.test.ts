@@ -349,6 +349,34 @@ describe("E2E: large validator batches through the UI socket", function () {
     ).to.equal(true);
   });
 
+  it("tells an idle UI when reload repairs a fee recipient it showed as wrong", async () => {
+    const pubkeys = Array.from({ length: 3 }, (_, index) => pubkeyAt(index));
+    await importAll(importRequest(pubkeys), pubkeys);
+    // Let the import's own announcements (including its beacon lookup) land before counting.
+    await beaconStatus.whenIdle();
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const watcher = await connect();
+    let events = 0;
+    watcher.client.on(VALIDATORS_CHANGED_EVENT, () => events++);
+
+    // The validator client's fee recipient changes behind the Brain's back; the UI shows it, then idles.
+    validator.feeRecipients.set(pubkeys[1], "0x" + "00".repeat(20));
+    const shown = await watcher.client.call("getValidators", undefined);
+    expect(shown[1].validatorFeeRecipientCorrect).to.equal(false);
+
+    // Reload restores it without changing any database record, and still tells the UI.
+    await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+    await waitFor(() => events > 0);
+    const repaired = await watcher.client.call("getValidators", undefined);
+    expect(repaired.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect)).to.equal(true);
+
+    // Nothing wrong any more: reconciling announces nothing, so idle UIs are not made to list again.
+    const before = events;
+    await reloadValidators(signerApi, signerUrl, validatorApi, brainDb);
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(events).to.equal(before);
+  });
+
   it("keeps builder configuration switched off end to end", async () => {
     const pubkeys = [pubkeyAt(0)];
     await importAll(importRequest(pubkeys), pubkeys);

@@ -5,42 +5,12 @@ import { ValidatorApi, Web3SignerApi } from "../../../apiClients/index.js";
 import { BeaconStatusStore } from "../../../beaconStatus/index.js";
 import { forEachConcurrently } from "../../../utils/forEachConcurrently.js";
 import logger from "../../../logger/index.js";
+import { listReadStateFor } from "../../../validatorList/readState.js";
 
 /** Bound on one list request; unfinished reads are reported as pending for the UI to request again. */
 export const LIST_DEADLINE_MS = 10_000;
 const READ_CONCURRENCY = 8;
 const FEE_CHECK_TTL_MS = 60_000;
-
-interface FeeCheck {
-  expected: string;
-  correct: boolean;
-  expires: number;
-}
-interface ReadState {
-  /** Where the next request resumes fee reads, so successive requests cover different validators. */
-  feeNext: number;
-  fee: Map<string, FeeCheck>;
-  /** Bumped on every validator change; a read that overlaps one is not cached. */
-  generation: number;
-}
-const readStates = new WeakMap<BrainDataBase, ReadState>();
-
-function readStateFor(brainDb: BrainDataBase): ReadState {
-  let state = readStates.get(brainDb);
-  if (!state) {
-    const created: ReadState = { feeNext: 0, fee: new Map(), generation: 0 };
-    // Change notifications arrive after an operation has configured the validator client. A check read
-    // mid-operation saw the new expected address but the old client value, so only mismatches can be
-    // stale; drop them, and refuse to cache reads that straddle the change.
-    brainDb.onChange(() => {
-      for (const [pubkey, check] of created.fee) if (!check.correct) created.fee.delete(pubkey);
-      created.generation++;
-    });
-    readStates.set(brainDb, created);
-    state = created;
-  }
-  return state;
-}
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
@@ -63,7 +33,7 @@ export async function getValidators({
 }): Promise<CustomValidatorGetResponse[]> {
   const entries = Object.entries(brainDb.getData());
   if (entries.length === 0) return [];
-  const state = readStateFor(brainDb);
+  const state = listReadStateFor(brainDb);
   const now = Date.now();
   const present = new Set(entries.map(([pubkey]) => pubkey));
   for (const [pubkey, check] of state.fee) if (!present.has(pubkey) || check.expires <= now) state.fee.delete(pubkey);
@@ -176,5 +146,10 @@ export async function getValidators({
     row.detailsPending = pending.has(index);
     row.detailsError = errors[index].length > 0 ? errors[index].join("; ") : undefined;
   });
+  // Problems reconciliation may fix: ask it to announce itself when it next completes.
+  state.recheck = rows.some(
+    ({ detailsPending, detailsError, validatorFeeRecipientCorrect }) =>
+      detailsPending || detailsError !== undefined || validatorFeeRecipientCorrect === false
+  );
   return rows;
 }
