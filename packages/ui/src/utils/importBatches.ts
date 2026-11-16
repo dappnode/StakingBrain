@@ -6,8 +6,10 @@ import { prefix0xPubkey, RPC_MAX_PAYLOAD_BYTES } from "@stakingbrain/common";
  * the RPC timeout, lets the UI report progress and lets the user stop between batches.
  */
 export const IMPORT_BATCH_SIZE = 20;
-// Well below the transport limit: JSON escaping roughly doubles keystore text and slashing data rides along.
-const IMPORT_BATCH_MAX_BYTES = RPC_MAX_PAYLOAD_BYTES / 4;
+// Sizes below are exact encoded bytes; keep a margin under the transport limit for RPC framing.
+const IMPORT_BATCH_MAX_BYTES = Math.floor(RPC_MAX_PAYLOAD_BYTES * 0.9);
+const encoder = new TextEncoder();
+const byteLength = (text: string) => encoder.encode(text).byteLength;
 
 export interface ImportResult {
   status: string;
@@ -18,6 +20,8 @@ export interface ImportBatch {
   /** Positions in the original file list, so results stay aligned with the files the user picked. */
   indexes: number[];
   request: CustomImportRequest;
+  /** Set when a single key cannot fit one request; it is reported as an error without being sent. */
+  tooLarge?: { bytes: number; maxBytes: number };
 }
 
 export interface ImportProgress {
@@ -33,22 +37,60 @@ export function notAttempted(): ImportResult {
   return { status: NOT_ATTEMPTED, message: "Not imported yet: the import stopped before reaching this validator." };
 }
 
+type Interchange = { data: { pubkey?: unknown }[] };
+
+function parseInterchange(interchange: string): Interchange | undefined {
+  try {
+    const parsed: unknown = JSON.parse(interchange);
+    if (parsed && typeof parsed === "object" && Array.isArray((parsed as { data?: unknown }).data))
+      return parsed as Interchange;
+  } catch {
+    // Fall through: let the signer report the malformed file, as before.
+  }
+  return undefined;
+}
+
+const entryPubkey = (entry: { pubkey?: unknown }) =>
+  typeof entry?.pubkey === "string" ? prefix0xPubkey(entry.pubkey).toLowerCase() : undefined;
+
 /** Keep only the slashing history of the batch's keys; the signer only needs those. */
 export function filterInterchange(interchange: string, pubkeys: ReadonlySet<string>): string {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(interchange);
-  } catch {
-    return interchange; // Let the signer report the malformed file once, as before.
-  }
-  if (!parsed || typeof parsed !== "object" || !Array.isArray((parsed as { data?: unknown }).data)) return interchange;
-  const record = parsed as { data: { pubkey?: unknown }[] };
+  const record = parseInterchange(interchange);
+  if (!record) return interchange;
   return JSON.stringify({
     ...record,
-    data: record.data.filter(
-      (entry) => typeof entry?.pubkey === "string" && pubkeys.has(prefix0xPubkey(entry.pubkey).toLowerCase())
-    )
+    data: record.data.filter((entry) => pubkeys.has(entryPubkey(entry) ?? ""))
   });
+}
+
+/**
+ * Bytes each part adds to the serialized RPC request. `slashing_protection` travels as a JSON string
+ * inside JSON, so its entries are measured after a second round of escaping.
+ */
+function measureImport(request: CustomImportRequest, pubkeys: readonly string[]) {
+  const record = request.slashing_protection === undefined ? undefined : parseInterchange(request.slashing_protection);
+  const slashingBytes = new Map<string, number>();
+  for (const entry of record?.data ?? []) {
+    const key = entryPubkey(entry);
+    if (key)
+      slashingBytes.set(key, (slashingBytes.get(key) ?? 0) + byteLength(JSON.stringify(JSON.stringify(entry))) - 1);
+  }
+  const emptyRequest: CustomImportRequest = {
+    importFrom: request.importFrom,
+    slashing_protection:
+      request.slashing_protection === undefined
+        ? undefined
+        : record
+          ? JSON.stringify({ ...record, data: [] })
+          : request.slashing_protection,
+    validatorsImportRequest: []
+  };
+  const base = byteLength(JSON.stringify({ jsonrpc: "2.0", method: "importValidators", params: emptyRequest, id: 0 }));
+  const perKey = (index: number) =>
+    byteLength(JSON.stringify(request.validatorsImportRequest[index])) +
+    1 +
+    (pubkeys[index] ? (slashingBytes.get(prefix0xPubkey(pubkeys[index]).toLowerCase()) ?? 0) : 0);
+  return { base, perKey };
 }
 
 /** Split an import into ordered batches by count and size. `only` limits a retry to some files. */
@@ -62,36 +104,49 @@ export function planImportBatches(
   }: { only?: readonly number[]; maxKeystores?: number; maxBytes?: number } = {}
 ): ImportBatch[] {
   const selected = only ?? request.validatorsImportRequest.map((_, index) => index);
+  const { base, perKey } = measureImport(request, pubkeys);
   const groups: number[][] = [];
+  const oversized = new Map<number, number>();
   let group: number[] = [];
-  let bytes = 0;
+  let bytes = base;
   for (const index of selected) {
-    const { keystore, password } = request.validatorsImportRequest[index];
-    const size = keystore.length + password.length;
+    const size = perKey(index);
+    if (base + size > maxBytes) {
+      oversized.set(index, base + size);
+      continue;
+    }
     if (group.length > 0 && (group.length >= maxKeystores || bytes + size > maxBytes)) {
       groups.push(group);
       group = [];
-      bytes = 0;
+      bytes = base;
     }
     group.push(index);
     bytes += size;
   }
   if (group.length > 0) groups.push(group);
 
-  return groups.map((indexes) => ({
-    indexes,
-    request: {
-      importFrom: request.importFrom,
-      slashing_protection:
-        request.slashing_protection === undefined
-          ? undefined
-          : filterInterchange(
-              request.slashing_protection,
-              new Set(indexes.map((index) => prefix0xPubkey(pubkeys[index]).toLowerCase()))
-            ),
-      validatorsImportRequest: indexes.map((index) => request.validatorsImportRequest[index])
-    }
+  const tooLarge: ImportBatch[] = [...oversized].map(([index, size]) => ({
+    indexes: [index],
+    request: { ...request, validatorsImportRequest: [] },
+    tooLarge: { bytes: size, maxBytes }
   }));
+  return [
+    ...tooLarge,
+    ...groups.map((indexes) => ({
+      indexes,
+      request: {
+        importFrom: request.importFrom,
+        slashing_protection:
+          request.slashing_protection === undefined
+            ? undefined
+            : filterInterchange(
+                request.slashing_protection,
+                new Set(indexes.map((index) => prefix0xPubkey(pubkeys[index]).toLowerCase()))
+              ),
+        validatorsImportRequest: indexes.map((index) => request.validatorsImportRequest[index])
+      }
+    }))
+  ];
 }
 
 /**
@@ -120,6 +175,16 @@ export async function runImportBatches({
 
   for (const [position, batch] of batches.entries()) {
     if (shouldStop()) return { results, stopped: "user" };
+    if (batch.tooLarge) {
+      const mb = (bytes: number) => (bytes / 1024 / 1024).toFixed(1);
+      results[batch.indexes[0]] = {
+        status: "error",
+        message: `This keystore and its slashing protection history are too large to import in one request (${mb(batch.tooLarge.bytes)} MB, limit ${mb(batch.tooLarge.maxBytes)} MB). Import it with a pruned slashing protection file.`
+      };
+      done += 1;
+      onProgress({ done, total, batch: position + 1, batches: batches.length }, [...results]);
+      continue;
+    }
     let failed = false;
     try {
       const response = await importBatch(batch.request);

@@ -232,6 +232,27 @@ describe("E2E: large validator batches through the UI socket", function () {
     expect(validator.remoteKeys.size).to.equal(40);
   });
 
+  it("pushes a final update after slow validator-client writes so other UIs end up current", async () => {
+    validator.writeDelayMs = 1500;
+    const watcher = await connect();
+    // Behave like the validator list: refresh on every push and keep the latest rows.
+    let latest: Awaited<ReturnType<typeof watcher.client.call<"getValidators">>> = [];
+    let refreshes = Promise.resolve();
+    watcher.client.on(VALIDATORS_CHANGED_EVENT, () => {
+      refreshes = refreshes.then(async () => {
+        latest = await watcher.client.call("getValidators", undefined);
+      });
+    });
+    const pubkeys = Array.from({ length: 10 }, (_, index) => pubkeyAt(index));
+    await importAll(importRequest(pubkeys), pubkeys);
+    // Let the last push and its refresh land.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await refreshes;
+    expect(latest).to.have.length(10);
+    expect(latest.every(({ validatorImported }) => validatorImported === true)).to.equal(true);
+    expect(latest.every(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect === true)).to.equal(true);
+  });
+
   it("loads a slow list progressively until every row is complete", async () => {
     const pubkeys = Array.from({ length: 70 }, (_, index) => pubkeyAt(index));
     await importAll(importRequest(pubkeys), pubkeys);

@@ -19,7 +19,7 @@ import {
   MAX_STALLED_REFRESHES,
   nextStallCount,
   PENDING_REFRESH_MS,
-  remapSelection
+  selectionAfterRefresh
 } from "../../utils/validatorRefresh";
 
 export default function ValidatorList({
@@ -92,7 +92,8 @@ export default function ValidatorList({
     try {
       if (!background) setLoading(true);
       const rows = await rpcClient.call("getValidators", undefined);
-      if (background) setSelectedRows((selected) => remapSelection(rowsRef.current, rows, selected));
+      // Capture the rows the current selection refers to before replacing them (see selectionAfterRefresh).
+      if (background) setSelectedRows(selectionAfterRefresh(rowsRef.current, rows));
       rowsRef.current = rows;
       const pending = countPending(rows);
       stalls.current = nextStallCount(stalls.current, lastPending.current, pending);

@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { BrainDataBase } from "../../../../src/modules/db/index.js";
 import logger from "../../../../src/modules/logger/index.js";
+import { withValidatorOperationLock } from "../../../../src/modules/db/withValidatorOperationLock.js";
 
 describe("Database change notifications", () => {
   let directory: string;
@@ -33,6 +34,34 @@ describe("Database change notifications", () => {
     expect(listener.callCount).to.equal(1);
     unsubscribe();
     brainDb.deleteValidators([pubkey]);
+    expect(listener.callCount).to.equal(1);
+  });
+
+  it("sends one notification after a held operation, and none if nothing changed", () => {
+    const listener = sinon.spy();
+    brainDb.onChange(listener);
+    const release = brainDb.holdChangeNotifications();
+    const nested = brainDb.holdChangeNotifications();
+    brainDb.addValidators({ validators: { [pubkey]: { ...record } } });
+    brainDb.updateValidators([{ pubkey, feeRecipient: "0x" + "cd".repeat(20) }]);
+    nested();
+    expect(listener.callCount).to.equal(0);
+    release();
+    release();
+    expect(listener.callCount).to.equal(1);
+    brainDb.holdChangeNotifications()();
+    expect(listener.callCount).to.equal(1);
+  });
+
+  it("defers notifications for the whole validator operation", async () => {
+    const listener = sinon.spy();
+    brainDb.onChange(listener);
+    await withValidatorOperationLock(brainDb, async () => {
+      brainDb.addValidators({ validators: { [pubkey]: { ...record } } });
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      // Clients are configured after the write; nobody should have been told yet.
+      expect(listener.callCount).to.equal(0);
+    });
     expect(listener.callCount).to.equal(1);
   });
 

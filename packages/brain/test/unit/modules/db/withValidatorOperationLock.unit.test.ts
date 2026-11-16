@@ -6,12 +6,14 @@ import {
   withValidatorOperationLock
 } from "../../../../src/modules/db/withValidatorOperationLock.js";
 
+const fakeDb = () => ({ holdChangeNotifications: () => () => undefined }) as unknown as BrainDataBase;
+
 describe("Validator operation lock", () => {
   afterEach(() => sinon.restore());
 
   it("keeps later operations behind the running one after a waiter is abandoned", async () => {
     const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    const brainDb = {} as BrainDataBase;
+    const brainDb = fakeDb();
     const events: string[] = [];
     let finishFirst!: () => void;
 
@@ -36,7 +38,7 @@ describe("Validator operation lock", () => {
   });
 
   it("runs a bounded operation that acquires the lock in time", async () => {
-    const brainDb = {} as BrainDataBase;
+    const brainDb = fakeDb();
     expect(await withValidatorOperationLock(brainDb, async () => "done", { maxWaitMs: 1000 })).to.equal("done");
   });
 });

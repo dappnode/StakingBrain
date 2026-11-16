@@ -20,6 +20,17 @@ export function remapSelection(
   });
 }
 
+/**
+ * Build the selection updater for a refresh. `previous` must be captured when the refresh lands:
+ * React may run the updater later, after the caller has already replaced its own reference to the rows.
+ */
+export function selectionAfterRefresh(
+  previous: readonly { pubkey: string }[] | undefined,
+  next: readonly { pubkey: string }[]
+): (selected: GridRowId[]) => GridRowId[] {
+  return (selected) => remapSelection(previous, next, selected);
+}
+
 export function countPending(rows: readonly { detailsPending?: boolean }[]): number {
   return rows.filter(({ detailsPending }) => detailsPending).length;
 }

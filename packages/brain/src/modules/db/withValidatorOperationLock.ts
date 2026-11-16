@@ -47,9 +47,12 @@ export async function withValidatorOperationLock<T>(
     }
   } else await previous;
 
+  // Announce the operation's changes once it has finished configuring clients, not per write.
+  const releaseNotifications = brainDb.holdChangeNotifications();
   try {
     return await operation();
   } finally {
+    releaseNotifications();
     cleanup();
   }
 }

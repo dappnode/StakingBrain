@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { countPending, nextStallCount, remapSelection } from "../src/utils/validatorRefresh.js";
+import { countPending, nextStallCount, remapSelection, selectionAfterRefresh } from "../src/utils/validatorRefresh.js";
 import { incompleteImportIndexes } from "../src/utils/importForm.js";
 
 const row = (pubkey: string, detailsPending?: boolean) => ({ pubkey, detailsPending });
@@ -9,6 +9,17 @@ describe("Live validator list refresh", () => {
     const previous = [row("0xaa"), row("0xbb"), row("0xcc")];
     const next = [row("0xCC"), row("0xaa")];
     expect(remapSelection(previous, next, [0, 1, 2])).to.deep.equal([1, 0]);
+  });
+
+  it("keeps the selected validator when React applies the update after the rows were replaced", () => {
+    const rowsRef: { current: { pubkey: string }[] } = { current: [row("0xaa"), row("0xbb"), row("0xcc")] };
+    const next = [row("0xbb"), row("0xcc")];
+    // B is selected. Like ValidatorList, schedule the update and then replace the rows before it runs.
+    const updater = selectionAfterRefresh(rowsRef.current, next);
+    rowsRef.current = next;
+    expect(updater([1])).to.deep.equal([0]);
+    // Reading the reference inside the updater (the previous code) selects C instead.
+    expect(remapSelection(rowsRef.current, next, [1])).to.deep.equal([1]);
   });
 
   it("clears the selection when there was no earlier list", () => {

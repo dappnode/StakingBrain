@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { RPC_MAX_PAYLOAD_BYTES } from "@stakingbrain/common";
 import type { CustomImportRequest, Web3signerPostResponse } from "@stakingbrain/brain";
 import {
   filterInterchange,
@@ -44,6 +45,66 @@ describe("Batched validator import", () => {
     const batches = planImportBatches(request(), pubkeys, { maxBytes: 1000 });
     expect(batches.every(({ indexes }) => indexes.length < 20)).to.equal(true);
     expect(batches.flatMap(({ indexes }) => indexes)).to.have.length(45);
+  });
+
+  it("counts each key's slashing history and JSON encoding toward the batch size", () => {
+    // 4,000 attestations per key: twenty of these do not fit one RPC payload.
+    const attestations = Array.from({ length: 4000 }, (_, epoch) => ({
+      source_epoch: String(epoch),
+      target_epoch: String(epoch + 1),
+      signing_root: "0x" + "ab".repeat(32)
+    }));
+    const heavy = JSON.stringify({
+      metadata: { interchange_format_version: "5", genesis_validators_root: "0x" + "00".repeat(32) },
+      data: pubkeys.map((pubkey) => ({ pubkey, signed_blocks: [], signed_attestations: attestations }))
+    });
+    const batches = planImportBatches(request(heavy), pubkeys);
+    expect(batches.length).to.be.greaterThan(Math.ceil(pubkeys.length / 20));
+    expect(batches.flatMap(({ indexes }) => indexes)).to.deep.equal(pubkeys.map((_, index) => index));
+    for (const { request: batch } of batches) {
+      // The same framing the RPC client measures before sending.
+      const rpcBytes = new TextEncoder().encode(
+        JSON.stringify({ jsonrpc: "2.0", method: "importValidators", params: batch, id: Date.now() })
+      ).byteLength;
+      expect(rpcBytes + 64).to.be.at.most(RPC_MAX_PAYLOAD_BYTES);
+    }
+  });
+
+  it("reports a key too large for any request and imports the rest", async () => {
+    const huge = Array.from({ length: 60000 }, (_, epoch) => ({
+      source_epoch: String(epoch),
+      target_epoch: String(epoch + 1),
+      signing_root: "0x" + "cd".repeat(32)
+    }));
+    const keys = pubkeys.slice(0, 3);
+    const slashing = JSON.stringify({
+      metadata: { interchange_format_version: "5", genesis_validators_root: "0x" + "00".repeat(32) },
+      data: keys.map((pubkey, index) => ({
+        pubkey,
+        signed_blocks: [],
+        signed_attestations: index === 1 ? huge : []
+      }))
+    });
+    const full = request(slashing);
+    const batches = planImportBatches(
+      { ...full, validatorsImportRequest: full.validatorsImportRequest.slice(0, 3) },
+      keys
+    );
+    const sent: number[][] = [];
+    const { results, stopped } = await runImportBatches({
+      batches,
+      results: keys.map(notAttempted),
+      importBatch: async (batch) => {
+        sent.push(batch.validatorsImportRequest.map((_, i) => i));
+        return imported(batch);
+      },
+      onProgress: () => undefined,
+      shouldStop: () => false
+    });
+    expect(stopped).to.equal(undefined);
+    expect(results.map(({ status }) => status)).to.deep.equal(["imported", "error", "imported"]);
+    expect(results[1].message).to.include("too large");
+    expect(sent).to.have.length(1);
   });
 
   it("leaves a malformed slashing file untouched for the signer to report", () => {

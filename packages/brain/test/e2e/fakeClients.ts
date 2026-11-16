@@ -85,12 +85,15 @@ export class FakeValidatorClient {
   feeRecipients = new Map<string, string>();
   /** Every request path, to assert what the Brain did (and did not) call. */
   paths: string[] = [];
+  /** Simulated latency of a busy validator client on every write. */
+  writeDelayMs = 0;
 
   async start(): Promise<Started> {
     const app = express();
     app.use(express.json({ limit: "64mb" }));
-    app.use((req, _res, next) => {
+    app.use(async (req, _res, next) => {
       this.paths.push(`${req.method} ${req.path}`);
+      if (req.method !== "GET") await delay(this.writeDelayMs);
       next();
     });
     app.get("/eth/v1/remotekeys", (_req, res) => {

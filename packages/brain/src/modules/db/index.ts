@@ -34,12 +34,23 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
   }
 
   private changeListeners = new Set<() => void>();
+  private notificationHolds = 0;
+  private changedWhileHeld = false;
 
   public override write(): void {
     super.write();
     // The JSON adapter replaces the file atomically; restore the private mode on
     // the replacement too, since records may contain builder authorization data.
     this.setOwnerWriteRead();
+    this.notifyChanged();
+  }
+
+  /** Announce a validator change, including client-side changes that involve no database write. */
+  public notifyChanged(): void {
+    if (this.notificationHolds > 0) {
+      this.changedWhileHeld = true;
+      return;
+    }
     for (const listener of this.changeListeners) {
       try {
         listener();
@@ -47,6 +58,25 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
         logger.error("Database change listener failed", e);
       }
     }
+  }
+
+  /**
+   * Hold change notifications until the returned release runs, then send at most one. An operation
+   * writes the database before configuring clients, so notifying mid-operation would let UIs read
+   * client state that is about to change and never hear about the final result.
+   */
+  public holdChangeNotifications(): () => void {
+    this.notificationHolds++;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.notificationHolds--;
+      if (this.notificationHolds === 0 && this.changedWhileHeld) {
+        this.changedWhileHeld = false;
+        this.notifyChanged();
+      }
+    };
   }
 
   /** Notify after each persisted change, e.g. to push live updates to open UIs. Returns an unsubscribe. */
