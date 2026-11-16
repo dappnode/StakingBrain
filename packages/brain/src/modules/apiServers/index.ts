@@ -9,6 +9,7 @@ import { BeaconchainApi } from "../apiClients/beaconchain/index.js";
 import { CronJob } from "../cron/cron.js";
 import { startLaunchpadApi } from "./launchpad/index.js";
 import http from "http";
+import { BeaconStatusStore } from "../beaconStatus/index.js";
 
 export const getServers = ({
   brainConfig,
@@ -19,7 +20,8 @@ export const getServers = ({
   beaconchainApi,
   brainDb,
   reloadValidatorsCronTask,
-  allowedOriginsFromEnv
+  allowedOriginsFromEnv,
+  beaconStatus
 }: {
   brainConfig: BrainConfig;
   uiBuildPath: string;
@@ -30,6 +32,7 @@ export const getServers = ({
   brainDb: BrainDataBase;
   reloadValidatorsCronTask: CronJob;
   allowedOriginsFromEnv: string | string[] | null;
+  beaconStatus: BeaconStatusStore;
 }): {
   uiServer: http.Server;
   launchpadServer: http.Server;
@@ -45,13 +48,13 @@ export const getServers = ({
       validatorApi,
       beaconchainApi,
       postgresClient,
-      allowedOriginsFromEnv
+      allowedOriginsFromEnv,
+      beaconStatus
     }),
     launchpadServer: startLaunchpadApi({
       brainDb,
       signerApi,
       validatorApi,
-      beaconchainApi,
       reloadValidatorsCronTask,
       network: brainConfig.chain.network,
       signerUrl: brainConfig.apis.signerUrl,

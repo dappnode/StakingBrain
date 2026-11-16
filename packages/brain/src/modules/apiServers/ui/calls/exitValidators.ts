@@ -4,6 +4,7 @@ import {
   ValidatorExitExecute,
   ValidatorExitGet
 } from "../../../apiClients/types.js";
+import { BEACON_CHUNK_SIZE } from "../../../beaconStatus/index.js";
 import logger from "../../../logger/index.js";
 
 /**
@@ -96,15 +97,19 @@ async function _getExitValidators({
   // Get the genesis from the beaconchain API to sign the voluntary exit
   const genesis = await beaconchainApi.getGenesis();
 
-  // Get the validators indexes from the validator API
-  const validatorPubkeysIndexes = (
-    await Promise.all(pubkeys.map((pubkey) => beaconchainApi.getStateValidator({ state: "head", pubkey })))
-  ).map((validator) => {
-    return {
-      pubkey: validator.data.validator.pubkey,
-      index: validator.data.index
-    };
-  });
+  // Look up indexes with bulk requests: one request per lookup would flood the beacon node for large batches.
+  const found = new Map<string, string>();
+  for (let start = 0; start < pubkeys.length; start += BEACON_CHUNK_SIZE) {
+    const { data } = await beaconchainApi.postStateValidators({
+      stateId: "head",
+      body: { ids: pubkeys.slice(start, start + BEACON_CHUNK_SIZE), statuses: [] }
+    });
+    for (const validator of data) found.set(validator.validator.pubkey.toLowerCase(), validator.index);
+  }
+  const missing = pubkeys.filter((pubkey) => !found.has(pubkey.toLowerCase()));
+  if (missing.length > 0)
+    throw new Error(`Validators not found on the beacon chain, so they cannot exit: ${missing.join(", ")}`);
+  const validatorPubkeysIndexes = pubkeys.map((pubkey) => ({ pubkey, index: found.get(pubkey.toLowerCase())! }));
 
   const validatorsExit: ValidatorExitGet[] = [];
   for (const validatorIndex of validatorPubkeysIndexes) {

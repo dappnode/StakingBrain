@@ -1,16 +1,17 @@
 import express from "express";
 import { isValidBlsPubkey } from "@stakingbrain/common";
 import { updateValidators } from "../../../ui/calls/updateValidators.js";
-import { getValidators } from "../../../ui/calls/getValidators.js";
 import { BrainPubkeysFeeRecipients } from "../../types.js";
 import { validateUpdateFeeRecipientRequestBody } from "./validation.js";
-import type { CustomValidatorGetResponse } from "../../../ui/calls/types.js";
 import logger from "../../../../logger/index.js";
 import { BrainDataBase } from "../../../../db/index.js";
 import { CronJob } from "../../../../cron/cron.js";
-import { BeaconchainApi } from "../../../../apiClients/beaconchain/index.js";
-import { Web3SignerApi } from "../../../../apiClients/signer/index.js";
 import { ValidatorApi } from "../../../../apiClients/validator/index.js";
+import { ValidatorOperationBusyError } from "../../../../db/withValidatorOperationLock.js";
+
+/** Stored fee recipients; client status is not needed, so reading them makes no client calls. */
+const storedFeeRecipients = (brainDb: BrainDataBase) =>
+  Object.entries(brainDb.getData()).map(([pubkey, { feeRecipient }]) => ({ pubkey, feeRecipient }));
 
 /**
  * Retrieves fee recipient information for specified validators via GET request.
@@ -40,17 +41,13 @@ import { ValidatorApi } from "../../../../apiClients/validator/index.js";
 
 export const createFeeRecipientsRouter = ({
   brainDb,
-  signerApi,
   signerUrl,
   validatorApi,
-  beaconchainApi,
   reloadValidatorsCronTask
 }: {
   brainDb: BrainDataBase;
-  signerApi: Web3SignerApi;
   signerUrl: string;
   validatorApi: ValidatorApi;
-  beaconchainApi: BeaconchainApi;
   reloadValidatorsCronTask: CronJob;
 }) => {
   const feeRecipientsRouter = express.Router();
@@ -58,12 +55,7 @@ export const createFeeRecipientsRouter = ({
 
   feeRecipientsRouter.get(feeRecipientsEndpoint, async (req, res) => {
     try {
-      const validators: CustomValidatorGetResponse[] = await getValidators({
-        brainDb,
-        signerApi,
-        validatorApi,
-        beaconchainApi
-      });
+      const validators = storedFeeRecipients(brainDb);
       const pubkeysParam = req.query.pubkeys as string | undefined;
 
       if (!pubkeysParam) {
@@ -143,12 +135,7 @@ export const createFeeRecipientsRouter = ({
     }
 
     try {
-      const currentValidators: CustomValidatorGetResponse[] = await getValidators({
-        brainDb,
-        signerApi,
-        validatorApi,
-        beaconchainApi
-      });
+      const currentValidators = storedFeeRecipients(brainDb);
 
       const validatorsToUpdate = currentValidators.filter((validator) =>
         requestBody.validators.some(
@@ -177,7 +164,8 @@ export const createFeeRecipientsRouter = ({
       res.status(200).send();
     } catch (error) {
       logger.error("Failed to update validators:", error);
-      res.status(500).send({ message: "Internal server error" });
+      if (error instanceof ValidatorOperationBusyError) res.status(503).send({ message: error.message });
+      else res.status(500).send({ message: "Internal server error" });
     }
   });
 

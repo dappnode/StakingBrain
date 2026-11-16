@@ -1,4 +1,6 @@
-import { Network } from "@stakingbrain/common";
+import { Network, VALIDATORS_CHANGED_EVENT } from "@stakingbrain/common";
+
+const VALIDATORS_CHANGED_DEBOUNCE_MS = 500;
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -14,6 +16,7 @@ import { BrainDataBase } from "../../db/index.js";
 import { BrainConfig } from "../../config/types.js";
 import { BeaconchainApi, PostgresClient, ValidatorApi, Web3SignerApi } from "../../apiClients/index.js";
 import { allowedOrigins, uiSocketOptions } from "./config.js";
+import { BeaconStatusStore } from "../../beaconStatus/index.js";
 
 export function startUiServer({
   brainDb,
@@ -24,7 +27,9 @@ export function startUiServer({
   uiBuildPath,
   brainConfig,
   reloadValidatorsCronTask,
-  allowedOriginsFromEnv
+  allowedOriginsFromEnv,
+  beaconStatus,
+  port = params.uiPort
 }: {
   brainDb: BrainDataBase;
   beaconchainApi: BeaconchainApi;
@@ -35,6 +40,9 @@ export function startUiServer({
   brainConfig: BrainConfig;
   reloadValidatorsCronTask: CronJob;
   allowedOriginsFromEnv: string | string[] | null;
+  beaconStatus: BeaconStatusStore;
+  /** Defaults to the production UI port; tests pass 0 for an ephemeral port. */
+  port?: number;
 }): http.Server {
   const { network } = brainConfig.chain;
   // create index.html modified with network
@@ -48,7 +56,8 @@ export function startUiServer({
     signerApi,
     brainDb,
     reloadValidatorsCronTask,
-    brainConfig
+    brainConfig,
+    beaconStatus
   });
 
   const app = express();
@@ -57,6 +66,17 @@ export function startUiServer({
 
   // Socket io
   const io = new Server(server, uiSocketOptions(uiOrigins));
+  // One import or reload writes several times; coalesce them into a single refresh hint.
+  let changeTimer: NodeJS.Timeout | undefined;
+  brainDb.onChange(() => {
+    if (changeTimer) return;
+    changeTimer = setTimeout(() => {
+      changeTimer = undefined;
+      io.emit(VALIDATORS_CHANGED_EVENT);
+    }, VALIDATORS_CHANGED_DEBOUNCE_MS);
+    changeTimer.unref();
+  });
+
   io.on("connection", (socket) => {
     logger.debug("A user connected");
 
@@ -87,8 +107,8 @@ export function startUiServer({
     res.sendFile(path.join(uiBuildPath, "index.html"));
   });
 
-  server.listen(params.uiPort, () => {
-    logger.info(`Server listening on *:${params.uiPort}`);
+  server.listen(port, () => {
+    logger.info(`Server listening on *:${port}`);
   });
 
   return server;

@@ -5,7 +5,7 @@ import fs from "fs";
 import logger from "../logger/index.js";
 import { Web3SignerApi, ValidatorApi } from "../apiClients/index.js";
 import { params } from "../../params.js";
-import { isValidTag } from "./utils.js";
+import { isValidTag, storedPubkeys } from "./utils.js";
 import { shortenPubkey, isValidBlsPubkey, isValidEcdsaPubkey, validateBuilderConfig } from "@stakingbrain/common";
 import { BrainDbError } from "./error.js";
 
@@ -33,11 +33,56 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     this.dbName = dbName;
   }
 
+  private changeListeners = new Set<() => void>();
+  private notificationHolds = 0;
+  private changedWhileHeld = false;
+
   public override write(): void {
     super.write();
     // The JSON adapter replaces the file atomically; restore the private mode on
     // the replacement too, since records may contain builder authorization data.
     this.setOwnerWriteRead();
+    this.notifyChanged();
+  }
+
+  /** Announce a validator change, including client-side changes that involve no database write. */
+  public notifyChanged(): void {
+    if (this.notificationHolds > 0) {
+      this.changedWhileHeld = true;
+      return;
+    }
+    for (const listener of this.changeListeners) {
+      try {
+        listener();
+      } catch (e) {
+        logger.error("Database change listener failed", e);
+      }
+    }
+  }
+
+  /**
+   * Hold change notifications until the returned release runs, then send at most one. An operation
+   * writes the database before configuring clients, so notifying mid-operation would let UIs read
+   * client state that is about to change and never hear about the final result.
+   */
+  public holdChangeNotifications(): () => void {
+    this.notificationHolds++;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.notificationHolds--;
+      if (this.notificationHolds === 0 && this.changedWhileHeld) {
+        this.changedWhileHeld = false;
+        this.notifyChanged();
+      }
+    };
+  }
+
+  /** Notify after each persisted change, e.g. to push live updates to open UIs. Returns an unsubscribe. */
+  public onChange(listener: () => void): () => void {
+    this.changeListeners.add(listener);
+    return () => this.changeListeners.delete(listener);
   }
 
   /**
@@ -120,12 +165,14 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       this.validateDb();
       this.validateUpdateValidators(validators);
       const updatedData = { ...this.data };
+      const storedKeys = storedPubkeys(this.data);
       for (const { pubkey, ...changes } of validators) {
-        if (!this.data[pubkey]) {
+        const storedKey = storedKeys.get(pubkey.toLowerCase());
+        if (!storedKey) {
           logger.warn(`Pubkey ${pubkey} not found in the database`);
           continue;
         }
-        updatedData[pubkey] = { ...this.data[pubkey], ...changes };
+        updatedData[storedKey] = { ...this.data[storedKey], ...changes };
       }
       this.ensureDbMaxSize(updatedData, true);
       this.data = updatedData;
@@ -145,7 +192,7 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
     try {
       this.validateDb();
       if (!this.data) return;
-      const storedKeys = new Map(Object.keys(this.data).map((key) => [key.toLowerCase(), key]));
+      const storedKeys = storedPubkeys(this.data);
       let changed = false;
       for (const pubkey of pubkeys) {
         const storedKey = storedKeys.get(pubkey.toLowerCase());
@@ -296,8 +343,9 @@ export class BrainDataBase extends LowSync<StakingBrainDb> {
       // Validate Ethereum address
       if (!isValidBlsPubkey(pubkey)) errors.push(`\n  pubkey ${pubkeySubstr}: bls is invalid`);
 
-      if (seen.has(pubkey)) errors.push(`\n  pubkey ${pubkeySubstr}: duplicate update`);
-      seen.add(pubkey);
+      const key = pubkey.toLowerCase();
+      if (seen.has(key)) errors.push(`\n  pubkey ${pubkeySubstr}: duplicate update`);
+      seen.add(key);
 
       // FeeRecipient
       if ("feeRecipient" in validator) {

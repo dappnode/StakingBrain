@@ -1,5 +1,7 @@
 # Gloas / ePBS validator configuration
 
+> **Disabled for now.** This feature is switched off with `featureFlags.builderConfig` in `packages/common/src/featureFlags.ts`. While it is off, the UI hides builder settings, the builder RPCs and builder fields in updates are rejected, reload does not apply stored settings, and `BUILDER_IDS` is ignored (its one-time import still runs once the feature is enabled). Settings already saved stay in the database unchanged, and overrides already applied to a validator client by 0.2.0-rc.0 are not removed.
+
 Brain manages configuration. The validator client signs slot-specific proposer
 preferences and builder authorizations and supplies the resolved configuration
 in proposal requests. The beacon node solicits and selects bids. Web3Signer

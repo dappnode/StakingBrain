@@ -1,21 +1,14 @@
 import type { JSX } from "react";
-import type { GridRowId } from "@mui/x-data-grid";
 import { shortenPubkey } from "@stakingbrain/common";
 import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 
-export default function DeletionWarning({
-  selectedRows,
-  rows
-}: {
-  selectedRows: GridRowId[];
-  rows: CustomValidatorGetResponse[];
-}): JSX.Element {
+export default function DeletionWarning({ validators }: { validators: CustomValidatorGetResponse[] }): JSX.Element {
   return (
     <>
       Are you sure you want to delete these keystores?
       <ul>
-        {selectedRows.map((row, i) => (
-          <li key={i}>{shortenPubkey(rows[parseInt(row.toString())].pubkey)}</li>
+        {validators.map(({ pubkey }) => (
+          <li key={pubkey}>{shortenPubkey(pubkey)}</li>
         ))}
       </ul>
       After deletion, these keystores won't be used for signing anymore and your slashing protection data will be

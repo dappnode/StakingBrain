@@ -9,6 +9,7 @@ import { PrometheusApi } from "../apiClients/prometheus/index.js";
 import { PostgresClient } from "../apiClients/postgres/index.js";
 import { BeaconchainApi } from "../apiClients/beaconchain/index.js";
 import { DappmanagerApi } from "../apiClients/dappmanager/index.js";
+import { BeaconStatusStore } from "../beaconStatus/index.js";
 
 export const getCrons = ({
   sendNotification,
@@ -20,7 +21,8 @@ export const getCrons = ({
   brainDb,
   chainConfig,
   beaconchainApi,
-  dappmanagerApi
+  dappmanagerApi,
+  beaconStatus
 }: {
   sendNotification: boolean;
   postgresClient: PostgresClient;
@@ -32,6 +34,7 @@ export const getCrons = ({
   chainConfig: ChainConfig;
   beaconchainApi: BeaconchainApi;
   dappmanagerApi: DappmanagerApi;
+  beaconStatus: BeaconStatusStore;
 }) => {
   const { executionClient, consensusClient, secondsPerSlot, slotsPerEpoch } = chainConfig;
   return {
@@ -50,6 +53,9 @@ export const getCrons = ({
     }),
     reloadValidatorsCronTask: new CronJob(60 * 1000, () =>
       reloadValidators(signerApi, signerUrl, validatorApi, brainDb)
-    )
+    ),
+    // Beacon details for listing, on their own schedule: a slow beacon node must not delay
+    // reconciliation, and a run still in progress makes later ticks skip rather than queue.
+    beaconStatusCronTask: new CronJob(60 * 1000, () => beaconStatus.refresh())
   };
 };

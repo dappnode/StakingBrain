@@ -8,14 +8,12 @@ import { createKeystoresRouter, createFeeRecipientsRouter } from "./routes/index
 import { CronJob } from "../../cron/cron.js";
 import { BrainDataBase } from "../../db/index.js";
 import { Network, RPC_MAX_PAYLOAD_BYTES } from "@stakingbrain/common";
-import { BeaconchainApi } from "../../apiClients/beaconchain/index.js";
 import { Web3SignerApi } from "../../apiClients/signer/index.js";
 import { ValidatorApi } from "../../apiClients/validator/index.js";
 
 export function startLaunchpadApi({
   signerApi,
   validatorApi,
-  beaconchainApi,
   reloadValidatorsCronTask,
   brainDb,
   network,
@@ -24,7 +22,6 @@ export function startLaunchpadApi({
 }: {
   signerApi: Web3SignerApi;
   validatorApi: ValidatorApi;
-  beaconchainApi: BeaconchainApi;
   reloadValidatorsCronTask: CronJob;
   brainDb: BrainDataBase;
   network: Network;
@@ -35,14 +32,21 @@ export function startLaunchpadApi({
   app.use(express.json({ limit: RPC_MAX_PAYLOAD_BYTES, inflate: false }));
   app.use(cors({ origin: allowedOriginsFromEnv ?? allowedOrigins }));
 
-  app.use(createKeystoresRouter({ reloadValidatorsCronTask, brainDb, network, validatorApi, signerApi, signerUrl }));
+  app.use(
+    createKeystoresRouter({
+      reloadValidatorsCronTask,
+      brainDb,
+      network,
+      validatorApi,
+      signerApi,
+      signerUrl
+    })
+  );
   app.use(
     createFeeRecipientsRouter({
       brainDb,
-      signerApi,
       signerUrl,
       validatorApi,
-      beaconchainApi,
       reloadValidatorsCronTask
     })
   );

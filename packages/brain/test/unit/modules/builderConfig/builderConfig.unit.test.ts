@@ -3,7 +3,15 @@ import sinon from "sinon";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { BuilderConfig, Network, MEV_SP_ADDRESS_MAINNET, ConsensusClient, ExecutionClient } from "@stakingbrain/common";
+import {
+  BuilderConfig,
+  Network,
+  MEV_SP_ADDRESS_MAINNET,
+  ConsensusClient,
+  ExecutionClient,
+  featureFlags,
+  FeatureDisabledError
+} from "@stakingbrain/common";
 import { ValidatorApi, Web3SignerApi, BeaconchainApi } from "../../../../src/modules/apiClients/index.js";
 import { AllowedMethods } from "../../../../src/modules/apiClients/types.js";
 import { HttpApiError } from "../../../../src/modules/apiClients/error.js";
@@ -13,9 +21,12 @@ import { reloadValidators } from "../../../../src/modules/cron/reloadValidators/
 import { updateValidators } from "../../../../src/modules/apiServers/ui/calls/updateValidators.js";
 import { getBuilderConfigs } from "../../../../src/modules/apiServers/ui/calls/getBuilderConfigs.js";
 import { getValidators } from "../../../../src/modules/apiServers/ui/calls/getValidators.js";
+import { createRpcMethods } from "../../../../src/modules/apiServers/ui/calls/index.js";
 import { setActiveValidatorsLoadedInBrain } from "../../../../src/modules/cron/trackValidatorsPerformance/setActiveValidatorsLoadedInBrain.js";
 import { ValidatorStatus } from "../../../../src/modules/apiClients/types.js";
 import logger from "../../../../src/modules/logger/index.js";
+import { BeaconStatusStore } from "../../../../src/modules/beaconStatus/index.js";
+import { emptyBeacon } from "../../../helpers/beacon.js";
 
 function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void;
@@ -86,8 +97,11 @@ describe("Builder configuration management", () => {
     api.remoteKeys = [...keys];
     cron = sinon.createStubInstance(CronJob);
     sinon.stub(logger, "error");
+    // The feature is switched off in this version; this suite covers it for when it returns.
+    featureFlags.builderConfig = true;
   });
   afterEach(() => {
+    featureFlags.builderConfig = false;
     sinon.restore();
     fs.rmSync(directory, { recursive: true, force: true });
   });
@@ -545,13 +559,11 @@ describe("Builder configuration management", () => {
       signer.listRemoteKeys.resolves({
         data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
       });
-      const beacon = sinon.createStubInstance(BeaconchainApi);
-      beacon.getStateValidator.rejects(new Error("not deposited"));
       const result = await getValidators({
         brainDb: db,
         validatorApi: validator,
         signerApi: signer,
-        beaconchainApi: beacon
+        beaconStatus: new BeaconStatusStore(db, emptyBeacon())
       });
       expect(result.map(({ validatorFeeRecipientCorrect }) => validatorFeeRecipientCorrect)).to.deep.equal([
         true,
@@ -561,4 +573,74 @@ describe("Builder configuration management", () => {
       expect(validator.getBuilderConfig.called).to.equal(false);
     });
   }
+});
+
+describe("Builder configuration while disabled", () => {
+  let directory: string;
+  let db: BrainDataBase;
+  let api: RecordingValidator;
+  const config: BuilderConfig = { builders: [{ url: "https://hoodi.aestus.live" }] };
+  beforeEach(() => {
+    expect(featureFlags.builderConfig).to.equal(false);
+    directory = fs.mkdtempSync(path.join(os.tmpdir(), "stakingbrain-builders-off-"));
+    db = new BrainDataBase(path.join(directory, "db.json"));
+    // A record saved while the feature was on must survive untouched.
+    db.addValidators({
+      validators: { [keys[0]]: { tag: "solo", feeRecipient: recipient, automaticImport: false, builderConfig: config } }
+    });
+    api = new RecordingValidator();
+    api.remoteKeys = [keys[0]];
+    sinon.stub(logger, "error");
+  });
+  afterEach(() => {
+    sinon.restore();
+    fs.rmSync(directory, { recursive: true, force: true });
+  });
+
+  it("rejects builder updates without touching stored settings or the client", async () => {
+    const error = await updateValidators({
+      reloadValidatorsCronTask: sinon.createStubInstance(CronJob),
+      brainDb: db,
+      validatorApi: api,
+      signerUrl: "http://signer",
+      customValidatorUpdateRequest: [{ pubkey: keys[0], builderConfig: null }]
+    }).catch((e: Error) => e);
+    expect(error).to.be.instanceOf(FeatureDisabledError);
+    expect(db.getData()[keys[0]].builderConfig).to.deep.equal(config);
+    expect(api.calls.filter(({ endpoint }) => endpoint.includes("builder_config"))).to.deep.equal([]);
+  });
+
+  it("does not replay stored settings on reload and hides them from the list", async () => {
+    const signer = sinon.createStubInstance(Web3SignerApi);
+    signer.upcheck.resolves();
+    signer.listRemoteKeys.resolves({ data: [{ validating_pubkey: keys[0], derivation_path: "", readonly: false }] });
+    await reloadValidators(signer, "http://signer", api, db);
+    expect(api.calls.filter(({ endpoint }) => endpoint.includes("builder_config"))).to.deep.equal([]);
+    expect(db.getData()[keys[0]].builderConfig).to.deep.equal(config);
+
+    const [row] = await getValidators({
+      brainDb: db,
+      validatorApi: api,
+      signerApi: signer,
+      beaconStatus: new BeaconStatusStore(db, emptyBeacon())
+    });
+    expect(row).to.not.have.property("builderConfig");
+    expect(row).to.not.have.property("builderConfigStatus");
+  });
+
+  it("refuses the builder RPCs", async () => {
+    const methods = createRpcMethods({
+      postgresClient: {} as never,
+      beaconchainApi: {} as never,
+      validatorApi: api,
+      signerApi: {} as never,
+      brainDb: db,
+      reloadValidatorsCronTask: {} as never,
+      brainConfig: { apis: {}, chain: { network: Network.Hoodi } } as never,
+      beaconStatus: new BeaconStatusStore(db, emptyBeacon())
+    });
+    for (const call of [() => methods.getBuilderRelayPresets(), () => methods.getBuilderConfigs([keys[0]])])
+      expect(await call().catch((e: Error) => e)).to.be.instanceOf(FeatureDisabledError);
+    expect(api.calls).to.deep.equal([]);
+  });
 });

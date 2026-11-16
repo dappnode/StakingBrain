@@ -17,19 +17,21 @@ export class CronJob {
   public start(): void {
     if (this.task === null) {
       logger.info(`Starting cron job with interval ${this.interval}ms`);
-      this.task = setInterval(async () => {
-        // A slow reload must not queue another copy on every interval.
-        if (this.running) return;
-        this.running = true;
-        try {
-          await this.jobFunction();
-        } catch (error) {
-          logger.error("Error running cron job", error);
-        } finally {
-          this.running = false;
-        }
-      }, this.interval);
+      this.task = setInterval(() => void this.runNow(), this.interval);
     } else logger.warn("Task is already running. Use restart to restart the job.");
+  }
+
+  /** Run the job now unless a run is already in progress; a slow run must not queue more copies. */
+  public async runNow(): Promise<void> {
+    if (this.running) return;
+    this.running = true;
+    try {
+      await this.jobFunction();
+    } catch (error) {
+      logger.error("Error running cron job", error);
+    } finally {
+      this.running = false;
+    }
   }
 
   public stop(): void {

@@ -6,7 +6,8 @@ import {
   MAINNET_ORACLE_URL,
   TESTNET_ORACLE_URL,
   nonEditableFeeRecipientTags,
-  NonEditableFeeRecipientTag
+  NonEditableFeeRecipientTag,
+  featureFlags
 } from "@stakingbrain/common";
 import SmoothStatus from "./SmoothStatus";
 import { GridColDef } from "@mui/x-data-grid";
@@ -60,10 +61,6 @@ export default function KeystoresDataGrid({
 }): JSX.Element {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const blockExplorerUrl = blockExplorerUrls.get(network);
-
-  useEffect(() => {
-    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
-  }, [selectedRows, network, rows]);
 
   const [validatorsSubscriptionMap, setValidatorsSubscriptionMap] = useState<SmoothStatusByPubkey | null>(null);
 
@@ -151,14 +148,25 @@ export default function KeystoresDataGrid({
       setValidatorsSubscriptionMap(newValidatorSubscriptionStatus);
       setOracleCallError(undefined);
     } catch (e) {
+      // Record the attempt (all UNKNOWN) so live refresh rounds do not re-query an oracle that is down.
+      setValidatorsSubscriptionMap(newValidatorSubscriptionStatus);
       setOracleCallError("Error fetching subscription status. Oracle might be down: " + e.message);
     }
   };
+  // The list refreshes live and in rounds; only query the external oracle when what it is asked
+  // about changes, and not on every round while details are still loading.
+  const oracleQueryKey = rows.map((row) => `${row.pubkey}:${row.tag}:${row.index}`).join(",");
+  const detailsLoading = rows.some((row) => row.detailsPending);
+  const selectedIds = new Set(selectedRows);
+  const selectedValidators = rows.filter((row) => selectedIds.has(row.pubkey));
+  // Live refreshes replace `rows` often; only reset the dashboard hint when what it depends on changes.
   useEffect(() => {
-    if (rows.length > 0) {
-      fetchValidatorsData(rows);
-    }
-  }, [rows]);
+    setSummaryUrlBuildingStatus(BeaconchaUrlBuildingStatus.NotStarted);
+  }, [selectedRows, network, oracleQueryKey]);
+  useEffect(() => {
+    if (rows.length === 0 || (detailsLoading && validatorsSubscriptionMap !== null)) return;
+    fetchValidatorsData(rows);
+  }, [oracleQueryKey, detailsLoading, network]);
 
   const columns: GridColDef[] = [
     {
@@ -249,7 +257,7 @@ export default function KeystoresDataGrid({
     }
   ];
 
-  const customRows = rows.map((row, index) => ({
+  const customRows = rows.map((row) => ({
     pubkey: row.pubkey,
     explorerUrl: blockExplorerUrl ? blockExplorerUrl + "/validator/" + row.pubkey : "",
     feeRecipient: row.feeRecipient,
@@ -261,27 +269,28 @@ export default function KeystoresDataGrid({
     feeRecipientImported: row.validatorFeeRecipientCorrect,
     builderConfig: row.builderConfig,
     builderConfigStatus: row.builderConfigStatus,
-    id: index
+    // Pubkeys, not positions: live refreshes reorder and remove rows under a selection.
+    id: row.pubkey
   }));
+
+  const builderConfigColumn: GridColDef = {
+    field: "builderConfigStatus",
+    headerName: "Builder config",
+    description: "Last application attempt; open Builder config to inspect client values and refresh status",
+    width: 180,
+    sortable: false,
+    renderCell: ({ row }) => (
+      <Tooltip title={row.builderConfigStatus?.message ?? "Open Builder config for details"}>
+        <span>
+          {capitalize(row.builderConfigStatus?.status ?? (row.builderConfig === undefined ? "Unmanaged" : "Pending"))}
+        </span>
+      </Tooltip>
+    )
+  };
 
   if (userMode === "advanced")
     columns.push(
-      {
-        field: "builderConfigStatus",
-        headerName: "Builder config",
-        description: "Last application attempt; open Builder config to inspect client values and refresh status",
-        width: 180,
-        sortable: false,
-        renderCell: ({ row }) => (
-          <Tooltip title={row.builderConfigStatus?.message ?? "Open Builder config for details"}>
-            <span>
-              {capitalize(
-                row.builderConfigStatus?.status ?? (row.builderConfig === undefined ? "Unmanaged" : "Pending")
-              )}
-            </span>
-          </Tooltip>
-        )
-      },
+      ...(featureFlags.builderConfig ? [builderConfigColumn] : []),
       {
         field: "explorerUrl",
         headerName: "URL",
@@ -412,7 +421,7 @@ export default function KeystoresDataGrid({
     }
 
     const summaryUrl = buildValidatorSummaryURL({
-      validatorIndexes: selectedRows.map((row) => rows[row as number]?.index ?? ""),
+      validatorIndexes: selectedValidators.map((row) => row.index),
       network
     });
 
@@ -426,12 +435,12 @@ export default function KeystoresDataGrid({
   }
 
   function areAllSelectedRowsExitable() {
-    return selectedRows.every((row) => rows[row as number].tag !== "rocketpool");
+    return selectedValidators.every((row) => row.tag !== "rocketpool");
   }
 
   function areAllSelectedRowsUneditable() {
-    return selectedRows.every((row) => {
-      const tag = rows[row as number].tag;
+    return selectedValidators.every((row) => {
+      const tag = row.tag;
       return nonEditableFeeRecipientTags.includes(tag as NonEditableFeeRecipientTag);
     });
   }
@@ -483,14 +492,16 @@ export default function KeystoresDataGrid({
             </Button>
           </Tooltip>
 
-          <Button
-            size="small"
-            startIcon={<TuneIcon />}
-            disabled={!areRowsSelected}
-            onClick={() => setBuilderConfigOpen(true)}
-          >
-            Builder settings
-          </Button>
+          {featureFlags.builderConfig && (
+            <Button
+              size="small"
+              startIcon={<TuneIcon />}
+              disabled={!areRowsSelected}
+              onClick={() => setBuilderConfigOpen(true)}
+            >
+              Builder settings
+            </Button>
+          )}
 
           <Tooltip title="Delete validators">
             <IconButton aria-label="Delete validators" disabled={!areRowsSelected} onClick={() => setDeleteOpen(true)}>

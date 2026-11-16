@@ -26,11 +26,12 @@ export async function postValidatorPubkeysFromDb({
     });
 
     for (const [index, pubkeyToAdd] of brainDbPubkeysToAdd.entries()) {
-      const postKeyStatus = postKeysResponse.data[index].status;
-      if (postKeyStatus === "imported" || postKeyStatus === "duplicate") validatorPubkeys.push(pubkeyToAdd);
+      // A missing result is uncertain; leave the key out so the next reload tries again.
+      const result = postKeysResponse.data[index];
+      if (result?.status === "imported" || result?.status === "duplicate") validatorPubkeys.push(pubkeyToAdd);
       else
         logger.error(
-          `${logPrefix}Error adding pubkey ${pubkeyToAdd} to validator API: ${postKeyStatus} ${postKeysResponse.data[index].message}`
+          `${logPrefix}Error adding pubkey ${pubkeyToAdd} to validator API: ${result?.status ?? "no result"} ${result?.message ?? ""}`
         );
     }
   }

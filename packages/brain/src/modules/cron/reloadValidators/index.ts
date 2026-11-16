@@ -1,3 +1,4 @@
+import { featureFlags } from "@stakingbrain/common";
 import { withValidatorOperationLock } from "../../db/withValidatorOperationLock.js";
 import { Web3SignerApi, ValidatorApi } from "../../apiClients/index.js";
 import { BrainDataBase } from "../../db/index.js";
@@ -60,19 +61,14 @@ export async function reloadValidators(
       const dbKeys = new Set(dbPubkeys.map((pubkey) => pubkey.toLowerCase()));
 
       // 4. POST to validator API pubkeys that are in DB and not in validator API
-      await postValidatorPubkeysFromDb({
-        validatorApi,
-        signerUrl,
-        brainDbPubkeysToAdd: Object.keys(activeData).filter((pubkey) => !validatorKeys.has(pubkey.toLowerCase())),
-        validatorPubkeys
-      });
+      const brainDbPubkeysToAdd = Object.keys(activeData).filter((pubkey) => !validatorKeys.has(pubkey.toLowerCase()));
+      await postValidatorPubkeysFromDb({ validatorApi, signerUrl, brainDbPubkeysToAdd, validatorPubkeys });
 
       // 5. DELETE to validator API pubkeys that are in validator API and not in DB
-      await deleteValidatorPubkeysNotInDB({
-        validatorApi,
-        validatorPubkeys,
-        validatorPubkeysToRemove: validatorPubkeys.filter((pubkey) => !dbKeys.has(pubkey.toLowerCase()))
-      });
+      const validatorPubkeysToRemove = validatorPubkeys.filter((pubkey) => !dbKeys.has(pubkey.toLowerCase()));
+      await deleteValidatorPubkeysNotInDB({ validatorApi, validatorPubkeys, validatorPubkeysToRemove });
+      // Client membership is shown in the UI; repairs here change it without touching the database.
+      if (brainDbPubkeysToAdd.length > 0 || validatorPubkeysToRemove.length > 0) brainDb.notifyChanged();
 
       // 6. POST to validator API fee recipients that are in DB in validator API
       await postValidatorsFeeRecipientsFromDb({
@@ -81,7 +77,7 @@ export async function reloadValidators(
       });
 
       // Independently retry managed configuration after key imports and fee destinations.
-      await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: activeData });
+      if (featureFlags.builderConfig) await postValidatorsBuilderConfigsFromDb({ validatorApi, dbData: activeData });
       logger.debug(`${logPrefix}Finished reloading data`);
     } catch (e) {
       logger.error(`${logPrefix}Error reloading data`, e);

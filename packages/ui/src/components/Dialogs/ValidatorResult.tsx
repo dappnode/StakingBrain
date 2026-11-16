@@ -21,7 +21,7 @@ export default function ValidatorResult({
         <Typography variant="body2" fontFamily="monospace">
           {shortenPubkey(pubkey)}
         </Typography>
-        <Chip size="small" variant="outlined" label={status} color={color} />
+        <Chip size="small" variant="outlined" label={status.replaceAll("_", " ")} color={color} />
       </Stack>
       {message && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1, overflowWrap: "anywhere" }}>

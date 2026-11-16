@@ -1,3 +1,4 @@
+import type { BeaconStatusView } from "../../../beaconStatus/index.js";
 import { BuilderConfig, BuilderConfigStatus, BuilderRelayPresets, StakerConfig, Tag } from "@stakingbrain/common";
 import type {
   Web3signerDeleteRequest,
@@ -60,19 +61,19 @@ export interface ValidatorBuilderConfigResponse {
   message?: string;
 }
 
-export type WithdrawalCredentialsFormat = "ecdsa" | "bls" | "unknown" | "error";
-export interface CustomValidatorGetResponse {
+export type { WithdrawalCredentialsFormat } from "../../../beaconStatus/index.js";
+export interface CustomValidatorGetResponse extends Omit<BeaconStatusView, "index" | "beaconError"> {
   pubkey: string;
   index: string;
   tag: Tag;
   feeRecipient: string;
-  withdrawalCredentials: {
-    format: WithdrawalCredentialsFormat;
-    address: string;
-  };
   signerImported?: boolean;
   validatorImported?: boolean;
   validatorFeeRecipientCorrect?: boolean;
+  /** A client read was cut off by the list deadline; request the list again to continue. */
+  detailsPending: boolean;
+  /** Why a check failed, when it failed rather than being cut off. */
+  detailsError?: string;
   builderConfig?: BuilderConfig | null;
   builderConfigStatus?: BuilderConfigStatus;
 }

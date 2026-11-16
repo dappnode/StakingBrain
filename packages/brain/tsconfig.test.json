@@ -1,7 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "." // Root directory of input files
+    // The e2e tests import the UI's client modules to drive the Brain exactly as the browser does.
+    "rootDir": ".."
   },
   "include": ["test"],
   "exclude": ["node_modules", "dist"]

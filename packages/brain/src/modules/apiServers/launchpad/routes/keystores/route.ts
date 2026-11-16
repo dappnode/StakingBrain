@@ -1,4 +1,5 @@
 import { Network, Tag } from "@stakingbrain/common";
+import { ValidatorOperationBusyError } from "../../../../db/withValidatorOperationLock.js";
 import express from "express";
 import { deleteValidators } from "../../../ui/calls/deleteValidators.js";
 import { importValidators } from "../../../ui/calls/importValidators.js";
@@ -10,6 +11,13 @@ import { CronJob } from "../../../../cron/cron.js";
 import { BrainDataBase } from "../../../../db/index.js";
 import { Web3SignerApi } from "../../../../apiClients/signer/index.js";
 import { ValidatorApi } from "../../../../apiClients/validator/index.js";
+
+/** Busy is temporary and safe to retry: nothing was changed. Other failures stay opaque. */
+function sendOperationError(res: express.Response, error: Error): void {
+  logger.error(error);
+  if (error instanceof ValidatorOperationBusyError) res.status(503).send({ message: error.message });
+  else res.status(500).send({ message: "Internal server error" });
+}
 
 export const createKeystoresRouter = ({
   signerApi,
@@ -62,8 +70,7 @@ export const createKeystoresRouter = ({
 
       res.status(200).send(importResponse);
     } catch (e) {
-      logger.error(e);
-      res.status(500).send({ message: "Internal server error" });
+      sendOperationError(res, e);
     }
   });
 
@@ -89,8 +96,7 @@ export const createKeystoresRouter = ({
 
       res.status(200).send(deleteResponse);
     } catch (e) {
-      logger.error(e);
-      res.status(500).send({ message: "Internal server error" });
+      sendOperationError(res, e);
     }
   });
 

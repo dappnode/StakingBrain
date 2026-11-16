@@ -15,6 +15,9 @@ import path from "node:path";
 import { prefix0xPubkey } from "../prefix0xPubkey.js";
 import { SignerApiError } from "./error.js";
 
+/** Longer than the UI's RPC timeout: an import already sent should be recorded even if the UI gave up. */
+export const SIGNER_IMPORT_TIMEOUT_MS = 10 * 60 * 1000;
+
 /**
  * Key Manager API standard
  * https://ethereum.github.io/keymanager-APIs/
@@ -121,7 +124,10 @@ export class Web3SignerApi extends StandardApi {
         method: "POST",
         endpoint: this.localKeymanagerEndpoint,
         body: JSON.stringify(postRequest),
-        headers: this.originHeader
+        headers: this.originHeader,
+        // Keystore decryption is slow. Dropping the connection does not stop the signer, it only
+        // discards the result, so wait long enough to record the outcome of large imports.
+        timeout: SIGNER_IMPORT_TIMEOUT_MS
       });
     } catch (e) {
       throw new SignerApiError(`Error importing (POST) keystores to remote signer. ${e.message}`);

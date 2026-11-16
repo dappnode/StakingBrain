@@ -51,6 +51,14 @@ export class RpcClient {
     });
   }
 
+  /** Subscribe to a server push event. Returns an unsubscribe function for effect cleanup. */
+  on(event: string, handler: () => void): () => void {
+    this.socket.on(event, handler);
+    return () => {
+      this.socket.off(event, handler);
+    };
+  }
+
   async call<T extends RpcMethodNames>(method: T, params: RoutesArguments[T]): Promise<RoutesReturn[T]> {
     return new Promise((resolve, reject) => {
       const rpcRequest = {
