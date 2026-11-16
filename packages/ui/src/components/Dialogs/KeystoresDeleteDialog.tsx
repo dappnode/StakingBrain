@@ -1,17 +1,35 @@
 import type { JSX } from "react";
-import { useState } from "react";
-import { Dialog, DialogContent, Box, Button, DialogContentText, DialogActions, Alert, Divider } from "@mui/material";
+import { useMemo, useRef, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  Box,
+  Button,
+  DialogContentText,
+  DialogActions,
+  Alert,
+  Divider,
+  Stack
+} from "@mui/material";
 import type { GridRowId } from "@mui/x-data-grid";
 import { importDialogBoxStyle } from "../../Styles/dialogStyles";
-import WaitBox from "../WaitBox/WaitBox";
 import DeletionWarning from "./DeletionWarning";
 import { rpcClient } from "../../socket";
 import { SlideTransition } from "./Transitions";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DialogHeader from "./DialogHeader";
-import ValidatorResult from "./ValidatorResult";
-import type { CustomValidatorGetResponse, Web3signerDeleteResponse } from "@stakingbrain/brain";
+import BatchProgressView from "./BatchProgressView";
+import type { CustomValidatorGetResponse } from "@stakingbrain/brain";
 import { useTheme, useMediaQuery } from "@mui/material";
+import { BatchProgress, BatchResult, notAttempted } from "../../utils/batchRunner";
+import {
+  DELETED_STATUSES,
+  DELETING,
+  mergeInterchanges,
+  planDeleteBatches,
+  retryableDeletes,
+  runDeleteBatches
+} from "../../utils/deleteBatches";
 
 export default function KeystoresDeleteDialog({
   validators,
@@ -25,36 +43,45 @@ export default function KeystoresDeleteDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
 }): JSX.Element {
-  const [keystoresDelete, setKeystoresDelete] = useState<Web3signerDeleteResponse>();
-  const [keystoresDeleteError, setKeystoresDeleteError] = useState<string>();
-  const [loading, setLoading] = useState(false);
-  const [deletedPubkeys, setDeletedPubkeys] = useState<string[]>([]);
+  // Fixed when deletion starts, so later list refreshes cannot change what is being deleted.
+  const [targets, setTargets] = useState<string[]>();
+  const [results, setResults] = useState<BatchResult[]>();
+  const [progress, setProgress] = useState<BatchProgress>();
+  const [stopped, setStopped] = useState<"user" | "error">();
+  const [running, setRunning] = useState(false);
+  const [stopRequested, setStopRequested] = useState(false);
+  const stopRef = useRef(false);
+  // Every batch exports the slashing history of its keys; keep all of it, across retries too.
+  const [exports, setExports] = useState<string[]>([]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  async function deleteSelectedKeystores() {
-    try {
-      setKeystoresDelete(undefined);
-      setLoading(true);
-      const pubkeysToDelete = validators.map(({ pubkey }) => pubkey);
-      setDeletedPubkeys(pubkeysToDelete);
-      setKeystoresDelete(
-        await rpcClient.call("deleteValidators", {
-          pubkeys: pubkeysToDelete
-        })
-      );
-      setLoading(false);
-      setKeystoresDeleteError(undefined);
-      setSelectedRows([]);
-    } catch (e) {
-      console.error(e);
-      setLoading(false);
-      setKeystoresDeleteError(e.message);
-    }
+  async function deleteKeystores(pubkeys: string[], only?: number[]) {
+    setTargets(pubkeys);
+    setRunning(true);
+    setStopped(undefined);
+    stopRef.current = false;
+    setStopRequested(false);
+    const outcome = await runDeleteBatches({
+      batches: planDeleteBatches(pubkeys, only),
+      results: (only && results) || pubkeys.map(notAttempted),
+      deleteBatch: (request) => rpcClient.call("deleteValidators", request),
+      onProgress: (update, latest) => {
+        setProgress(update);
+        setResults(latest);
+      },
+      shouldStop: () => stopRef.current
+    });
+    setResults(outcome.results);
+    setStopped(outcome.stopped);
+    setExports((previous) => [...previous, ...outcome.slashingProtection]);
+    setRunning(false);
+    setSelectedRows([]);
   }
-  const handleClose = () => {
-    setOpen(false);
-  };
+
+  const retry = useMemo(() => retryableDeletes(results ?? []), [results]);
+  const downloads = useMemo(() => mergeInterchanges(exports), [exports]);
+  const handleClose = () => setOpen(false);
 
   return (
     <Dialog
@@ -63,85 +90,110 @@ export default function KeystoresDeleteDialog({
       fullScreen={isMobile}
       fullWidth={!isMobile}
       onClose={(event, reason) => {
-        if (!reason) {
-          handleClose();
-        }
+        if (!reason && !running) handleClose();
       }}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
       TransitionComponent={SlideTransition}
     >
       <DialogHeader
-        title={keystoresDelete ? "Deletion results" : "Delete keystores"}
+        title={running ? "Deleting keystores" : targets ? "Deletion results" : "Delete keystores"}
         subtitle="Remove validator keys from this signer."
         icon={<DeleteOutlineIcon />}
-        count={keystoresDelete ? deletedPubkeys.length : validators.length}
+        count={targets?.length ?? validators.length}
         onClose={handleClose}
-        busy={loading}
+        busy={running}
       />
       <DialogContent>
         <Box sx={importDialogBoxStyle}>
-          {keystoresDeleteError ? (
-            <Alert severity="error">{keystoresDeleteError}</Alert>
-          ) : keystoresDelete?.data ? (
-            <div>
-              {keystoresDelete.data.map((result, index) => {
-                const pubkey = deletedPubkeys[index];
-                return (
-                  <ValidatorResult
-                    key={pubkey || index}
-                    pubkey={pubkey}
-                    status={result.status}
-                    message={result.message}
-                  />
-                );
-              })}
-              {keystoresDelete.slashing_protection ? (
+          {targets && results && progress ? (
+            <Stack spacing={2}>
+              <BatchProgressView
+                results={results}
+                progress={progress}
+                running={running}
+                pubkeys={targets}
+                verb="Deleting"
+                activeStatus={DELETING}
+                doneStatuses={DELETED_STATUSES}
+                labels={[
+                  ["deleted", "deleted", "success"],
+                  ["not_active", "deleted (inactive)", "success"],
+                  ["not_found", "not in signer", "default"]
+                ]}
+                runningHint="Keep this window open; you can stop after the current batch."
+                stopped={stopped}
+                stoppedMessages={{
+                  error:
+                    "Deletion stopped because a batch failed. Validators not yet deleted can be retried; keys already removed will show as not in signer.",
+                  user: "Deletion stopped. You can retry the validators that were not deleted."
+                }}
+              />
+              {!running && downloads.length > 0 && (
                 <div>
-                  <Alert severity="warning" sx={{ marginTop: 2, marginBottom: 2 }}>
-                    It is strongly recommended to stop the validator and watch at least 3 missed attestations in the
-                    explorer before uploading the keys to another machine.
+                  <Alert severity="warning" sx={{ marginBottom: 2 }}>
+                    Keep the slashing protection data for when you import these keystores elsewhere. It is strongly
+                    recommended to stop the validator and watch at least 3 missed attestations in the explorer before
+                    uploading the keys to another machine.
                   </Alert>
-
-                  <Button
-                    variant="contained"
-                    href={`data:text/json;charset=utf-8,${encodeURIComponent(keystoresDelete.slashing_protection)}`}
-                    download="slashing_protection.json"
-                    sx={{ borderRadius: 2 }}
-                  >
-                    Download slashing protection
-                  </Button>
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                    {downloads.map((interchange, index) => (
+                      <Button
+                        key={index}
+                        variant="contained"
+                        href={`data:text/json;charset=utf-8,${encodeURIComponent(interchange)}`}
+                        download={
+                          downloads.length > 1 ? `slashing_protection-${index + 1}.json` : "slashing_protection.json"
+                        }
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {downloads.length > 1
+                          ? `Download slashing protection (${index + 1})`
+                          : "Download slashing protection"}
+                      </Button>
+                    ))}
+                  </Stack>
                 </div>
-              ) : null}
-            </div>
-          ) : (
-            <div>
-              {loading ? (
-                <WaitBox />
-              ) : (
-                <DialogContentText id="alert-dialog-description" component={"span"}>
-                  <DeletionWarning validators={validators} />
-                </DialogContentText>
               )}
-            </div>
+            </Stack>
+          ) : (
+            <DialogContentText id="alert-dialog-description" component={"span"}>
+              <DeletionWarning validators={validators} />
+            </DialogContentText>
           )}
         </Box>
       </DialogContent>
       <Divider />
       <DialogActions>
-        <Button disabled={loading} onClick={handleClose}>
+        {running ? (
+          <Button
+            onClick={() => {
+              stopRef.current = true;
+              setStopRequested(true);
+            }}
+            disabled={stopRequested}
+          >
+            {stopRequested ? "Stopping after this batch…" : "Stop after this batch"}
+          </Button>
+        ) : (
+          targets &&
+          retry.length > 0 && (
+            <Button onClick={() => deleteKeystores(targets, retry)}>Retry {retry.length} not deleted</Button>
+          )
+        )}
+        <Button disabled={running} onClick={handleClose}>
           Close
         </Button>
-        {!keystoresDelete && !loading ? (
+        {!targets && (
           <Button
-            onClick={() => deleteSelectedKeystores()}
+            onClick={() => deleteKeystores(validators.map(({ pubkey }) => pubkey))}
             variant="contained"
             color="error"
             sx={{ marginRight: 1, borderRadius: 2 }}
           >
             Delete
           </Button>
-        ) : null}
+        )}
       </DialogActions>
     </Dialog>
   );

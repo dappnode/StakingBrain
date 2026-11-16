@@ -1,5 +1,16 @@
 import type { CustomImportRequest, Web3signerPostResponse } from "@stakingbrain/brain";
 import { prefix0xPubkey, RPC_MAX_PAYLOAD_BYTES } from "@stakingbrain/common";
+import {
+  Batch,
+  BatchProgress,
+  BatchResult,
+  NOT_ATTEMPTED,
+  notAttempted,
+  QUEUED,
+  retryableIndexes as retryable,
+  runBatches,
+  summarize
+} from "./batchRunner";
 
 /**
  * Keystore decryption in the signer is slow, so one RPC call per batch keeps every call well inside
@@ -11,31 +22,15 @@ const IMPORT_BATCH_MAX_BYTES = Math.floor(RPC_MAX_PAYLOAD_BYTES * 0.9);
 const encoder = new TextEncoder();
 const byteLength = (text: string) => encoder.encode(text).byteLength;
 
-export interface ImportResult {
-  status: string;
-  message?: string;
-}
+export type ImportResult = BatchResult;
+export type ImportProgress = BatchProgress;
+export type ImportBatch = Batch<CustomImportRequest>;
+export { NOT_ATTEMPTED, QUEUED, notAttempted };
 
-export interface ImportBatch {
-  /** Positions in the original file list, so results stay aligned with the files the user picked. */
-  indexes: number[];
-  request: CustomImportRequest;
-  /** Set when a single key cannot fit one request; it is reported as an error without being sent. */
-  tooLarge?: { bytes: number; maxBytes: number };
-}
-
-export interface ImportProgress {
-  done: number;
-  total: number;
-  batch: number;
-  batches: number;
-}
-
-export const NOT_ATTEMPTED = "not_attempted";
-
-export function notAttempted(): ImportResult {
-  return { status: NOT_ATTEMPTED, message: "Not imported yet: the import stopped before reaching this validator." };
-}
+/** In the batch being imported right now. */
+export const IMPORTING = "importing";
+/** Statuses that need no retry. */
+export const IMPORTED_STATUSES = ["imported", "duplicate"] as const;
 
 type Interchange = { data: { pubkey?: unknown }[] };
 
@@ -125,11 +120,12 @@ export function planImportBatches(
   }
   if (group.length > 0) groups.push(group);
 
+  const mb = (bytes: number) => (bytes / 1024 / 1024).toFixed(1);
   const tooLarge: ImportBatch[] = [...oversized].map(([index, size]) => ({
     indexes: [index],
     // Never sent: the run reports it as an error instead.
     request: { importFrom: request.importFrom, validatorsImportRequest: [] },
-    tooLarge: { bytes: size, maxBytes }
+    rejected: `This keystore and its slashing protection history are too large to import in one request (${mb(size)} MB, limit ${mb(maxBytes)} MB). Import it with a pruned slashing protection file.`
   }));
   return [
     ...tooLarge,
@@ -150,14 +146,10 @@ export function planImportBatches(
   ];
 }
 
-/**
- * Import batches in order. A failed batch stops the run: its error may be a timeout whose outcome is
- * unknown, and the remaining files are left "not attempted" so the user can retry them safely
- * (keys that did land are reported as duplicates).
- */
-export async function runImportBatches({
+/** Import batches in order with live progress; see runBatches for stop and failure semantics. */
+export function runImportBatches({
   batches,
-  results: initial,
+  results,
   importBatch,
   onProgress,
   shouldStop
@@ -168,52 +160,27 @@ export async function runImportBatches({
   onProgress: (progress: ImportProgress, results: ImportResult[]) => void;
   shouldStop: () => boolean;
 }): Promise<{ results: ImportResult[]; stopped?: "user" | "error" }> {
-  const results = [...initial];
-  for (const { indexes } of batches) for (const index of indexes) results[index] = notAttempted();
-  const total = batches.reduce((sum, { indexes }) => sum + indexes.length, 0);
-  let done = 0;
-  onProgress({ done, total, batch: 0, batches: batches.length }, [...results]);
-
-  for (const [position, batch] of batches.entries()) {
-    if (shouldStop()) return { results, stopped: "user" };
-    if (batch.tooLarge) {
-      const mb = (bytes: number) => (bytes / 1024 / 1024).toFixed(1);
-      results[batch.indexes[0]] = {
-        status: "error",
-        message: `This keystore and its slashing protection history are too large to import in one request (${mb(batch.tooLarge.bytes)} MB, limit ${mb(batch.tooLarge.maxBytes)} MB). Import it with a pruned slashing protection file.`
-      };
-      done += 1;
-      onProgress({ done, total, batch: position + 1, batches: batches.length }, [...results]);
-      continue;
-    }
-    let failed = false;
-    try {
-      const response = await importBatch(batch.request);
-      batch.indexes.forEach((index, offset) => {
-        results[index] = response.data[offset] ?? {
-          status: "error",
-          message: "Import outcome unknown: Brain returned no result for this key. Retry to check."
-        };
-      });
-    } catch (error) {
-      failed = true;
-      const message = error instanceof Error ? error.message : String(error);
-      for (const index of batch.indexes) results[index] = { status: "error", message };
-    }
-    done += batch.indexes.length;
-    onProgress({ done, total, batch: position + 1, batches: batches.length }, [...results]);
-    if (failed) return { results, stopped: "error" };
-  }
-  return { results };
+  return runBatches({
+    batches,
+    results,
+    send: importBatch,
+    toResults: (response, batch) =>
+      batch.indexes.map(
+        (_, offset) =>
+          response.data[offset] ?? {
+            status: "error",
+            message: "Import outcome unknown: Brain returned no result for this key. Retry to check."
+          }
+      ),
+    active: { status: IMPORTING, message: "Importing…" },
+    onProgress,
+    shouldStop
+  });
 }
 
 /** Files worth retrying: anything not confirmed imported or already present. */
 export function retryableIndexes(results: readonly ImportResult[]): number[] {
-  return results.flatMap((result, index) => (["imported", "duplicate"].includes(result?.status) ? [] : [index]));
+  return retryable(results, IMPORTED_STATUSES);
 }
 
-export function summarizeImport(results: readonly ImportResult[]): Record<string, number> {
-  const summary: Record<string, number> = {};
-  for (const { status } of results) summary[status] = (summary[status] ?? 0) + 1;
-  return summary;
-}
+export const summarizeImport = summarize;
