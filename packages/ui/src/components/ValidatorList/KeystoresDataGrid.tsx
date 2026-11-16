@@ -147,6 +147,8 @@ export default function KeystoresDataGrid({
       setValidatorsSubscriptionMap(newValidatorSubscriptionStatus);
       setOracleCallError(undefined);
     } catch (e) {
+      // Record the attempt (all UNKNOWN) so live refresh rounds do not re-query an oracle that is down.
+      setValidatorsSubscriptionMap(newValidatorSubscriptionStatus);
       setOracleCallError("Error fetching subscription status. Oracle might be down: " + e.message);
     }
   };
