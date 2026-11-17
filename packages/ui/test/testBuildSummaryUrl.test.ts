@@ -1,12 +1,11 @@
 import { expect } from "chai";
 import buildValidatorSummaryURL from "../src/utils/buildValidatorSummaryURL.js";
+import { blockExplorerUrls } from "../src/params.js";
 
 describe("Validator dashboard URLs", () => {
   for (const [network, baseUrl] of [
     ["mainnet", "https://beaconcha.in"],
-    ["hoodi", "https://hoodi.beaconcha.in"],
-    ["gnosis", "https://gnosischa.in"],
-    ["lukso", "https://explorer.consensus.mainnet.lukso.network"]
+    ["hoodi", "https://hoodi.beaconcha.in"]
   ]) {
     it(`builds a ${network} link from local indexes, including index zero`, () => {
       expect(buildValidatorSummaryURL({ validatorIndexes: ["0", "42", "123"], network })).to.equal(
@@ -14,6 +13,17 @@ describe("Validator dashboard URLs", () => {
       );
     });
   }
+
+  // Their explorers would open an empty dashboard (Gnosis) or a missing page (Lukso).
+  for (const network of ["gnosis", "lukso"]) {
+    it(`builds no dashboard link for ${network}, whose explorer has no multi-validator dashboard`, () => {
+      expect(buildValidatorSummaryURL({ validatorIndexes: ["0", "42"], network })).to.equal("");
+    });
+  }
+
+  it("points Gnosis explorer links at a live explorer", () => {
+    expect(blockExplorerUrls.get("gnosis")).to.equal("https://beaconchain.gnosischain.com");
+  });
 
   it("includes selections larger than the former API batch limit", () => {
     const validatorIndexes = Array.from({ length: 103 }, (_, index) => index.toString());

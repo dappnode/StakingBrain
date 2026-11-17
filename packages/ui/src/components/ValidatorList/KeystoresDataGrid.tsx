@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { DataGrid, GridAlignment, GridRowId } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import { blockExplorerUrls } from "../../params";
+import { blockExplorerUrls, dashboardNetworks } from "../../params";
 import {
   MAINNET_ORACLE_URL,
   TESTNET_ORACLE_URL,
@@ -61,6 +61,7 @@ export default function KeystoresDataGrid({
 }): JSX.Element {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const blockExplorerUrl = blockExplorerUrls.get(network);
+  const hasDashboard = dashboardNetworks.has(network);
 
   const [validatorsSubscriptionMap, setValidatorsSubscriptionMap] = useState<SmoothStatusByPubkey | null>(null);
 
@@ -475,10 +476,23 @@ export default function KeystoresDataGrid({
           label={selectedRows.length ? `${selectedRows.length} selected` : `${rows.length} validators`}
         />
         <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
-          <Tooltip title="Go to explorer dashboard for selected validators">
-            <IconButton aria-label="Open validator dashboard" disabled={!areRowsSelected} onClick={openDashboardTab}>
-              <LinkIcon />
-            </IconButton>
+          <Tooltip
+            title={
+              hasDashboard
+                ? "Go to explorer dashboard for selected validators"
+                : "This network's explorer has no multi-validator dashboard; use each validator's explorer link"
+            }
+          >
+            {/* A span keeps the tooltip working while the button is disabled. */}
+            <span>
+              <IconButton
+                aria-label="Open validator dashboard"
+                disabled={!areRowsSelected || !hasDashboard}
+                onClick={openDashboardTab}
+              >
+                <LinkIcon />
+              </IconButton>
+            </span>
           </Tooltip>
 
           <Tooltip title="Edit validators fee recipient">

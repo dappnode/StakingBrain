@@ -1,4 +1,4 @@
-import { blockExplorerUrls } from "../params";
+import { blockExplorerUrls, dashboardNetworks } from "../params";
 
 export default function buildValidatorSummaryURL({
   validatorIndexes,
@@ -12,6 +12,7 @@ export default function buildValidatorSummaryURL({
     throw new Error(`Invalid network: ${network}`);
   }
 
+  if (!dashboardNetworks.has(network)) return "";
   if (validatorIndexes.length === 0 || validatorIndexes.some((index) => !/^\d+$/.test(index))) return "";
 
   return baseUrl + "/dashboard?validators=" + validatorIndexes.join(",");
