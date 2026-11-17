@@ -6,30 +6,35 @@ import path from "node:path";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { once } from "node:events";
-import { Network } from "@stakingbrain/common";
+import { inspect } from "node:util";
+import { BuilderConfig, featureFlags, Network } from "@stakingbrain/common";
 import { BrainDataBase } from "../../../src/modules/db/index.js";
 import { CronJob } from "../../../src/modules/cron/cron.js";
 import { ValidatorApi, Web3SignerApi } from "../../../src/modules/apiClients/index.js";
+import { ApiError } from "../../../src/modules/apiClients/error.js";
+import { ValidatorApiError } from "../../../src/modules/apiClients/validator/error.js";
 import { updateValidators } from "../../../src/modules/apiServers/ui/calls/updateValidators.js";
 import { reloadValidators } from "../../../src/modules/cron/reloadValidators/index.js";
 import { postValidatorsFeeRecipientsFromDb } from "../../../src/modules/cron/reloadValidators/postValidatorsFeeRecipientsFromDb.js";
+import { postValidatorsBuilderConfigsFromDb } from "../../../src/modules/cron/reloadValidators/postValidatorsBuilderConfigsFromDb.js";
 import { RELOAD_SLICE_MAX_HOLD_MS } from "../../../src/modules/cron/reloadValidators/forEachInLockedSlices.js";
 import logger from "../../../src/modules/logger/index.js";
 
 const pubkeyAt = (i: number) => "0x" + i.toString(16).padStart(96, "0");
 const recipient = "0x" + "ab".repeat(20);
 const newRecipient = "0x" + "cd".repeat(20);
+const builderConfig: BuilderConfig = { builders: [{ url: "https://builder.example" }] };
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe("Reload holds the validator operation lock in short slices", () => {
   let directory: string;
   let brainDb: BrainDataBase;
 
-  const seed = (count: number): string[] => {
+  const seed = (count: number, extra: { builderConfig?: BuilderConfig } = {}): string[] => {
     const keys = Array.from({ length: count }, (_, i) => pubkeyAt(i + 1));
     brainDb.addValidators({
       validators: Object.fromEntries(
-        keys.map((key) => [key, { tag: "solo" as const, feeRecipient: recipient, automaticImport: false }])
+        keys.map((key) => [key, { tag: "solo" as const, feeRecipient: recipient, automaticImport: false, ...extra }])
       )
     });
     return keys;
@@ -99,6 +104,33 @@ describe("Reload holds the validator operation lock in short slices", () => {
     expect(validatorApi.setFeeRecipient.getCalls().map((call) => call.args[1])).to.deep.equal(keys.slice(0, 2));
   });
 
+  it("skips builder configuration when the validator client stopped responding to fee recipients", async () => {
+    const keys = seed(3, { builderConfig });
+    const signerApi = sinon.createStubInstance(Web3SignerApi);
+    const validatorApi = sinon.createStubInstance(ValidatorApi);
+    signerApi.upcheck.resolves();
+    signerApi.listRemoteKeys.resolves({
+      data: keys.map((validating_pubkey) => ({ validating_pubkey, derivation_path: "", readonly: false }))
+    });
+    validatorApi.getRemoteKeys.resolves({ data: keys.map((pubkey) => ({ pubkey, readonly: false, url: "" })) });
+    // What the real client throws when a request gets no response.
+    validatorApi.setFeeRecipient.rejects(new ValidatorApiError("fee", { cause: new ApiError("timed out") }));
+    validatorApi.setBuilderConfig.resolves();
+    featureFlags.builderConfig = true;
+    try {
+      await reloadValidators(signerApi, "http://signer", validatorApi, brainDb);
+      expect(validatorApi.setFeeRecipient.callCount).to.equal(1);
+      expect(validatorApi.setBuilderConfig.called).to.equal(false);
+
+      // A responsive client gets both phases again on the next pass.
+      validatorApi.setFeeRecipient.resolves();
+      await reloadValidators(signerApi, "http://signer", validatorApi, brainDb);
+      expect(validatorApi.setBuilderConfig.callCount).to.equal(keys.length);
+    } finally {
+      featureFlags.builderConfig = false;
+    }
+  });
+
   describe("against a real validator client connection", () => {
     let server: http.Server;
     let validatorApi: ValidatorApi;
@@ -154,6 +186,31 @@ describe("Reload holds the validator operation lock in short slices", () => {
       expect(spy.callCount).to.equal(1);
       server.listen(0, "127.0.0.1"); // let afterEach close it cleanly
       await once(server, "listening");
+    });
+
+    it("stops builder configuration at the first refused connection", async () => {
+      const keys = seed(3, { builderConfig });
+      const { port } = server.address() as AddressInfo;
+      server.close();
+      await once(server, "close");
+      const closedApi = new ValidatorApi({ baseUrl: `http://127.0.0.1:${port}` }, Network.Mainnet);
+      const spy = sinon.spy(closedApi, "setBuilderConfig");
+      expect(await postValidatorsBuilderConfigsFromDb({ validatorApi: closedApi, brainDb, pubkeys: keys })).to.equal(
+        "stopped"
+      );
+      expect(spy.callCount).to.equal(1);
+      server.listen(0, "127.0.0.1");
+      await once(server, "listening");
+    });
+
+    it("keeps applying builder configuration past HTTP errors without logging response bodies", async () => {
+      const keys = seed(3, { builderConfig });
+      respond = (req, res) =>
+        req.url?.includes(keys[0]) ? res.writeHead(500).end("echoed-secret-authorization") : res.writeHead(200).end();
+      expect(await postValidatorsBuilderConfigsFromDb({ validatorApi, brainDb, pubkeys: keys })).to.equal("completed");
+      expect(requests).to.have.length(keys.length);
+      const logged = (logger.error as sinon.SinonStub).getCalls().map((call) => inspect(call.args, { depth: 10 }));
+      expect(logged.join("\n")).to.include("HTTP 500").and.not.include("echoed-secret");
     });
   });
 });

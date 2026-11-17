@@ -15,13 +15,15 @@ export type SliceStep = (pubkey: string, details: PubkeyDetails) => Promise<"con
  * between. Every slice re-reads the database inside the lock, so it always applies the settings stored
  * now, never a value a user operation has since replaced, and skips keys deleted meanwhile. A step that
  * returns "stop" ends the whole run; the next reload pass starts over.
+ *
+ * @returns "stopped" when a step stopped the run, so callers can skip later steps against the same client
  */
 export async function forEachInLockedSlices(
   brainDb: BrainDataBase,
   pubkeys: readonly string[],
   step: SliceStep,
   { maxHoldMs = RELOAD_SLICE_MAX_HOLD_MS }: { maxHoldMs?: number } = {}
-): Promise<void> {
+): Promise<"completed" | "stopped"> {
   let next = 0;
   let stopped = false;
   while (next < pubkeys.length && !stopped) {
@@ -37,4 +39,5 @@ export async function forEachInLockedSlices(
       } while (next < pubkeys.length && !stopped && Date.now() < deadline);
     });
   }
+  return stopped ? "stopped" : "completed";
 }

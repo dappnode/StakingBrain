@@ -85,7 +85,10 @@ export class ValidatorApi extends StandardApi {
       error instanceof HttpApiError
         ? `HTTP ${error.statusCode}${[405, 501].includes(error.statusCode) ? " (builder configuration is unsupported)" : error.statusCode === 404 ? " (endpoint unavailable or validator key not found)" : ""}`
         : error.message;
-    return new ValidatorApiError(`Error ${action} builder configuration for ${pubkey}: ${reason}`);
+    // Keep whether the client answered (for reload to stop on an unreachable client), never the body.
+    const cause =
+      error instanceof HttpApiError ? new HttpApiError(error.statusCode, `HTTP ${error.statusCode}`) : error;
+    return new ValidatorApiError(`Error ${action} builder configuration for ${pubkey}: ${reason}`, { cause });
   }
 
   /**

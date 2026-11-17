@@ -14,6 +14,8 @@ export const FEE_RECIPIENT_TIMEOUT_MS = 10 * 1000;
  * An HTTP error concerns one key, so the pass carries on with the rest. A request that gets no response
  * (timeout, refused or reset connection) means the client is unavailable: stop, rather than wait on every
  * remaining key, and let the next pass start over.
+ *
+ * @returns "stopped" when the client did not respond, so reload skips its other per-key steps
  */
 export async function postValidatorsFeeRecipientsFromDb({
   validatorApi,
@@ -27,8 +29,8 @@ export async function postValidatorsFeeRecipientsFromDb({
   pubkeys: readonly string[];
   timeoutMs?: number;
   maxHoldMs?: number;
-}): Promise<void> {
-  await forEachInLockedSlices(
+}): Promise<"completed" | "stopped"> {
+  return forEachInLockedSlices(
     brainDb,
     pubkeys,
     async (pubkey, { feeRecipient }) => {

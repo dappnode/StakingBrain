@@ -48,11 +48,14 @@ export async function reloadValidators(
 
     // 6. POST to validator API fee recipients that are in DB in validator API. One request per key, so
     // it holds the lock in short slices: a long pass on a large node must not lock out user operations.
-    await postValidatorsFeeRecipientsFromDb({ validatorApi, brainDb, pubkeys: activePubkeys });
+    const fees = await postValidatorsFeeRecipientsFromDb({ validatorApi, brainDb, pubkeys: activePubkeys });
 
-    // Independently retry managed configuration after key imports and fee destinations.
-    if (featureFlags.builderConfig)
-      await postValidatorsBuilderConfigsFromDb({ validatorApi, brainDb, pubkeys: activePubkeys });
+    // Independently retry managed configuration after key imports and fee destinations. Skip it when the
+    // client stopped responding: every request would wait for its timeout and delay the next pass.
+    if (featureFlags.builderConfig) {
+      if (fees === "stopped") logger.debug(`${logPrefix}Skipping builder configuration: validator client unavailable`);
+      else await postValidatorsBuilderConfigsFromDb({ validatorApi, brainDb, pubkeys: activePubkeys });
+    }
     // Repairs such as restored fee recipients change no database record. If an open UI last saw a
     // problem, announce the pass so it lists again (and checks the fee recipients by GET).
     if (takeListRecheck(brainDb)) brainDb.notifyChanged();
