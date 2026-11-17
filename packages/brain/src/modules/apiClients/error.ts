@@ -10,3 +10,9 @@ export class HttpApiError extends ApiError {
     super(message);
   }
 }
+
+/** True when a request got an HTTP response, i.e. the server is reachable even if it refused the request. */
+export function receivedHttpResponse(error: unknown): boolean {
+  for (let e = error; e instanceof Error; e = e.cause) if (e instanceof HttpApiError) return true;
+  return false;
+}

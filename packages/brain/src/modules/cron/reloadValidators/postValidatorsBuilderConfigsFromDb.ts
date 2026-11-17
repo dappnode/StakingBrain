@@ -1,8 +1,9 @@
 import { BuilderConfig } from "@stakingbrain/common";
 import { ValidatorApi } from "../../apiClients/index.js";
-import { StakingBrainDb } from "../../db/types.js";
+import { BrainDataBase } from "../../db/index.js";
 import logger from "../../logger/index.js";
 import { logPrefix } from "./logPrefix.js";
+import { forEachInLockedSlices } from "./forEachInLockedSlices.js";
 
 export async function applyValidatorBuilderConfig(
   validatorApi: ValidatorApi,
@@ -16,14 +17,17 @@ export async function applyValidatorBuilderConfig(
 /** Replay original overrides, including reset intent. Never copy resolved GET values. */
 export async function postValidatorsBuilderConfigsFromDb({
   validatorApi,
-  dbData
+  brainDb,
+  pubkeys
 }: {
   validatorApi: ValidatorApi;
-  dbData: StakingBrainDb;
+  brainDb: BrainDataBase;
+  pubkeys: readonly string[];
 }): Promise<void> {
-  for (const [pubkey, { builderConfig }] of Object.entries(dbData)) {
+  await forEachInLockedSlices(brainDb, pubkeys, async (pubkey, { builderConfig }) => {
     await applyValidatorBuilderConfig(validatorApi, pubkey, builderConfig).catch((error) =>
       logger.error(`${logPrefix}Error applying builder configuration for ${pubkey}`, error)
     );
-  }
+    return "continue";
+  });
 }

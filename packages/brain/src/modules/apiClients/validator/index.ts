@@ -120,16 +120,22 @@ export class ValidatorApi extends StandardApi {
    * Sets the validator client fee recipient mapping which will then update the beacon node..
    * https://ethereum.github.io/keymanager-APIs/#/Fee%20Recipient/setFeeRecipient
    */
-  public async setFeeRecipient(newFeeRecipient: string, publicKey: string): Promise<void> {
+  public async setFeeRecipient(
+    newFeeRecipient: string,
+    publicKey: string,
+    { timeout }: { timeout?: number } = {}
+  ): Promise<void> {
     try {
       await this.request({
         method: "POST",
         endpoint: path.join(this.validatorEndpoint, prefix0xPubkey(publicKey), "feerecipient"),
-        body: JSON.stringify({ ethaddress: newFeeRecipient })
+        body: JSON.stringify({ ethaddress: newFeeRecipient }),
+        timeout
       });
     } catch (e) {
       throw new ValidatorApiError(
-        `Error setting fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. ${e.message}`
+        `Error setting fee recipient for pubkey ${publicKey} to ${newFeeRecipient} on validator. ${e.message}`,
+        { cause: e }
       );
     }
   }

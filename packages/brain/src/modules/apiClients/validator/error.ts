@@ -1,8 +1,8 @@
 import { ApiError } from "../error.js";
 
 export class ValidatorApiError extends ApiError {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "ValidatorApiError"; // Override the name if needed
   }
 }
